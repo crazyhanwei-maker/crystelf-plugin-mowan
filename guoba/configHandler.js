@@ -529,7 +529,7 @@ function validateConfig(configType, config = null) {
         errors.push('控制台每页数量不能大于最大每页数量');
       }
       if (config.webConsoleToken !== undefined && typeof config.webConsoleToken !== 'string') {
-        errors.push('控制台 Token 必须是字符串');
+        errors.push('控制台登录口令必须是字符串');
       }
       if (config.webConsoleHost !== undefined && typeof config.webConsoleHost !== 'string') {
         errors.push('控制台地址必须是字符串');

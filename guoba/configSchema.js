@@ -328,19 +328,19 @@ const guobaSchema = [
   },
   {
     field: 'config.webConsoleToken',
-    label: '控制台 Token',
+    label: '控制台登录口令',
     component: 'InputPassword',
     required: false,
-    bottomHelpMessage: '本地控制台访问令牌，留空则不启用鉴权',
+    bottomHelpMessage: '控制台登录页使用的口令，留空则不启用登录鉴权',
     componentProps: {
-      placeholder: '请输入控制台 Token',
+      placeholder: '请输入控制台登录口令',
     },
   },
   {
     field: 'config.webConsoleRequireAuth',
     label: '强制鉴权',
     component: 'Switch',
-    bottomHelpMessage: '开启后即使 Token 留空也会要求带 Token 访问接口',
+    bottomHelpMessage: '开启后会要求先登录控制台；若未设置登录口令则无法通过网页登录',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
