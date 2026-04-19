@@ -84,6 +84,34 @@ function sanitizeAssistantHistoryContent(text = '') {
     .trim();
 }
 
+const EMOJI_SEQUENCE_REGEX = /(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/gu;
+const EMOJI_FLAG_REGEX = /\p{Regional_Indicator}{2}/gu;
+const EMOJI_KEYCAP_REGEX = /[#*0-9]\uFE0F?\u20E3/gu;
+const EMOJI_MODIFIER_REGEX = /[\u{1F3FB}-\u{1F3FF}]/gu;
+const EMOJI_JOINER_REGEX = /[\u200D\uFE0E\uFE0F]/gu;
+
+function stripEmojiCharacters(text = '') {
+  return String(text || '')
+    .replace(EMOJI_SEQUENCE_REGEX, '')
+    .replace(EMOJI_FLAG_REGEX, '')
+    .replace(EMOJI_KEYCAP_REGEX, '')
+    .replace(EMOJI_MODIFIER_REGEX, '')
+    .replace(EMOJI_JOINER_REGEX, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .split('\n')
+    .map(line => line.trimEnd())
+    .join('\n')
+    .trim();
+}
+
+function applyEmojiSuppression(text = '', aiConfig = {}) {
+  if (!aiConfig?.emojiSuppression) {
+    return String(text || '');
+  }
+
+  return stripEmojiCharacters(text);
+}
+
 function getFollowUpConfig(aiConfig) {
   return {
     enabled: aiConfig?.followUp?.enabled !== false,
@@ -1927,9 +1955,13 @@ export class crystelfAI extends plugin {
         .map(msg => this.humanize.typoGenerator.apply(msg))
         .filter(Boolean);
       const rawAssistantText = outputMessages.join('\n');
+      const effectiveAssistantText = outputMessages.length > 0
+        ? applyEmojiSuppression(rawAssistantText, aiConfig)
+        : '';
       const hasVoiceMessages = Array.isArray(chatResult.voiceMessages) && chatResult.voiceMessages.length > 0;
       const hasEmojiReply = Boolean(chatResult.emojiPath);
       const emojiMeta = chatResult.emojiMeta || null;
+      let parsedMessages = [];
 
       if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply) {
         setSessionDebugSnapshot(groupSessionId, {
@@ -1966,8 +1998,8 @@ export class crystelfAI extends plugin {
       }
 
       if (outputMessages.length > 0) {
-        const parsedMessages = await ResponseHandler.processResponse(
-          rawAssistantText,
+        parsedMessages = await ResponseHandler.processResponse(
+          effectiveAssistantText,
           messageData.text,
           groupId,
           userId
@@ -1977,6 +2009,8 @@ export class crystelfAI extends plugin {
           await this.sendResponse(e, parsedMessages, aiConfig);
         }
       }
+
+      const hasTextReply = parsedMessages.length > 0;
 
       if (hasEmojiReply) {
         await this.replyMemeImageWithFallback(e, chatResult.emojiPath, {
@@ -1991,7 +2025,7 @@ export class crystelfAI extends plugin {
         await this.sendResponse(e, chatResult.voiceMessages, aiConfig);
       }
 
-      if (outputMessages.length > 0 || hasEmojiReply || hasVoiceMessages) {
+      if (hasTextReply || hasEmojiReply || hasVoiceMessages) {
         this.groupLastBotMessageTime.set(groupSessionId, Date.now());
         this.groupMessageCountAfterBot.set(groupSessionId, 0);
       }
@@ -2004,7 +2038,7 @@ export class crystelfAI extends plugin {
         promptSummary,
         decisionExplanation: buildDecisionSnapshot({
           status: 'success',
-          hasTextOutput: outputMessages.length > 0,
+          hasTextOutput: hasTextReply,
           hasVoiceOutput: hasVoiceMessages,
           hasEmojiOutput: hasEmojiReply,
           toolCallCount: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.length : 0,
@@ -2027,7 +2061,7 @@ export class crystelfAI extends plugin {
         messageId: e.message_id,
       });
 
-      const assistantHistoryContent = sanitizeAssistantHistoryContent(rawAssistantText);
+      const assistantHistoryContent = sanitizeAssistantHistoryContent(effectiveAssistantText);
       if (assistantHistoryContent) {
         this.db.saveMessage({
           sessionId: groupSessionId,
@@ -2203,9 +2237,14 @@ export class crystelfAI extends plugin {
       const adapter = await YunzaiUtils.getAdapter(e);
       for (const message of messages) {
         switch (message.type) {
-          case 'message':
-            await Message.sendGroupMessage(e, e.group_id, message.data, message.at, message.quote, adapter);
+          case 'message': {
+            const messageContent = applyEmojiSuppression(message.data, aiConfig);
+            if (!messageContent) {
+              break;
+            }
+            await Message.sendGroupMessage(e, e.group_id, messageContent, message.at, message.quote, adapter);
             break;
+          }
           case 'code':
             await this.handleCodeMessage(e, message);
             break;

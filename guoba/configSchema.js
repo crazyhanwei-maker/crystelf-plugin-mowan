@@ -1288,6 +1288,12 @@ const guobaSchema = [
     },
   },
   {
+    field: 'ai.emojiSuppression',
+    label: 'Emoji抑制',
+    component: 'Switch',
+    bottomHelpMessage: '开启后会移除 AI 文本回复中的 Unicode emoji 字符，避免模型频繁乱发表情；不影响 [meme:角色:情绪] 这类表情包指令',
+  },
+  {
     label: '故障降级',
     component: 'SOFT_GROUP_BEGIN',
   },

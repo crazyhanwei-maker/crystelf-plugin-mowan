@@ -65,6 +65,8 @@
   "knowledgeBase": "",
   "?timeout": "AI调用超时时间(毫秒)",
   "timeout": 60000,
+  "?emojiSuppression": "是否抑制 AI 文本回复中的 Unicode emoji 字符，不影响 [meme:角色:情绪] 这类表情包指令",
+  "emojiSuppression": false,
   "?fallbackReply": "模型故障、超时或没有产出内容时发送的兜底回复，留空则按内置策略生成",
   "fallbackReply": "",
   "?fallbackSearchReply": "联网搜索或网页读取失败时发送的兜底回复，留空则按内置策略生成",
