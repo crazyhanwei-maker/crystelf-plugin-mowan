@@ -277,7 +277,7 @@ function validateConfig(configType, config = null) {
 
   switch (configType) {
     case 'ai':
-      if (!config.baseApi) errors.push('AI API 地址不能为空');
+      if (!config.baseApi) errors.push('AI API 地址不能为空，应类似 https://xx.xx.com/v1');
       if (!config.mode) errors.push('对话模式不能为空');
       if (!config.apiKey) errors.push('AI API Key 不能为空');
       if (!config.modelType) errors.push('文本模型不能为空');

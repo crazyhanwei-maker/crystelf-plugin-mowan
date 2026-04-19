@@ -1261,10 +1261,10 @@ const guobaSchema = [
     field: 'ai.baseApi',
     label: 'API基础地址',
     component: 'Input',
-    bottomHelpMessage: '请求基础api地址(仅支持openai),其余可自行部署newapi代理',
+    bottomHelpMessage: '填写 OpenAI 风格的 API 基础地址，通常写到 /v1，不要填写 /chat/completions 完整路径',
     required: true,
     componentProps: {
-      placeholder: '请输入API基础地址，如: https://api.siliconflow.cn/v1',
+      placeholder: '请输入API基础地址，如: https://xx.xx.com/v1',
     },
   },
   {

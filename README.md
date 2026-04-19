@@ -49,6 +49,7 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 2. 在 `Yunzai` 根目录安装依赖并启动 Bot
 3. 先用锅巴或本地 Web 控制台完成基础配置
 4. 如果要启用 AI，对话至少补齐 `ai.baseApi`、`ai.apiKey`、`ai.modelType`
+   - `ai.baseApi` 一般写成 `https://xx.xx.com/v1`，不要填写到 `/chat/completions`
 5. 打开本地控制台检查运行状态，再按需继续配置搜索、网页读取、TTS 等扩展能力
 
 ## 安装方法
@@ -87,6 +88,7 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
   - 先用锅巴或本地 Web 控制台完成主开关配置即可
 - 想启用 AI 对话
   - 至少补齐 `ai.baseApi`、`ai.apiKey`、`ai.modelType`
+  - `ai.baseApi` 推荐按 `https://xx.xx.com/v1` 这种 OpenAI 兼容基础地址格式填写
 - 想启用联网搜索和网页读取
   - 继续填写 `coreConfig.tools.search.*`
 - 想启用语音能力
