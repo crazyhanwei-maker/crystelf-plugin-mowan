@@ -112,6 +112,10 @@ function hasRecentBotActivity(lastBotTime, aiConfig) {
   return Date.now() - lastBotTime <= followUpConfig.windowMs;
 }
 
+function isCommandPrefixedMessage(text = '') {
+  return /^#/.test(String(text || '').trim());
+}
+
 function isImageGenerationRequest(text) {
   const content = String(text || '').trim();
   if (!content) return false;
@@ -1146,9 +1150,13 @@ export class crystelfAI extends plugin {
       await this.init();
     }
     const aiConfig = await ConfigControl.get('ai');
+    const commandPrefixed = isCommandPrefixedMessage(e?.msg);
     await processPokeFollowUpMessage(e).catch(() => false);
     const groupSessionId = `group:${e.group_id}`;
     if (this.sessionControlState?.get(groupSessionId)?.pauseFollowUp && !shouldObserveGroupMessage(e, aiConfig)) {
+      return false;
+    }
+    if (commandPrefixed && !shouldObserveGroupMessage(e, aiConfig)) {
       return false;
     }
     const lastBotTime = this.groupLastBotMessageTime?.get(groupSessionId) ?? 0;
@@ -1618,7 +1626,7 @@ export class crystelfAI extends plugin {
           return;
         }
 
-        if (this.shouldFollowUp(groupSessionId, aiConfig)) {
+        if (!isCommandPrefixedMessage(e.msg) && this.shouldFollowUp(groupSessionId, aiConfig)) {
           const history = this.db.getMessages(groupSessionId, aiConfig.chatHistory || 30);
           const botNickname = nickname || 'Bot';
 
