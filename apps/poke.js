@@ -20,6 +20,35 @@ const pokeRuntimeState = {
   followWindows: new Map(),
 };
 
+const EMOJI_SEQUENCE_REGEX = /(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/gu;
+const EMOJI_FLAG_REGEX = /\p{Regional_Indicator}{2}/gu;
+const EMOJI_KEYCAP_REGEX = /[#*0-9]\uFE0F?\u20E3/gu;
+const EMOJI_MODIFIER_REGEX = /[\u{1F3FB}-\u{1F3FF}]/gu;
+const EMOJI_JOINER_REGEX = /[\u200D\uFE0E\uFE0F]/gu;
+
+function stripEmojiCharacters(text = '') {
+  return String(text || '')
+    .replace(EMOJI_SEQUENCE_REGEX, '')
+    .replace(EMOJI_FLAG_REGEX, '')
+    .replace(EMOJI_KEYCAP_REGEX, '')
+    .replace(EMOJI_MODIFIER_REGEX, '')
+    .replace(EMOJI_JOINER_REGEX, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .split('\n')
+    .map(line => line.trimEnd())
+    .join('\n')
+    .trim();
+}
+
+function applyEmojiSuppression(text = '', aiConfig = null) {
+  const effectiveAiConfig = aiConfig || configControl.get('ai') || {};
+  if (!effectiveAiConfig?.emojiSuppression) {
+    return String(text || '');
+  }
+
+  return stripEmojiCharacters(text);
+}
+
 async function summarizePokeImage(imageUrl, e) {
   const aiConfig = configControl.get('ai') || {};
   const pokeConfig = configControl.get('poke') || {};
@@ -456,8 +485,9 @@ async function sendPokeReply(e, replyText) {
   const aiConfig = configControl.get('ai') || {};
   const botCharacter = aiConfig?.character || configControl.get('profile')?.nickName || 'default';
   const enableTextReply = pokeConfig.enableTextReply !== false;
-  const replyTexts = splitPokeReplies(replyText).slice(0, Math.max(1, Number(pokeConfig.maxReplyMessages || 1)));
-  const primaryReply = replyTexts[0] || replyText;
+  const normalizedReplyText = applyEmojiSuppression(replyText, aiConfig);
+  const replyTexts = splitPokeReplies(normalizedReplyText).slice(0, Math.max(1, Number(pokeConfig.maxReplyMessages || 1)));
+  const primaryReply = replyTexts[0] || normalizedReplyText;
   const shouldSendVoice = shouldHitProbability(pokeConfig.enableVoiceReply, pokeConfig.voiceReplyProbability);
   const shouldSendMeme = shouldHitProbability(pokeConfig.enableMemeReply, pokeConfig.memeReplyProbability);
   const inferredEmotion = inferPokeEmotion(primaryReply);
@@ -487,6 +517,7 @@ async function sendPokeReply(e, replyText) {
 
   if (enableTextReply && !voiceSent) {
     for (const item of replyTexts) {
+      if (!item) continue;
       await e.reply(item, false, 110);
       await tool.sleep(200);
     }
@@ -550,6 +581,7 @@ async function generateAiPokeReply(e, pokeConfig) {
   const profileConfig = configControl.get('profile') || {};
   const aiConfig = configControl.get('ai') || {};
   const usageControl = configControl.get('coreConfig')?.usageControl || {};
+  const maxReplies = Math.max(1, Number(pokeConfig.maxReplyMessages || 1));
   const breaker = shouldCircuitBreakSync(usageControl, 'poke');
   if (breaker.blocked) {
     logger.warn(`[poke] 戳一戳AI已熔断: ${breaker.reason}`);
@@ -568,7 +600,13 @@ async function generateAiPokeReply(e, pokeConfig) {
     groupName,
     operatorId: String(e.operator_id || ''),
   });
+  const replyInstruction = maxReplies > 1
+    ? `请最多输出 ${maxReplies} 条短句，并使用空行或 \\n---\\n 分隔成多条消息，不要编号。`
+    : '请只输出 1 条短句。';
+  const emojiInstruction = aiConfig?.emojiSuppression ? '不要使用任何 Unicode emoji 字符。' : '';
   const prompt = [
+    replyInstruction,
+    emojiInstruction,
     `${operatorName} 刚刚戳了你一下，请立即回复一句。`,
     context.lines.length > 0 ? `最近群聊上下文：\n${context.lines.join('\n')}` : '',
     context.latestImageUrls.length > 0 ? '最近一条消息包含图片，请结合图片内容和上下文自然回复。' : '',
@@ -624,7 +662,7 @@ async function generateAiPokeReply(e, pokeConfig) {
     lastImageSummary: context.latestImageSummary,
     useMultimodal: context.useMultimodal,
   });
-  return sanitizePokeReply(result.response, Math.max(1, Number(pokeConfig.maxReplyMessages || 1)));
+  return sanitizePokeReply(result.response, maxReplies);
 }
 
 async function fetchRemotePokeReply(maxReplies = 2) {
@@ -680,10 +718,12 @@ function sanitizePokeReply(text, maxReplies = 2) {
     .flatMap(line => line.includes('\n') ? line.split('\n').map(item => item.trim()).filter(Boolean) : [line])
     .slice(0, normalizedMaxReplies);
 
-  return segments
-    .join('\n\n')
-    .slice(0, 120)
-    .trim();
+  return applyEmojiSuppression(
+    segments
+      .join('\n\n')
+      .slice(0, 120)
+      .trim()
+  );
 }
 
 function normalizeReplyMode(pokeConfig) {
