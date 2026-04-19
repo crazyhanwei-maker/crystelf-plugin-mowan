@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="dashboard-page">
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>魔丸控制台</h1>
+        <p id="plugin-meta">正在加载...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group hero-token-group">
+          <div class="hero-action-label">访问凭证</div>
+          <div class="hero-token-row">
+            <input id="auth-token" placeholder="控制台访问令牌，可留空" />
+            <button id="save-token-btn">保存令牌</button>
+          </div>
+        </div>
+        <div class="hero-action-group">
+          <div class="hero-action-label">数据操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="refresh-btn">刷新数据</button>
+            <button id="backup-config-btn">一键备份配置</button>
+            <button id="restore-config-btn">从备份恢复</button>
+          </div>
+        </div>
+        <div class="hero-action-group">
+          <div class="hero-action-label">快捷入口</div>
+          <div class="actions hero-actions-grid">
+            <a class="link-btn" href="/sandbox-chat.html">网页调试对话</a>
+            <a class="link-btn" href="/api-settings.html">接口设置中心</a>
+            <a class="link-btn" href="/plugin-settings.html">插件设置中心</a>
+            <a class="link-btn" href="/usage-center.html">AI 用量日志中心</a>
+            <a class="link-btn" href="/image-monitor-center.html">图片监控中心</a>
+            <a class="link-btn" href="/help-diy.html">用户帮助自定义</a>
+            <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+        <input id="restore-config-input" class="hidden" type="file" accept="application/json" />
+      </div>
+    </header>
+
+    <section class="mobile-sticky-bar">
+      <button id="mobile-refresh-btn" class="mini-btn">刷新</button>
+      <button id="mobile-clear-filters-btn" class="mini-btn">清空筛选</button>
+      <button id="mobile-theme-toggle-btn" class="mini-btn" data-theme-toggle>深色主题</button>
+    </section>
+
+    <section id="dashboard-strip" class="dashboard-strip"></section>
+
+    <section class="panel dashboard-control-panel">
+      <div class="dashboard-control-head">
+        <div>
+          <h2>页面状态</h2>
+          <div id="refresh-status" class="setting-help">正在准备数据...</div>
+        </div>
+        <button id="clear-filters-btn" class="mini-btn">清空筛选</button>
+      </div>
+      <div id="active-filters" class="active-filter-list">
+        <span class="active-filter-empty">当前没有生效的筛选条件</span>
+      </div>
+    </section>
+
+    <section class="grid cards dashboard-cards" id="overview-cards"></section>
+
+    <section class="panel panel-two">
+      <div>
+        <h2>健康状态</h2>
+        <div id="health-summary" class="detail-box">加载中...</div>
+      </div>
+      <div>
+        <h2>巡检结果</h2>
+        <div id="health-issues" class="list">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>依赖状态</h2>
+          <div class="setting-help">首页仅显示是否缺失运行依赖；完整清单与版本偏差请进入独立检查页。</div>
+        </div>
+      </div>
+      <div id="dependency-summary" class="config-summary">加载中...</div>
+      <div id="dependency-list" class="list hidden"></div>
+    </section>
+
+    <section class="panel">
+      <div class="tab-header">
+        <button class="tab-btn active" data-tab-target="usage-tab">今日 AI 用量</button>
+        <button class="tab-btn" data-tab-target="image-monitor-usage-tab">图片监控小结</button>
+        <button class="tab-btn" data-tab-target="trend-tab">最近 24 小时趋势</button>
+      </div>
+      <div id="usage-tab" class="tab-panel">
+        <pre id="usage-box">加载中...</pre>
+      </div>
+      <div id="image-monitor-usage-tab" class="tab-panel hidden">
+        <pre id="image-monitor-usage-box">加载中...</pre>
+        <div id="image-monitor-usage-trend" class="chart-box">加载中...</div>
+        <div id="poke-image-summary-trend" class="chart-box">加载中...</div>
+      </div>
+      <div id="trend-tab" class="tab-panel hidden">
+        <div id="trend-chart" class="chart-box">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>独立调试入口</h2>
+          <div class="setting-help">最近会话、好感度 Top 和用户画像已拆分到独立页面，主页仅保留快捷入口。</div>
+        </div>
+      </div>
+      <div id="collection-entry-grid" class="settings-grid">加载中...</div>
+    </section>
+
+    <section class="panel panel-two">
+      <div>
+        <div class="dashboard-entry-card">
+          <div>
+            <h2>AI 用量日志中心</h2>
+            <div class="setting-help">AI 用量日志、场景筛选、趋势图和详情页已拆到独立页面，首页只保留今日概览。</div>
+          </div>
+          <div class="actions">
+            <a class="link-btn" href="/usage-center.html">打开 AI 用量日志中心</a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>好感度日志</h2>
+        <div class="toolbar">
+          <input id="affinity-log-search" placeholder="搜索群号 / 用户 / 原因 / 文本" />
+          <input id="affinity-log-group" placeholder="按群号筛选" />
+          <button id="export-affinity-logs-btn">导出日志</button>
+        </div>
+        <div id="affinity-log-box" class="list log-list">加载中...</div>
+        <div id="affinity-log-pagination" class="pagination"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="dashboard-entry-card">
+        <div>
+          <h2>图片监控中心</h2>
+          <div class="setting-help">图片监控日志和表情包入库记录已拆分到独立页面，便于单独排查与翻页浏览。</div>
+        </div>
+        <div class="actions">
+          <a class="link-btn" href="/image-monitor-center.html">打开图片监控中心</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>配置摘要</h2>
+      <div class="setting-status">“一键备份配置”会导出当前运行中的全部插件配置 JSON；“从备份恢复”会直接覆盖当前配置，请谨慎操作。</div>
+      <div id="config-box" class="config-summary">加载中...</div>
+    </section>
+
+  </div>
+  <div id="modal-mask" class="modal-mask hidden">
+    <div class="modal-card">
+      <h3 id="modal-title">提示</h3>
+      <div id="modal-content" class="modal-content"></div>
+      <div class="actions">
+        <button id="modal-cancel-btn">取消</button>
+        <button id="modal-confirm-btn">确定</button>
+      </div>
+    </div>
+  </div>
+  <script src="/app.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

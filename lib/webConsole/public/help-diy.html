@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 用户帮助 DIY</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>用户帮助 DIY</h1>
+        <p>在这里直接自定义 #灵晶帮助 返回内容，支持总帮助与分类帮助。</p>
+      </div>
+      <div class="actions">
+        <button id="help-diy-save-btn">保存帮助内容</button>
+        <button id="help-diy-reset-btn">恢复已保存</button>
+        <button id="help-diy-export-btn">导出模板</button>
+        <button id="help-diy-import-btn">导入模板</button>
+        <button id="theme-toggle-btn">深色主题</button>
+        <a class="link-btn" href="/">返回首页</a>
+        <input id="help-diy-import-input" class="hidden" type="file" accept="application/json" />
+      </div>
+      <div class="toolbar">
+        <input id="help-diy-history-note" placeholder="本次保存备注，可选，例如：活动版帮助 / 管理版帮助" />
+      </div>
+    </header>
+
+    <section class="panel panel-two help-diy-grid">
+      <div class="panel-inner">
+        <h2>使用说明</h2>
+        <div class="detail-box">1. 启用后，#灵晶帮助 会优先返回这里保存的内容。
+2. 分类键固定为 AI / 管理 / 娱乐 / 调试。
+3. 不启用时，帮助命令仍走内置默认内容。
+4. 文本支持多行，按发送内容原样返回。
+5. 若有未保存修改，离开页面前会弹出提醒。</div>
+        <div class="actions">
+          <label class="help-diy-toggle-row">
+            <input id="help-diy-enabled" type="checkbox" />
+            <span>启用帮助 DIY</span>
+          </label>
+        </div>
+        <div id="help-diy-dirty-status" class="setting-status">当前状态：正在加载</div>
+        <div id="help-diy-status" class="setting-status">正在加载帮助内容...</div>
+      </div>
+      <div class="panel-inner">
+        <h2>内置模板</h2>
+        <div id="help-diy-template-list" class="settings-grid"></div>
+      </div>
+    </section>
+
+    <section class="panel panel-two help-diy-grid">
+      <div class="panel-inner">
+        <h2>预览</h2>
+        <div class="toolbar">
+          <button class="tab-btn active" data-help-preview="home">总帮助</button>
+          <button class="tab-btn" data-help-preview="ai">AI</button>
+          <button class="tab-btn" data-help-preview="manage">管理</button>
+          <button class="tab-btn" data-help-preview="fun">娱乐</button>
+          <button class="tab-btn" data-help-preview="debug">调试</button>
+        </div>
+        <pre id="help-diy-preview" class="detail-box">暂无预览</pre>
+        <div id="help-diy-image-preview-wrap" class="hidden">
+          <img id="help-diy-image-preview" class="help-diy-image-preview" alt="帮助图片预览" />
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>历史版本</h2>
+      <div class="actions">
+        <button id="help-diy-history-clear-btn">清空历史版本</button>
+      </div>
+      <div id="help-diy-history-list" class="settings-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>总帮助内容</h2>
+      <div class="toolbar">
+        <select id="help-diy-home-mode">
+          <option value="text">文字发送</option>
+          <option value="image">图片发送</option>
+        </select>
+        <input id="help-diy-home-image" placeholder="总帮助图片地址，支持 http/https 或本地可访问地址" />
+        <button type="button" data-help-upload="home">上传图片</button>
+        <button type="button" data-help-clear="home">清除图片</button>
+        <input id="help-diy-home-upload" class="hidden" type="file" accept="image/*" />
+      </div>
+      <textarea id="help-diy-home" rows="14" placeholder="填写 #灵晶帮助 默认返回内容"></textarea>
+    </section>
+
+    <section class="panel panel-two help-diy-grid">
+      <div>
+        <h2>AI 分类帮助</h2>
+        <div class="toolbar">
+          <select id="help-diy-ai-mode">
+            <option value="text">文字发送</option>
+            <option value="image">图片发送</option>
+          </select>
+          <input id="help-diy-ai-image" placeholder="AI 帮助图片地址" />
+          <button type="button" data-help-upload="ai">上传图片</button>
+          <button type="button" data-help-clear="ai">清除图片</button>
+          <input id="help-diy-ai-upload" class="hidden" type="file" accept="image/*" />
+        </div>
+        <textarea id="help-diy-ai" rows="14" placeholder="填写 #灵晶帮助 AI 返回内容"></textarea>
+      </div>
+      <div>
+        <h2>管理分类帮助</h2>
+        <div class="toolbar">
+          <select id="help-diy-manage-mode">
+            <option value="text">文字发送</option>
+            <option value="image">图片发送</option>
+          </select>
+          <input id="help-diy-manage-image" placeholder="管理帮助图片地址" />
+          <button type="button" data-help-upload="manage">上传图片</button>
+          <button type="button" data-help-clear="manage">清除图片</button>
+          <input id="help-diy-manage-upload" class="hidden" type="file" accept="image/*" />
+        </div>
+        <textarea id="help-diy-manage" rows="14" placeholder="填写 #灵晶帮助 管理 返回内容"></textarea>
+      </div>
+      <div>
+        <h2>娱乐分类帮助</h2>
+        <div class="toolbar">
+          <select id="help-diy-fun-mode">
+            <option value="text">文字发送</option>
+            <option value="image">图片发送</option>
+          </select>
+          <input id="help-diy-fun-image" placeholder="娱乐帮助图片地址" />
+          <button type="button" data-help-upload="fun">上传图片</button>
+          <button type="button" data-help-clear="fun">清除图片</button>
+          <input id="help-diy-fun-upload" class="hidden" type="file" accept="image/*" />
+        </div>
+        <textarea id="help-diy-fun" rows="14" placeholder="填写 #灵晶帮助 娱乐 返回内容"></textarea>
+      </div>
+      <div>
+        <h2>调试分类帮助</h2>
+        <div class="toolbar">
+          <select id="help-diy-debug-mode">
+            <option value="text">文字发送</option>
+            <option value="image">图片发送</option>
+          </select>
+          <input id="help-diy-debug-image" placeholder="调试帮助图片地址" />
+          <button type="button" data-help-upload="debug">上传图片</button>
+          <button type="button" data-help-clear="debug">清除图片</button>
+          <input id="help-diy-debug-upload" class="hidden" type="file" accept="image/*" />
+        </div>
+        <textarea id="help-diy-debug" rows="14" placeholder="填写 #灵晶帮助 调试 返回内容"></textarea>
+      </div>
+    </section>
+  </div>
+  <script src="/help-diy.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

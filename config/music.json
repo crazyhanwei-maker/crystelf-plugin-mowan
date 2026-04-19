@@ -1,0 +1,7 @@
+{
+  "urls": [
+    "https://api.xcvts.cn/api/music/bdyy"
+  ],
+  "?quality": "1为48kaac,2为320kmp3,3为2000kflac",
+  "quality": "3"
+}

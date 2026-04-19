@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 依赖检查</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>依赖健康面板</h1>
+        <p id="page-meta">正在读取依赖状态...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group hero-token-group">
+          <div class="hero-action-label">访问凭证</div>
+          <div class="hero-token-row">
+            <input id="auth-token" placeholder="控制台访问令牌，可留空" />
+            <button id="save-token-btn">保存令牌</button>
+          </div>
+        </div>
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="refresh-btn">重新扫描依赖</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="dashboard-entry-card">
+        <div>
+          <h2>检查状态</h2>
+          <div id="refresh-status" class="setting-help">正在准备依赖数据...</div>
+          <div class="dependency-active-panel">
+            <div class="dependency-active-head">
+              <h3>当前安装任务</h3>
+              <div id="active-install-summary" class="setting-help">当前无进行中的安装任务</div>
+            </div>
+            <div id="active-install-list" class="list dependency-active-list"></div>
+          </div>
+          <div class="dependency-history-panel">
+            <div class="dependency-active-head">
+              <h3>最近安装记录</h3>
+              <div id="install-history-summary" class="setting-help">正在加载最近安装记录...</div>
+            </div>
+            <div class="dependency-search-row dependency-history-toolbar">
+              <input id="install-history-search" class="dependency-search-input" placeholder="筛选依赖名 / 插件 / 路径 / 错误信息" />
+              <select id="install-history-status">
+                <option value="all">全部状态</option>
+                <option value="error">仅失败</option>
+                <option value="success">仅成功</option>
+              </select>
+              <button id="clear-install-history-search-btn">清空筛选</button>
+              <button id="clear-install-history-btn">清空记录</button>
+            </div>
+            <div id="install-history-list" class="list dependency-history-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>依赖摘要</h2>
+      <div id="dependency-summary" class="config-summary">加载中...</div>
+    </section>
+
+    <section class="panel">
+      <div class="dashboard-entry-card dependency-search-card">
+        <div>
+          <h2>其他插件依赖搜索</h2>
+          <div id="other-plugin-dependency-meta" class="setting-help">正在扫描其他插件的 package.json 依赖...</div>
+        </div>
+        <div class="dependency-search-row">
+          <input id="other-plugin-dependency-search" class="dependency-search-input" placeholder="搜索插件名 / 依赖名 / 版本 / 路径" />
+          <button id="clear-other-plugin-search-btn">清空搜索</button>
+        </div>
+      </div>
+      <div id="other-plugin-dependency-list" class="list">加载中...</div>
+    </section>
+
+    <section class="panel panel-two">
+      <div>
+        <h2>问题依赖</h2>
+        <div id="dependency-problems" class="list">加载中...</div>
+      </div>
+      <div>
+        <h2>全部依赖</h2>
+        <div id="dependency-list" class="list">加载中...</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/dependency-check.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

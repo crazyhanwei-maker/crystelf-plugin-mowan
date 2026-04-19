@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 插件设置中心</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>插件设置中心</h1>
+        <p id="plugin-settings-meta">基于锅巴配置项渲染，按分类与分组管理。</p>
+      </div>
+      <div class="actions">
+        <button id="plugin-settings-save-btn">保存插件设置</button>
+        <button id="plugin-settings-nav-toggle-btn">收起导航</button>
+        <button id="theme-toggle-btn">深色主题</button>
+        <a class="link-btn" href="/">返回首页</a>
+      </div>
+    </header>
+
+    <div id="plugin-settings-shell" class="plugin-settings-shell">
+      <aside id="plugin-settings-drawer" class="panel plugin-settings-drawer">
+        <div class="plugin-settings-sidebar-head">
+          <h2>设置导航</h2>
+          <div class="setting-status">固定侧栏，切换后右侧直接显示内容。</div>
+        </div>
+        <div class="plugin-settings-sidebar-card">
+          <div class="kv-label">当前分组</div>
+          <div id="plugin-settings-summary" class="kv-value">正在加载设置项...</div>
+        </div>
+        <div class="plugin-settings-side-section">
+          <div class="kv-label">导航搜索</div>
+          <div class="plugin-settings-search-row">
+            <input id="plugin-settings-search" placeholder="搜索分类、分组、字段" />
+            <button id="plugin-settings-search-clear-btn">清空</button>
+          </div>
+          <div id="plugin-settings-search-status" class="setting-status">可搜索分类、分组、字段名和说明。</div>
+        </div>
+        <div class="plugin-settings-side-section">
+          <div class="kv-label">主导航</div>
+          <div class="plugin-settings-side-nav">
+            <button class="plugin-settings-side-btn active" data-plugin-top-tab="plugin-settings-config-panel">插件配置</button>
+            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
+            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-console-panel">控制台设置</button>
+          </div>
+        </div>
+        <div id="plugin-settings-config-nav" class="plugin-settings-side-section">
+          <div class="kv-label">分类</div>
+          <div id="plugin-settings-category-tabs" class="plugin-settings-side-nav"></div>
+          <div class="kv-label">分组</div>
+          <div id="plugin-settings-group-tabs" class="plugin-settings-group-nav"></div>
+        </div>
+      </aside>
+
+      <div class="plugin-settings-main">
+        <section class="panel">
+          <div id="plugin-settings-risk" class="risk-box hidden"></div>
+          <div class="preview-section">
+            <h3>设置中心说明</h3>
+            <div class="preview-box">这里统一承接插件配置、功能状态与控制台设置。左侧可快速切换分类与分组，右侧直接编辑当前内容。</div>
+          </div>
+        </section>
+
+        <section id="plugin-settings-config-panel" class="panel">
+          <div class="plugin-settings-content-head">
+            <h2 id="plugin-settings-group-title">配置项</h2>
+            <div id="plugin-settings-group-desc" class="setting-status">按分组编辑当前配置项。</div>
+            <div id="plugin-settings-config-meta" class="plugin-settings-panel-meta"></div>
+          </div>
+          <div id="plugin-settings-form" class="plugin-settings-form-grid">加载中...</div>
+        </section>
+
+        <section id="plugin-settings-features-panel" class="panel hidden">
+          <div class="plugin-settings-content-head">
+            <h2>功能状态</h2>
+            <div class="setting-status">集中查看主要能力开关与本地控制台的运行状态。</div>
+            <div id="plugin-settings-features-meta" class="plugin-settings-panel-meta"></div>
+          </div>
+          <div id="plugin-settings-feature-list" class="tag-list"></div>
+        </section>
+
+        <section id="plugin-settings-console-panel" class="panel hidden">
+          <div class="plugin-settings-content-head">
+            <h2>控制台设置</h2>
+            <div class="setting-status">控制台相关运行参数、访问安全、数据展示上限，以及常用 API 的超时与保底文案配置。</div>
+            <div id="plugin-settings-console-meta" class="plugin-settings-panel-meta"></div>
+          </div>
+          <div id="plugin-settings-console-box" class="settings-grid"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script src="/plugin-settings.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

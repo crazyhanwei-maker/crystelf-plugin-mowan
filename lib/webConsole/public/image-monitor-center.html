@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 图片监控中心</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>图片监控日志</h1>
+        <p id="page-meta">正在加载概览...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group hero-token-group">
+          <div class="hero-action-label">访问凭证</div>
+          <div class="hero-token-row">
+            <input id="auth-token" placeholder="控制台访问令牌，可留空" />
+            <button id="save-token-btn">保存令牌</button>
+          </div>
+        </div>
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="refresh-btn">刷新数据</button>
+            <button id="clear-all-filters-btn">清空筛选</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="dashboard-entry-card">
+        <div>
+          <h2>页面状态</h2>
+          <div id="refresh-status" class="setting-help">正在准备数据...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid cards" id="image-monitor-summary-cards"></section>
+
+    <section class="panel panel-two">
+      <div>
+        <div class="section-head">
+          <h2>图片监控日志</h2>
+          <div class="actions">
+            <button id="export-review-btn" class="mini-btn">导出审核日志</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input id="image-monitor-log-search" placeholder="搜索群号 / 用户 / 标签 / 风险 / 摘要" />
+          <input id="image-monitor-log-group-filter" placeholder="按群号筛选，如 123456" />
+          <input id="image-monitor-log-user-filter" placeholder="按用户筛选，如 10001" />
+          <button id="refresh-image-monitor-btn">刷新图片监控</button>
+        </div>
+        <div class="toolbar">
+          <span class="setting-help">开始</span>
+          <input id="image-monitor-log-start-at" type="datetime-local" />
+          <span class="setting-help">结束</span>
+          <input id="image-monitor-log-end-at" type="datetime-local" />
+        </div>
+        <div class="toolbar image-monitor-filter-toolbar">
+          <span class="setting-help">风险筛选</span>
+          <button class="mini-btn active" data-review-risk="">全部</button>
+          <button class="mini-btn" data-review-risk="high">高风险</button>
+          <button class="mini-btn" data-review-risk="medium">中风险</button>
+          <button class="mini-btn" data-review-risk="low">低风险</button>
+        </div>
+        <div class="toolbar image-monitor-filter-toolbar">
+          <span class="setting-help">内容筛选</span>
+          <button class="mini-btn active" data-review-is-meme="">全部图片</button>
+          <button class="mini-btn" data-review-is-meme="true">仅表情包</button>
+          <button class="mini-btn" data-review-is-meme="false">排除表情包</button>
+          <button class="mini-btn active" data-review-alerted="">全部告警状态</button>
+          <button class="mini-btn" data-review-alerted="true">仅已告警</button>
+          <button class="mini-btn" data-review-alerted="false">仅未告警</button>
+          <button class="mini-btn active" data-review-recalled="">全部撤回状态</button>
+          <button class="mini-btn" data-review-recalled="true">仅已撤回</button>
+          <button class="mini-btn" data-review-recalled="false">仅未撤回</button>
+        </div>
+        <div id="image-monitor-log-box" class="list">加载中...</div>
+        <div id="image-monitor-log-pagination" class="pagination"></div>
+      </div>
+
+      <div>
+        <div class="section-head">
+          <h2>表情包入库记录</h2>
+          <div class="actions">
+            <button id="export-meme-btn" class="mini-btn">导出入库记录</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input id="image-monitor-meme-search" placeholder="搜索文件名 / 标签 / 群号 / 用户" />
+          <input id="image-monitor-meme-group-filter" placeholder="按群号筛选，如 123456" />
+          <input id="image-monitor-meme-user-filter" placeholder="按用户筛选，如 10001" />
+        </div>
+        <div class="toolbar">
+          <span class="setting-help">开始</span>
+          <input id="image-monitor-meme-start-at" type="datetime-local" />
+          <span class="setting-help">结束</span>
+          <input id="image-monitor-meme-end-at" type="datetime-local" />
+        </div>
+        <div id="image-monitor-meme-box" class="list">加载中...</div>
+        <div id="image-monitor-meme-pagination" class="pagination"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="detail-modal-mask" class="modal-mask hidden">
+    <div class="modal-card modal-card-wide detail-modal-card">
+      <div class="section-head">
+        <div>
+          <h3 id="detail-modal-title">记录详情</h3>
+          <div id="detail-modal-subtitle" class="setting-help"></div>
+        </div>
+        <div class="actions">
+          <button id="detail-modal-close-top" class="mini-btn">关闭</button>
+        </div>
+      </div>
+      <div id="detail-modal-content" class="modal-content"></div>
+      <div class="actions">
+        <button id="detail-modal-close-btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/image-monitor-center.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

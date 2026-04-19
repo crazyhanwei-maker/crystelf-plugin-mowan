@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - API 设置中心</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>API 设置中心</h1>
+        <p id="api-settings-meta">集中管理所有外部 API 接入配置</p>
+      </div>
+      <div class="actions">
+        <button id="api-settings-save-btn">保存 API 配置</button>
+        <button id="api-settings-test-btn">测试主 API</button>
+        <button id="api-settings-batch-test-btn">批量测试全部</button>
+        <a class="link-btn" href="/">返回首页</a>
+      </div>
+    </header>
+
+    <div class="api-settings-container">
+      <div class="api-settings-nav">
+        <button class="api-settings-nav-btn active" data-section="ai-main">AI 主对话 <span class="status-badge" id="status-ai-main"></span></button>
+        <button class="api-settings-nav-btn" data-section="ai-image">图像生成 <span class="status-badge" id="status-ai-image"></span></button>
+        <button class="api-settings-nav-btn" data-section="image-monitor">图片监控 <span class="status-badge" id="status-image-monitor"></span></button>
+        <button class="api-settings-nav-btn" data-section="search">搜索工具 <span class="status-badge" id="status-search"></span></button>
+        <button class="api-settings-nav-btn" data-section="meme">表情包 <span class="status-badge" id="status-meme"></span></button>
+      </div>
+
+      <div class="api-settings-content">
+        <div id="api-settings-risk" class="risk-box hidden"></div>
+        <div id="api-settings-success" class="success-box hidden"></div>
+
+        <section id="api-settings-overview" class="panel api-settings-overview-panel">
+          <div class="section-header">
+            <h3>配置摘要</h3>
+            <p class="section-desc">集中看每类 API 的完整度、风险项和当前缺口。</p>
+          </div>
+          <div id="api-settings-overview-meta" class="api-settings-overview-meta"></div>
+          <div id="api-settings-overview-list" class="api-settings-overview-list">加载中...</div>
+        </section>
+        
+        <!-- 批量测试结果 -->
+        <div id="batch-test-results" class="panel hidden">
+          <h3>批量测试结果</h3>
+          <div id="batch-test-list"></div>
+        </div>
+
+        <!-- AI 主对话 -->
+        <section id="section-ai-main" class="api-settings-section">
+          <div class="section-header">
+            <h2>AI 主对话 API</h2>
+            <p class="section-desc">配置群聊 AI 对话的主要 API 接口，支持 OpenAI 风格的 API</p>
+          </div>
+          <div class="api-settings-group-grid">
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>基础接入</h3>
+                  <p>先把接口地址、密钥和模型填完整，再决定是否补工作模型或多模态模型。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">API 基础地址 <span class="required">*</span></div>
+                  <input type="text" id="ai-baseApi" placeholder="https://api.openai.com/v1" />
+                  <div class="setting-help">OpenAI 风格的 API 基础地址，通常以 /v1 结尾</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">API 密钥 <span class="required">*</span></div>
+                  <form class="inline-field-form" onsubmit="return false;">
+                    <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+                    <input type="password" id="ai-apiKey" placeholder="sk-..." autocomplete="new-password" />
+                  </form>
+                  <div class="setting-help">API 提供商提供的访问密钥</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">文本模型 <span class="required">*</span></div>
+                  <input type="text" id="ai-modelType" placeholder="gpt-4" />
+                  <div class="setting-help">用于普通对话的模型名称</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">工作模型</div>
+                  <input type="text" id="ai-workingModel" placeholder="gpt-3.5-turbo" />
+                  <div class="setting-help">用于规划器、记忆检索等辅助任务的轻量级模型。若启用图片工作流，需支持多模态能力</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">多模态模型</div>
+                  <input type="text" id="ai-multimodalModel" placeholder="gpt-4-vision-preview" />
+                  <div class="setting-help">用于识别图片内容的视觉模型（可选）</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>超时</h3>
+                  <p>主对话超时先在这里调整；如果还是不稳，再去控制台设置里配更细的保底文案。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">请求超时（毫秒）</div>
+                  <input type="number" id="ai-timeout" min="1000" step="1000" placeholder="60000" />
+                  <div class="setting-help">主对话 API 的请求超时时间，默认 60000 毫秒</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- 图像生成 -->
+        <section id="section-ai-image" class="api-settings-section hidden">
+          <div class="section-header">
+            <h2>图像生成 API</h2>
+            <p class="section-desc">配置 AI 生图功能，支持 OpenAI 风格接口或即梦接口</p>
+          </div>
+          <div class="api-settings-group-grid">
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>基础接入</h3>
+                  <p>先决定走 OpenAI、对话式生图还是即梦，再填写模型、地址和密钥。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">图像生成模式</div>
+                  <select id="image-imageMode">
+                    <option value="openai">OpenAI 风格 (/v1/images/generations)</option>
+                    <option value="chat">对话式生图模型</option>
+                    <option value="jimeng">即梦接口</option>
+                  </select>
+                  <div class="setting-help">选择图像生成使用的接口类型</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">图像模型</div>
+                  <input type="text" id="image-model" placeholder="dall-e-3" />
+                  <div class="setting-help">图像生成模型名称</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">API 基础地址</div>
+                  <input type="text" id="image-baseApi" placeholder="https://api.openai.com" />
+                  <div class="setting-help">图像生成 API 地址（OpenAI/对话模式）</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">即梦接口地址</div>
+                  <input type="text" id="image-jimengApiUrl" placeholder="http://your-jimeng-server:985" />
+                  <div class="setting-help">即梦生图服务地址（仅即梦模式使用）</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">API 密钥</div>
+                  <form class="inline-field-form" onsubmit="return false;">
+                    <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+                    <input type="password" id="image-apiKey" placeholder="sk-..." autocomplete="new-password" />
+                  </form>
+                  <div class="setting-help">图像生成服务的 API 密钥</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">图像尺寸</div>
+                  <select id="image-size">
+                    <option value="1024x1024">1024x1024 (正方形)</option>
+                    <option value="1024x1792">1024x1792 (竖屏)</option>
+                    <option value="1792x1024">1792x1024 (横屏)</option>
+                  </select>
+                  <div class="setting-help">生成图像的默认尺寸</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>超时与保底</h3>
+                  <p>这里集中放图像生成的超时时间和失败/超时兜底文案，方便一起调。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">请求超时（毫秒）</div>
+                  <input type="number" id="image-timeout" min="1000" step="1000" placeholder="60000" />
+                  <div class="setting-help">图像生成 API 的请求超时时间，默认 60000 毫秒</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">失败保底文案</div>
+                  <textarea id="image-fallbackReply" rows="3" placeholder="图像生成失败了,待会儿再试试吧~"></textarea>
+                  <div class="setting-help">图像生成或改图失败时使用；留空则回退到 AI 通用保底</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">超时保底文案</div>
+                  <textarea id="image-fallbackTimeoutReply" rows="3" placeholder="图像生成超时了,你可以稍后再试试，或者把要求说短一点~"></textarea>
+                  <div class="setting-help">图像生成或改图超时时使用；留空则回退到 AI 通用超时保底</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- 图片监控 -->
+        <section id="section-image-monitor" class="api-settings-section hidden">
+          <div class="section-header">
+            <h2>图片监控 API</h2>
+            <p class="section-desc">配置图片内容审核和表情包入库的视觉模型 API</p>
+          </div>
+          <div class="api-settings-group-grid">
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>基础接入</h3>
+                  <p>这里放图片监控的主开关、视觉模型地址、密钥和模型名。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用图片监控</div>
+                  <button class="plugin-settings-switch off" id="imageMonitor-enabled">已关闭</button>
+                  <div class="setting-help">开启后会对群聊图片进行审核并自动入库表情包</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">API 基础地址</div>
+                  <input type="text" id="imageMonitor-apiBase" placeholder="https://api.openai.com/v1" />
+                  <div class="setting-help">图片审核使用的视觉模型 API 地址</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">API 密钥</div>
+                  <form class="inline-field-form" onsubmit="return false;">
+                    <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+                    <input type="password" id="imageMonitor-apiKey" placeholder="sk-..." autocomplete="new-password" />
+                  </form>
+                  <div class="setting-help">图片审核服务的 API 密钥</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">审核模型</div>
+                  <input type="text" id="imageMonitor-model" placeholder="gpt-4-vision-preview" />
+                  <div class="setting-help">用于图片内容审核的视觉模型</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>超时与保底</h3>
+                  <p>图片监控默认失败静默。只有这里填了文案，识别失败或超时才会发群提示。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">识别超时（毫秒）</div>
+                  <input type="number" id="imageMonitor-analysisTimeoutMs" min="1000" step="1000" placeholder="30000" />
+                  <div class="setting-help">图片监控识别接口的超时时间，默认 30000 毫秒</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">失败提示文案</div>
+                  <textarea id="imageMonitor-fallbackReply" rows="3" placeholder="留空表示识别失败时不发送群提示"></textarea>
+                  <div class="setting-help">图片监控识别失败时使用；留空则保持静默</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">超时提示文案</div>
+                  <textarea id="imageMonitor-fallbackTimeoutReply" rows="3" placeholder="留空表示识别超时时不发送群提示"></textarea>
+                  <div class="setting-help">图片监控识别超时时使用；留空则保持静默</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- 搜索工具 -->
+        <section id="section-search" class="api-settings-section hidden">
+          <div class="section-header">
+            <h2>搜索工具 API</h2>
+            <p class="section-desc">配置联网搜索功能所需的 API 密钥和网页转 Markdown 接口</p>
+          </div>
+          <div class="api-settings-group-grid">
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>基础接入</h3>
+                  <p>先决定是否启用联网搜索，再填写密钥和网页转 Markdown 的提交/查询地址。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用联网搜索</div>
+                  <button class="plugin-settings-switch off" id="search-enabled">已关闭</button>
+                  <div class="setting-help">开启后 AI 可以使用联网搜索工具</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">搜索 API 密钥</div>
+                  <input type="password" id="search-apiKey" placeholder="搜索服务 API Key" />
+                  <div class="setting-help">联网搜索服务（如 SerpAPI、SearXNG 等）的访问密钥</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">网页转 Markdown 接口地址</div>
+                  <input type="text" id="search-markdownApiUrl" placeholder="https://uapis.cn/api/v1/web/tomarkdown/async" />
+                  <div class="setting-help">提交网页转 Markdown 任务的 API 地址</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">Markdown 状态查询地址</div>
+                  <input type="text" id="search-markdownStatusUrl" placeholder="https://uapis.cn/api/v1/web/tomarkdown/async" />
+                  <div class="setting-help">查询 Markdown 转换任务状态的 API 地址（自动拼接 task_id）</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>超时</h3>
+                  <p>搜索和网页读取共用这里的客户端等待超时。先调稳定性，再决定是否调结果长度等细项。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">请求超时（毫秒）</div>
+                  <input type="number" id="search-timeoutMs" min="1000" step="1000" placeholder="60000" />
+                  <div class="setting-help">搜索与网页读取工具的客户端等待超时，默认 60000 毫秒</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- 表情包 -->
+        <section id="section-meme" class="api-settings-section hidden">
+          <div class="section-header">
+            <h2>表情包 API</h2>
+            <p class="section-desc">配置远程表情包服务，以及本地表情包目录的读取方式</p>
+          </div>
+          <div class="api-settings-group-grid">
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>基础接入</h3>
+                  <p>表情包服务目前只需要维护一个基础地址，适合单独放一组。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">表情包 API 地址</div>
+                  <input type="text" id="meme-apiBase" placeholder="http://127.0.0.1:5555" />
+                  <div class="setting-help">表情包服务的 API 基础地址</div>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">测试角色</div>
+                  <input type="text" id="meme-test-character" placeholder="例如：芙宁娜" />
+                  <div class="setting-help">用于测试远程 API 和本地目录解析的角色名。默认优先取已显式配置的表情角色；若仍是旧默认值 zhenxun，则回退到内置人设名，再回退到当前机器人昵称。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">测试情绪</div>
+                  <input type="text" id="meme-test-emotion" placeholder="happy" />
+                  <div class="setting-help">例如 happy / default / angry，也支持中文情绪词，会自动做一次情绪映射。</div>
+                </div>
+              </div>
+              <div class="actions" style="margin-top:12px;">
+                <button id="meme-test-btn">测试发图链路</button>
+                <span id="meme-test-meta" class="setting-status">尚未测试</span>
+              </div>
+              <div id="meme-test-result" class="preview-box">点击“测试发图链路”后，可看到远程图是否能取到、本地是否有兜底，以及最终会走哪条发送路径。</div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">拉取数量</div>
+                  <input type="number" id="meme-pull-count" min="1" max="20" step="1" value="1" />
+                  <div class="setting-help">按当前测试角色和测试情绪，从远程 API 拉取指定张数并保存到本地目录，单次最多 20 张。</div>
+                </div>
+              </div>
+              <div class="actions" style="margin-top:12px;">
+                <button id="meme-pull-btn">拉取到本地</button>
+                <span id="meme-pull-meta" class="setting-status">尚未拉取</span>
+              </div>
+              <div id="meme-pull-result" class="preview-box">点击“拉取到本地”后，会把远程表情图保存到“本地表情包目录/角色/情绪/”下，并显示每张图的来源地址与保存路径。</div>
+            </section>
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>本地目录</h3>
+                  <p>支持绝对路径和相对路径。相对路径会按机器人运行目录解析。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用本地表情包</div>
+                  <button class="plugin-settings-switch" id="meme-localEnabled">已开启</button>
+                  <div class="setting-help">关闭后不会读取本地目录，只使用远程表情包服务。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">优先本地表情包</div>
+                  <button class="plugin-settings-switch off" id="meme-preferLocal">已关闭</button>
+                  <div class="setting-help">开启后先从本地目录选图；关闭时先走远程，失败后再回退本地。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">本地表情包目录</div>
+                  <input type="text" id="meme-localBaseDir" placeholder="data/chat/meme" />
+                  <div class="setting-help">支持两种结构：1) 目录/角色/情绪/图片 2) 目录/角色/图片。第二种结构兼容图片监控自动入库目录。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">目录结构示例</div>
+                  <div class="preview-box">标准结构
+&lt;baseDir&gt;/角色名/happy/001.png
+&lt;baseDir&gt;/角色名/default/002.jpg
+
+扁平结构
+&lt;baseDir&gt;/角色名/001.png
+&lt;baseDir&gt;/角色名/002.jpg
+
+扁平结构适合图片监控自动入库目录；此时不会按情绪分文件夹，而是按角色随机取图。</div>
+                </div>
+              </div>
+              <div class="actions" style="margin-top:12px;">
+                <button id="meme-local-scan-btn">扫描本地目录</button>
+                <span id="meme-local-scan-meta" class="setting-status">尚未扫描</span>
+              </div>
+              <pre id="meme-local-scan-result" class="preview-box">点击“扫描本地目录”后，可查看角色、情绪目录和图片数量。</pre>
+            </section>
+          </div>
+        </section>
+
+        <!-- 配置预览 -->
+        <section class="panel">
+          <div class="section-header">
+            <h3>配置预览</h3>
+            <p class="section-desc">按页面分组顺序展示当前 API 配置汇总（密钥已脱敏）</p>
+          </div>
+          <pre id="api-settings-preview" class="preview-box">加载中...</pre>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script src="/api-settings.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

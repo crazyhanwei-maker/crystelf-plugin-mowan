@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 图片监控详情</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>图片监控详情</h1>
+        <p id="detail-meta">正在加载...</p>
+      </div>
+      <div class="actions">
+        <button id="copy-json-btn">复制 JSON</button>
+        <button id="toggle-raw-btn">查看原始数据</button>
+        <button id="theme-toggle-btn">深色主题</button>
+        <a class="link-btn" href="/">返回首页</a>
+      </div>
+    </header>
+
+    <section class="grid cards" id="detail-cards"></section>
+
+    <section class="panel">
+      <h2>关联操作</h2>
+      <div id="detail-actions" class="actions">加载中...</div>
+    </section>
+
+    <section class="panel panel-two">
+      <div class="panel-inner">
+        <h2>记录信息</h2>
+        <div id="detail-main" class="kv-grid">加载中...</div>
+      </div>
+      <div class="panel-inner">
+        <h2>图片预览</h2>
+        <div id="detail-image-preview" class="detail-box">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel panel-two">
+      <div class="panel-inner">
+        <h2>摘要与标签</h2>
+        <div id="detail-preview" class="detail-box">加载中...</div>
+      </div>
+      <div class="panel-inner">
+        <h2>快速操作</h2>
+        <div id="detail-actions-panel" class="detail-box">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>原始数据</h2>
+      <pre id="raw-json-box" class="detail-box hidden">加载中...</pre>
+    </section>
+  </div>
+  <script src="/image-monitor-detail.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>
