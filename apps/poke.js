@@ -136,8 +136,22 @@ export default class ChuochuoPlugin extends plugin {
 }
 
 function splitPokeReplies(text = '') {
-  return String(text || '')
+  const normalized = String(text || '').replace(/\r/g, '').trim();
+  if (!normalized) {
+    return [];
+  }
+
+  const explicitSegments = normalized
     .split(/\n---\n|\n{2,}/)
+    .map(item => item.trim())
+    .filter(Boolean);
+
+  if (explicitSegments.length > 1) {
+    return explicitSegments;
+  }
+
+  return normalized
+    .split('\n')
     .map(item => item.trim())
     .filter(Boolean);
 }
@@ -239,7 +253,7 @@ async function decideFollowReply(e, windowState) {
   if (!result?.success) {
     return '';
   }
-  const text = sanitizePokeReply(result.response || '');
+  const text = sanitizePokeReply(result.response || '', Math.max(1, Number(pokeConfig.maxReplyMessages || 1)));
   if (text.includes('[[[silence]]]')) {
     return '';
   }
@@ -652,18 +666,22 @@ function renderPokePrompt(template, vars) {
   return source.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => vars[key] ?? '');
 }
 
-function sanitizePokeReply(text) {
+function sanitizePokeReply(text, maxReplies = 2) {
   if (typeof text !== 'string') {
     return '';
   }
 
-  return text
+  const normalizedMaxReplies = Math.max(1, Number(maxReplies || 1));
+  const segments = text
     .replace(/\r/g, '')
-    .split('\n')
+    .split(/\n---\n|\n{2,}/)
     .map(line => line.trim())
     .filter(Boolean)
-    .slice(0, 2)
-    .join('\n')
+    .flatMap(line => line.includes('\n') ? line.split('\n').map(item => item.trim()).filter(Boolean) : [line])
+    .slice(0, normalizedMaxReplies);
+
+  return segments
+    .join('\n\n')
     .slice(0, 120)
     .trim();
 }
