@@ -519,6 +519,7 @@ function validateConfig(configType, config = null) {
       if (config.imageMonitor !== undefined && typeof config.imageMonitor !== 'boolean') {
         errors.push('图片监控主开关必须是布尔值');
       }
+      pushRangeError(errors, config.maxFeed, 1, 50, '最长订阅数量必须在 1-50 之间');
       pushRangeError(errors, config.webConsolePageSize, 1, 100, '控制台每页数量必须在 1-100 之间');
       pushRangeError(errors, config.webConsoleMaxPageSize, 1, 500, '控制台最大每页数量必须在 1-500 之间');
       if (

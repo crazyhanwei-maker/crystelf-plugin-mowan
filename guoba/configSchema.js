@@ -331,19 +331,9 @@ const guobaSchema = [
     label: '控制台登录口令',
     component: 'InputPassword',
     required: false,
-    bottomHelpMessage: '控制台登录页使用的口令，留空则不启用登录鉴权',
+    bottomHelpMessage: '控制台登录页使用的口令，控制台始终要求登录；留空则网页端无法登录',
     componentProps: {
       placeholder: '请输入控制台登录口令',
-    },
-  },
-  {
-    field: 'config.webConsoleRequireAuth',
-    label: '强制鉴权',
-    component: 'Switch',
-    bottomHelpMessage: '开启后会要求先登录控制台；若未设置登录口令则无法通过网页登录',
-    componentProps: {
-      checkedValue: true,
-      unCheckedValue: false,
     },
   },
   {
@@ -472,26 +462,6 @@ const guobaSchema = [
     component: 'SOFT_GROUP_BEGIN',
   },
   {
-    field: 'config.core',
-    label: '旧核心兼容功能',
-    component: 'Switch',
-    bottomHelpMessage: '是否启用旧核心兼容相关功能',
-    componentProps: {
-      checkedValue: true,
-      unCheckedValue: false,
-    },
-  },
-  {
-    field: 'config.debug',
-    label: '调试模式',
-    component: 'Switch',
-    bottomHelpMessage: '是否启用调试模式',
-    componentProps: {
-      checkedValue: true,
-      unCheckedValue: false,
-    },
-  },
-  {
     field: 'config.autoUpdate',
     label: '自动更新',
     component: 'Switch',
@@ -526,16 +496,6 @@ const guobaSchema = [
     bottomHelpMessage: '兼容旧核心服务地址，仅用于旧词库、早晚安、普通戳一戳与表情包兜底，默认值是示例占位地址',
     componentProps: {
       placeholder: '请输入兼容旧核心服务地址',
-    },
-  },
-  {
-    field: 'coreConfig.token',
-    label: '兼容旧核心服务 Token',
-    component: 'InputPassword',
-    required: false,
-    bottomHelpMessage: '兼容旧核心服务的可选访问 Token，不需要时可留空',
-    componentProps: {
-      placeholder: '请输入兼容旧核心服务 Token',
     },
   },
   {
@@ -1823,16 +1783,6 @@ const guobaSchema = [
     },
   },
   {
-    field: 'imageMonitor.autoRecallViolation',
-    label: '自动撤回违规图',
-    component: 'Switch',
-    bottomHelpMessage: '兼容旧配置；开启后会自动把违规图处理方式视为“自动撤回”',
-    componentProps: {
-      checkedValue: true,
-      unCheckedValue: false,
-    },
-  },
-  {
     field: 'imageMonitor.monitorQuotedImages',
     label: '监控引用图片',
     component: 'Switch',
@@ -2764,16 +2714,6 @@ const guobaSchema = [
         { label: '仅普通回复', value: 'normal' },
       ],
       placeholder: '请选择戳一戳回复模式',
-    },
-  },
-  {
-    field: 'poke.aiReply',
-    label: '启用AI回复',
-    component: 'Switch',
-    bottomHelpMessage: '关闭后将不再生成 AI 戳一戳回复，只走普通文案回退',
-    componentProps: {
-      checkedValue: true,
-      unCheckedValue: false,
     },
   },
   {

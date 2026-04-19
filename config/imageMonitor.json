@@ -6,8 +6,6 @@
   "saveMemeImages": true,
   "?violationAction": "违规图片处理方式(record=仅记录,alert=告警提示,recall=自动撤回)",
   "violationAction": "record",
-  "?autoRecallViolation": "识别为高风险违规图片时是否自动撤回",
-  "autoRecallViolation": false,
   "?monitorQuotedImages": "是否同时监控引用消息中的图片",
   "monitorQuotedImages": true,
   "?allowedGroups": "允许启用监控的群号白名单,为空表示全部群",

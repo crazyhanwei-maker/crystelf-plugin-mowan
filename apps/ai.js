@@ -462,7 +462,7 @@ function parseFeatureToggleCommand(text = '') {
       type: 'batch',
       enabled: allMatch[1] === '开启',
       label: '全部功能',
-      keys: ['core', 'poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth'],
+      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth'],
     };
   }
 
@@ -509,7 +509,7 @@ function parseFeatureToggleCommand(text = '') {
     };
   }
 
-  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|AI|音乐|订阅|表情回复|核心|60s|早晚安|自动更新)$/i);
+  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|AI|音乐|订阅|表情回复|60s|早晚安|自动更新)$/i);
   if (!match) return null;
 
   const action = match[1] === '开启';
@@ -524,7 +524,6 @@ function parseFeatureToggleCommand(text = '') {
     '音乐': { key: 'music', label: '音乐' },
     '订阅': { key: 'rss', label: '订阅' },
     '表情回复': { key: 'faceReply', label: '表情回复' },
-    '核心': { key: 'core', label: '核心' },
     '60s': { key: '60s', label: '60s' },
     '早晚安': { key: 'zwa', label: '早晚安' },
     '自动更新': { key: 'autoUpdate', label: '自动更新' },
@@ -543,7 +542,6 @@ function parseFeatureToggleCommand(text = '') {
 function buildFeatureToggleStatus(config = {}) {
   const lines = [
     '当前功能开关：',
-    `- 旧核心兼容：${config.core === false ? '关闭' : '开启'}`,
     `- 戳一戳：${config.poke === false ? '关闭' : '开启'}`,
     `- 60s：${config['60s'] === false ? '关闭' : '开启'}`,
     `- 早晚安：${config.zwa === false ? '关闭' : '开启'}`,
@@ -600,7 +598,6 @@ function buildFeatureToggleCommandHelp() {
 
 function buildDisabledFeatureStatus(config = {}) {
   const entries = [
-    ['旧核心兼容', config.core !== false],
     ['戳一戳', config.poke !== false],
     ['60s', config['60s'] !== false],
     ['早晚安', config.zwa !== false],
@@ -656,7 +653,6 @@ function createFeatureToggleBackupPayload(config = {}) {
 function buildDefaultFeatureConfig() {
   const defaults = pluginDefaultConfig || {};
   return {
-    core: defaults.core !== false,
     poke: defaults.poke !== false,
     '60s': defaults['60s'] !== false,
     zwa: defaults.zwa !== false,
@@ -673,7 +669,7 @@ function buildDefaultFeatureConfig() {
 }
 
 function getManagedFeatureKeys() {
-  return ['core', 'poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'autoUpdate'];
+  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'autoUpdate'];
 }
 
 function mergeSessionControlState(base = {}, patch = {}) {

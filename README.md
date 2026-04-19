@@ -139,20 +139,19 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 - 默认启用本地控制台
 - 默认地址：`http://127.0.0.1:27891/`
 - 默认仅本机访问
-- 启用登录鉴权后，未登录访问控制台会自动跳转到 `/login.html`
+- 未登录访问控制台会自动跳转到 `/login.html`
 - 可通过主配置修改：
   - `webConsole`
   - `webConsoleHost`
   - `webConsolePort`
-  - `webConsoleRequireAuth`
   - `webConsoleToken`（控制台登录口令）
   - `webConsoleReadOnly`
 
 ### 登录方式
 
-- 当 `webConsoleToken` 为空时，控制台可直接访问
-- 当设置了 `webConsoleToken` 后，可通过登录页输入“控制台登录口令”进入
-- 当 `webConsoleRequireAuth` 为 `true` 时，未登录访问任意控制台页面会自动跳转到 `/login.html`
+- 控制台网页始终要求登录
+- 需要先设置 `webConsoleToken`，再通过登录页输入“控制台登录口令”进入
+- 当 `webConsoleToken` 为空时，控制台仍会打开登录页，但无法通过网页登录
 - 登录成功后，控制台会写入登录态 Cookie，后续刷新页面不会重复跳回登录页
 - 退出登录会清理当前控制台登录态
 
@@ -171,7 +170,6 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 - 如果需要局域网访问，请务必设置控制台登录口令。
 - 如果只是本地调试，建议保持 `127.0.0.1`。
 - 对生产或多人共享环境，建议开启：
-  - `webConsoleRequireAuth`
   - `webConsoleMaskSensitiveConfig`
 
 ## 网页调试沙箱

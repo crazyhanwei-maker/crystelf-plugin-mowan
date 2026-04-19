@@ -27,8 +27,6 @@
   "followGroupWindowMs": 10000,
   "?followGroupMaxReplies": "监听窗口内最多继续回复多少次",
   "followGroupMaxReplies": 1,
-  "?aiReply": "是否启用AI生成戳一戳回复",
-  "aiReply": true,
   "?model": "戳一戳专用小模型名称，留空时回退到ai.workingModel或ai.modelType",
   "model": "",
   "?temperature": "戳一戳AI回复温度(0-2)",
