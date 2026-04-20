@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import configControl from '../lib/config/configControl.js';
 import ConfigControl from '../lib/config/configControl.js';
 import AiCaller from '../lib/ai/aiCaller.js';
+import ResponseHandler from '../lib/ai/responseHandler.js';
 import { logAiUsage, shouldCircuitBreakSync } from '../lib/ai/usageLogger.js';
 import Group from '../lib/yunzai/group.js';
 import Meme from '../lib/core/meme.js';
@@ -516,9 +517,24 @@ async function sendPokeReply(e, replyText) {
   }
 
   if (enableTextReply && !voiceSent) {
-    for (const item of replyTexts) {
-      if (!item) continue;
-      await e.reply(item, false, 110);
+    const parsedMessages = await ResponseHandler.processResponse(
+      replyTexts.join('\n\n'),
+      String(e.msg || ''),
+      e.group_id,
+      e.user_id
+    );
+
+    for (const message of parsedMessages) {
+      if (message?.type === 'message') {
+        if (!message.data) continue;
+        await e.reply(message.data, false, 110);
+      } else if (message?.type === 'poke') {
+        if (String(message.id) === String(e.self_id)) continue;
+        await Group.groupPoke(e, message.id, e.group_id);
+      } else if (message?.type === 'at') {
+        if (String(message.id) === String(e.self_id)) continue;
+        await e.reply(segment.at(message.id));
+      }
       await tool.sleep(200);
     }
   }
