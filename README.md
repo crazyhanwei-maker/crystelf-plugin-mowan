@@ -53,16 +53,10 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 
 ## 安装方法
 
-- 使用 GitHub
+- 使用 Gitee
 
   ```bash
-  git clone --depth=1 https://github.com/Jerryplusy/crystelf-plugin ./plugins/crystelf-plugin
-  ```
-
-- 使用 Crystelf-Gitea 镜像（更新可能滞后）
-
-  ```bash
-  git clone --depth=1 https://git.crystelf.top/Jerry/crystelf-plugin ./plugins/crystelf-plugin
+  git clone --depth=1 https://gitee.com/nuesurwan/crystelf-plugin.git ./plugins/crystelf-plugin
   ```
 
 ### 安装依赖
@@ -130,15 +124,17 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 
 ### 访问入口
 
-- 控制台首页：`http://127.0.0.1:27891/`
-- 登录页：`http://127.0.0.1:27891/login.html`
+- 默认示例首页：`http://127.0.0.1:27891/`
+- 默认示例登录页：`http://127.0.0.1:27891/login.html`
 
 ### 默认行为
 
 - 默认启用本地控制台
-- 默认地址：`http://127.0.0.1:27891/`
+- 默认地址示例：`http://127.0.0.1:27891/`
+- 实际访问地址以 `webConsoleHost` 与 `webConsolePort` 的当前运行值为准
 - 默认仅本机访问
 - 未登录访问控制台会自动跳转到 `/login.html`
+- 当 `webConsoleToken` 为空时，本机会先进入初始化页，必须先设置控制台登录口令
 - 可通过主配置修改：
   - `webConsole`
   - `webConsoleHost`
@@ -149,8 +145,9 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 ### 登录方式
 
 - 控制台网页始终要求登录
-- 需要先设置 `webConsoleToken`，再通过登录页输入“控制台登录口令”进入
-- 当 `webConsoleToken` 为空时，控制台仍会打开登录页，但无法通过网页登录
+- 首次使用且 `webConsoleToken` 为空时，仅允许本机进入初始化页设置口令
+- 初始化保存成功后，会跳转到登录页，再通过“控制台登录口令”进入
+- 未配置口令时，非本机访问无法完成初始化
 - 登录成功后，控制台会写入登录态 Cookie，后续刷新页面不会重复跳回登录页
 - 退出登录会清理当前控制台登录态
 
@@ -166,8 +163,10 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 
 ### 安全建议
 
-- 如果需要局域网访问，请务必设置控制台登录口令。
+- 如果需要局域网访问，请务必先设置控制台登录口令。
+- 当 `webConsoleToken` 为空时，只能由本机先完成首次初始化；远程访问无法代替这一步。
 - 如果只是本地调试，建议保持 `127.0.0.1`。
+- 控制台登录口令和各类 API 密钥不会以明文形式返回到前端页面。
 - 对生产或多人共享环境，建议开启：
   - `webConsoleMaskSensitiveConfig`
 
@@ -264,7 +263,7 @@ crystelf-plugin 不只是一个“功能堆叠”的娱乐插件，它更偏向�
 `coreConfig.tools.tts.allowedAutoScenes` 使用逗号分隔场景代码，例如：
 
 ```text
-reply,poked
+reply,poked,comment
 ```
 
 当前支持的场景代码：
@@ -283,7 +282,7 @@ reply,poked
 默认值通常为：
 
 ```text
-reply,poked
+reply,poked,comment
 ```
 
 这表示默认只允许在正常回复和被戳一戳两个场景中自动发送语音。
@@ -515,7 +514,7 @@ reply,poked,comment
 - 检查是否启用了 `webConsole`
 - 检查端口是否被占用
 - 检查 `webConsoleHost` 是否仍为 `127.0.0.1`
-- 如果开启了强制登录，请检查控制台登录口令是否正确
+- 如果控制台提示未登录或不断跳回登录页，请检查控制台登录口令是否正确
 - 如果你刚修改过配置但页面表现没变化，请确认改的是运行时生效配置，而不是插件目录下的默认 `config/config.json`
 
 ### 2. 登录后跳回登录页 / 无限刷新
@@ -523,7 +522,7 @@ reply,poked,comment
 - 先确认当前版本是否包含“登录成功后写入 Cookie 登录态”的修复
 - 清理浏览器里这个控制台域名的旧缓存和 Cookie 后再试
 - 确认访问地址与登录地址保持一致，例如都使用 `http://127.0.0.1:27891/`
-- 如果你改过登录口令或强制登录开关，请先重启控制台或重启 Bot 再测试
+- 如果你改过登录口令、监听地址或端口，请先重启控制台或重启 Bot 再测试
 
 ### 3. 网页读取失败
 

@@ -1,6 +1,6 @@
 root = true
 
-[*.{js,json,html,css,md}]
+[*.{js,mjs,cjs,json,html,css,md,svg,yml,yaml,toml,txt,sh,ps1}]
 charset = utf-8
 end_of_line = lf
 insert_final_newline = true

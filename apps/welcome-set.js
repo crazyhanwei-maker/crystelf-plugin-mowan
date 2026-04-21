@@ -68,7 +68,15 @@ export class welcomeNewcomerSetting extends plugin {
         }
         const res = await axios.get(imgUrl, { responseType: 'arraybuffer' });
         const contentType = res.headers['content-type'] || '';
-        const ext = contentType.includes('gif') ? 'gif' : 'jpg';
+        const ext = contentType.includes('gif')
+          ? 'gif'
+          : contentType.includes('png')
+            ? 'png'
+            : contentType.includes('webp')
+              ? 'webp'
+              : contentType.includes('jpeg') || contentType.includes('jpg')
+                ? 'jpg'
+                : 'jpg';
         const fullPath = `${filePath}.${ext}`;
         await fs.promises.writeFile(fullPath, res.data);
         cfg.image = fullPath;

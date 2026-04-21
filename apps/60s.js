@@ -9,7 +9,7 @@ export default class SixSecond extends plugin {
       priority: -200,
       rule: [
         {
-          reg: '^(#|/)?60s|(#|/)?早报$',
+          reg: '^((#|/)?60s|(#|/)?早报)$',
           fnc: 'six',
         },
       ],

@@ -133,7 +133,6 @@ export class CrystelfMusic extends plugin {
       }
       const adapter = await YunzaiUtils.getAdapter(e);
       await Message.emojiLike(e,e.message_id,60,e.group_id,adapter);
-      await musicSearch.clearGroupSearch(e.group_id);
       const result = await musicSearch.handleSelection(e, index);
       if (result.success) {
         await this.sendMusicResult(e, result);
@@ -155,7 +154,7 @@ export class CrystelfMusic extends plugin {
       const { song, audioFile, type, quality, message } = result;
       //await e.reply(message);
       const adapter = await YunzaiUtils.getAdapter(e);
-      if (type === 'voice' || quality === 1) {
+      if (type === 'voice' || Number(quality) === 1) {
         await Group.sendGroupRecord(e, e.group_id, `file://${audioFile}`, adapter);
       } else {
         const extension = await this.getFileExtension();

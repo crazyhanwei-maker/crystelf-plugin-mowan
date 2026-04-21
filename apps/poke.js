@@ -217,6 +217,14 @@ async function handleFollowGroupMessage(e) {
   if (String(e.user_id) === String(e.self_id)) {
     return false;
   }
+  if (/^(#|\/)/.test(String(e?.msg || '').trim())) {
+    setPokeDebugSnapshot(e.group_id, {
+      followWindow: windowState,
+      lastAction: 'follow_skip_command',
+      lastObservedMessage: String(e.msg || ''),
+    });
+    return false;
+  }
   const pokeConfig = configControl.get('poke') || {};
   const maxFollowReplies = Math.max(0, Number(pokeConfig.followGroupMaxReplies || 1));
   if (windowState.handledCount >= maxFollowReplies) {
@@ -249,7 +257,7 @@ async function handleFollowGroupMessage(e) {
     lastReply: replyText,
     lastObservedMessage: String(e.msg || ''),
   });
-  return false;
+  return true;
 }
 
 export async function processPokeFollowUpMessage(e) {
@@ -418,7 +426,7 @@ function inferPokeEmotion(replyText = '') {
     return { memeEmotion: 'shy', voiceEmotion: '害羞' };
   }
 
-  if (/(？|why|啥|什么|懵|疑惑|看不懂|迷糊)/i.test(text)) {
+  if (/(？|\bwhy\b|啥|什么|懵|疑惑|看不懂|迷糊)/i.test(text)) {
     return { memeEmotion: 'confused', voiceEmotion: '疑惑' };
   }
 

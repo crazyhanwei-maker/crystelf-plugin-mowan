@@ -8,7 +8,7 @@ import Renderer from '../lib/ai/renderer.js';
 import Meme from '../lib/core/meme.js';
 import Group from '../lib/yunzai/group.js';
 import Message from '../lib/yunzai/message.js';
-import ResponseHandler from '../lib/ai/responseHandler.js';
+import ResponseHandler, { normalizeOutgoingMessageForSend } from '../lib/ai/responseHandler.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 import { initDatabase } from '../lib/ai/chatDatabase.js';
 import { HumanizeEngine } from '../lib/humanize/index.js';
@@ -141,7 +141,7 @@ function hasRecentBotActivity(lastBotTime, aiConfig) {
 }
 
 function isCommandPrefixedMessage(text = '') {
-  return /^#/.test(String(text || '').trim());
+  return /^(#|\/)/.test(String(text || '').trim());
 }
 
 function isImageGenerationRequest(text) {
@@ -1175,12 +1175,15 @@ export class crystelfAI extends plugin {
     }
     const aiConfig = await ConfigControl.get('ai');
     const commandPrefixed = isCommandPrefixedMessage(e?.msg);
-    await processPokeFollowUpMessage(e).catch(() => false);
-    const groupSessionId = `group:${e.group_id}`;
-    if (this.sessionControlState?.get(groupSessionId)?.pauseFollowUp && !shouldObserveGroupMessage(e, aiConfig)) {
+    if (commandPrefixed) {
       return false;
     }
-    if (commandPrefixed && !shouldObserveGroupMessage(e, aiConfig)) {
+    const pokeHandled = await processPokeFollowUpMessage(e).catch(() => false);
+    if (pokeHandled) {
+      return true;
+    }
+    const groupSessionId = `group:${e.group_id}`;
+    if (this.sessionControlState?.get(groupSessionId)?.pauseFollowUp && !shouldObserveGroupMessage(e, aiConfig)) {
       return false;
     }
     const lastBotTime = this.groupLastBotMessageTime?.get(groupSessionId) ?? 0;
@@ -1961,6 +1964,9 @@ export class crystelfAI extends plugin {
       const hasVoiceMessages = Array.isArray(chatResult.voiceMessages) && chatResult.voiceMessages.length > 0;
       const hasEmojiReply = Boolean(chatResult.emojiPath);
       const emojiMeta = chatResult.emojiMeta || null;
+      const emojiDecision = hasEmojiReply
+        ? this.shouldSendMemeByTiming(e, groupSessionId, messageData.text, history)
+        : { allow: false };
       let parsedMessages = [];
 
       if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply) {
@@ -2005,27 +2011,41 @@ export class crystelfAI extends plugin {
           userId
         );
 
+        if (hasEmojiReply) {
+          parsedMessages = parsedMessages.filter(message => message?.type !== 'meme');
+        }
+
         if (parsedMessages.length > 0) {
-          await this.sendResponse(e, parsedMessages, aiConfig);
+          await this.sendResponse(e, parsedMessages, aiConfig, {
+            includeInlineMemes: !hasEmojiReply,
+          });
         }
       }
 
       const hasTextReply = parsedMessages.length > 0;
+      let hasSentEmojiReply = false;
 
-      if (hasEmojiReply) {
-        await this.replyMemeImageWithFallback(e, chatResult.emojiPath, {
+      if (hasEmojiReply && !emojiDecision.allow) {
+        logger.info(`[crystelf-ai] 跳过聊天引擎表情包发送: ${emojiDecision.reason || 'timing_blocked'}`);
+      }
+
+      if (hasEmojiReply && emojiDecision.allow) {
+        hasSentEmojiReply = await this.replyMemeImageWithFallback(e, chatResult.emojiPath, {
           character: emojiMeta?.character || '',
           emotion: emojiMeta?.emotion || emojiMeta?.requestedEmotion || '',
           fallbackStatuses: [emojiMeta?.requestedEmotion, emojiMeta?.emotion, 'default'].filter(Boolean),
           logLabel: '聊天引擎表情包'
         });
+        if (hasSentEmojiReply) {
+          this.recordMemeTiming(e, groupSessionId);
+        }
       }
 
       if (hasVoiceMessages) {
         await this.sendResponse(e, chatResult.voiceMessages, aiConfig);
       }
 
-      if (hasTextReply || hasEmojiReply || hasVoiceMessages) {
+      if (hasTextReply || hasSentEmojiReply || hasVoiceMessages) {
         this.groupLastBotMessageTime.set(groupSessionId, Date.now());
         this.groupMessageCountAfterBot.set(groupSessionId, 0);
       }
@@ -2040,7 +2060,7 @@ export class crystelfAI extends plugin {
           status: 'success',
           hasTextOutput: hasTextReply,
           hasVoiceOutput: hasVoiceMessages,
-          hasEmojiOutput: hasEmojiReply,
+          hasEmojiOutput: hasSentEmojiReply,
           toolCallCount: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.length : 0,
           toolNames: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.map(item => item?.name).filter(Boolean) : [],
           failureReason: chatResult.failureReason || '',
@@ -2169,7 +2189,7 @@ export class crystelfAI extends plugin {
       if (e.source || e.reply_id) {
         let reply;
         if (e.getReply) reply = await e.getReply();
-        else {
+        else if (e.source?.seq) {
           const history = await e.group.getChatHistory(e.source.seq, 1);
           reply = history?.pop();
         }
@@ -2232,10 +2252,20 @@ export class crystelfAI extends plugin {
     return { text: [], originalMessages: [] };
   }
 
-  async sendResponse(e, messages, aiConfig) {
+  async sendResponse(e, messages, aiConfig, sendOptions = {}) {
     try {
       const adapter = await YunzaiUtils.getAdapter(e);
+      const normalizedMessages = [];
       for (const message of messages) {
+        const expandedMessages = normalizeOutgoingMessageForSend(message, {
+          includeInlineMemes: sendOptions.includeInlineMemes !== false,
+        });
+        if (expandedMessages.length > 0) {
+          normalizedMessages.push(...expandedMessages);
+        }
+      }
+
+      for (const message of normalizedMessages) {
         switch (message.type) {
           case 'message': {
             const messageContent = applyEmojiSuppression(message.data, aiConfig);
@@ -2253,6 +2283,9 @@ export class crystelfAI extends plugin {
             break;
           case 'meme':
             await this.handleMemeMessage(e, message, aiConfig);
+            break;
+          case 'memory':
+            await ResponseHandler.handleMemoryMessage(e, message, e.group_id, e.user_id);
             break;
           case 'at':
             if (!isBotUser(message.id, e)) e.reply(segment.at(message.id));
@@ -2314,6 +2347,40 @@ export class crystelfAI extends plugin {
     }
   }
 
+  getSessionIdForEvent(e) {
+    if (e?.group_id) {
+      return `group:${e.group_id}`;
+    }
+    return `private:${e?.user_id || 'unknown'}`;
+  }
+
+  shouldSendMemeByTiming(e, sessionId, messageText = '', chatHistory = []) {
+    const memeTiming = this.humanize?.memeTiming;
+    if (!memeTiming) {
+      return { allow: true };
+    }
+
+    try {
+      return memeTiming.shouldSendMeme(sessionId, e?.group_id || null, messageText, chatHistory);
+    } catch (error) {
+      logger.warn(`[crystelf-ai] 表情包时机检查失败，按允许处理: ${error.message}`);
+      return { allow: true };
+    }
+  }
+
+  recordMemeTiming(e, sessionId) {
+    const memeTiming = this.humanize?.memeTiming;
+    if (!memeTiming) {
+      return;
+    }
+
+    try {
+      memeTiming.recordMemeSent(sessionId, e?.group_id || null);
+    } catch (error) {
+      logger.warn(`[crystelf-ai] 记录表情包发送时机失败: ${error.message}`);
+    }
+  }
+
   async replyMemeImageWithFallback(e, primaryImage, options = {}) {
     const {
       character = '',
@@ -2359,6 +2426,13 @@ export class crystelfAI extends plugin {
 
   async handleMemeMessage(e, message, aiConfig) {
     try {
+      const sessionId = this.getSessionIdForEvent(e);
+      const timingDecision = this.shouldSendMemeByTiming(e, sessionId, e?.msg || '', []);
+      if (!timingDecision.allow) {
+        logger.info(`[crystelf-ai] 跳过表情消息发送: ${timingDecision.reason || 'timing_blocked'}`);
+        return;
+      }
+
       const memeConfig = aiConfig?.memeConfig || {};
       const character = resolvePreferredMemeCharacter({
         explicitCharacter: message.character,
@@ -2367,12 +2441,15 @@ export class crystelfAI extends plugin {
       });
       const emotion = message.emotion || message.data || 'default';
       const resolvedMeme = await Meme.getResolvedMemeUrl(character, emotion, ['default']);
-      await this.replyMemeImageWithFallback(e, resolvedMeme.imagePath || resolvedMeme.imageUrl, {
+      const sent = await this.replyMemeImageWithFallback(e, resolvedMeme.imagePath || resolvedMeme.imageUrl, {
         character,
         emotion: resolvedMeme.emotion || emotion,
         fallbackStatuses: [emotion, 'default'],
         logLabel: '表情消息'
       });
+      if (sent) {
+        this.recordMemeTiming(e, sessionId);
+      }
     } catch (error) {
       logger.error(`[crystelf-ai] 处理表情消息失败: ${error.message}`);
     }
@@ -2410,7 +2487,7 @@ export class crystelfAI extends plugin {
       const imageMessages = [];
       e.message.forEach((message) => {
         if (message.type === 'image') {
-          if (message.image) {
+          if (message.url) {
             imageMessages.push(message.url);
           }
         }
@@ -2419,7 +2496,7 @@ export class crystelfAI extends plugin {
       if (e.source || e.reply_id) {
         let reply;
         if (e.getReply) reply = await e.getReply();
-        else {
+        else if (e.source?.seq) {
           const history = await e.group.getChatHistory(e.source.seq, 1);
           reply = history?.pop();
         }

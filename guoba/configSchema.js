@@ -331,7 +331,7 @@ const guobaSchema = [
     label: '控制台登录口令',
     component: 'InputPassword',
     required: false,
-    bottomHelpMessage: '控制台登录页使用的口令，控制台始终要求登录；留空则网页端无法登录',
+    bottomHelpMessage: '控制台登录页使用的口令。首次使用时需先在本机控制台完成初始化并设置它；控制台始终要求登录',
     componentProps: {
       placeholder: '请输入控制台登录口令',
     },
@@ -350,7 +350,7 @@ const guobaSchema = [
     field: 'config.webConsoleHost',
     label: '控制台地址',
     component: 'Input',
-    bottomHelpMessage: '默认 127.0.0.1，仅本机可访问；改为 0.0.0.0 可局域网访问',
+    bottomHelpMessage: '默认 127.0.0.1，仅本机可访问；改为 0.0.0.0 可局域网访问，但建议先设置登录口令，且口令为空时远程无法完成首次初始化',
     componentProps: {
       placeholder: '请输入监听地址',
     },
@@ -427,7 +427,7 @@ const guobaSchema = [
     field: 'config.webConsoleMaskSensitiveConfig',
     label: '隐藏敏感配置',
     component: 'Switch',
-    bottomHelpMessage: '是否对 Token、密钥等配置项做掩码处理',
+    bottomHelpMessage: '是否对一般敏感配置做掩码处理；控制台登录口令和各类 API 密钥始终不会明文返回到前端',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
@@ -1629,7 +1629,7 @@ const guobaSchema = [
     bottomHelpMessage: '图像生成API基础地址,不加v1',
     required: true,
     componentProps: {
-      placeholder: '请输入图像API地址，例如https://api.siliconflow.cn',
+      placeholder: '请输入图像API地址，例如 https://xx.xx.com',
     },
   },
   {
@@ -2658,22 +2658,12 @@ const guobaSchema = [
   {
     field: 'music.urls',
     label: '音乐源地址',
-    component: 'GSubForm',
-    bottomHelpMessage: '支持配置多个音乐源地址，按顺序自动回退',
+    component: 'InputTextArea',
+    bottomHelpMessage: '支持配置多个音乐源地址，按行、逗号或分号分隔，按顺序自动回退',
     required: true,
     componentProps: {
-      multiple: true,
-      schemas: [
-        {
-          field: 'url',
-          label: '地址',
-          component: 'Input',
-          required: true,
-          componentProps: {
-            placeholder: '请输入音乐 API 地址',
-          },
-        },
-      ],
+      rows: 4,
+      placeholder: '每行一个音乐 API 地址，也可使用逗号或分号分隔',
     },
   },
   {

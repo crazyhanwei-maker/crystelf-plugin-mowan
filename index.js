@@ -17,7 +17,7 @@ logger.info(
   chalk.rgb(134, 142, 204)(`crystelf-plugin ${Version.ver} 初始化~ by ${Version.author}`)
 );
 
-await crystelfInit.CSH().then(logger.mark('[crystelf-plugin] crystelf-plugin 完成初始化'));
+await crystelfInit.CSH().then(() => logger.mark('[crystelf-plugin] crystelf-plugin 完成初始化'));
 
 import ConfigControl from "./lib/config/configControl.js";
 const appConfig = await ConfigControl.get('config');
@@ -29,7 +29,7 @@ if (appConfig.webConsole !== false) {
 }
 
 if(appConfig.autoUpdate) {
-  logger.info('[crystelf-plugin] 自动更新已启用,正在自动检查更新..');
+  logger.info('[crystelf-plugin] 自动更新已启用，正在自动检查更新...');
   updater.checkAndUpdate().catch((err) => {
     logger.error(err);
   });
@@ -45,7 +45,7 @@ for (const file of jsFiles) {
   const configKey = getConfigKey(name);
   if (appConfig[configKey] === false) {
     disabledApps.push(name);
-    logger.info(`[crystelf-plugin] 插件 ${name} 已禁用,跳过加载`);
+    logger.info(`[crystelf-plugin] 插件 ${name} 已禁用，跳过加载`);
   } else {
     enabledApps.push(file);
   }

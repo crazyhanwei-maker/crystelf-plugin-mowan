@@ -213,7 +213,7 @@ async function auth(e, group_id, user_id) {
     if (pending.has(key)) {
       pending.delete(key);
       await e.reply([segment.at(user_id), '验证超时，请重新申请入群。']);
-      await Group.groupKick(e, e.user_id, e.group_id, false);
+      await Group.groupKick(e, user_id, group_id, false);
     }
   }, groupCfg.timeout * 1000);
 }

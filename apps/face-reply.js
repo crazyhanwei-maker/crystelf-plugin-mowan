@@ -1,12 +1,13 @@
 import ConfigControl from '../lib/config/configControl.js';
 import Message from '../lib/yunzai/message.js';
+import { extractReactionEmojiEntries } from '../lib/yunzai/emojiReaction.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 
 export class FaceReply extends plugin {
   constructor() {
     super({
       name: 'face-reply',
-      dsc: '给消息中的表情贴上回应',
+      dsc: '给消息里的表情贴上回应',
       event: 'message.group',
       priority: -114,
     });
@@ -14,20 +15,23 @@ export class FaceReply extends plugin {
 
   async accept(e) {
     if (!e.message_id || e.message.length === 0) return;
-    let face = [];
+    const config = await ConfigControl.get('config');
+    if (config?.faceReply === false) return;
+
+    const face = [];
     e.message.forEach((m) => {
       if (m.type === 'face') {
         face.push({ id: m.id });
       } else if (m.type === 'text') {
-        let emojiList = exEmojis(m.text);
-        if (emojiList.length) {
-          for (const emoji of emojiList) {
-            const id = emoji.codePointAt(0);
-            face.push({ id: id });
+        const emojiEntries = extractReactionEmojiEntries(m.text);
+        if (emojiEntries.supported.length) {
+          for (const emoji of emojiEntries.supported) {
+            face.push({ id: emoji.id });
           }
         }
       }
     });
+
     const adapter = await YunzaiUtils.getAdapter(e);
     if (face.length) {
       for (const f of face) {
@@ -35,13 +39,4 @@ export class FaceReply extends plugin {
       }
     }
   }
-}
-
-//从消息中提取emoji
-function exEmojis(text) {
-  //没错,爆红了
-  const emojiRegex =
-    /(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*|\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/gu;
-  const emojis = text.match(emojiRegex);
-  return emojis || [];
 }

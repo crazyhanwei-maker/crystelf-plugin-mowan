@@ -23,7 +23,7 @@
   "?fallbackTimeoutReply": "图片监控识别超时时的提示文案，留空则保持静默",
   "fallbackTimeoutReply": "",
   "?apiBase": "独立视觉模型API基础地址,兼容OpenAI格式,不加/v1",
-  "apiBase": "https://llmapi.badmia.com/v1",
+  "apiBase": "https://xx.xx.com",
   "?apiKey": "独立视觉模型API密钥",
   "apiKey": "",
   "?model": "用于图片监控识别的独立视觉模型",

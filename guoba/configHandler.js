@@ -119,6 +119,23 @@ function pushMinError(errors, value, min, message) {
   }
 }
 
+function normalizeMusicUrlsValue(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map(item => String(item || '').trim())
+      .filter(Boolean);
+  }
+
+  return String(value || '')
+    .split(/\r?\n|,|;/)
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function formatMusicUrlsValue(value) {
+  return normalizeMusicUrlsValue(value).join('\n');
+}
+
 export async function getConfigData() {
   const allConfigs = ConfigControl.get();
   const result = {};
@@ -127,6 +144,9 @@ export async function getConfigData() {
     if (configName === 'feeds' || configName === 'newcomer') continue;
     Object.assign(result, flattenObject(configData, configName));
   }
+
+  const musicConfig = allConfigs?.music || {};
+  result['music.urls'] = formatMusicUrlsValue(musicConfig.urls ?? musicConfig.url ?? '');
 
   const usagePricing = allConfigs?.coreConfig?.usageControl
     ? {
@@ -165,7 +185,13 @@ export async function getConfigData() {
 
 export async function setConfigData(data, { Result }) {
   try {
-    const configUpdates = expandFlatConfig(data);
+    const normalizedInput = { ...(data || {}) };
+    if (Object.prototype.hasOwnProperty.call(normalizedInput, 'music.urls')) {
+      normalizedInput['music.urls'] = normalizeMusicUrlsValue(normalizedInput['music.urls']);
+    }
+
+    const configUpdates = expandFlatConfig(normalizedInput);
+    const pendingUpdates = [];
 
     for (const [configName, newConfigData] of Object.entries(configUpdates)) {
       const existingConfig = ConfigControl.get(configName) || {};
@@ -173,14 +199,22 @@ export async function setConfigData(data, { Result }) {
       const isChanged = !isDeepStrictEqual(updatedConfig, existingConfig);
 
       if (!isChanged) continue;
+      const validationResult = validateConfig(configName, updatedConfig);
+      if (!validationResult.valid) {
+        return Result.error({}, `配置验证失败: ${validationResult.errors.join(', ')}`);
+      }
+      pendingUpdates.push([configName, updatedConfig]);
+    }
 
+    for (const [configName, updatedConfig] of pendingUpdates) {
       await ConfigControl.set(configName, updatedConfig);
     }
+    UserConfigManager.clearCache();
 
     return Result.ok({}, '保存成功~');
   } catch (error) {
     logger.error('[crystelf-plugin] 保存配置失败:', error);
-    return Result.error('保存配置失败: ' + error.message);
+    return Result.error({}, '保存配置失败: ' + error.message);
   }
 }
 

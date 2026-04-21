@@ -5,6 +5,71 @@ import Path from '../constants/path.js';
 
 const HELP_DIY_FILE = path.join(Path.config, 'help-diy.json');
 const LEGACY_HELP_DIY_FILE = path.join(process.cwd(), 'data', 'crystelf', 'help-diy.json');
+const WEB_CONSOLE_PUBLIC_DIR = path.join(Path.lib, 'webConsole', 'public');
+const HELP_DIY_UPLOAD_DIR = path.join(WEB_CONSOLE_PUBLIC_DIR, 'uploads', 'help-diy');
+
+function normalizePathForComparison(value = '') {
+  const normalized = path.resolve(String(value || ''));
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+function isPathInsideRoot(targetPath, rootPath) {
+  const normalizedTarget = normalizePathForComparison(targetPath);
+  const normalizedRoot = normalizePathForComparison(rootPath);
+  return normalizedTarget === normalizedRoot || normalizedTarget.startsWith(`${normalizedRoot}${path.sep}`);
+}
+
+function getRealPathSafe(targetPath) {
+  try {
+    if (typeof fs.realpathSync.native === 'function') {
+      return fs.realpathSync.native(targetPath);
+    }
+    return fs.realpathSync(targetPath);
+  } catch {
+    return null;
+  }
+}
+
+function resolveHelpDiyImageSource(value = '') {
+  const raw = String(value || '').trim();
+  if (!raw.startsWith('/uploads/help-diy/')) {
+    return '';
+  }
+
+  const relativeUploadPath = path.posix.normalize(`/${raw.slice('/uploads/help-diy/'.length)}`).replace(/^\/+/, '');
+  if (!relativeUploadPath || relativeUploadPath.startsWith('..')) {
+    return '';
+  }
+
+  const uploadRoot = getRealPathSafe(HELP_DIY_UPLOAD_DIR) || path.resolve(HELP_DIY_UPLOAD_DIR);
+  const targetPath = path.resolve(HELP_DIY_UPLOAD_DIR, relativeUploadPath.split('/').join(path.sep));
+  if (!isPathInsideRoot(targetPath, HELP_DIY_UPLOAD_DIR)) {
+    return '';
+  }
+  if (!fs.existsSync(targetPath)) {
+    return '';
+  }
+
+  const targetRealPath = getRealPathSafe(targetPath) || targetPath;
+  if (!isPathInsideRoot(targetRealPath, uploadRoot)) {
+    return '';
+  }
+
+  return targetRealPath;
+}
+
+function sanitizeHelpDiyImageValue(value = '') {
+  const raw = String(value || '').trim();
+  return resolveHelpDiyImageSource(raw) ? raw : '';
+}
+
+function getWebConsoleDisplayUrl() {
+  const config = ConfigControl.get('config') || {};
+  const rawHost = String(config.webConsoleHost || '127.0.0.1').trim() || '127.0.0.1';
+  const host = rawHost === '0.0.0.0' || rawHost === '::' ? '127.0.0.1' : rawHost;
+  const port = Number(config.webConsolePort) || 27891;
+  return `http://${host}:${port}/`;
+}
 
 function safeReadHelpDiyFile(filePath) {
   try {
@@ -19,6 +84,7 @@ function safeReadHelpDiyFile(filePath) {
 }
 
 function getDefaultHelpContent() {
+  const webConsoleUrl = getWebConsoleDisplayUrl();
   return {
     home: {
       mode: 'text',
@@ -112,7 +178,7 @@ function getDefaultHelpContent() {
           '灵晶帮助 · 调试',
           '',
           '本地控制台',
-          '- 地址：http://127.0.0.1:27891/',
+          `- 地址：${webConsoleUrl}`,
           '- 可查看健康状态、日志、画像、好感和会话',
           '',
           '网页调试沙箱',
@@ -161,10 +227,10 @@ export default class CrystelfHelp extends plugin {
 
   async replyHelpBlock(e, block) {
     if (block?.mode === 'image' && block?.image) {
-      const imageSource = String(block.image || '').startsWith('/uploads/help-diy/')
-        ? path.join(process.cwd(), 'lib', 'webConsole', 'public', String(block.image || '').replace(/^\//, '').replace(/\//g, path.sep))
-        : block.image;
-      return e.reply(segment.image(imageSource));
+      const imageSource = resolveHelpDiyImageSource(block.image);
+      if (imageSource) {
+        return e.reply(segment.image(imageSource));
+      }
     }
     return e.reply(block?.text || '未找到帮助内容。', true);
   }
@@ -173,10 +239,11 @@ export default class CrystelfHelp extends plugin {
     if (typeof block === 'string') {
       return { mode: 'text', text: block || fallbackText, image: '' };
     }
+    const image = sanitizeHelpDiyImageValue(block?.image);
     return {
-      mode: block?.mode === 'image' && String(block?.image || '').trim() ? 'image' : 'text',
+      mode: block?.mode === 'image' && image ? 'image' : 'text',
       text: String(block?.text || fallbackText || '').trim(),
-      image: String(block?.image || '').trim(),
+      image,
     };
   }
 
