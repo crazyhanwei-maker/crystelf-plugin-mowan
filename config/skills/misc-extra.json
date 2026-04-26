@@ -1,0 +1,150 @@
+{
+  "enabled": false,
+  "name": "misc-extra",
+  "description": "扩展实用工具，包含世界时间、手机号归属地、行政区划与程序员历史上的今天",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "get_worldtime",
+      "description": "查询指定城市或时区的当前时间。必须提供 city。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "城市或时区名称，例如 Tokyo、London、Asia/Shanghai"
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/worldtime",
+        "query": {
+          "city": "{{city}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "datetime",
+          "offset_string",
+          "timezone",
+          "weekday"
+        ],
+        "maxLength": 1600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_phoneinfo",
+      "description": "查询中国大陆手机号归属地与运营商。必须提供 phone。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "手机号，例如 13800138000"
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/phoneinfo",
+        "query": {
+          "phone": "{{phone}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "province",
+          "city",
+          "sp"
+        ],
+        "maxLength": 1400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_district",
+      "description": "查询中国行政区划信息。支持 keywords、adcode 或经纬度查询。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "搜索关键词，例如 北京"
+          },
+          "adcode": {
+            "type": "string",
+            "description": "行政区划代码，例如 110000"
+          },
+          "lat": {
+            "type": "string",
+            "description": "纬度，与 lng 配合使用"
+          },
+          "lng": {
+            "type": "string",
+            "description": "经度，与 lat 配合使用"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/district",
+        "query": {
+          "keywords": "{{keywords}}",
+          "adcode": "{{adcode}}",
+          "lat": "{{lat}}",
+          "lng": "{{lng}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "results"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "programmer_history_today",
+      "description": "获取程序员历史上的今天事件列表，无需传参。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/history/programmer/today",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "date",
+          "events"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

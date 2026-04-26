@@ -1,0 +1,221 @@
+{
+  "enabled": true,
+  "name": "social",
+  "description": "UAPI 社交平台工具集，使用免登录免积分模式，支持 B站视频/用户/直播查询和 QQ 用户/群信息查询",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "bilibili_videoinfo",
+      "description": "查询 B站视频详细信息。必须提供 bvid；返回标题、播放量、弹幕数、点赞数、UP主信息等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "bvid": {
+            "type": "string",
+            "description": "B站视频 BV 号，例如 BV1GJ411x7h7"
+          }
+        },
+        "required": [
+          "bvid"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/bilibili/videoinfo",
+        "query": {
+          "bvid": "{{bvid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "bilibili_userinfo",
+      "description": "查询 B站用户信息。必须提供 uid；返回用户名、等级、粉丝数、签名等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string",
+            "description": "B站用户 UID，例如 1"
+          }
+        },
+        "required": [
+          "uid"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/bilibili/userinfo",
+        "query": {
+          "uid": "{{uid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "bilibili_liveroom",
+      "description": "查询 B站直播间信息。必须提供 room_id；返回直播状态、标题、观看人数等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "room_id": {
+            "type": "string",
+            "description": "B站直播间号"
+          }
+        },
+        "required": [
+          "room_id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/bilibili/liveroom",
+        "query": {
+          "room_id": "{{room_id}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "bilibili_archives",
+      "description": "查询 B站用户投稿视频列表。必须提供 uid；返回该用户最近投稿的视频概要。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string",
+            "description": "B站用户 UID"
+          }
+        },
+        "required": [
+          "uid"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/bilibili/archives",
+        "query": {
+          "uid": "{{uid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "bilibili_replies",
+      "description": "查询 B站视频评论。必须提供 bvid；返回该视频的热门评论列表。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "bvid": {
+            "type": "string",
+            "description": "B站视频 BV 号"
+          }
+        },
+        "required": [
+          "bvid"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/bilibili/replies",
+        "query": {
+          "bvid": "{{bvid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "qq_userinfo",
+      "description": "查询 QQ 用户信息。必须提供 qq 号；返回昵称、头像等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "qq": {
+            "type": "string",
+            "description": "QQ 号"
+          }
+        },
+        "required": [
+          "qq"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/qq/userinfo",
+        "query": {
+          "qq": "{{qq}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "qq_groupinfo",
+      "description": "查询 QQ 群信息。必须提供 group_id；返回群名称、群头像等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "description": "QQ 群号"
+          }
+        },
+        "required": [
+          "group_id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/social/qq/groupinfo",
+        "query": {
+          "group_id": "{{group_id}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

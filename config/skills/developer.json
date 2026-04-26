@@ -1,0 +1,267 @@
+{
+  "enabled": false,
+  "name": "developer",
+  "description": "开发者信息工具，包含 npm、PyPI、Stack Overflow 和 Hacker News 查询。",
+  "allowedHosts": [
+    "registry.npmjs.org",
+    "api.npmjs.org",
+    "pypi.org",
+    "api.stackexchange.com",
+    "hacker-news.firebaseio.com"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "search_npm_packages",
+      "description": "搜索 npm 包。必须提供 query；适合查包名、简介、下载热度和维护信息。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词，例如 axios、react table"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://registry.npmjs.org/-/v1/search",
+        "query": {
+          "text": "{{query}}",
+          "size": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "total",
+          "objects"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_npm_package",
+      "description": "查询 npm 包元数据。必须提供 packageName；适合查 latest 版本、简介、主页、仓库和许可证。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string",
+            "description": "npm 包名，例如 axios、lodash；scope 包请传 URL 编码后的包名"
+          }
+        },
+        "required": [
+          "packageName"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://registry.npmjs.org/{{packageName}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "name",
+          "description",
+          "dist-tags",
+          "time.created",
+          "time.modified",
+          "homepage",
+          "repository",
+          "license",
+          "keywords",
+          "maintainers"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_npm_downloads",
+      "description": "查询 npm 包下载量。必须提供 packageName 和 period；period 常用 last-day、last-week、last-month。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string",
+            "description": "npm 包名，例如 axios"
+          },
+          "period": {
+            "type": "string",
+            "enum": [
+              "last-day",
+              "last-week",
+              "last-month"
+            ],
+            "description": "统计周期"
+          }
+        },
+        "required": [
+          "packageName",
+          "period"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.npmjs.org/downloads/point/{{period}}/{{packageName}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_pypi_package",
+      "description": "查询 PyPI 包元数据。必须提供 packageName；适合查最新版本、简介、作者、项目链接和 Python 版本要求。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string",
+            "description": "PyPI 包名，例如 requests、fastapi"
+          }
+        },
+        "required": [
+          "packageName"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://pypi.org/pypi/{{packageName}}/json",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "info.name",
+          "info.version",
+          "info.summary",
+          "info.author",
+          "info.author_email",
+          "info.home_page",
+          "info.project_url",
+          "info.project_urls",
+          "info.license",
+          "info.requires_python",
+          "info.classifiers"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "search_stackoverflow",
+      "description": "搜索 Stack Overflow 问题。必须提供 query；tagged 可选，适合查技术报错和相关问答链接。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词，例如 node axios timeout"
+          },
+          "tagged": {
+            "type": "string",
+            "description": "可选标签，用分号分隔，例如 node.js;axios"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.stackexchange.com/2.3/search/advanced",
+        "query": {
+          "order": "desc",
+          "sort": "relevance",
+          "q": "{{query}}",
+          "tagged": "{{tagged}}",
+          "site": "stackoverflow",
+          "pagesize": "5",
+          "filter": "default"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "items",
+          "has_more",
+          "quota_remaining"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_hackernews_topstories",
+      "description": "获取 Hacker News 热门故事 ID 列表。适合先取热门 ID，再用 get_hackernews_item 查询详情。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_hackernews_item",
+      "description": "查询 Hacker News 单条故事详情。必须提供 id；适合查看标题、作者、分数、评论数和链接。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Hacker News item id"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://hacker-news.firebaseio.com/v0/item/{{id}}.json",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "id",
+          "type",
+          "by",
+          "time",
+          "title",
+          "url",
+          "score",
+          "descendants"
+        ],
+        "maxLength": 1800
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

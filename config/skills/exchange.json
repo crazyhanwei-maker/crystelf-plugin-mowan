@@ -1,0 +1,79 @@
+{
+  "enabled": true,
+  "name": "exchange",
+  "description": "Frankfurter 汇率工具，免 API Key，适合实时汇率、历史汇率和简单换算。换算时先取 base 到 quote 的 rate，再用用户给出的金额自行相乘。",
+  "allowedHosts": [
+    "api.frankfurter.dev"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "get_exchange_rate",
+      "description": "查询两个货币之间的汇率。必须提供 base 和 quote；amount 仅用于让 AI 在回答中计算换算结果，接口本身返回汇率。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "description": "基础货币代码，例如 USD、CNY、EUR、JPY"
+          },
+          "quote": {
+            "type": "string",
+            "description": "目标货币代码，例如 CNY、USD、EUR、JPY"
+          },
+          "amount": {
+            "type": "number",
+            "description": "用户想换算的金额；接口不会直接使用，AI 应用 rate 计算"
+          },
+          "date": {
+            "type": "string",
+            "description": "可选历史日期，格式 YYYY-MM-DD；不填则查询最新汇率"
+          }
+        },
+        "required": [
+          "base",
+          "quote"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.frankfurter.dev/v2/rate/{{base}}/{{quote}}",
+        "query": {
+          "date": "{{date}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "date",
+          "base",
+          "quote",
+          "rate"
+        ],
+        "maxLength": 1200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "list_currencies",
+      "description": "列出 Frankfurter 支持的货币代码与名称。适合用户只给中文货币名，需要确认 ISO 货币代码时调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.frankfurter.dev/v2/currencies",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "enabled": true,
+  "name": "calendar",
+  "description": "UAPI 日历时间工具，使用免登录免积分模式，支持节假日与农历时间查询",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "get_holiday_calendar",
+      "description": "查询指定日期、月份或年份的节假日与万年历信息。date、month、year 三选一；可选返回附近节日、过滤过去日期、按节日类型筛选。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "按天查询，格式 YYYY-MM-DD。与 month、year 三选一"
+          },
+          "month": {
+            "type": "string",
+            "description": "按月查询，格式 YYYY-MM。与 date、year 三选一"
+          },
+          "year": {
+            "type": "string",
+            "description": "按年查询，格式 YYYY。与 date、month 三选一"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "时区名称，默认 Asia/Shanghai"
+          },
+          "holiday_type": {
+            "type": "string",
+            "description": "节日筛选类型，默认 all；可按法定节假日、公历节日、农历节日或节气筛选"
+          },
+          "include_nearby": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ],
+            "description": "仅 date 模式生效，是否返回前后最近节日"
+          },
+          "nearby_limit": {
+            "type": "integer",
+            "description": "附近节日返回数量上限，默认 7，最大 30"
+          },
+          "exclude_past": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ],
+            "description": "传 true 时过滤今天之前已经过去的节日"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/holiday-calendar",
+        "query": {
+          "date": "{{date}}",
+          "month": "{{month}}",
+          "year": "{{year}}",
+          "timezone": "{{timezone}}",
+          "holiday_type": "{{holiday_type}}",
+          "include_nearby": "{{include_nearby}}",
+          "nearby_limit": "{{nearby_limit}}",
+          "exclude_past": "{{exclude_past}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "mode",
+          "query",
+          "summary",
+          "days",
+          "holidays",
+          "nearby"
+        ],
+        "maxLength": 3400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_lunartime",
+      "description": "查询指定时间点的农历信息。可传 ts 和 timezone；不传 ts 时默认当前时间，不传 timezone 时默认 Asia/Shanghai。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ts": {
+            "type": "string",
+            "description": "Unix 时间戳，支持 10 位秒级或 13 位毫秒级；不传则默认当前时间"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "时区名称，支持 IANA 时区如 Asia/Shanghai，也支持 Shanghai、Beijing"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/lunartime",
+        "query": {
+          "ts": "{{ts}}",
+          "timezone": "{{timezone}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "query_timestamp",
+          "query_timezone",
+          "timezone",
+          "datetime",
+          "datetime_rfc3339",
+          "timestamp_unix",
+          "weekday",
+          "weekday_cn",
+          "lunar_year",
+          "lunar_month",
+          "lunar_day",
+          "is_leap_month",
+          "lunar_year_cn",
+          "lunar_month_cn",
+          "lunar_day_cn",
+          "ganzhi_year",
+          "ganzhi_month",
+          "ganzhi_day",
+          "zodiac",
+          "solar_term",
+          "lunar_festivals",
+          "solar_festivals"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

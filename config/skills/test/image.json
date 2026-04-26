@@ -1,0 +1,124 @@
+{
+  "enabled": true,
+  "name": "image",
+  "description": "UAPI 图片工具集，使用免登录免积分模式，支持 Bing 每日壁纸、二维码生成、OCR 文字识别、NSFW 图片检测",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "bing_daily_wallpaper",
+      "description": "获取 Bing 每日壁纸图片，无需传参。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/image/bing-daily",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "generate_qrcode",
+      "description": "生成指定文本/URL 的二维码图片。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要生成二维码的内容，例如 URL 或文本"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/image/qrcode",
+        "query": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "ocr_recognize",
+      "description": "OCR 文字识别，从图片中提取文字。支持通过 URL 或 Base64 传入图片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "图片 URL 地址"
+          },
+          "image_base64": {
+            "type": "string",
+            "description": "图片 Base64 编码，与 url 二选一"
+          }
+        }
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/image/ocr",
+        "body": {
+          "url": "{{url}}",
+          "image_base64": "{{image_base64}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "nsfw_detect",
+      "description": "检测图片是否包含 NSFW（不适宜工作场所）内容。支持通过 URL 或上传文件传入图片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "图片 URL 地址"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/image/nsfw",
+        "body": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

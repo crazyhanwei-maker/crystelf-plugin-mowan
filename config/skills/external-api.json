@@ -1,0 +1,265 @@
+{
+  "enabled": false,
+  "name": "external-api",
+  "description": "开发者与学术检索工具，包含 GitHub 仓库详情、搜索、提交、发布、论文与汇率查询",
+  "allowedHosts": [
+    "api.github.com",
+    "api.semanticscholar.org",
+    "open.er-api.com"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "github_repo_detail",
+      "description": "查询 GitHub 仓库详情。必须提供 owner 和 repo；适合查看描述、星标、语言、主题、许可证和最近更新时间。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "仓库所有者用户名，例如 openai"
+          },
+          "repo": {
+            "type": "string",
+            "description": "仓库名称，例如 openai-node"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{{owner}}/{{repo}}",
+        "headers": {
+          "Accept": "application/vnd.github+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "full_name",
+          "description",
+          "html_url",
+          "homepage",
+          "stargazers_count",
+          "forks_count",
+          "open_issues_count",
+          "subscribers_count",
+          "watchers_count",
+          "language",
+          "topics",
+          "license",
+          "default_branch",
+          "archived",
+          "disabled",
+          "created_at",
+          "updated_at",
+          "pushed_at"
+        ],
+        "maxLength": 2800
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_search_repos",
+      "description": "搜索 GitHub 仓库。必须提供 q；适合找项目、比较热门仓库或按更新时间筛选。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "搜索关键词，例如 llm framework language:javascript"
+          },
+          "sort": {
+            "type": "string",
+            "description": "排序方式，可选 stars、forks、updated；不填则按最佳匹配"
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "返回条数，建议 1-10"
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/search/repositories",
+        "query": {
+          "q": "{{q}}",
+          "sort": "{{sort}}",
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/vnd.github+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "total_count",
+          "items"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_repo_commits",
+      "description": "获取 GitHub 仓库最近提交。必须提供 owner 和 repo；适合看项目最近是否活跃。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "仓库所有者用户名，例如 openai"
+          },
+          "repo": {
+            "type": "string",
+            "description": "仓库名称，例如 openai-node"
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "返回条数，建议 1-10"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{{owner}}/{{repo}}/commits",
+        "query": {
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/vnd.github+json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_repo_releases",
+      "description": "获取 GitHub 仓库最近发布版本。必须提供 owner 和 repo；适合查看最新版本、发布时间和发布说明。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "仓库所有者用户名"
+          },
+          "repo": {
+            "type": "string",
+            "description": "仓库名称"
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "返回条数，建议 1-10"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{{owner}}/{{repo}}/releases",
+        "query": {
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/vnd.github+json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "semantic_scholar_search",
+      "description": "搜索 Semantic Scholar 学术论文。必须提供 query；适合查论文标题、年份、作者、摘要和引用量。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词，例如 attention is all you need"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "返回条数，建议 1-10"
+          },
+          "fields": {
+            "type": "string",
+            "description": "返回字段，默认 title,year,authors,abstract,citationCount,venue,url"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.semanticscholar.org/graph/v1/paper/search",
+        "query": {
+          "query": "{{query}}",
+          "limit": "{{limit}}",
+          "fields": "{{fields}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "total",
+          "offset",
+          "data"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "exchange_rates",
+      "description": "查询指定基础货币的实时汇率。必须提供 base；适合快速换算常见货币。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "description": "基础货币代码，例如 USD、CNY、EUR、JPY、GBP"
+          }
+        },
+        "required": [
+          "base"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://open.er-api.com/v6/latest/{{base}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "result",
+          "base_code",
+          "time_last_update_utc",
+          "rates"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

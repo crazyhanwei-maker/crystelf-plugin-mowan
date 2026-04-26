@@ -1,112 +1,67 @@
 # 插件健康检查待办
 
-检查时间：2026-04-21
+检查时间：2026-04-26
 
 说明：
-- 本文件仅汇总问题，不代表已修改。
-- 你可以按条处理，处理完后自行删掉对应条目或改成已完成。
+- 本文件仅汇总当前复核后仍成立的问题，不代表已修改。
+- 本次复核已移除上一版中已经修复或不再成立的旧条目。
 - 严重级别分为：`严重`、`高`、`中`、`低`。
+
+## 当前检查结果
+
+- `通过` `npm run check:encoding`，检查 205 个文本文件。
+- `通过` JS/MJS 语法检查，检查 93 个文件。
+- `通过` 非 `node_modules` JSON 配置解析。
+- `通过` `npm ls --depth=0`。
+- `失败` `npx eslint .`，当前 442 个错误，大量来自 Yunzai 运行时全局变量未在 ESLint 配置声明。
+- `失败` `npm audit --omit=dev`，当前 9 个漏洞：`7 high`、`2 moderate`。
+- `通过` SSH 远端覆盖部署测试：安装插件生产依赖后，PM2 在线，控制台 `/api/auth/status` 返回 200，最新日志显示 crystelf 初始化完成并成功加载 11 个插件。
 
 ## 严重
 
-1. `严重` [lib/webConsole/server.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/server.js):124, 141, 1877, 5622, 6147
-原因：`bootstrap` 判定信任 `X-Forwarded-For` 首值；反向代理场景下可被伪造为回环地址，导致未登录也可走初始化白名单并提交 `/api/plugin-settings/save` 写入 `webConsoleToken`。
+当前未发现会让整个插件入口必然崩溃的严重项。
 
 ## 高
 
-2. `高` [lib/webConsole/server.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/server.js):1375, [lib/webConsole/public/help-diy.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/help-diy.js):206
-原因：帮助历史备注 `historyNote` 原样存储，前端用 `innerHTML` 直接渲染，存在 Stored XSS 风险。
+1. `高` [apps/rssPush.js](D:/群机器人插件/crystelf-plugin-main/apps/rssPush.js):7, [package.json](D:/群机器人插件/crystelf-plugin-main/package.json):20
+原因：`rssPush` 直接导入 `node-schedule`，但 `package.json.dependencies` 未声明该依赖；干净环境或宿主未安装时，RSS 推送应用会导入失败。
 
-3. `高` [apps/auth.js](D:/群机器人插件/crystelf-plugin-main/apps/auth.js):216
-原因：验证超时后踢人使用的是 `e.user_id/e.group_id`，而不是 `auth(e, group_id, user_id)` 传入的目标用户；管理员执行“#重新验证@某人”时可能误踢自己。
+2. `高` [apps/ai.js](D:/群机器人插件/crystelf-plugin-main/apps/ai.js):427
+原因：`isMasterUser()` 读取未声明的 `cfg.masterQQ`；触发 AI 的“功能开关”主人命令时会 `ReferenceError`。
 
-4. `高` [apps/music.js](D:/群机器人插件/crystelf-plugin-main/apps/music.js):136, 137
-原因：数字选歌流程先 `clearGroupSearch` 再 `handleSelection`，会先把搜索结果清空，导致按序号选歌失败。
-
-5. `高` [lib/yunzai/utils.js](D:/群机器人插件/crystelf-plugin-main/lib/yunzai/utils.js):44
-原因：`e.bot.version?.app_name` 未对 `e.bot` 做可选链保护；当事件对象不带 `bot` 时会直接 `TypeError`。
-
-6. `高` [lib/yunzai/message.js](D:/群机器人插件/crystelf-plugin-main/lib/yunzai/message.js):3, 22
-原因：直接引用未声明的全局 `Bot`；在无该全局变量环境下会 `ReferenceError`。
-
-7. `高` [lib/ai/toolRegistry.js](D:/群机器人插件/crystelf-plugin-main/lib/ai/toolRegistry.js):240
-原因：`fetch_web_markdown` 对 Markdown 结果调用 `sanitizeText`，会压缩空白并移除反引号，导致返回内容失真。
-
-8. `高` [lib/humanize/actionPlanner.js](D:/群机器人插件/crystelf-plugin-main/lib/humanize/actionPlanner.js):124, 136, 148, 169
-原因：解析失败/异常时默认返回 `reply`，与模块“默认等待”策略相反，容易放大误触发与刷屏。
+3. `高` [package.json](D:/群机器人插件/crystelf-plugin-main/package.json):21, [package-lock.json](D:/群机器人插件/crystelf-plugin-main/package-lock.json):396, [package-lock.json](D:/群机器人插件/crystelf-plugin-main/package-lock.json):2209
+原因：`npm audit --omit=dev` 报 9 个生产依赖漏洞，其中高危主要来自 `puppeteer` 链、`proxy-agent/basic-ftp` 链；中危来自 `axios/follow-redirects` 链。当前 audit 显示无自动修复方案，需要跟踪上游版本或评估替代依赖与风险缓解。
 
 ## 中
 
-9. `中` [lib/webConsole/server.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/server.js):1597, 5886
-原因：`/api/image-proxy` 可代理任意 `http/https` URL，存在 SSRF 风险。
+4. `中` [package-lock.json](D:/群机器人插件/crystelf-plugin-main/package-lock.json):3, [package-lock.json](D:/群机器人插件/crystelf-plugin-main/package-lock.json):9, [package.json](D:/群机器人插件/crystelf-plugin-main/package.json):3
+原因：`package.json` 版本是 `1.6.4`，但 `package-lock.json` 根版本仍是 `1.6.3`；发布或复现安装时容易产生版本混乱。
 
-10. `中` [lib/webConsole/server.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/server.js):5575, 1095
-原因：静态资源统一按 UTF-8 文本读取，上传托管的图片文件可能返回损坏内容。
+5. `中` [pnpm-lock.yaml](D:/群机器人插件/crystelf-plugin-main/pnpm-lock.yaml):10, [pnpm-lock.yaml](D:/群机器人插件/crystelf-plugin-main/pnpm-lock.yaml):11, [pnpm-lock.yaml](D:/群机器人插件/crystelf-plugin-main/pnpm-lock.yaml):17
+原因：`pnpm-lock.yaml` 与当前 `package.json` 明显不一致，仍记录较旧的依赖组合，例如 `axios ^1.8.4`、`openai ^4.89.0`；如果保留 pnpm 锁文件，应重新生成。
 
-11. `中` [lib/webConsole/public/image-monitor-detail.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/image-monitor-detail.js):65, 85, 104, [lib/webConsole/public/log-detail.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/log-detail.js):57
-原因：多个 `innerHTML` 模板直接插入日志字段，存在 HTML 注入与恶意链接注入风险。
+6. `中` [eslint.config.js](D:/群机器人插件/crystelf-plugin-main/eslint.config.js):7, [eslint.config.js](D:/群机器人插件/crystelf-plugin-main/eslint.config.js):9
+原因：ESLint 只声明了 browser/node 全局变量，未声明 Yunzai 运行时全局 `plugin`、`logger`、`Bot`、`redis`、`segment` 等，导致 lint 结果混入大量误报，无法作为质量门禁使用。
 
-12. `中` [lib/humanize/memoryRetrieval.js](D:/群机器人插件/crystelf-plugin-main/lib/humanize/memoryRetrieval.js):158
-原因：对 `tool_call.arguments` 直接 `JSON.parse`，模型参数不是严格 JSON 时会中断整轮记忆检索。
+7. `中` [apps/ai.js](D:/群机器人插件/crystelf-plugin-main/apps/ai.js):21, [apps/poke.js](D:/群机器人插件/crystelf-plugin-main/apps/poke.js):1, [apps/poke.js](D:/群机器人插件/crystelf-plugin-main/apps/poke.js):13, [apps/zwa.js](D:/群机器人插件/crystelf-plugin-main/apps/zwa.js):1, [apps/update-plugin.js](D:/群机器人插件/crystelf-plugin-main/apps/update-plugin.js):1
+原因：部分应用直接依赖 Yunzai 宿主路径或宿主依赖，例如 `../../../lib/config/config.js`、`../../../lib/plugins/plugin.js`、`oicq`；这是 Yunzai 插件常见写法，但当前 README/依赖声明没有把这些运行前置讲清楚，独立检查或非标准目录部署时会导入失败。
 
-13. `中` [lib/ai/chatDatabase.js](D:/群机器人插件/crystelf-plugin-main/lib/ai/chatDatabase.js):217
-原因：`getMessagesByUser` 用严格相等比较 `message.userId === userId`，字符串/数字混用时查不到历史。
+8. `中` [lib/music/audioProcessor.js](D:/群机器人插件/crystelf-plugin-main/lib/music/audioProcessor.js):222, [lib/music/audioProcessor.js](D:/群机器人插件/crystelf-plugin-main/lib/music/audioProcessor.js):226, [config/music.json](D:/群机器人插件/crystelf-plugin-main/config/music.json):6
+原因：`config/music.json` 中 `quality` 是字符串 `"3"`，但音频处理里使用 `quality === 1` 严格比较；当配置为 `"1"` 时，低音质转语音分支不会命中。
 
-14. `中` [lib/core/meme.js](D:/群机器人插件/crystelf-plugin-main/lib/core/meme.js):520
-原因：写缓存时硬编码 `crystelf-plugin-main` 目录名，仓库重命名或部署目录变化后会写到错误位置。
+9. `中` [guoba/configSchema.js](D:/群机器人插件/crystelf-plugin-main/guoba/configSchema.js):8, [guoba/configSchema.js](D:/群机器人插件/crystelf-plugin-main/guoba/configSchema.js):32
+原因：锅巴配置 schema 仍硬编码 `crystelf-plugin-main` 目录名读取缓存；插件目录重命名或按 README 克隆为 `crystelf-plugin` 后，候选路径可能失效。
 
-15. `中` [lib/core/meme.js](D:/群机器人插件/crystelf-plugin-main/lib/core/meme.js):65
-原因：表情 API 未配置时兜底仍是 `http://127.0.0.1:5555`，与当前公开默认值 `http://165.99.42.28:5555` 不一致。
+10. `中` [lib/webConsole/public/app.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/app.js):1213, [lib/webConsole/public/app.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/app.js):1214
+原因：前端直接重赋值函数声明 `summarizeFallbackConfig`、`renderConfig`，触发 ESLint `no-func-assign`；建议改为显式函数名切换或直接保留增强版实现。
 
-16. `中` [lib/ai/aiCaller.js](D:/群机器人插件/crystelf-plugin-main/lib/ai/aiCaller.js):624
-原因：`getSystemPrompt` 无条件访问 `e.group.getChatHistory`，私聊上下文下会抛错并导致 system prompt 上下文退化。
-
-17. `中` [apps/music.js](D:/群机器人插件/crystelf-plugin-main/apps/music.js):158, [config/music.json](D:/群机器人插件/crystelf-plugin-main/config/music.json):6
-原因：音质配置是字符串，但代码使用数字严格比较，低音质语音分支无法按预期命中。
-
-18. `中` [apps/60s.js](D:/群机器人插件/crystelf-plugin-main/apps/60s.js):12
-原因：正则 `^(#|/)?60s|(#|/)?早报$` 缺少分组，`60s` 分支没有 `$` 约束，会误匹配如 `60sabc`。
-
-19. `中` [guoba/configSchema.js](D:/群机器人插件/crystelf-plugin-main/guoba/configSchema.js):2659, [config/music.json](D:/群机器人插件/crystelf-plugin-main/config/music.json):2, [guoba/configHandler.js](D:/群机器人插件/crystelf-plugin-main/guoba/configHandler.js):431
-原因：`music.urls` 在 Guoba 中定义成对象数组，但默认配置是字符串数组；面板保存后有结构漂移风险。
-
-20. `中` [apps/welcome-set.js](D:/群机器人插件/crystelf-plugin-main/apps/welcome-set.js):71, 73
-原因：欢迎图扩展名逻辑只区分 `gif`，其余全部按 `jpg` 保存；上传 `png/webp` 时会出现内容格式与后缀不一致。
-
-21. `中` [lib/system/updater.js](D:/群机器人插件/crystelf-plugin-main/lib/system/updater.js):75, 86, 91, 123
-原因：更新逻辑硬编码远端名为 `origin`，且用 `local !== remote` 判定“有更新”，会把本地 ahead/分叉误判为可更新。
-
-22. `中` [lib/yunzai/group.js](D:/群机器人插件/crystelf-plugin-main/lib/yunzai/group.js):42, 54
-原因：直接调用 `e.bot.sendApi`，缺少能力检测与回退，适配器差异下容易抛错。
-
-23. `中` [README.md](D:/群机器人插件/crystelf-plugin-main/README.md):288, 291, [config/coreConfig.json](D:/群机器人插件/crystelf-plugin-main/config/coreConfig.json):77
-原因：README 写默认自动语音触发场景为 `reply,poked`，实际默认值是 `reply,poked,comment`。
-
-24. `中` [README.md](D:/群机器人插件/crystelf-plugin-main/README.md):59, 65, [package.json](D:/群机器人插件/crystelf-plugin-main/package.json):10
-原因：README 仓库来源描述与 `package.json.repository.url` 不一致。
+11. `中` [package.json](D:/群机器人插件/crystelf-plugin-main/package.json):20, [README.md](D:/群机器人插件/crystelf-plugin-main/README.md):1
+原因：远端只覆盖插件源码且不带 `node_modules` 时，宿主环境不一定已有插件声明的运行依赖；本次 SSH 测试首次启动报 `crystelf-plugin 缺少依赖 axios`，执行 `npm --prefix /root/mu/Yunzai/plugins/crystelf-plugin install --omit=dev --ignore-scripts --no-audit --no-fund` 后恢复。建议在部署说明或脚本中明确覆盖后安装生产依赖。
 
 ## 低
 
-25. `低` [apps/poke.js](D:/群机器人插件/crystelf-plugin-main/apps/poke.js):429
-原因：该行包含控制字符 `U+0008`，属于真实脏字符，会影响正则可读性和匹配稳定性。
+12. `低` [config/skills.json](D:/群机器人插件/crystelf-plugin-main/config/skills.json):1, [config/skills](D:/群机器人插件/crystelf-plugin-main/config/skills):1, [lib/ai/httpSkillRegistry.js](D:/群机器人插件/crystelf-plugin-main/lib/ai/httpSkillRegistry.js):1
+原因：HTTP skills 相关文件当前是新增未跟踪文件；如果该功能要进入正式版本，需要确认全部加入版本管理，否则发布包会缺少 skill 定义或注册器。
 
-26. `低` [lib/webConsole/public/image-monitor-detail.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/image-monitor-detail.js):130, [lib/webConsole/public/log-detail.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/log-detail.js):155
-原因：复制按钮事件绑定使用 `{ once: true }`，点一次后监听器就被移除。
-
-27. `低` [lib/webConsole/public/login.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/login.js):28, [lib/webConsole/server.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/server.js):5559
-原因：前端在“未配置口令”时固定展示“前往初始化页面”，但后端仅在 `bootstrapMode` 才允许未登录访问初始化页，非本机场景提示与实际行为不一致。
-
-28. `低` [lib/webConsole/server.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/server.js):166, [lib/webConsole/public/app.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/app.js):134, [lib/webConsole/public/image-monitor-center.js](D:/群机器人插件/crystelf-plugin-main/lib/webConsole/public/image-monitor-center.js):99
-原因：后端 CSP 禁止内联脚本，但前端用内联 `onerror` 做图片失败回退，实际不会执行。
-
-29. `低` [index.js](D:/群机器人插件/crystelf-plugin-main/index.js):83, [apps/update-plugin.js](D:/群机器人插件/crystelf-plugin-main/apps/update-plugin.js):13, [config/config.json](D:/群机器人插件/crystelf-plugin-main/config/config.json):6
-原因：存在 `apps/update-plugin.js` 入口，但没有统一配置开关项，配置管理不一致。
-
-30. `低` [apps/help.js](D:/群机器人插件/crystelf-plugin-main/apps/help.js):172, [config/config.json](D:/群机器人插件/crystelf-plugin-main/config/config.json):26
-原因：帮助文案把控制台地址写死为 `127.0.0.1:27891`，与可配置项 `webConsoleHost/webConsolePort` 不一致。
-
-31. `低` [config/ai.json](D:/群机器人插件/crystelf-plugin-main/config/ai.json):268
-原因：注释字段文本错误，`豪秒` 应为 `毫秒`。
-
-32. `低` [temp/file-browser-conflict-test.txt](D:/群机器人插件/crystelf-plugin-main/temp/file-browser-conflict-test.txt):1, [temp/start-web-console-validate.mjs](D:/群机器人插件/crystelf-plugin-main/temp/start-web-console-validate.mjs):1, [temp/validate-console-bg.mjs](D:/群机器人插件/crystelf-plugin-main/temp/validate-console-bg.mjs):1
-原因：存在 UTF-8 BOM；虽在忽略目录中，但仓内编码风格不统一。
+13. `低` [skill-candidates](D:/群机器人插件/crystelf-plugin-main/skill-candidates):1, [skillre.md](D:/群机器人插件/crystelf-plugin-main/skillre.md):1
+原因：候选 skill 文档当前也是新增未跟踪文件；如果只是调研资料，建议移到 docs 或确认是否随插件发布。

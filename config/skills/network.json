@@ -1,0 +1,197 @@
+{
+  "enabled": false,
+  "name": "network",
+  "description": "网络诊断与域名信息工具，包含 IP 查询、RDAP、DNS、ICP备案与 URL 状态检查",
+  "allowedHosts": [
+    "uapis.cn",
+    "rdap.org",
+    "dns.google"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_ipinfo",
+      "description": "查询指定 IP 地址的归属地、运营商、ASN 与经纬度信息。必须提供 ip。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "需要查询的 IP 地址，例如 8.8.8.8"
+          }
+        },
+        "required": [
+          "ip"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/ipinfo",
+        "query": {
+          "ip": "{{ip}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "ip",
+          "region",
+          "isp",
+          "llc",
+          "asn",
+          "latitude",
+          "longitude"
+        ],
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "domain_rdap_lookup",
+      "description": "通过 RDAP 查询域名注册状态与基本注册信息。必须提供 domain。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "需要查询的域名，例如 example.com"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://rdap.org/domain/{{domain}}",
+        "headers": {
+          "Accept": "application/rdap+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "ldhName",
+          "status",
+          "events",
+          "nameservers",
+          "entities"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": false
+    },
+    {
+      "name": "dns_lookup",
+      "description": "通过 Google Public DNS 查询域名解析记录。必须提供 name；可选 type 指定记录类型。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "需要查询的域名，例如 example.com"
+          },
+          "type": {
+            "type": "string",
+            "description": "记录类型，例如 A、AAAA、MX、NS、TXT、CNAME，默认 A"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://dns.google/resolve",
+        "query": {
+          "name": "{{name}}",
+          "type": "{{type}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "Status",
+          "Question",
+          "Answer",
+          "Authority"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "icp_lookup",
+      "description": "查询中国网站 ICP 备案信息。必须提供 domain。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "需要查询备案的域名，例如 baidu.com"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/icp",
+        "query": {
+          "domain": "{{domain}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "domain",
+          "natureName",
+          "serviceLicence",
+          "unitName"
+        ],
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "check_url_status",
+      "description": "检测指定 URL 的 HTTP 状态码与可达性。必须提供 url。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "需要检测的 URL，例如 https://example.com"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/urlstatus",
+        "query": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "status",
+          "url"
+        ],
+        "maxLength": 1400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "?enabled": "是否启用配置化 HTTP skills",
+  "enabled": true,
+  "?autoLoad": "是否在每个 AI 会话中自动加载已启用的 skill",
+  "autoLoad": true,
+  "?defaultTimeoutMs": "HTTP skill 默认超时时间(毫秒)",
+  "defaultTimeoutMs": 15000,
+  "?definitions": "skills 列表与顺序。详细定义可拆分到 config/skills/*.json；运行时覆盖支持 data/crystelf/skills.json 与 data/crystelf/skills/*.json",
+  "definitions": [
+    {
+      "enabled": true,
+      "name": "weather",
+      "description": "UAPI 天气查询，使用免登录免积分模式"
+    },
+    {
+      "enabled": true,
+      "name": "tracking",
+      "description": "UAPI 快递工具，使用免登录免积分模式，支持物流查询、快递公司识别和公司列表读取"
+    },
+    {
+      "enabled": true,
+      "name": "hotboard",
+      "description": "UAPI 热榜查询，使用免登录免积分模式，适合获取主流平台实时热榜"
+    },
+    {
+      "enabled": true,
+      "name": "calendar",
+      "description": "UAPI 日历时间工具，使用免登录免积分模式，支持节假日与农历时间查询"
+    },
+    {
+      "enabled": true,
+      "name": "webparse",
+      "description": "UAPI 网页解析工具，使用免登录免积分模式，适合做轻量链接预览和网页图片提取"
+    },
+    {
+      "enabled": true,
+      "name": "exchange",
+      "description": "Frankfurter 汇率工具，免 API Key，适合实时汇率、历史汇率和简单换算"
+    },
+    {
+      "enabled": false,
+      "name": "wiki",
+      "description": "中文维基百科检索与摘要工具；当前远端 VPS 访问 zh.wikipedia.org 超时，默认关闭"
+    },
+    {
+      "enabled": false,
+      "name": "books",
+      "description": "Open Library 图书检索工具；当前远端 VPS 访问 openlibrary.org 超时，默认关闭"
+    },
+    {
+      "enabled": true,
+      "name": "paper",
+      "description": "OpenAlex 论文检索工具，适合学术论文搜索、开放访问状态和引用量查询"
+    },
+    {
+      "enabled": true,
+      "name": "earthquake",
+      "description": "USGS 地震速报工具，适合查询全球近期地震和显著地震事件"
+    },
+    {
+      "enabled": true,
+      "name": "country",
+      "description": "REST Countries 国家信息工具，适合查询国家、首都、货币、语言、人口、时区和国旗"
+    },
+    {
+      "enabled": true,
+      "name": "holiday-global",
+      "description": "Nager.Date 全球公共节假日工具，适合查询各国家法定节假日和近期假日"
+    },
+    {
+      "enabled": true,
+      "name": "finance",
+      "description": "World Bank 公开指标工具，适合查询国家人口、GDP、通胀等宏观指标"
+    },
+    {
+      "enabled": false,
+      "name": "air-quality",
+      "description": "Open-Meteo 空气质量工具，适合查询 PM2.5、PM10、臭氧、花粉、AQI 和城市坐标"
+    },
+    {
+      "enabled": false,
+      "name": "security",
+      "description": "公开漏洞查询工具，包含 NVD CVE 和 OSV 开源包漏洞查询"
+    },
+    {
+      "enabled": false,
+      "name": "developer",
+      "description": "开发者信息工具，包含 npm、PyPI、Stack Overflow 和 Hacker News 查询"
+    },
+    {
+      "enabled": false,
+      "name": "dictionary",
+      "description": "英文词典与词语关系工具，包含单词释义、近义词、押韵词和联想词"
+    },
+    {
+      "enabled": false,
+      "name": "chemistry",
+      "description": "PubChem 化合物查询工具，适合查询分子式、分子量、SMILES 和 IUPAC 名称"
+    },
+    {
+      "enabled": false,
+      "name": "food",
+      "description": "Open Food Facts 食品条形码查询工具，适合查询品牌、配料、营养等级和营养成分"
+    },
+    {
+      "enabled": false,
+      "name": "anime",
+      "description": "Jikan 动漫资料查询工具，适合查询动漫标题、评分、集数、年份和简介"
+    },
+    {
+      "enabled": false,
+      "name": "games-deals",
+      "description": "CheapShark 游戏折扣查询工具，适合查询 PC 游戏当前折扣和历史低价"
+    },
+    {
+      "enabled": false,
+      "name": "space",
+      "description": "航天与自然事件工具，包含 NASA 图片、EONET 自然事件、ISS 位置和航天发射"
+    },
+    {
+      "enabled": false,
+      "name": "bio",
+      "description": "GBIF 物种与分布记录查询工具，适合查询学名、分类和物种出现记录"
+    },
+    {
+      "enabled": false,
+      "name": "translate",
+      "description": "轻量翻译工具，适合短文本多语言互译"
+    },
+    {
+      "enabled": false,
+      "name": "external-api",
+      "description": "开发者与学术检索工具，包含 GitHub 仓库详情、搜索、提交、发布、论文与汇率查询"
+    },
+    {
+      "enabled": false,
+      "name": "youtube",
+      "description": "YouTube 视频信息工具，适合从公开视频链接提取标题、作者和缩略图"
+    },
+    {
+      "enabled": false,
+      "name": "network",
+      "description": "网络诊断与域名信息工具，包含 IP 查询、RDAP、DNS、ICP备案与 URL 状态检查"
+    },
+    {
+      "enabled": false,
+      "name": "social",
+      "description": "社交与开发者资料工具，包含 B站视频/直播/用户信息与 GitHub 仓库信息"
+    },
+    {
+      "enabled": false,
+      "name": "game",
+      "description": "游戏信息工具，包含 Epic 免费游戏、Minecraft 服务器/玩家信息与 Steam 玩家摘要"
+    },
+    {
+      "enabled": false,
+      "name": "misc-extra",
+      "description": "扩展实用工具，包含世界时间、手机号归属地、行政区划与程序员历史上的今天"
+    },
+    {
+      "enabled": false,
+      "name": "text",
+      "description": "文本安全工具，包含敏感词快速检测"
+    }
+  ]
+}

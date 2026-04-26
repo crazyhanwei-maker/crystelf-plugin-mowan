@@ -1,0 +1,88 @@
+{
+  "enabled": true,
+  "name": "webparse",
+  "description": "UAPI 网页解析工具，使用免登录免积分模式，适合做轻量链接预览和网页图片提取",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_metadata",
+      "description": "提取网页元数据，返回标题、描述、关键词、图标、canonical 等信息。适合生成链接预览卡片，或在正文抓取失败时做轻量兜底。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "需要提取元数据的网页 URL"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/webparse/metadata",
+        "query": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "page_url",
+          "title",
+          "description",
+          "keywords",
+          "favicon_url",
+          "language",
+          "author",
+          "published_time",
+          "canonical_url",
+          "generator",
+          "open_graph"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "extract_images",
+      "description": "提取网页中的图片链接列表。适合在用户明确要求找图、取封面或收集页面图片时使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "需要提取图片的网页 URL"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/webparse/extractimages",
+        "query": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "page_url",
+          "image_urls"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

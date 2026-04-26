@@ -1602,7 +1602,7 @@ const guobaSchema = [
     label: '图像生成模式',
     component: 'Select',
     bottomHelpMessage:
-      'openai使用/v1/images/generations接口(如Qwen-Image), chat使用对话式生图模型(如gemini-3-pro-image-preview), jimeng使用即梦接口',
+      'openai使用/v1/images/generations接口(如gpt-image-2、Qwen-Image), chat使用对话式生图模型(如gemini-3-pro-image-preview), jimeng使用即梦接口',
     componentProps: {
       options: [
         { label: 'OpenAI接口', value: 'openai' },
@@ -1619,7 +1619,7 @@ const guobaSchema = [
     bottomHelpMessage: '用于图像生成的模型名称',
     required: true,
     componentProps: {
-      placeholder: '请输入图像生成模型名称,例如如gemini-3-pro-image-preview',
+      placeholder: '请输入图像生成模型名称，例如 gpt-image-2',
     },
   },
   {
@@ -1687,13 +1687,31 @@ const guobaSchema = [
     field: 'ai.imageConfig.quality',
     label: '图像质量',
     component: 'Select',
-    bottomHelpMessage: '生成图像的质量',
+    bottomHelpMessage: '生成图像的质量；gpt-image-2 建议 high，DALL-E 类接口可用 standard/hd',
     componentProps: {
       options: [
-        { label: '标准', value: 'standard' },
+        { label: '低质量', value: 'low' },
+        { label: '中质量', value: 'medium' },
         { label: '高质量', value: 'high' },
+        { label: '标准', value: 'standard' },
+        { label: '高清兼容', value: 'hd' },
       ],
       placeholder: '请选择图像质量',
+    },
+  },
+  {
+    field: 'ai.imageConfig.background',
+    label: '图像背景',
+    component: 'Select',
+    bottomHelpMessage: 'gpt-image-2 支持的背景参数；留空表示不传该字段',
+    componentProps: {
+      options: [
+        { label: '不传', value: '' },
+        { label: '自动', value: 'auto' },
+        { label: '不透明', value: 'opaque' },
+        { label: '透明', value: 'transparent' },
+      ],
+      placeholder: '请选择背景模式',
     },
   },
   {
@@ -1716,7 +1734,14 @@ const guobaSchema = [
     bottomHelpMessage: '生成图像的尺寸',
     componentProps: {
       options: [
+        { label: '自动/不传', value: 'auto' },
         { label: '1024x1024', value: '1024x1024' },
+        { label: '1536x1024', value: '1536x1024' },
+        { label: '1024x1536', value: '1024x1536' },
+        { label: '2048x2048', value: '2048x2048' },
+        { label: '2560x1440', value: '2560x1440' },
+        { label: '3840x2160', value: '3840x2160' },
+        { label: '2160x3840', value: '2160x3840' },
         { label: '1792x1024', value: '1792x1024' },
         { label: '1024x1792', value: '1024x1792' },
       ],
@@ -1727,7 +1752,7 @@ const guobaSchema = [
     field: 'ai.imageConfig.responseFormat',
     label: '响应格式',
     component: 'Select',
-    bottomHelpMessage: '图像响应的格式,建议url',
+    bottomHelpMessage: '图像响应的格式；gpt-image-2 建议 b64_json',
     componentProps: {
       options: [
         { label: 'URL', value: 'url' },

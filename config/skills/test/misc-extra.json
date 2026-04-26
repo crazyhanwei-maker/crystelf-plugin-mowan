@@ -1,0 +1,313 @@
+{
+  "enabled": true,
+  "name": "misc-extra",
+  "description": "UAPI 扩展杂项工具集，使用免登录免积分模式，支持世界时间、手机归属地、时间戳转换、行政区划查询、随机数、随机字符串、每日一言、答案之书、GitHub 仓库信息、编程历史、每日新闻图",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_worldtime",
+      "description": "查询全球 500+ 城市的当前时间。必须提供 city 参数；返回时区、日期时间、星期、UTC 偏移量。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "城市名称（英文），例如 Tokyo、London、NewYork"
+          }
+        },
+        "required": [
+          "city"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/worldtime",
+        "query": {
+          "city": "{{city}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_phoneinfo",
+      "description": "查询手机号码归属地和运营商信息。必须提供 phone 参数；返回省份、城市、运营商。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "手机号码，例如 13800138000"
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/phoneinfo",
+        "query": {
+          "phone": "{{phone}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "convert_timestamp",
+      "description": "Unix 时间戳与可读日期互转。可选提供 ts 参数；不传则返回当前时间。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ts": {
+            "type": "string",
+            "description": "Unix 时间戳（10位秒级或13位毫秒级），不传则默认当前时间"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/timestamp",
+        "query": {
+          "ts": "{{ts}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_district",
+      "description": "查询中国行政区划信息。支持通过 keywords（关键词）、adcode（区划码）或 lat+lng（经纬度）查询。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "keywords": {
+            "type": "string",
+            "description": "搜索关键词，例如 北京"
+          },
+          "adcode": {
+            "type": "string",
+            "description": "行政区划代码，例如 110000"
+          },
+          "lat": {
+            "type": "string",
+            "description": "纬度，与 lng 配合使用"
+          },
+          "lng": {
+            "type": "string",
+            "description": "经度，与 lat 配合使用"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/district",
+        "query": {
+          "keywords": "{{keywords}}",
+          "adcode": "{{adcode}}",
+          "lat": "{{lat}}",
+          "lng": "{{lng}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "random_number",
+      "description": "生成随机数。可选 min 和 max 参数指定范围。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "string",
+            "description": "最小值，默认 0"
+          },
+          "max": {
+            "type": "string",
+            "description": "最大值，默认 100"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/randomnumber",
+        "query": {
+          "min": "{{min}}",
+          "max": "{{max}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "random_string",
+      "description": "生成随机字符串。可选 length 参数指定长度。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "length": {
+            "type": "string",
+            "description": "字符串长度，默认 10"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/random/string",
+        "query": {
+          "length": "{{length}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_saying",
+      "description": "获取随机每日一言/励志语录，无需传参。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/saying",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "answerbook_ask",
+      "description": "答案之书，对问题返回一个随机答案（类似占卜/求签）。可选提供 question 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "你的问题"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/answerbook/ask",
+        "query": {
+          "question": "{{question}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_repo_info",
+      "description": "查询 GitHub 仓库信息。必须提供 repo 参数（格式 owner/repo）；返回 star 数、fork 数、语言、许可证、创建/更新时间等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "repo": {
+            "type": "string",
+            "description": "GitHub 仓库路径，格式 owner/repo，例如 anthropics/claude-code"
+          }
+        },
+        "required": [
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/github/repo",
+        "query": {
+          "repo": "{{repo}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "programmer_history_today",
+      "description": "获取历史上的今天发生的编程/科技大事件，无需传参。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/history/programmer/today",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "daily_news_image",
+      "description": "获取每日新闻图片（60秒看世界），无需传参。返回当日新闻概览图片。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/daily/news-image",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

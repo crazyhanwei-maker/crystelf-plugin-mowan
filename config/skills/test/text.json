@@ -1,0 +1,264 @@
+{
+  "enabled": true,
+  "name": "text",
+  "description": "UAPI 文本与加密工具集，使用免登录免积分模式，支持 MD5 哈希/校验、Base64 编解码、AES 加解密、文本分析、敏感词检测",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "md5_hash",
+      "description": "计算文本的 MD5 哈希值。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要计算 MD5 的文本"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/text/md5",
+        "query": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "md5_verify",
+      "description": "校验文本与已知 MD5 哈希是否匹配。POST 请求。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "原始文本"
+          },
+          "hash": {
+            "type": "string",
+            "description": "需要比对的 MD5 哈希值"
+          }
+        },
+        "required": [
+          "text",
+          "hash"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/md5/verify",
+        "body": {
+          "text": "{{text}}",
+          "hash": "{{hash}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "base64_encode",
+      "description": "将文本进行 Base64 编码。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要编码的文本"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/base64/encode",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "base64_decode",
+      "description": "将 Base64 字符串解码为原文。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要解码的 Base64 字符串"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/base64/decode",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "aes_encrypt",
+      "description": "使用 AES 加密文本。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要加密的明文"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/aes/encrypt",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "aes_decrypt",
+      "description": "使用 AES 解密密文。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要解密的 AES 密文"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/aes/decrypt",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "text_analyze",
+      "description": "分析文本的字符数、字节数、语言类型等。必须提供 text 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要分析的文本"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/analyze",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "profanity_check",
+      "description": "检测文本中的敏感词/违禁词。必须提供 text 参数；返回脱敏后的文本和检测到的违禁词列表。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要检测的文本"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/profanitycheck",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "enabled": true,
+  "name": "openai-api",
+  "description": "OpenAI API 工具集，支持 Chat Completions 对话、图片生成、模型列表查询。需要 OPENAI_API_KEY。灵感来源于多个技能仓库中的 AI 后端集成。",
+  "allowedHosts": [
+    "api.openai.com"
+  ],
+  "timeoutMs": 60000,
+  "tools": [
+    {
+      "name": "chat_completions",
+      "description": "调用 OpenAI Chat Completions API 发送对话请求。必须提供 model 和 messages（JSON 数组）；返回助手回复。需要 OPENAI_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "模型名称，例如 gpt-4o、gpt-4o-mini、o3、o4-mini"
+          },
+          "messages": {
+            "type": "string",
+            "description": "消息数组 JSON 字符串，格式 [{\"role\":\"system\",\"content\":\"...\"},{\"role\":\"user\",\"content\":\"...\"}]"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "最大输出 token 数"
+          },
+          "temperature": {
+            "type": "number",
+            "description": "温度参数 0-2，越高越随机"
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "是否启用流式输出，默认 false"
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "body": {
+          "model": "{{model}}",
+          "messages": "{{messages}}",
+          "max_tokens": "{{max_tokens}}",
+          "temperature": "{{temperature}}",
+          "stream": "{{stream}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {{OPENAI_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "id",
+          "object",
+          "model",
+          "choices",
+          "usage"
+        ],
+        "maxLength": 6400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "generate_image",
+      "description": "使用 OpenAI 图片生成 API 创建图片。必须提供 prompt；返回生成的图片 URL 或 base64 数据。需要 OPENAI_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 dall-e-3，可选 gpt-image-2"
+          },
+          "size": {
+            "type": "string",
+            "description": "图片尺寸：1024x1024、1024x1792、1792x1024"
+          },
+          "quality": {
+            "type": "string",
+            "description": "图片质量：standard 或 hd"
+          },
+          "n": {
+            "type": "integer",
+            "description": "生成图片数量，默认 1"
+          },
+          "response_format": {
+            "type": "string",
+            "description": "返回格式：url 或 b64_json，默认 url"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "body": {
+          "model": "{{model}}",
+          "prompt": "{{prompt}}",
+          "size": "{{size}}",
+          "quality": "{{quality}}",
+          "n": "{{n}}",
+          "response_format": "{{response_format}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {{OPENAI_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "created",
+          "data"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "list_models",
+      "description": "查询可用的 OpenAI 模型列表。需要 OPENAI_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.openai.com/v1/models",
+        "headers": {
+          "Accept": "application/json",
+          "Authorization": "Bearer {{OPENAI_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "object",
+          "data"
+        ],
+        "maxLength": 6400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

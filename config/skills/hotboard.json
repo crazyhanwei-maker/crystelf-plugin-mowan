@@ -1,0 +1,48 @@
+{
+  "enabled": true,
+  "name": "hotboard",
+  "description": "UAPI 热榜查询，使用免登录免积分模式，适合获取主流平台实时热榜",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "get_hotboard",
+      "description": "查询指定平台当前实时热榜。必须提供 type，例如 weibo、zhihu、bilibili、douyin、baidu、juejin、genshin、starrail、weatheralarm、earthquake、history。当前默认只接免费模式，不暴露 time、keyword、time_start、time_end、limit 等高级参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "热榜平台类型，例如 weibo、zhihu、bilibili、douyin、baidu、juejin、genshin、starrail、weatheralarm、earthquake、history"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/hotboard",
+        "query": {
+          "type": "{{type}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "type",
+          "update_time",
+          "list",
+          "count",
+          "results"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "enabled": false,
+  "name": "youtube",
+  "description": "YouTube 视频信息工具，适合从公开视频链接提取标题、作者和缩略图",
+  "allowedHosts": [
+    "noembed.com"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_video_info",
+      "description": "查询 YouTube 视频基本信息。必须提供 url；适合读取视频标题、作者、频道链接、缩略图和嵌入信息。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "YouTube 视频完整链接，例如 https://www.youtube.com/watch?v=dQw4w9WgXcQ 或 https://youtu.be/dQw4w9WgXcQ"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://noembed.com/embed",
+        "query": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "title",
+          "author_name",
+          "author_url",
+          "provider_name",
+          "provider_url",
+          "thumbnail_url",
+          "thumbnail_width",
+          "thumbnail_height",
+          "width",
+          "height",
+          "type"
+        ],
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

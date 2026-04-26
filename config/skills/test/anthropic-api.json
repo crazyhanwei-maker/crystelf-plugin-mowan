@@ -1,0 +1,274 @@
+{
+  "enabled": true,
+  "name": "anthropic-api",
+  "description": "Anthropic Claude API 工具集，支持 Messages 对话、模型列表查询、批量任务提交和文件管理。需要 ANTHROPIC_API_KEY。",
+  "allowedHosts": [
+    "api.anthropic.com"
+  ],
+  "timeoutMs": 30000,
+  "tools": [
+    {
+      "name": "create_message",
+      "description": "调用 Claude Messages API 发送对话请求。必须提供 model 和 messages；返回 Claude 的回复内容。支持流式和非流式模式。需要 ANTHROPIC_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "模型 ID，例如 claude-sonnet-4-6、claude-haiku-4-5-20251001、claude-opus-4-7"
+          },
+          "messages": {
+            "type": "string",
+            "description": "消息数组 JSON 字符串，格式 [{\"role\":\"user\",\"content\":\"...\"}]"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "最大输出 token 数，默认 4096"
+          },
+          "system": {
+            "type": "string",
+            "description": "系统提示词"
+          },
+          "temperature": {
+            "type": "number",
+            "description": "温度参数 0-1，越高越随机"
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "是否启用流式输出，默认 false"
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "body": {
+          "model": "{{model}}",
+          "messages": "{{messages}}",
+          "max_tokens": "{{max_tokens}}",
+          "system": "{{system}}",
+          "temperature": "{{temperature}}",
+          "stream": "{{stream}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "x-api-key": "{{ANTHROPIC_API_KEY}}",
+          "anthropic-version": "2023-06-01"
+        }
+      },
+      "response": {
+        "pick": [
+          "id",
+          "type",
+          "role",
+          "content",
+          "model",
+          "stop_reason",
+          "stop_sequence",
+          "usage"
+        ],
+        "maxLength": 6400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "list_models",
+      "description": "查询可用的 Claude 模型列表。需要 ANTHROPIC_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "返回数量限制，默认 20，最大 1000"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.anthropic.com/v1/models",
+        "query": {
+          "limit": "{{limit}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "x-api-key": "{{ANTHROPIC_API_KEY}}",
+          "anthropic-version": "2023-06-01"
+        }
+      },
+      "response": {
+        "pick": [
+          "data",
+          "has_more",
+          "first_id",
+          "last_id"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_model_info",
+      "description": "查询指定 Claude 模型的详细信息。必须提供 model_id。需要 ANTHROPIC_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "model_id": {
+            "type": "string",
+            "description": "模型 ID，例如 claude-sonnet-4-6"
+          }
+        },
+        "required": [
+          "model_id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.anthropic.com/v1/models/{{model_id}}",
+        "headers": {
+          "Accept": "application/json",
+          "x-api-key": "{{ANTHROPIC_API_KEY}}",
+          "anthropic-version": "2023-06-01"
+        }
+      },
+      "response": {
+        "pick": [
+          "id",
+          "type",
+          "display_name",
+          "created_at"
+        ],
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "count_tokens",
+      "description": "计算给定消息的 token 数量，用于预估 API 调用成本。必须提供 model 和 messages。需要 ANTHROPIC_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "模型 ID"
+          },
+          "messages": {
+            "type": "string",
+            "description": "消息数组 JSON 字符串"
+          },
+          "system": {
+            "type": "string",
+            "description": "系统提示词"
+          }
+        },
+        "required": [
+          "model",
+          "messages"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages/count_tokens",
+        "body": {
+          "model": "{{model}}",
+          "messages": "{{messages}}",
+          "system": "{{system}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "x-api-key": "{{ANTHROPIC_API_KEY}}",
+          "anthropic-version": "2023-06-01"
+        }
+      },
+      "response": {
+        "pick": [
+          "input_tokens"
+        ],
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "create_batch",
+      "description": "创建批量 Messages 请求任务。必须提供 requests（请求列表 JSON）；返回批量任务 ID，可用于后续查询状态。需要 ANTHROPIC_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "type": "string",
+            "description": "批量请求数组 JSON 字符串，每项包含 custom_id 和 params"
+          }
+        },
+        "required": [
+          "requests"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages/batches",
+        "body": {
+          "requests": "{{requests}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "x-api-key": "{{ANTHROPIC_API_KEY}}",
+          "anthropic-version": "2023-06-01"
+        }
+      },
+      "response": {
+        "pick": [
+          "id",
+          "type",
+          "processing_status",
+          "request_counts",
+          "created_at"
+        ],
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_batch_status",
+      "description": "查询批量任务状态。必须提供 batch_id；返回处理进度和结果。需要 ANTHROPIC_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "description": "批量任务 ID"
+          }
+        },
+        "required": [
+          "batch_id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.anthropic.com/v1/messages/batches/{{batch_id}}",
+        "headers": {
+          "Accept": "application/json",
+          "x-api-key": "{{ANTHROPIC_API_KEY}}",
+          "anthropic-version": "2023-06-01"
+        }
+      },
+      "response": {
+        "pick": [
+          "id",
+          "type",
+          "processing_status",
+          "request_counts",
+          "created_at",
+          "ended_at"
+        ],
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

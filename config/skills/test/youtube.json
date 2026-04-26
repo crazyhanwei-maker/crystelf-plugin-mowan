@@ -1,0 +1,154 @@
+{
+  "enabled": true,
+  "name": "youtube",
+  "description": "YouTube 视频信息查询与字幕获取工具，使用免登录公开API，支持视频元数据查询和字幕列表获取",
+  "allowedHosts": [
+    "www.youtube.com",
+    "noembed.com",
+    "www.googleapis.com"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "get_video_info",
+      "description": "查询 YouTube 视频基本信息。必须提供 url（视频链接）或 video_id；返回标题、作者、频道、缩略图等。使用 noembed 公开 oEmbed 接口，无需 API Key。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "YouTube 视频完整链接，例如 https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+          },
+          "video_id": {
+            "type": "string",
+            "description": "YouTube 视频 ID，与 url 二选一，例如 dQw4w9WgXcQ"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://noembed.com/embed",
+        "query": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "title",
+          "author_name",
+          "author_url",
+          "type",
+          "height",
+          "width",
+          "version",
+          "provider_name",
+          "provider_url",
+          "thumbnail_url",
+          "thumbnail_width",
+          "thumbnail_height",
+          "html"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_innertube_player",
+      "description": "通过 YouTube InnerTube API 获取视频详细元数据和字幕轨道列表。必须提供 video_id；返回视频标题、频道、时长、描述和可用字幕语言列表。无需 API Key，但可能受频率限制。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "video_id": {
+            "type": "string",
+            "description": "YouTube 视频 ID，例如 dQw4w9WgXcQ"
+          },
+          "language": {
+            "type": "string",
+            "description": "首选字幕语言代码，例如 en、zh、ja，默认 en"
+          }
+        },
+        "required": [
+          "video_id"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+        "body": {
+          "context": {
+            "client": {
+              "clientName": "WEB",
+              "clientVersion": "2.20260320.08.00",
+              "hl": "{{language}}"
+            }
+          },
+          "videoId": "{{video_id}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+      },
+      "response": {
+        "pick": [
+          "videoDetails",
+          "captions"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": false
+    },
+    {
+      "name": "get_transcript_list",
+      "description": "获取 YouTube 视频可用的字幕/翻译语言列表。必须提供 video_id；先通过 InnerTube 获取字幕轨道信息，返回每种可用语言的代码、名称和是否为自动生成。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "video_id": {
+            "type": "string",
+            "description": "YouTube 视频 ID"
+          }
+        },
+        "required": [
+          "video_id"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+        "body": {
+          "context": {
+            "client": {
+              "clientName": "ANDROID",
+              "clientVersion": "20.10.38",
+              "clientFormFactor": "SMALL_FORM_FACTOR",
+              "androidSdkVersion": 34,
+              "platform": "MOBILE"
+            }
+          },
+          "videoId": "{{video_id}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "com.google.android.youtube/20.10.38"
+        }
+      },
+      "response": {
+        "pick": [
+          "videoDetails",
+          "captions"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": false
+    }
+  ]
+}

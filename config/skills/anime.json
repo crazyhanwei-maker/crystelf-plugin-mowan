@@ -1,0 +1,56 @@
+{
+  "enabled": false,
+  "name": "anime",
+  "description": "Jikan 动漫资料查询工具，适合查询动漫标题、评分、集数、年份、播出状态、简介和链接。",
+  "allowedHosts": [
+    "api.jikan.moe"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "search_anime",
+      "description": "搜索动漫资料。必须提供 query；适合查番剧标题、评分、集数、播出年份和简介。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "动漫关键词，例如 Frieren、葬送的芙莉莲"
+          },
+          "type": {
+            "type": "string",
+            "description": "可选类型，例如 tv、movie、ova"
+          },
+          "status": {
+            "type": "string",
+            "description": "可选状态，例如 airing、complete、upcoming"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.jikan.moe/v4/anime",
+        "query": {
+          "q": "{{query}}",
+          "type": "{{type}}",
+          "status": "{{status}}",
+          "limit": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "pagination",
+          "data"
+        ],
+        "maxLength": 3400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

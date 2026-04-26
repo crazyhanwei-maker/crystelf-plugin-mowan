@@ -21,6 +21,7 @@ import { processPokeFollowUpMessage } from './poke.js';
 import { segment } from 'oicq';
 import tools from '../components/tool.js';
 import { getTtsTools } from '../lib/ai/ttsRegistry.js';
+import { loadAutoSessionSkills } from '../lib/ai/httpSkillRegistry.js';
 
 const nickname = await ConfigControl.get('profile')?.nickName;
 
@@ -141,13 +142,15 @@ function hasRecentBotActivity(lastBotTime, aiConfig) {
 }
 
 function isCommandPrefixedMessage(text = '') {
-  return /^(#|\/)/.test(String(text || '').trim());
+  return /^(#|＃|\/)/.test(String(text || '').trim());
 }
 
 function isImageGenerationRequest(text) {
   const content = String(text || '').trim();
   if (!content) return false;
-  return ['生成图片', '画一张', '帮我画', '#绘图', '#画图', '画个', '画一幅', '改图'].some(keyword => content.includes(keyword));
+  if (isCommandPrefixedMessage(content)) return false;
+  if (/(^|\s)[#＃/](绘图|画图)(?=\s|$)/.test(content)) return false;
+  return ['生成图片', '画一张', '帮我画', '画个', '画一幅', '改图'].some(keyword => content.includes(keyword));
 }
 
 function isImageFollowUpRequest(text = '') {
@@ -1126,7 +1129,10 @@ export class crystelfAI extends plugin {
         config,
         db: this.db,
         pendingImageUrls: [],
+        skillManager: this.skillManager,
       };
+
+      await loadAutoSessionSkills(this.skillManager, groupSessionId);
 
       const promptCtx = {
         config,
@@ -1134,6 +1140,7 @@ export class crystelfAI extends plugin {
         botRole: 'member',
         isGroup: true,
         replyContext: { type: 'idle' },
+        skillContext: this.skillManager.getActiveSkillsInfo(groupSessionId),
       };
 
       const result = await runChat(
@@ -1796,6 +1803,7 @@ export class crystelfAI extends plugin {
       }
 
       const coreConfig = await ConfigControl.get('coreConfig');
+      await loadAutoSessionSkills(this.skillManager, groupSessionId);
       const ttsConfig = coreConfig?.tools?.tts || {};
       const pendingImageUrls = this.extractImageUrls(messageData.originalMessages);
       const groupLastBotTime = this.groupLastBotMessageTime?.get(groupSessionId) ?? 0;
@@ -1850,6 +1858,7 @@ export class crystelfAI extends plugin {
         },
         db: this.db,
         pendingImageUrls,
+        skillManager: this.skillManager,
         event: e,
         promptCtx: {
           replyContext: {
@@ -1881,6 +1890,7 @@ export class crystelfAI extends plugin {
         expressionContext,
         userProfileContext,
         sessionControlContext: buildSessionControlPrompt(sessionControl),
+        skillContext: this.skillManager.getActiveSkillsInfo(groupSessionId),
         replyContext: {
           type: 'reply',
           targetUser: targetMessage.userName,
@@ -2530,9 +2540,12 @@ export class crystelfAI extends plugin {
 
         try {
           const responseData = JSON.parse(result.rawResponse);
-          if (responseData && responseData.length > 0 && responseData[0].type === 'image') {
-            imageUrl = responseData[0].url;
-            description = responseData[0].description || message.data;
+          if (Array.isArray(responseData) && responseData.length > 0) {
+            const imageResult = responseData.find(item => item?.type === 'image' && item?.url);
+            if (imageResult) {
+              imageUrl = imageResult.url;
+              description = imageResult.description || message.data;
+            }
           }
         } catch (parseError) {
           logger.warn(`[crystelf-ai] 解析图像响应失败,响应文本: ${parseError.message}`);
@@ -2544,6 +2557,7 @@ export class crystelfAI extends plugin {
           await e.reply(segment.image(imageUrl), true);
         } else {
           logger.info(`[crystelf-ai] 图像生成响应 - 用户: ${e.user_id}, 响应: ${result.response}`);
+          await e.reply(imageFallback(result.response || '图像接口未返回图片地址'), true);
         }
       } else {
         logger.error(`[crystelf-ai] 图像生成/编辑失败 - 用户: ${e.user_id}, 错误: ${result.error}`);

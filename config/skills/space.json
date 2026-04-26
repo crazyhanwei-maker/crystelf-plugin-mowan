@@ -1,0 +1,129 @@
+{
+  "enabled": false,
+  "name": "space",
+  "description": "航天与自然事件工具，包含 NASA 图片搜索、EONET 自然事件、ISS 当前位置和近期航天发射。",
+  "allowedHosts": [
+    "images-api.nasa.gov",
+    "eonet.gsfc.nasa.gov",
+    "api.wheretheiss.at",
+    "ll.thespacedevs.com"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "search_nasa_images",
+      "description": "搜索 NASA 图片。必须提供 query；适合查火星、月球、星云、航天任务图片和元数据。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词，例如 mars、apollo、nebula"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://images-api.nasa.gov/search",
+        "query": {
+          "q": "{{query}}",
+          "media_type": "image",
+          "page_size": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "collection.items"
+        ],
+        "maxLength": 3400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_open_natural_events",
+      "description": "查询 NASA EONET 自然事件。适合查当前火灾、火山、风暴、冰山等开放自然事件。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "可选事件分类，例如 wildfires、volcanoes、severeStorms"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://eonet.gsfc.nasa.gov/api/v3/events",
+        "query": {
+          "status": "open",
+          "category": "{{category}}",
+          "limit": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "title",
+          "description",
+          "events"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_iss_position",
+      "description": "查询国际空间站 ISS 当前经纬度、高度、速度和可见状态。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.wheretheiss.at/v1/satellites/25544",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_upcoming_launches",
+      "description": "查询近期航天发射。适合问接下来有哪些火箭发射、任务名称、发射窗口和发射场。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://ll.thespacedevs.com/2.3.0/launches/upcoming/",
+        "query": {
+          "limit": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "count",
+          "next",
+          "results"
+        ],
+        "maxLength": 3600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "enabled": true,
+  "name": "translate",
+  "description": "UAPI 翻译工具集，使用免登录免积分模式，支持 AI 翻译和传统翻译",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "ai_translate",
+      "description": "AI 驱动的翻译，支持多语言互译。必须提供 text 和 target_lang；AI 翻译质量更高，支持上下文理解。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要翻译的文本"
+          },
+          "target_lang": {
+            "type": "string",
+            "description": "目标语言代码，例如 zh（中文）、en（英文）、ja（日文）、ko（韩文）、fr（法文）、de（德文）"
+          }
+        },
+        "required": [
+          "text",
+          "target_lang"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/ai/translate",
+        "body": {
+          "text": "{{text}}",
+          "target_lang": "{{target_lang}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "text_translate",
+      "description": "传统文本翻译，速度更快。必须提供 text 和 ToLang；适合简单短文本翻译。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要翻译的文本"
+          },
+          "ToLang": {
+            "type": "string",
+            "description": "目标语言代码，例如 zh、en、ja、ko、fr、de"
+          }
+        },
+        "required": [
+          "text",
+          "ToLang"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/translate/text",
+        "body": {
+          "text": "{{text}}",
+          "ToLang": "{{ToLang}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

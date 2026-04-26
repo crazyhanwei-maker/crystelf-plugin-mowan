@@ -1,0 +1,75 @@
+{
+  "enabled": true,
+  "name": "weather",
+  "description": "UAPI 天气查询，使用免登录免积分模式",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "查询天气。支持传 city 或 adcode 获取当前天气；可选返回未来预报、逐小时、生活指数和分钟级降水信息。未传 city 与 adcode 时，将按服务器 IP 所在地查询。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "城市名称，支持中文或英文，例如北京、Beijing"
+          },
+          "adcode": {
+            "type": "string",
+            "description": "地区 adcode，例如 110000"
+          },
+          "forecast": {
+            "type": "string",
+            "enum": [
+              "true"
+            ],
+            "description": "需要未来天气预报时传 true，不需要请省略"
+          },
+          "hourly": {
+            "type": "string",
+            "enum": [
+              "true"
+            ],
+            "description": "需要逐小时天气时传 true，不需要请省略"
+          },
+          "indices": {
+            "type": "string",
+            "enum": [
+              "true"
+            ],
+            "description": "需要生活指数时传 true，不需要请省略"
+          },
+          "minutely": {
+            "type": "string",
+            "enum": [
+              "true"
+            ],
+            "description": "需要分钟级降水预报时传 true，不需要请省略"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/weather",
+        "query": {
+          "city": "{{city}}",
+          "adcode": "{{adcode}}",
+          "forecast": "{{forecast}}",
+          "hourly": "{{hourly}}",
+          "indices": "{{indices}}",
+          "minutely": "{{minutely}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

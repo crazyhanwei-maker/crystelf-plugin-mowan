@@ -1,0 +1,41 @@
+{
+  "enabled": false,
+  "name": "chemistry",
+  "description": "PubChem 化合物查询工具，适合查询分子式、分子量、SMILES、IUPAC 名称、XLogP 和 TPSA。",
+  "allowedHosts": [
+    "pubchem.ncbi.nlm.nih.gov"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_compound_properties",
+      "description": "按化合物名称查询 PubChem 属性。必须提供 name；适合查 aspirin、caffeine、glucose 等化合物。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "化合物英文名或常用名，例如 aspirin、caffeine"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{{name}}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IsomericSMILES,IUPACName,XLogP,TPSA,Charge/JSON",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "PropertyTable.Properties"
+        ],
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "enabled": false,
+  "name": "bio",
+  "description": "GBIF 物种与分布记录查询工具，适合查询学名、分类、物种记录和分布地点。",
+  "allowedHosts": [
+    "api.gbif.org"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "search_species",
+      "description": "搜索 GBIF 物种分类信息。必须提供 query；适合查物种学名、分类阶元、同物异名和来源数据集。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "物种关键词或学名，例如 panda、Ailuropoda melanoleuca"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.gbif.org/v1/species/search",
+        "query": {
+          "q": "{{query}}",
+          "limit": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "count",
+          "results"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "search_occurrences",
+      "description": "搜索 GBIF 物种出现记录。必须提供 scientificName；country 可选，适合查物种分布地点和采集记录。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "scientificName": {
+            "type": "string",
+            "description": "物种学名，例如 Ailuropoda melanoleuca"
+          },
+          "country": {
+            "type": "string",
+            "description": "可选 ISO 国家代码，例如 CN、US"
+          }
+        },
+        "required": [
+          "scientificName"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.gbif.org/v1/occurrence/search",
+        "query": {
+          "scientificName": "{{scientificName}}",
+          "country": "{{country}}",
+          "limit": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "count",
+          "results"
+        ],
+        "maxLength": 3400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

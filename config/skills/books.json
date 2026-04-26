@@ -1,0 +1,105 @@
+{
+  "enabled": false,
+  "name": "books",
+  "description": "Open Library 图书检索工具，适合按书名、作者、ISBN 查询图书元数据、出版年份、作者和可借阅信息。",
+  "allowedHosts": [
+    "openlibrary.org"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "search_books",
+      "description": "搜索图书。必须提供 query；可选 title、author、language 和 limit 用于缩小范围。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "通用搜索关键词，例如 三体、Dune、Clean Code"
+          },
+          "title": {
+            "type": "string",
+            "description": "书名关键词，可选"
+          },
+          "author": {
+            "type": "string",
+            "description": "作者名关键词，可选"
+          },
+          "language": {
+            "type": "string",
+            "description": "ISO 639-1 语言代码，例如 zh、en、ja"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "返回条数，建议 1-8"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://openlibrary.org/search.json",
+        "query": {
+          "q": "{{query}}",
+          "title": "{{title}}",
+          "author": "{{author}}",
+          "lang": "{{language}}",
+          "limit": "{{limit}}",
+          "fields": "key,title,author_name,first_publish_year,isbn,language,edition_count,cover_i,has_fulltext,ebook_access,publisher,subject"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "User-Agent": "crystelf-plugin/1.6.4"
+        }
+      },
+      "response": {
+        "pick": [
+          "num_found",
+          "start",
+          "docs"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "search_books_by_isbn",
+      "description": "按 ISBN 查询图书。必须提供 isbn；适合用户给出 10 位或 13 位 ISBN 时精确检索。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "isbn": {
+            "type": "string",
+            "description": "ISBN-10 或 ISBN-13"
+          }
+        },
+        "required": [
+          "isbn"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://openlibrary.org/search.json",
+        "query": {
+          "isbn": "{{isbn}}",
+          "limit": "5",
+          "fields": "key,title,author_name,first_publish_year,isbn,language,edition_count,cover_i,has_fulltext,ebook_access,publisher"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "User-Agent": "crystelf-plugin/1.6.4"
+        }
+      },
+      "response": {
+        "pick": [
+          "num_found",
+          "docs"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

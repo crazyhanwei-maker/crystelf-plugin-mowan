@@ -1,0 +1,218 @@
+{
+  "enabled": true,
+  "name": "wechat-mp",
+  "description": "微信公众号API工具集，支持获取Access Token、上传图片素材和创建草稿文章。需要微信公众号 AppID 和 AppSecret。",
+  "allowedHosts": [
+    "api.weixin.qq.com"
+  ],
+  "timeoutMs": 20000,
+  "tools": [
+    {
+      "name": "get_access_token",
+      "description": "获取微信公众号 Access Token。必须提供 appid 和 secret；返回 access_token 和有效时长。Token 有效期 2 小时，应缓存复用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "appid": {
+            "type": "string",
+            "description": "微信公众号 AppID"
+          },
+          "secret": {
+            "type": "string",
+            "description": "微信公众号 AppSecret"
+          }
+        },
+        "required": [
+          "appid",
+          "secret"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.weixin.qq.com/cgi-bin/token",
+        "query": {
+          "grant_type": "client_credential",
+          "appid": "{{appid}}",
+          "secret": "{{secret}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "access_token",
+          "expires_in",
+          "errcode",
+          "errmsg"
+        ],
+        "maxLength": 1000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "upload_body_image",
+      "description": "上传正文图片到微信公众号素材库。必须提供 access_token 和图片 URL；返回微信 CDN 图片 URL，可直接在文章正文中使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "微信公众号 Access Token"
+          },
+          "media_url": {
+            "type": "string",
+            "description": "需要上传的图片 URL 地址"
+          }
+        },
+        "required": [
+          "access_token",
+          "media_url"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.weixin.qq.com/cgi-bin/media/uploadimg",
+        "query": {
+          "access_token": "{{access_token}}"
+        },
+        "body": {
+          "media_url": "{{media_url}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "url",
+          "errcode",
+          "errmsg"
+        ],
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "upload_material_image",
+      "description": "上传永久图片素材（用于封面图）。必须提供 access_token 和图片 URL；返回 media_id 和 URL，media_id 用于创建草稿时指定封面。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "微信公众号 Access Token"
+          },
+          "media_url": {
+            "type": "string",
+            "description": "需要上传的封面图片 URL 地址"
+          }
+        },
+        "required": [
+          "access_token",
+          "media_url"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.weixin.qq.com/cgi-bin/material/add_material",
+        "query": {
+          "access_token": "{{access_token}}",
+          "type": "image"
+        },
+        "body": {
+          "media_url": "{{media_url}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "media_id",
+          "url",
+          "errcode",
+          "errmsg"
+        ],
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "create_draft_article",
+      "description": "创建微信公众号草稿文章。必须提供 access_token、title 和 content（HTML 格式正文）；可选 thumb_media_id（封面图 media_id）、author、digest（摘要）。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "微信公众号 Access Token"
+          },
+          "title": {
+            "type": "string",
+            "description": "文章标题"
+          },
+          "content": {
+            "type": "string",
+            "description": "文章正文（HTML 格式）"
+          },
+          "thumb_media_id": {
+            "type": "string",
+            "description": "封面图片 media_id，通过 upload_material_image 获取"
+          },
+          "author": {
+            "type": "string",
+            "description": "文章作者"
+          },
+          "digest": {
+            "type": "string",
+            "description": "文章摘要，不填则自动截取正文前64字"
+          },
+          "need_open_comment": {
+            "type": "integer",
+            "description": "是否打开评论，0 不打开，1 打开"
+          }
+        },
+        "required": [
+          "access_token",
+          "title",
+          "content"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.weixin.qq.com/cgi-bin/draft/add",
+        "query": {
+          "access_token": "{{access_token}}"
+        },
+        "body": {
+          "articles": [
+            {
+              "title": "{{title}}",
+              "author": "{{author}}",
+              "digest": "{{digest}}",
+              "content": "{{content}}",
+              "thumb_media_id": "{{thumb_media_id}}",
+              "need_open_comment": "{{need_open_comment}}"
+            }
+          ]
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "media_id",
+          "errcode",
+          "errmsg"
+        ],
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

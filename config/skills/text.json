@@ -1,0 +1,47 @@
+{
+  "enabled": false,
+  "name": "text",
+  "description": "文本安全工具，包含敏感词快速检测",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "profanity_check",
+      "description": "检测文本中的敏感词或违禁词，返回脱敏文本与命中词列表。必须提供 text。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要检测的文本"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/text/profanitycheck",
+        "body": {
+          "text": "{{text}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "status",
+          "masked_text",
+          "forbidden_words"
+        ],
+        "maxLength": 1800
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

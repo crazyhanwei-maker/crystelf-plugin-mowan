@@ -1,0 +1,95 @@
+{
+  "enabled": false,
+  "name": "wiki",
+  "description": "中文维基百科检索与摘要工具，适合百科名词解释、人物/作品/概念页面搜索和短摘要。",
+  "allowedHosts": [
+    "zh.wikipedia.org"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "search_zh_wikipedia",
+      "description": "按关键词搜索中文维基百科页面标题。必须提供 query；适合不确定准确页面标题时先查候选。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词，例如 人工智能、芙宁娜、上海"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "返回条数，建议 1-8"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://zh.wikipedia.org/w/api.php",
+        "query": {
+          "action": "opensearch",
+          "search": "{{query}}",
+          "limit": "{{limit}}",
+          "namespace": "0",
+          "format": "json",
+          "redirects": "resolve"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "User-Agent": "crystelf-plugin/1.6.4"
+        }
+      },
+      "response": {
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_zh_wikipedia_extract",
+      "description": "获取中文维基百科指定页面的纯文本摘要。必须提供 title；适合回答“是什么”、人物/作品简介和概念解释。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "中文维基百科页面标题，例如 人工智能"
+          },
+          "exchars": {
+            "type": "integer",
+            "description": "摘要字符数，建议 300-900，最大 1200"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://zh.wikipedia.org/w/api.php",
+        "query": {
+          "action": "query",
+          "prop": "extracts",
+          "titles": "{{title}}",
+          "exchars": "{{exchars}}",
+          "exintro": "1",
+          "explaintext": "1",
+          "redirects": "1",
+          "format": "json",
+          "formatversion": "2"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "User-Agent": "crystelf-plugin/1.6.4"
+        }
+      },
+      "response": {
+        "path": "query.pages",
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

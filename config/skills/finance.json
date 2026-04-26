@@ -1,0 +1,57 @@
+{
+  "enabled": true,
+  "name": "finance",
+  "description": "World Bank 公开指标工具，适合查询国家人口、GDP、人均 GDP、通胀、失业率等宏观经济与社会指标。",
+  "allowedHosts": [
+    "api.worldbank.org"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "get_worldbank_indicator",
+      "description": "查询 World Bank 指标。必须提供 country 和 indicator；常用 indicator：SP.POP.TOTL 人口、NY.GDP.MKTP.CD GDP、NY.GDP.PCAP.CD 人均 GDP、FP.CPI.TOTL.ZG 通胀率、SL.UEM.TOTL.ZS 失业率。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string",
+            "description": "国家代码，建议使用 ISO 2/3 位或 World Bank 代码，例如 CN、US、JPN、WLD"
+          },
+          "indicator": {
+            "type": "string",
+            "description": "World Bank 指标代码，例如 SP.POP.TOTL、NY.GDP.MKTP.CD、NY.GDP.PCAP.CD"
+          },
+          "date": {
+            "type": "string",
+            "description": "年份或年份范围，例如 2024 或 2020:2024"
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "返回条数，建议 1-10"
+          }
+        },
+        "required": [
+          "country",
+          "indicator"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.worldbank.org/v2/country/{{country}}/indicator/{{indicator}}",
+        "query": {
+          "format": "json",
+          "date": "{{date}}",
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "path": "1",
+        "maxLength": 3000
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

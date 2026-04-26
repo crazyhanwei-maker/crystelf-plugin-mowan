@@ -1,0 +1,48 @@
+{
+  "enabled": false,
+  "name": "translate",
+  "description": "轻量翻译工具，适合短文本多语言互译",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "text_translate",
+      "description": "翻译短文本。必须提供 text 和 target_lang；适合中英日韩等常见语言互译。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "需要翻译的文本"
+          },
+          "target_lang": {
+            "type": "string",
+            "description": "目标语言代码，例如 zh、en、ja、ko、fr、de"
+          }
+        },
+        "required": [
+          "text",
+          "target_lang"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/translate/text",
+        "body": {
+          "text": "{{text}}",
+          "ToLang": "{{target_lang}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

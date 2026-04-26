@@ -1,0 +1,89 @@
+{
+  "enabled": true,
+  "name": "holiday-global",
+  "description": "Nager.Date 全球公共节假日工具，适合查询指定国家某年的公共节假日、近期假日和支持国家列表。",
+  "allowedHosts": [
+    "date.nager.at"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "get_public_holidays",
+      "description": "查询指定国家某年的公共节假日。必须提供 year 和 countryCode；countryCode 使用 ISO 3166-1 alpha-2，例如 CN、JP、US、GB。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "年份，例如 2026"
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "国家代码，例如 CN、JP、US、GB"
+          }
+        },
+        "required": [
+          "year",
+          "countryCode"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://date.nager.at/api/v3/PublicHolidays/{{year}}/{{countryCode}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_next_public_holidays",
+      "description": "查询指定国家接下来一段时间的公共节假日。必须提供 countryCode。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "string",
+            "description": "国家代码，例如 CN、JP、US、GB"
+          }
+        },
+        "required": [
+          "countryCode"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://date.nager.at/api/v3/NextPublicHolidays/{{countryCode}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "list_supported_countries",
+      "description": "列出 Nager.Date 支持查询节假日的国家代码。适合用户只给国家中文名时先确认 countryCode。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://date.nager.at/api/v3/AvailableCountries",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "enabled": false,
+  "name": "food",
+  "description": "Open Food Facts 食品条形码查询工具，适合查询食品名称、品牌、配料、营养等级、Nutri-Score 和营养成分。",
+  "allowedHosts": [
+    "world.openfoodfacts.org"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_food_by_barcode",
+      "description": "按条形码查询食品信息。必须提供 barcode；适合查包装食品的名称、品牌、配料、营养等级和营养成分。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "description": "食品条形码，例如 3017624010701"
+          }
+        },
+        "required": [
+          "barcode"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://world.openfoodfacts.org/api/v2/product/{{barcode}}.json",
+        "query": {
+          "fields": "code,status,product.product_name,product.brands,product.categories,product.ingredients_text,product.nutriscore_grade,product.nova_group,product.ecoscore_grade,product.nutriments,product.image_front_url"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "code",
+          "status",
+          "product"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "enabled": false,
+  "name": "games-deals",
+  "description": "CheapShark 游戏折扣查询工具，适合查询 PC 游戏当前折扣、价格、评分和历史低价。",
+  "allowedHosts": [
+    "www.cheapshark.com"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "search_game_deals",
+      "description": "搜索 PC 游戏折扣。必须提供 title；适合查游戏当前最低价、折扣比例和商店 dealID。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "游戏标题关键词，例如 portal、hades"
+          },
+          "upperPrice": {
+            "type": "number",
+            "description": "可选最高价格，单位美元"
+          },
+          "sortBy": {
+            "type": "string",
+            "description": "可选排序，例如 Deal Rating、Price、Savings、Recent"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://www.cheapshark.com/api/1.0/deals",
+        "query": {
+          "title": "{{title}}",
+          "upperPrice": "{{upperPrice}}",
+          "sortBy": "{{sortBy}}",
+          "pageSize": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "search_games",
+      "description": "按标题搜索 CheapShark 游戏条目。必须提供 title；适合查 gameID、Steam appID 和最低价。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "游戏标题关键词，例如 portal、stardew"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://www.cheapshark.com/api/1.0/games",
+        "query": {
+          "title": "{{title}}",
+          "limit": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

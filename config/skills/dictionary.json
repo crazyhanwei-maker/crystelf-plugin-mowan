@@ -1,0 +1,132 @@
+{
+  "enabled": false,
+  "name": "dictionary",
+  "description": "英文词典与词语关系工具，包含单词释义、音标、例句、近义词、押韵词和联想词。",
+  "allowedHosts": [
+    "api.dictionaryapi.dev",
+    "api.datamuse.com"
+  ],
+  "timeoutMs": 10000,
+  "tools": [
+    {
+      "name": "lookup_english_word",
+      "description": "查询英文单词释义。必须提供 word；适合查音标、词性、释义、例句和同反义词。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string",
+            "description": "英文单词，例如 hello、serendipity"
+          }
+        },
+        "required": [
+          "word"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.dictionaryapi.dev/api/v2/entries/en/{{word}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "find_words_by_meaning",
+      "description": "按含义查英文相关词。必须提供 meaning；适合找表达某个含义的英文词。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "meaning": {
+            "type": "string",
+            "description": "含义描述，例如 happy、fast car"
+          }
+        },
+        "required": [
+          "meaning"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.datamuse.com/words",
+        "query": {
+          "ml": "{{meaning}}",
+          "max": "10"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "find_synonyms",
+      "description": "查询英文近义词。必须提供 word。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string",
+            "description": "英文单词，例如 happy"
+          }
+        },
+        "required": [
+          "word"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.datamuse.com/words",
+        "query": {
+          "rel_syn": "{{word}}",
+          "max": "10"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "find_rhymes",
+      "description": "查询英文押韵词。必须提供 word；适合写歌词、英文诗或押韵文案。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string",
+            "description": "英文单词，例如 time"
+          }
+        },
+        "required": [
+          "word"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.datamuse.com/words",
+        "query": {
+          "rel_rhy": "{{word}}",
+          "max": "10"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

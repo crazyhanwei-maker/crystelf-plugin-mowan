@@ -1,0 +1,300 @@
+{
+  "enabled": true,
+  "name": "ai-image-gen",
+  "description": "AI 图片生成工具集，兼容 OpenAI Images API 格式，支持 OpenAI、Azure OpenAI、Google、OpenRouter、DashScope 等多提供商。各提供商需要对应的 API Key。",
+  "allowedHosts": [
+    "api.openai.com",
+    "*.openai.azure.com",
+    "generativelanguage.googleapis.com",
+    "openrouter.ai",
+    "dashscope.aliyuncs.com"
+  ],
+  "timeoutMs": 60000,
+  "tools": [
+    {
+      "name": "openai_generate_image",
+      "description": "使用 OpenAI 图片生成 API 创建图片。必须提供 prompt；可选 model（默认 gpt-image-2）、size、quality。需要 OPENAI_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词，详细描述想要的图片内容"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 gpt-image-2，可选 dall-e-3"
+          },
+          "size": {
+            "type": "string",
+            "description": "图片尺寸，例如 1024x1024、1024x1536、1536x1024"
+          },
+          "quality": {
+            "type": "string",
+            "description": "图片质量，standard 或 hd"
+          },
+          "n": {
+            "type": "integer",
+            "description": "生成图片数量，默认 1"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "body": {
+          "model": "{{model}}",
+          "prompt": "{{prompt}}",
+          "size": "{{size}}",
+          "quality": "{{quality}}",
+          "n": "{{n}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {{OPENAI_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "created",
+          "data"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "google_generate_image",
+      "description": "使用 Google Gemini/Imagen API 生成图片。必须提供 prompt；可选 model（默认 gemini-3-pro-image-preview）。支持参考图片。需要 GOOGLE_API_KEY 或 GEMINI_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 gemini-3-pro-image-preview；Imagen 可选 imagen-3.0-generate-002"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "宽高比，例如 1:1、16:9、9:16、4:3、3:4"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{{model}}:generateContent",
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "{{prompt}}"
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "responseModalities": [
+              "IMAGE"
+            ]
+          }
+        },
+        "query": {
+          "key": "{{GOOGLE_API_KEY}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "candidates"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "openrouter_generate_image",
+      "description": "使用 OpenRouter 代理生成图片，可调用多种模型。必须提供 prompt 和 model；需要 OPENROUTER_API_KEY。支持 Google、OpenAI 等多种图片模型。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 google/gemini-3.1-flash-image-preview；可选 openai/gpt-image-2 等"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "宽高比，例如 1:1、16:9、9:16"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "body": {
+          "model": "{{model}}",
+          "messages": [
+            {
+              "role": "user",
+              "content": "{{prompt}}"
+            }
+          ],
+          "modalities": [
+            "image",
+            "text"
+          ],
+          "stream": false
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {{OPENROUTER_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "choices"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "dashscope_generate_image",
+      "description": "使用阿里云 DashScope 通义万相 API 生成图片。必须提供 prompt；可选 model（默认 qwen-image-2.0-pro）。需要 DASHSCOPE_API_KEY。不支持参考图片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 qwen-image-2.0-pro；可选 qwen-image-max、qwen-image-plus"
+          },
+          "size": {
+            "type": "string",
+            "description": "图片尺寸，格式 宽*高，例如 1024*1024、1024*1536"
+          },
+          "negative_prompt": {
+            "type": "string",
+            "description": "反向提示词，描述不希望出现的元素"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
+        "body": {
+          "model": "{{model}}",
+          "input": {
+            "messages": [
+              {
+                "role": "user",
+                "content": [
+                  {
+                    "text": "{{prompt}}"
+                  }
+                ]
+              }
+            ]
+          },
+          "parameters": {
+            "size": "{{size}}",
+            "negative_prompt": "{{negative_prompt}}",
+            "watermark": false
+          }
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {{DASHSCOPE_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "output",
+          "request_id"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "azure_openai_generate_image",
+      "description": "使用 Azure OpenAI 图片生成 API 创建图片。必须提供 prompt；需要 AZURE_OPENAI_API_KEY、AZURE_OPENAI_BASE_URL 和 AZURE_OPENAI_DEPLOYMENT。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词"
+          },
+          "deployment": {
+            "type": "string",
+            "description": "Azure OpenAI 部署名称"
+          },
+          "size": {
+            "type": "string",
+            "description": "图片尺寸，例如 1024x1024"
+          },
+          "quality": {
+            "type": "string",
+            "description": "图片质量，standard 或 hd"
+          }
+        },
+        "required": [
+          "prompt",
+          "deployment"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://{{AZURE_OPENAI_BASE_URL}}/openai/deployments/{{deployment}}/images/generations?api-version=2025-04-01-preview",
+        "body": {
+          "prompt": "{{prompt}}",
+          "size": "{{size}}",
+          "quality": "{{quality}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "api-key": "{{AZURE_OPENAI_API_KEY}}"
+        }
+      },
+      "response": {
+        "pick": [
+          "created",
+          "data"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

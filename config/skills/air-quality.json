@@ -1,0 +1,102 @@
+{
+  "enabled": false,
+  "name": "air-quality",
+  "description": "Open-Meteo 空气质量工具，适合查询城市坐标、PM2.5、PM10、臭氧、花粉、欧洲 AQI 和美国 AQI。",
+  "allowedHosts": [
+    "geocoding-api.open-meteo.com",
+    "air-quality-api.open-meteo.com"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "search_location",
+      "description": "按城市名称搜索坐标。适合用户只给城市名时，先查 latitude 和 longitude 再调用空气质量工具。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "城市名称，例如 Beijing、上海、Tokyo"
+          },
+          "language": {
+            "type": "string",
+            "description": "返回语言，建议 zh 或 en"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://geocoding-api.open-meteo.com/v1/search",
+        "query": {
+          "name": "{{name}}",
+          "count": "5",
+          "language": "{{language}}",
+          "format": "json"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "results"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_air_quality",
+      "description": "按经纬度查询空气质量。必须提供 latitude 和 longitude；适合查 PM2.5、PM10、臭氧、花粉、UV、欧洲 AQI 和美国 AQI。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "纬度，例如北京约 39.9075"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "经度，例如北京约 116.39723"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "时区，建议 auto"
+          }
+        },
+        "required": [
+          "latitude",
+          "longitude"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://air-quality-api.open-meteo.com/v1/air-quality",
+        "query": {
+          "latitude": "{{latitude}}",
+          "longitude": "{{longitude}}",
+          "hourly": "pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,uv_index,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen,european_aqi,us_aqi",
+          "forecast_days": "1",
+          "timezone": "{{timezone}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "latitude",
+          "longitude",
+          "timezone",
+          "hourly_units",
+          "hourly"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

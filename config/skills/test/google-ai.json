@@ -1,0 +1,170 @@
+{
+  "enabled": true,
+  "name": "google-ai",
+  "description": "Google AI API 工具集，支持 Gemini 文本生成、Imagen 图片生成。需要 GOOGLE_API_KEY 或 GEMINI_API_KEY。灵感来源于 baoyu-imagine 和 anthropics/skills 中的 AI 集成。",
+  "allowedHosts": [
+    "generativelanguage.googleapis.com"
+  ],
+  "timeoutMs": 60000,
+  "tools": [
+    {
+      "name": "gemini_generate_content",
+      "description": "调用 Gemini API 生成文本内容。必须提供 prompt；可选 model（默认 gemini-2.5-flash）。支持多轮对话和长文本生成。需要 GOOGLE_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "用户提示词/问题"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 gemini-2.5-flash；可选 gemini-2.5-pro、gemini-2.0-flash"
+          },
+          "system_instruction": {
+            "type": "string",
+            "description": "系统指令，设定模型行为"
+          },
+          "temperature": {
+            "type": "number",
+            "description": "温度参数 0-2"
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "description": "最大输出 token 数"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{{model}}:generateContent",
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "{{prompt}}"
+                }
+              ]
+            }
+          ],
+          "systemInstruction": {
+            "parts": [
+              {
+                "text": "{{system_instruction}}"
+              }
+            ]
+          },
+          "generationConfig": {
+            "temperature": "{{temperature}}",
+            "maxOutputTokens": "{{max_output_tokens}}"
+          }
+        },
+        "query": {
+          "key": "{{GOOGLE_API_KEY}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "candidates",
+          "usageMetadata",
+          "modelVersion"
+        ],
+        "maxLength": 6400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "gemini_generate_image",
+      "description": "调用 Gemini API 生成图片。必须提供 prompt；返回 base64 编码的图片数据。需要 GOOGLE_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "图片生成提示词"
+          },
+          "model": {
+            "type": "string",
+            "description": "模型名称，默认 gemini-3-pro-image-preview"
+          },
+          "aspect_ratio": {
+            "type": "string",
+            "description": "宽高比：1:1、16:9、9:16、4:3、3:4"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{{model}}:generateContent",
+        "body": {
+          "contents": [
+            {
+              "role": "user",
+              "parts": [
+                {
+                  "text": "{{prompt}}"
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "responseModalities": [
+              "IMAGE"
+            ]
+          }
+        },
+        "query": {
+          "key": "{{GOOGLE_API_KEY}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "candidates"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "list_gemini_models",
+      "description": "查询可用的 Gemini 模型列表。需要 GOOGLE_API_KEY。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models",
+        "query": {
+          "key": "{{GOOGLE_API_KEY}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "models"
+        ],
+        "maxLength": 6400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "enabled": true,
+  "name": "tracking",
+  "description": "UAPI 快递工具，使用免登录免积分模式，支持物流查询、快递公司识别和公司列表读取",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_tracking",
+      "description": "查询快递物流轨迹。必须提供 tracking_number；可选提供 carrier_code 指定快递公司编码以加快查询。当前默认只接免费模式，不暴露 Pro 专属的 phone 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tracking_number": {
+            "type": "string",
+            "description": "快递单号，通常为 10 到 20 位数字或字母数字组合"
+          },
+          "carrier_code": {
+            "type": "string",
+            "description": "快递公司编码，可选；不填时系统会自动识别，例如 yuantong、shunfeng、zto"
+          }
+        },
+        "required": [
+          "tracking_number"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/tracking/query",
+        "query": {
+          "tracking_number": "{{tracking_number}}",
+          "carrier_code": "{{carrier_code}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "detect_carrier",
+      "description": "根据快递单号识别最可能的快递公司，不查询物流。必须提供 tracking_number；会返回识别结果和可能的备选公司。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tracking_number": {
+            "type": "string",
+            "description": "需要识别的快递单号"
+          }
+        },
+        "required": [
+          "tracking_number"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/tracking/detect",
+        "query": {
+          "tracking_number": "{{tracking_number}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "list_carriers",
+      "description": "获取系统当前支持的快递公司列表，返回标准编码和中文名称。适合在需要让用户选择 carrier_code 时先读取一次。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/misc/tracking/carriers",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2800
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

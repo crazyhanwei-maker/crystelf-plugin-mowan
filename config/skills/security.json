@@ -1,0 +1,130 @@
+{
+  "enabled": false,
+  "name": "security",
+  "description": "公开漏洞查询工具，包含 NVD CVE 和 OSV 开源包漏洞查询。适合查询 CVE、CVSS、发布日期和开源包漏洞。",
+  "allowedHosts": [
+    "services.nvd.nist.gov",
+    "api.osv.dev"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "search_cves",
+      "description": "按关键词搜索 NVD CVE 漏洞。必须提供 keyword；适合查 openssl、axios、nginx 等关键词相关漏洞。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "description": "漏洞关键词，例如 openssl、axios、nginx"
+          }
+        },
+        "required": [
+          "keyword"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+        "query": {
+          "keywordSearch": "{{keyword}}",
+          "resultsPerPage": "5"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "resultsPerPage",
+          "startIndex",
+          "totalResults",
+          "vulnerabilities"
+        ],
+        "maxLength": 3600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_cve",
+      "description": "按 CVE 编号查询 NVD 漏洞详情。必须提供 cveId，例如 CVE-2024-3094。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "cveId": {
+            "type": "string",
+            "description": "CVE 编号，例如 CVE-2024-3094"
+          }
+        },
+        "required": [
+          "cveId"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+        "query": {
+          "cveId": "{{cveId}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "totalResults",
+          "vulnerabilities"
+        ],
+        "maxLength": 3600
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "query_osv_package",
+      "description": "查询 OSV 开源包漏洞。必须提供 ecosystem 和 packageName；version 可选。适合查 npm、PyPI、Go、Maven 等生态的包漏洞。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ecosystem": {
+            "type": "string",
+            "description": "包生态，例如 npm、PyPI、Go、Maven、crates.io"
+          },
+          "packageName": {
+            "type": "string",
+            "description": "包名，例如 axios、requests"
+          },
+          "version": {
+            "type": "string",
+            "description": "可选版本号，例如 1.6.0；不填时查询该包已知漏洞"
+          }
+        },
+        "required": [
+          "ecosystem",
+          "packageName"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://api.osv.dev/v1/query",
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "version": "{{version}}",
+          "package": {
+            "name": "{{packageName}}",
+            "ecosystem": "{{ecosystem}}"
+          }
+        }
+      },
+      "response": {
+        "pick": [
+          "vulns"
+        ],
+        "maxLength": 3600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

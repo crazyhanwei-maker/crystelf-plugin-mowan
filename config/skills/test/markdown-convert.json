@@ -1,0 +1,69 @@
+{
+  "enabled": true,
+  "name": "markdown-convert",
+  "description": "UAPI Markdown 转换工具集，使用免登录免积分模式，支持网页转 Markdown（异步任务模式）",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "url_to_markdown",
+      "description": "将网页内容异步转换为 Markdown 格式。必须提供 url；返回任务 ID，用于后续查询转换结果。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "需要转换的网页 URL"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "url": "https://uapis.cn/api/v1/web/tomarkdown/async",
+        "body": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_markdown_result",
+      "description": "查询网页转 Markdown 异步任务的结果。必须提供 task_id（由 url_to_markdown 返回）。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "异步任务 ID"
+          }
+        },
+        "required": [
+          "task_id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/web/tomarkdown/async/{{task_id}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 6400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

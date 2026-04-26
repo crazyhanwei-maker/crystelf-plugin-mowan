@@ -1,0 +1,64 @@
+{
+  "enabled": true,
+  "name": "earthquake",
+  "description": "USGS 地震速报工具，适合查询全球近期地震、显著地震、M4.5+ 地震和最近一小时/一天/一周/一月地震事件。",
+  "allowedHosts": [
+    "earthquake.usgs.gov"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "get_recent_earthquakes",
+      "description": "查询 USGS GeoJSON 地震摘要 feed。必须提供 feed，例如 significant_day、4.5_day、2.5_week、significant_week、all_hour。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "feed": {
+            "type": "string",
+            "description": "USGS feed 名称",
+            "enum": [
+              "significant_hour",
+              "4.5_hour",
+              "2.5_hour",
+              "1.0_hour",
+              "all_hour",
+              "significant_day",
+              "4.5_day",
+              "2.5_day",
+              "1.0_day",
+              "all_day",
+              "significant_week",
+              "4.5_week",
+              "2.5_week",
+              "1.0_week",
+              "all_week",
+              "significant_month",
+              "4.5_month",
+              "2.5_month",
+              "1.0_month",
+              "all_month"
+            ]
+          }
+        },
+        "required": [
+          "feed"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/{{feed}}.geojson",
+        "headers": {
+          "Accept": "application/geo+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "metadata",
+          "features"
+        ],
+        "maxLength": 3600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

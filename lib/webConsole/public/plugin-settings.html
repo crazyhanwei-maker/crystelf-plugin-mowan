@@ -6,13 +6,13 @@
   <title>魔丸控制台 - 插件设置中心</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body class="plugin-settings-page">
   <div class="page">
     <header class="hero">
       <div>
         <div class="hero-badge">魔丸控制台</div>
         <h1>插件设置中心</h1>
-        <p id="plugin-settings-meta">基于锅巴配置项渲染，按分类与分组管理。</p>
+        <p id="plugin-settings-meta">基于锅巴配置项渲染，统一管理插件配置、控制台与 HTTP skills。</p>
       </div>
       <div class="actions">
         <button id="plugin-settings-save-btn">保存插件设置</button>
@@ -46,6 +46,7 @@
             <button class="plugin-settings-side-btn active" data-plugin-top-tab="plugin-settings-config-panel">插件配置</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-console-panel">控制台设置</button>
+            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-skills-panel">Skills 设置</button>
           </div>
         </div>
         <div id="plugin-settings-config-nav" class="plugin-settings-side-section">
@@ -57,13 +58,7 @@
       </aside>
 
       <div class="plugin-settings-main">
-        <section class="panel">
-          <div id="plugin-settings-risk" class="risk-box hidden"></div>
-          <div class="preview-section">
-            <h3>设置中心说明</h3>
-            <div class="preview-box">这里统一承接插件配置、功能状态与控制台设置。左侧可快速切换分类与分组，右侧直接编辑当前内容。</div>
-          </div>
-        </section>
+        <div id="plugin-settings-risk" class="risk-box hidden"></div>
 
         <section id="plugin-settings-config-panel" class="panel">
           <div class="plugin-settings-content-head">
@@ -90,6 +85,15 @@
             <div id="plugin-settings-console-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-console-box" class="settings-grid"></div>
+        </section>
+
+        <section id="plugin-settings-skills-panel" class="panel hidden">
+          <div class="plugin-settings-content-head">
+            <h2>Skills 设置</h2>
+            <div class="setting-status">查看每个 HTTP skill 的用途说明、工具数量和当前启用状态，并决定是否自动加载到 AI 会话。</div>
+            <div id="plugin-settings-skills-meta" class="plugin-settings-panel-meta"></div>
+          </div>
+          <div id="plugin-settings-skills-box" class="settings-grid">加载中...</div>
         </section>
       </div>
     </div>

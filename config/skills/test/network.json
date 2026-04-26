@@ -1,0 +1,251 @@
+{
+  "enabled": true,
+  "name": "network",
+  "description": "UAPI 网络工具集，使用免登录免积分模式，支持 IP 归属地查询、DNS 解析、WHOIS 查询、ICP 备案查询、URL 状态检测、Ping 延迟测试、端口扫描",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "get_ipinfo",
+      "description": "查询指定 IP 地址的地理位置与运营商信息。必须提供 ip 参数；返回国家、省份、城市、运营商、ASN、经纬度等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "需要查询的 IP 地址，例如 8.8.8.8"
+          }
+        },
+        "required": [
+          "ip"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/ipinfo",
+        "query": {
+          "ip": "{{ip}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "get_myip",
+      "description": "获取当前服务器出口 IP 及其地理位置信息，无需传参。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/myip",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "dns_lookup",
+      "description": "查询域名的 DNS 解析记录。必须提供 domain；可选 type 指定记录类型（A、AAAA、MX、NS、TXT、CNAME、SOA 等），默认 A。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "需要查询的域名，例如 baidu.com"
+          },
+          "type": {
+            "type": "string",
+            "description": "DNS 记录类型，例如 A、AAAA、MX、NS、TXT、CNAME、SOA，默认 A"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/dns",
+        "query": {
+          "domain": "{{domain}}",
+          "type": "{{type}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "whois_lookup",
+      "description": "查询域名的 WHOIS 注册信息。必须提供 domain；返回注册商、注册时间、到期时间、DNS 服务器等原始 WHOIS 数据。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "需要查询的域名，例如 google.com"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/whois",
+        "query": {
+          "domain": "{{domain}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "icp_lookup",
+      "description": "查询中国网站 ICP 备案信息。必须提供 domain；返回备案号、公司名称、审核时间等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "需要查询备案的域名，例如 baidu.com"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/icp",
+        "query": {
+          "domain": "{{domain}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "check_url_status",
+      "description": "检测指定 URL 的 HTTP 状态码和响应情况。必须提供 url 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "需要检测的 URL，例如 https://baidu.com"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/urlstatus",
+        "query": {
+          "url": "{{url}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "ping_host",
+      "description": "对指定主机执行 Ping 测试，返回最小/平均/最大延迟和解析 IP。必须提供 host 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "需要 Ping 的主机名或 IP，例如 baidu.com"
+          }
+        },
+        "required": [
+          "host"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/ping",
+        "query": {
+          "host": "{{host}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "port_scan",
+      "description": "扫描指定主机的端口开放状态。必须提供 host 和 port 参数。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "目标主机名或 IP"
+          },
+          "port": {
+            "type": "string",
+            "description": "需要扫描的端口号，例如 80、443、8080"
+          }
+        },
+        "required": [
+          "host",
+          "port"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/network/portscan",
+        "query": {
+          "host": "{{host}}",
+          "port": "{{port}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 1500
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

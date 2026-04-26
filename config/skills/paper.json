@@ -1,0 +1,56 @@
+{
+  "enabled": true,
+  "name": "paper",
+  "description": "OpenAlex 论文检索工具，适合学术论文搜索、年份、引用量、开放访问状态、DOI 和论文链接查询。",
+  "allowedHosts": [
+    "api.openalex.org"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "search_papers",
+      "description": "搜索 OpenAlex 学术论文。必须提供 query；适合查论文标题、年份、DOI、引用量、开放访问状态和原始链接。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "论文搜索关键词，例如 attention is all you need"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "返回条数，建议 1-8"
+          },
+          "filter": {
+            "type": "string",
+            "description": "可选 OpenAlex filter，例如 from_publication_date:2020-01-01,type:article"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.openalex.org/works",
+        "query": {
+          "search": "{{query}}",
+          "per-page": "{{limit}}",
+          "filter": "{{filter}}",
+          "select": "id,doi,title,display_name,publication_year,publication_date,type,cited_by_count,language,open_access,primary_location"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "meta",
+          "results"
+        ],
+        "maxLength": 3600
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

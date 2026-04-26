@@ -1,0 +1,152 @@
+{
+  "enabled": true,
+  "name": "game",
+  "description": "UAPI 游戏工具集，使用免登录免积分模式，支持 Epic 免费游戏查询、Minecraft 服务器/玩家查询、Steam 玩家摘要",
+  "allowedHosts": [
+    "uapis.cn"
+  ],
+  "timeoutMs": 12000,
+  "tools": [
+    {
+      "name": "epic_free_games",
+      "description": "查询 Epic Games Store 当前和即将免费的游戏信息。返回游戏标题、封面图、原价、免费领取时间段和商店链接。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/game/epic-free",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "minecraft_server_status",
+      "description": "查询 Minecraft 服务器状态。必须提供 server（服务器地址）；返回在线状态、在线玩家数、版本号和 MOTD。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "server": {
+            "type": "string",
+            "description": "Minecraft 服务器地址，例如 mc.hypixel.net"
+          }
+        },
+        "required": [
+          "server"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/game/minecraft/serverstatus",
+        "query": {
+          "server": "{{server}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "minecraft_user_info",
+      "description": "查询 Minecraft 玩家信息。必须提供 username（用户名）或 uuid；返回玩家皮肤、名称历史等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Minecraft 玩家用户名"
+          },
+          "uuid": {
+            "type": "string",
+            "description": "Minecraft 玩家 UUID，与 username 二选一"
+          }
+        }
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/game/minecraft/userinfo",
+        "query": {
+          "username": "{{username}}",
+          "uuid": "{{uuid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "minecraft_name_history",
+      "description": "查询 Minecraft 玩家用户名历史记录。必须提供 uuid。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "description": "Minecraft 玩家 UUID"
+          }
+        },
+        "required": [
+          "uuid"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/game/minecraft/historyid",
+        "query": {
+          "uuid": "{{uuid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "steam_player_summary",
+      "description": "查询 Steam 玩家摘要信息。必须提供 steamid；返回玩家昵称、头像、在线状态等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "steamid": {
+            "type": "string",
+            "description": "Steam 64位 ID"
+          }
+        },
+        "required": [
+          "steamid"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://uapis.cn/api/v1/game/steam/summary",
+        "query": {
+          "steamid": "{{steamid}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2000
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

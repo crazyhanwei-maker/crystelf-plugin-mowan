@@ -1,0 +1,403 @@
+{
+  "enabled": true,
+  "name": "external-api",
+  "description": "外部公开 API 工具集，免登录免密钥，支持 GitHub 仓库查询、Hacker News 热门故事、Semantic Scholar 学术论文搜索、域名 RDAP 查询、汇率换算、Google DNS 解析",
+  "allowedHosts": [
+    "api.github.com",
+    "hacker-news.firebaseio.com",
+    "api.semanticscholar.org",
+    "rdap.org",
+    "open.er-api.com",
+    "dns.google"
+  ],
+  "timeoutMs": 15000,
+  "tools": [
+    {
+      "name": "github_repo_detail",
+      "description": "查询 GitHub 仓库详细信息。必须提供 owner 和 repo；返回 star、fork、语言、许可证、描述等完整信息。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "仓库所有者用户名，例如 anthropics"
+          },
+          "repo": {
+            "type": "string",
+            "description": "仓库名称，例如 claude-code"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{{owner}}/{{repo}}",
+        "headers": {
+          "Accept": "application/vnd.github.v3+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "full_name",
+          "description",
+          "html_url",
+          "stargazers_count",
+          "forks_count",
+          "open_issues_count",
+          "language",
+          "license",
+          "created_at",
+          "updated_at",
+          "pushed_at",
+          "topics",
+          "archived",
+          "disabled"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_repo_commits",
+      "description": "获取 GitHub 仓库最近的提交记录。必须提供 owner 和 repo。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "仓库所有者用户名"
+          },
+          "repo": {
+            "type": "string",
+            "description": "仓库名称"
+          },
+          "per_page": {
+            "type": "string",
+            "description": "返回条数，默认 5，最大 100"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{{owner}}/{{repo}}/commits",
+        "query": {
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/vnd.github.v3+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "sha",
+          "commit",
+          "author",
+          "html_url"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_repo_releases",
+      "description": "获取 GitHub 仓库最近的发布版本。必须提供 owner 和 repo。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string",
+            "description": "仓库所有者用户名"
+          },
+          "repo": {
+            "type": "string",
+            "description": "仓库名称"
+          },
+          "per_page": {
+            "type": "string",
+            "description": "返回条数，默认 5"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{{owner}}/{{repo}}/releases",
+        "query": {
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/vnd.github.v3+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "tag_name",
+          "name",
+          "published_at",
+          "html_url",
+          "body",
+          "prerelease",
+          "draft"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "github_search_repos",
+      "description": "搜索 GitHub 仓库。必须提供 q（搜索关键词）；返回匹配的仓库列表。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "搜索关键词，例如 claude code"
+          },
+          "sort": {
+            "type": "string",
+            "description": "排序方式：stars、forks、updated，默认 best match"
+          },
+          "per_page": {
+            "type": "string",
+            "description": "返回条数，默认 5"
+          }
+        },
+        "required": [
+          "q"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/search/repositories",
+        "query": {
+          "q": "{{q}}",
+          "sort": "{{sort}}",
+          "per_page": "{{per_page}}"
+        },
+        "headers": {
+          "Accept": "application/vnd.github.v3+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "total_count",
+          "items"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "hn_top_stories",
+      "description": "获取 Hacker News 热门故事 ID 列表，无需传参。返回最多 500 个故事 ID。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "hn_item_detail",
+      "description": "获取 Hacker News 文章详情。必须提供 id（故事 ID）；返回标题、链接、评分、作者、评论数等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Hacker News 文章 ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://hacker-news.firebaseio.com/v0/item/{{id}}.json",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "semantic_scholar_search",
+      "description": "搜索 Semantic Scholar 学术论文。必须提供 query；返回匹配论文的标题、年份、作者、摘要等。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "搜索关键词，例如 attention is all you need"
+          },
+          "limit": {
+            "type": "string",
+            "description": "返回条数，默认 5，最大 100"
+          },
+          "fields": {
+            "type": "string",
+            "description": "返回字段，默认 title,year,authors,abstract；可选 citationCount,venue,url"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://api.semanticscholar.org/graph/v1/paper/search",
+        "query": {
+          "query": "{{query}}",
+          "limit": "{{limit}}",
+          "fields": "{{fields}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "total",
+          "offset",
+          "data"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "domain_rdap_lookup",
+      "description": "通过 RDAP 查询域名注册信息（判断域名是否已注册）。必须提供 domain；HTTP 200 表示已注册，404 表示可能可注册。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "需要查询的域名，例如 example.com"
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://rdap.org/domain/{{domain}}",
+        "headers": {
+          "Accept": "application/rdap+json"
+        }
+      },
+      "response": {
+        "pick": [
+          "ldhName",
+          "status",
+          "events",
+          "nameservers",
+          "entities"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": false
+    },
+    {
+      "name": "exchange_rates",
+      "description": "查询指定货币的实时汇率。必须提供 base（基础货币代码）；返回对 150+ 货币的汇率。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "description": "基础货币代码，例如 USD、CNY、EUR、JPY、GBP"
+          }
+        },
+        "required": [
+          "base"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://open.er-api.com/v6/latest/{{base}}",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "result",
+          "base_code",
+          "time_last_update_utc",
+          "rates"
+        ],
+        "maxLength": 3200
+      },
+      "stopOnFailure": true
+    },
+    {
+      "name": "google_dns_lookup",
+      "description": "通过 Google DNS-over-HTTPS 查询域名 DNS 记录。必须提供 name；可选 type 指定记录类型。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "域名，例如 example.com"
+          },
+          "type": {
+            "type": "string",
+            "description": "DNS 记录类型，例如 A、AAAA、MX、NS、TXT、CNAME，默认 A"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "url": "https://dns.google/resolve",
+        "query": {
+          "name": "{{name}}",
+          "type": "{{type}}"
+        },
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "pick": [
+          "Status",
+          "TC",
+          "RD",
+          "RA",
+          "Answer",
+          "Authority",
+          "Question"
+        ],
+        "maxLength": 2400
+      },
+      "stopOnFailure": true
+    }
+  ]
+}

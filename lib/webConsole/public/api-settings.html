@@ -140,7 +140,7 @@
                 </div>
                 <div class="setting-item">
                   <div class="kv-label">图像模型</div>
-                  <input type="text" id="image-model" placeholder="dall-e-3" />
+                  <input type="text" id="image-model" placeholder="gpt-image-2" />
                   <div class="setting-help">图像生成模型名称</div>
                 </div>
                 <div class="setting-item">
@@ -164,11 +164,47 @@
                 <div class="setting-item">
                   <div class="kv-label">图像尺寸</div>
                   <select id="image-size">
+                    <option value="auto">自动/不传</option>
                     <option value="1024x1024">1024x1024 (正方形)</option>
+                    <option value="1536x1024">1536x1024 (横向)</option>
+                    <option value="1024x1536">1024x1536 (竖向)</option>
+                    <option value="2048x2048">2048x2048 (方形 2K)</option>
+                    <option value="2560x1440">2560x1440 (16:9 2K)</option>
+                    <option value="3840x2160">3840x2160 (16:9 4K)</option>
+                    <option value="2160x3840">2160x3840 (9:16 4K)</option>
                     <option value="1024x1792">1024x1792 (竖屏)</option>
                     <option value="1792x1024">1792x1024 (横屏)</option>
                   </select>
                   <div class="setting-help">生成图像的默认尺寸</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">图像质量</div>
+                  <select id="image-quality">
+                    <option value="high">High (gpt-image-2 推荐)</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                    <option value="standard">Standard (DALL-E 兼容)</option>
+                    <option value="hd">HD (DALL-E 兼容)</option>
+                  </select>
+                  <div class="setting-help">gpt-image-2 使用 low / medium / high；DALL-E 类接口使用 standard / hd</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">响应格式</div>
+                  <select id="image-responseFormat">
+                    <option value="b64_json">Base64 JSON (gpt-image-2 推荐)</option>
+                    <option value="url">URL</option>
+                  </select>
+                  <div class="setting-help">gpt-image-2 返回 b64_json 更稳定，插件会自动转成可发送图片</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">背景模式</div>
+                  <select id="image-background">
+                    <option value="">不传</option>
+                    <option value="auto">自动</option>
+                    <option value="opaque">不透明</option>
+                    <option value="transparent">透明</option>
+                  </select>
+                  <div class="setting-help">gpt-image-2 的 background 参数，仅 OpenAI 风格生图时使用</div>
                 </div>
               </div>
             </section>
