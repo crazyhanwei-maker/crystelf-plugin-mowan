@@ -169,6 +169,51 @@ function isImageGenerationRequest(text) {
     || hasImageGenerationIntent(content);
 }
 
+function escapeRegExp(value = '') {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractPlainTextFromEvent(e) {
+  const textFromSegments = Array.isArray(e?.message)
+    ? e.message
+        .filter(message => message?.type === 'text' && message.text)
+        .map(message => String(message.text || ''))
+        .join('')
+        .trim()
+    : '';
+  if (textFromSegments) return textFromSegments;
+  return String(e?.msg || '').replace(/\[CQ:[^\]]+\]/g, '').trim();
+}
+
+function normalizeImagePromptText(text = '', e = null) {
+  const raw = String(text || '').trim();
+  const plain = extractPlainTextFromEvent(e);
+  let content = plain || raw;
+  const saidMatches = [...raw.matchAll(/\[[^\]\n]+,id:\d+,seq:\d+\]说:([^\n]+)/g)]
+    .map(match => String(match[1] || '').trim())
+    .filter(Boolean);
+  if (!plain && saidMatches.length > 0) {
+    content = saidMatches.join('\n');
+  }
+
+  content = String(content || '')
+    .replace(/\[CQ:[^\]]+\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const botNames = [nickname].filter(Boolean).map(name => String(name).trim()).filter(Boolean);
+  for (const botName of botNames.sort((a, b) => b.length - a.length)) {
+    const pattern = new RegExp(`^${escapeRegExp(botName)}[\\s,，:：。！!、-]*`);
+    const withoutName = content.replace(pattern, '').trim();
+    if (withoutName && withoutName !== content && hasImageGenerationIntent(withoutName)) {
+      content = withoutName;
+      break;
+    }
+  }
+
+  return content || raw;
+}
+
 function isImageFollowUpRequest(text = '') {
   return /(这(图|张图)|刚才.*图|上面.*图|那张图|图片里|图里|发了什么图片|什么图片)/i.test(String(text || '').trim());
 }
@@ -1765,10 +1810,11 @@ export class crystelfAI extends plugin {
       const memories = await MemorySystem.searchMemories(userId, e.msg || '', 5);
 
       if (isImageGenerationRequest(messageData.text)) {
-        logger.info(`[crystelf-ai] 检测到用户直接绘图请求: ${messageData.text}`);
+        const imagePrompt = normalizeImagePromptText(messageData.text, e);
+        logger.info(`[crystelf-ai] 检测到用户直接绘图请求: ${imagePrompt}`);
         await this.handleImageMessage(e, {
           type: 'image',
-          data: messageData.text,
+          data: imagePrompt,
           at: -1,
           quote: -1,
           recall: false,
