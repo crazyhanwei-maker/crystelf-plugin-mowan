@@ -145,12 +145,28 @@ function isCommandPrefixedMessage(text = '') {
   return /^(#|＃|\/)/.test(String(text || '').trim());
 }
 
+function hasImageGenerationIntent(text = '') {
+  const content = String(text || '').trim();
+  if (!content) return false;
+  const compact = content.replace(/\s+/g, '');
+  if (/(不要|不用|别|不能|无法|不会|没法).{0,12}(生成|画|绘制|做|制作|出).{0,30}(图|图片|图像|照片|插画|壁纸|头像|表情包)/.test(compact)) {
+    return false;
+  }
+
+  return [
+    /(?:生成|生|画|绘制|做|制作|出)(?:一|1|几|多)?(?:张|幅|个|组)?[^，。！？\n]{0,80}(?:图|图片|图像|照片|插画|壁纸|头像|表情包)/,
+    /(?:帮我|给我|请|麻烦你)?(?:来|整|搞)(?:一|1|几|多)?(?:张|幅|个|组)?[^，。！？\n]{0,60}(?:图|图片|图像|照片|插画|壁纸|头像|表情包)/,
+    /(?:生图|出图|作图|制图)(?:吧|一下|试试)?$/,
+  ].some(pattern => pattern.test(content));
+}
+
 function isImageGenerationRequest(text) {
   const content = String(text || '').trim();
   if (!content) return false;
   if (isCommandPrefixedMessage(content)) return false;
   if (/(^|\s)[#＃/](绘图|画图)(?=\s|$)/.test(content)) return false;
-  return ['生成图片', '画一张', '帮我画', '画个', '画一幅', '改图'].some(keyword => content.includes(keyword));
+  return ['生成图片', '画一张', '帮我画', '画个', '画一幅', '改图'].some(keyword => content.includes(keyword))
+    || hasImageGenerationIntent(content);
 }
 
 function isImageFollowUpRequest(text = '') {
