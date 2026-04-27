@@ -240,7 +240,6 @@ async function processImageMonitor(e) {
         userId: String(e.user_id || ''),
         messageCount: 1,
         elapsedMs: analysis.elapsedMs,
-        promptPreview: monitorConfig.prompt,
         responsePreview: analysis.summary || JSON.stringify(analysis.raw || {}),
         usage: analysis.usage,
       });
@@ -284,7 +283,6 @@ async function processImageMonitor(e) {
         groupId,
         userId: String(e.user_id || ''),
         messageCount: 1,
-        promptPreview: monitorConfig.prompt,
         error: error.message,
       });
       appendJsonLine(IMAGE_MONITOR_LOG, {
