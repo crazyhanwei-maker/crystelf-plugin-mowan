@@ -17,6 +17,33 @@ const IMAGE_MONITOR_DIR = path.join(Path.config, 'image-monitor');
 const IMAGE_MONITOR_MEME_DIR = path.join(IMAGE_MONITOR_DIR, 'memes');
 const IMAGE_MONITOR_INDEX = path.join(IMAGE_MONITOR_DIR, 'meme-index.jsonl');
 const IMAGE_MONITOR_LOG = path.join(IMAGE_MONITOR_DIR, 'review-log.jsonl');
+const IMAGE_MONITOR_OUTPUT_CONTRACT = [
+  '重要：请严格只输出 JSON。',
+  'JSON 字段必须包含 isMeme(boolean)、memeCharacter(string)、memeEmotion(string)、memeTags(string[])、riskLevel(low|medium|high|none)、riskCategories(string[])、summary(string)。',
+  'memeCharacter 只能是稳定角色名、人物名或核心形象名，例如 芙宁娜、派蒙、真寻；严禁把动作、情绪、用途、场景、画风、短句当作角色名；无法明确角色时写 未知。',
+  'memeEmotion 必须且只能是 happy、sad、angry、confused、shy、surprised、default 之一；无法判断时写 default。',
+  '图片会按 memeCharacter/memeEmotion 保存，例如 芙宁娜/happy/xxx.png，所以角色和情绪必须稳定、简短、规范。',
+].join('\n');
+const MEME_EMOTION_ALIASES = {
+  default: 'default',
+  normal: 'default',
+  neutral: 'default',
+  happy: 'happy',
+  joy: 'happy',
+  smile: 'happy',
+  cute: 'happy',
+  funny: 'happy',
+  sad: 'sad',
+  cry: 'sad',
+  angry: 'angry',
+  mad: 'angry',
+  surprised: 'surprised',
+  surprise: 'surprised',
+  shocked: 'surprised',
+  confused: 'confused',
+  confuse: 'confused',
+  shy: 'shy',
+};
 
 function pickFallbackReply(value = '') {
   const pool = String(value || '')
@@ -36,6 +63,14 @@ function buildImageMonitorFallbackMessage(cfg = {}, failureReason = '') {
     return pickFallbackReply(cfg?.fallbackTimeoutReply) || pickFallbackReply(cfg?.fallbackReply) || '';
   }
   return pickFallbackReply(cfg?.fallbackReply) || '';
+}
+
+function buildImageMonitorPrompt(prompt = '') {
+  const base = String(prompt || '').trim();
+  if (base.includes('memeCharacter') && base.includes('memeEmotion')) {
+    return base;
+  }
+  return [base, IMAGE_MONITOR_OUTPUT_CONTRACT].filter(Boolean).join('\n\n');
 }
 
 async function notifyImageMonitorFallback(e, cfg = {}, failureReason = '') {
@@ -109,10 +144,38 @@ function sanitizeFolderName(name = '') {
     .slice(0, 40);
 }
 
+function normalizeMemeEmotion(value = '') {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (MEME_EMOTION_ALIASES[normalized]) {
+    return MEME_EMOTION_ALIASES[normalized];
+  }
+  const raw = String(value || '').trim();
+  if (/笑|开心|高兴|可爱|萌|哈哈|偷笑|乐|喜/iu.test(raw)) return 'happy';
+  if (/哭|难过|伤心|委屈|泪|emo|沮丧/iu.test(raw)) return 'sad';
+  if (/怒|生气|火大|气死|炸毛|不爽/iu.test(raw)) return 'angry';
+  if (/惊|震惊|吓|愣|讶/iu.test(raw)) return 'surprised';
+  if (/疑惑|困惑|懵|问号|不懂/iu.test(raw)) return 'confused';
+  if (/害羞|脸红|羞/iu.test(raw)) return 'shy';
+  return 'default';
+}
+
 function resolveMemeCharacter(analysis = {}) {
-  const firstTag = Array.isArray(analysis.memeTags) ? String(analysis.memeTags[0] || '').trim() : '';
+  const firstTag = String(analysis.memeCharacter || '').trim()
+    || (Array.isArray(analysis.memeTags) ? String(analysis.memeTags[0] || '').trim() : '');
   const normalized = sanitizeFolderName(firstTag);
   return normalized || '未知';
+}
+
+function resolveMemeEmotion(analysis = {}) {
+  const explicit = normalizeMemeEmotion(analysis.memeEmotion);
+  if (explicit !== 'default') {
+    return explicit;
+  }
+  const text = [
+    ...(Array.isArray(analysis.memeTags) ? analysis.memeTags : []),
+    analysis.summary,
+  ].join(' ');
+  return normalizeMemeEmotion(text);
 }
 
 function resolveMemeKeywords(analysis = {}, character = '未知') {
@@ -123,6 +186,44 @@ function resolveMemeKeywords(analysis = {}, character = '未知') {
     .filter(item => item !== character)
     .slice(0, 4);
   return keywords;
+}
+
+function normalizeMatcherList(value) {
+  const items = Array.isArray(value)
+    ? value
+    : String(value || '').split(/[\n,，;；]/);
+  return items
+    .map(item => String(item || '').trim())
+    .filter(Boolean);
+}
+
+function includesTextToken(value = '', token = '') {
+  const text = String(value || '').trim().toLowerCase();
+  const keyword = String(token || '').trim().toLowerCase();
+  return Boolean(text && keyword && text.includes(keyword));
+}
+
+function shouldSaveMemeImageByFilter(cfg = {}, analysis = {}, character = '') {
+  const allowedCharacters = normalizeMatcherList(cfg.saveMemeCharacters);
+  const allowedKeywords = normalizeMatcherList(cfg.saveMemeKeywords);
+  if (allowedCharacters.length === 0 && allowedKeywords.length === 0) {
+    return { matched: true, reason: 'no_filter' };
+  }
+
+  const tags = Array.isArray(analysis.memeTags) ? analysis.memeTags.map(item => String(item || '').trim()).filter(Boolean) : [];
+  const summary = String(analysis.summary || '').trim();
+  const emotion = resolveMemeEmotion(analysis);
+  const searchFields = [character, emotion, ...tags, summary].filter(Boolean);
+  const characterMatched = allowedCharacters.some(item => includesTextToken(character, item));
+  const keywordMatched = allowedKeywords.some(keyword => searchFields.some(value => includesTextToken(value, keyword)));
+
+  if (characterMatched || keywordMatched) {
+    return {
+      matched: true,
+      reason: characterMatched ? 'character_matched' : 'keyword_matched',
+    };
+  }
+  return { matched: false, reason: 'filter_not_matched' };
 }
 
 function shouldSkipHash(hash, windowMs) {
@@ -145,7 +246,7 @@ async function analyzeImageWithVisionModel(cfg, imageUrl) {
     messages: [{
       role: 'user',
       content: [
-        { type: 'text', text: cfg.prompt },
+        { type: 'text', text: buildImageMonitorPrompt(cfg.prompt) },
         { type: 'image_url', image_url: { url: imageUrl } },
       ],
     }],
@@ -157,6 +258,8 @@ async function analyzeImageWithVisionModel(cfg, imageUrl) {
   const parsed = JSON.parse(jsonText);
   return {
     isMeme: Boolean(parsed.isMeme),
+    memeCharacter: String(parsed.memeCharacter || '').trim(),
+    memeEmotion: normalizeMemeEmotion(parsed.memeEmotion),
     memeTags: Array.isArray(parsed.memeTags) ? parsed.memeTags.map(item => String(item).trim()).filter(Boolean).slice(0, 12) : [],
     riskLevel: normalizeRiskLevel(parsed.riskLevel),
     riskCategories: Array.isArray(parsed.riskCategories) ? parsed.riskCategories.map(item => String(item).trim()).filter(Boolean).slice(0, 8) : [],
@@ -167,27 +270,35 @@ async function analyzeImageWithVisionModel(cfg, imageUrl) {
   };
 }
 
-function saveMemeImage(buffer, hash, analysis, e, sourceUrl) {
+function saveMemeImage(buffer, hash, analysis, e, sourceUrl, cfg = {}) {
   const character = resolveMemeCharacter(analysis);
+  const emotion = resolveMemeEmotion(analysis);
+  const keywords = resolveMemeKeywords(analysis, character);
   
   // 如果没有识别出角色名，不保存
   if (!character || character === '未知') {
     logger.info(`[image-monitor] Skip saving meme: no character identified`);
-    return null;
+    return { saved: false, character, emotion, keywords, reason: 'unknown_character' };
+  }
+
+  const filterResult = shouldSaveMemeImageByFilter(cfg, analysis, character);
+  if (!filterResult.matched) {
+    logger.info(`[image-monitor] Skip saving meme: save filter not matched (${character})`);
+    return { saved: false, character, emotion, keywords, reason: filterResult.reason };
   }
   
-  const characterDir = path.join(IMAGE_MONITOR_MEME_DIR, character);
-  ensureDir(characterDir);
+  const emotionDir = path.join(IMAGE_MONITOR_MEME_DIR, character, emotion);
+  ensureDir(emotionDir);
   const ext = sourceUrl.includes('.gif') ? 'gif' : sourceUrl.includes('.webp') ? 'webp' : sourceUrl.includes('.png') ? 'png' : 'jpg';
-  // 文件名只用角色名+hash
-  const fileName = `${character}-${hash.slice(0, 12)}.${ext}`;
-  const filePath = path.join(characterDir, fileName);
+  const fileName = `${character}-${emotion}-${hash.slice(0, 12)}.${ext}`;
+  const filePath = path.join(emotionDir, fileName);
   fs.writeFileSync(filePath, buffer);
   appendJsonLine(IMAGE_MONITOR_INDEX, {
     savedAt: new Date().toISOString(),
     character,
+    emotion,
     folder: character,
-    keywords: [],
+    relativeDir: path.join(character, emotion).replace(/\\/g, '/'),
     fileName,
     filePath,
     hash,
@@ -196,8 +307,10 @@ function saveMemeImage(buffer, hash, analysis, e, sourceUrl) {
     messageId: String(e.message_id || ''),
     sourceUrl,
     memeTags: [character, ...((analysis.memeTags || []).filter(item => String(item).trim() && String(item).trim() !== character))],
+    keywords,
     summary: analysis.summary,
   });
+  return { saved: true, character, emotion, keywords, filePath, fileName, reason: 'saved' };
 }
 
 async function processImageMonitor(e) {
@@ -245,8 +358,24 @@ async function processImageMonitor(e) {
       });
       let recalled = false;
       let alerted = false;
+      let memeSaveResult = {
+        saved: false,
+        character: resolveMemeCharacter(analysis),
+        emotion: resolveMemeEmotion(analysis),
+        keywords: resolveMemeKeywords(analysis),
+        reason: 'not_meme',
+      };
       if (analysis.isMeme && monitorConfig.saveMemeImages !== false) {
-        saveMemeImage(buffer, hash, analysis, e, imageUrl);
+        memeSaveResult = saveMemeImage(buffer, hash, analysis, e, imageUrl, monitorConfig);
+      } else if (analysis.isMeme) {
+        const disabledCharacter = resolveMemeCharacter(analysis);
+        memeSaveResult = {
+          saved: false,
+          character: disabledCharacter,
+          emotion: resolveMemeEmotion(analysis),
+          keywords: resolveMemeKeywords(analysis, disabledCharacter),
+          reason: 'save_disabled',
+        };
       }
       if (riskReached(analysis.riskLevel, monitorConfig.riskThreshold || 'high')) {
         if (violationAction === 'recall') {
@@ -266,6 +395,13 @@ async function processImageMonitor(e) {
         imageUrl,
         isMeme: analysis.isMeme,
         memeTags: analysis.memeTags,
+        memeCharacter: memeSaveResult.character || '',
+        memeEmotion: memeSaveResult.emotion || 'default',
+        memeKeywords: memeSaveResult.keywords || [],
+        memeSaved: memeSaveResult.saved === true,
+        memeSaveReason: memeSaveResult.reason || '',
+        memeFilePath: memeSaveResult.filePath || '',
+        memeFileName: memeSaveResult.fileName || '',
         riskLevel: analysis.riskLevel,
         riskCategories: analysis.riskCategories,
         summary: analysis.summary,

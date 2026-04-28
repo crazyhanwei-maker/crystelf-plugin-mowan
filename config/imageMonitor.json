@@ -4,6 +4,10 @@
   "enabled": false,
   "?saveMemeImages": "识别为表情包时是否保存到本地",
   "saveMemeImages": true,
+  "?saveMemeCharacters": "只保存这些角色的表情包图片，留空表示不限制；命中角色或关键词任意一个即可保存",
+  "saveMemeCharacters": [],
+  "?saveMemeKeywords": "只保存包含这些关键词的表情包图片，匹配角色名、标签或摘要；留空表示不限制",
+  "saveMemeKeywords": [],
   "?violationAction": "违规图片处理方式(record=仅记录,alert=告警提示,recall=自动撤回)",
   "violationAction": "record",
   "?monitorQuotedImages": "是否同时监控引用消息中的图片",
@@ -33,5 +37,5 @@
   "?riskThreshold": "触发违规撤回的最低风险等级(low/medium/high)",
   "riskThreshold": "high",
   "?prompt": "图片监控识别提示词",
-  "prompt": "你是群聊图片监控助手。请严格输出JSON，字段包括 isMeme(boolean)、memeTags(string[])、riskLevel(low|medium|high|none)、riskCategories(string[])、summary(string)。如果是聊天表情包或梗图，isMeme=true。memeTags 的第一个标签必须是该表情包最明确的角色名、人物名或核心形象名，用于本地按角色建立文件夹；如果无法明确判断角色，就把第一个标签写成 未知。后续标签请优先补充适合做文件名关键词的短词，例如心情、动作、场景、用途，如 开心、生气、吃饭、委屈、无语、点赞、睡觉、上班 等，尽量短、尽量准、不要写长句。如果包含疑似色情、裸露、未成年人色情、极端血腥、违法违禁展示等高风险内容，请提高 riskLevel。不要输出JSON以外的任何内容。"
+  "prompt": "你是群聊图片监控助手。请严格只输出 JSON，不要输出 JSON 以外的任何内容。字段必须包括：isMeme(boolean)、memeCharacter(string)、memeEmotion(string)、memeTags(string[])、riskLevel(low|medium|high|none)、riskCategories(string[])、summary(string)。如果图片是聊天表情包、梗图、角色表情图或适合做表情回复的图，isMeme=true；普通照片、截图、风景、菜单、聊天截图等不是表情包则 isMeme=false。memeCharacter 必须是最明确的角色名、人物名或核心形象名，例如 芙宁娜、派蒙、真寻；严禁把动作、情绪、用途、场景、画风、短句当作角色名；无法明确角色时写 未知。memeEmotion 必须且只能从 happy、sad、angry、confused、shy、surprised、default 中选择一个；开心/笑/可爱选 happy，哭/委屈/难过选 sad，生气选 angry，疑惑/问号选 confused，害羞/脸红选 shy，震惊/惊讶选 surprised，无法判断选 default。memeTags 只写适合检索的短标签，不要重复 memeCharacter，不要写长句，例如 开心、委屈、点赞、吃饭、睡觉、无语。图片会按 memeCharacter/memeEmotion 保存，例如 芙宁娜/happy/xxx.png，所以角色和情绪必须稳定、简短、规范。如果包含疑似色情、裸露、未成年人色情、极端血腥、违法违禁展示等高风险内容，请提高 riskLevel。"
 }

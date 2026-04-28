@@ -1800,6 +1800,24 @@ const guobaSchema = [
     },
   },
   {
+    field: 'imageMonitor.saveMemeCharacters',
+    label: '入库角色白名单',
+    component: 'InputArray',
+    bottomHelpMessage: '只保存角色名命中的表情包；留空表示不按角色限制。角色白名单和关键词白名单任一命中即可保存。',
+    componentProps: {
+      placeholder: '请输入要保存的角色名，按回车添加',
+    },
+  },
+  {
+    field: 'imageMonitor.saveMemeKeywords',
+    label: '入库关键词白名单',
+    component: 'InputArray',
+    bottomHelpMessage: '只保存标签、角色名或摘要中包含这些关键词的表情包；留空表示不按关键词限制。',
+    componentProps: {
+      placeholder: '请输入要保存的关键词，按回车添加',
+    },
+  },
+  {
     field: 'imageMonitor.violationAction',
     label: '违规图处理方式',
     component: 'Select',

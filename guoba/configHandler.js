@@ -547,6 +547,12 @@ function validateConfig(configType, config = null) {
       if (config.blockedGroups !== undefined && !Array.isArray(config.blockedGroups)) {
         errors.push('图片监控黑名单群必须是数组');
       }
+      if (config.saveMemeCharacters !== undefined && !Array.isArray(config.saveMemeCharacters)) {
+        errors.push('图片监控入库角色白名单必须是数组');
+      }
+      if (config.saveMemeKeywords !== undefined && !Array.isArray(config.saveMemeKeywords)) {
+        errors.push('图片监控入库关键词白名单必须是数组');
+      }
       break;
 
     case 'config':
