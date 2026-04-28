@@ -2,6 +2,8 @@
   "//": "请不要修改以?开头的字段",
   "?enabled": "是否启用独立图片监控",
   "enabled": false,
+  "?saveReviewImages": "是否为每条图片监控审核记录保存本地预览图，关闭后旧QQ图床链接可能过期无法预览",
+  "saveReviewImages": true,
   "?saveMemeImages": "识别为表情包时是否保存到本地",
   "saveMemeImages": true,
   "?saveMemeCharacters": "只保存这些角色的表情包图片，留空表示不限制；命中角色或关键词任意一个即可保存",

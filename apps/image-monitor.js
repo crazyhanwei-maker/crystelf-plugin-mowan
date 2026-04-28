@@ -15,6 +15,7 @@ const imageMonitorRuntime = {
 
 const IMAGE_MONITOR_DIR = path.join(Path.config, 'image-monitor');
 const IMAGE_MONITOR_MEME_DIR = path.join(IMAGE_MONITOR_DIR, 'memes');
+const IMAGE_MONITOR_REVIEW_IMAGE_DIR = path.join(IMAGE_MONITOR_DIR, 'reviews');
 const IMAGE_MONITOR_INDEX = path.join(IMAGE_MONITOR_DIR, 'meme-index.jsonl');
 const IMAGE_MONITOR_LOG = path.join(IMAGE_MONITOR_DIR, 'review-log.jsonl');
 const IMAGE_MONITOR_OUTPUT_CONTRACT = [
@@ -132,6 +133,24 @@ async function downloadImageBuffer(url, timeout = 30000) {
   return Buffer.from(response.data);
 }
 
+function detectImageExtension(buffer, sourceUrl = '') {
+  if (Buffer.isBuffer(buffer) && buffer.length >= 12) {
+    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'jpg';
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return 'png';
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return 'gif';
+    if (buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP') return 'webp';
+    if (buffer.toString('ascii', 4, 12) === 'ftypavif') return 'avif';
+    if (buffer[0] === 0x42 && buffer[1] === 0x4d) return 'bmp';
+  }
+  try {
+    const ext = path.extname(new URL(String(sourceUrl || '')).pathname).replace(/^\./, '').toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp'].includes(ext)) {
+      return ext === 'jpeg' ? 'jpg' : ext;
+    }
+  } catch {}
+  return 'jpg';
+}
+
 function calcBufferHash(buffer) {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 }
@@ -236,6 +255,34 @@ function shouldSkipHash(hash, windowMs) {
   return false;
 }
 
+function saveReviewImage(buffer, hash, e, sourceUrl, cfg = {}) {
+  if (cfg.saveReviewImages === false) {
+    return { saved: false, reason: 'save_disabled' };
+  }
+  try {
+    const date = new Date().toISOString().slice(0, 10);
+    const groupId = sanitizeFolderName(String(e.group_id || 'unknown'));
+    const ext = detectImageExtension(buffer, sourceUrl);
+    const saveDir = path.join(IMAGE_MONITOR_REVIEW_IMAGE_DIR, date, groupId);
+    ensureDir(saveDir);
+    const fileName = `${hash.slice(0, 16)}.${ext}`;
+    const filePath = path.join(saveDir, fileName);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, buffer);
+    }
+    return {
+      saved: true,
+      filePath,
+      fileName,
+      relativePath: path.relative(IMAGE_MONITOR_DIR, filePath).replace(/\\/g, '/'),
+      reason: 'saved',
+    };
+  } catch (error) {
+    logger.warn(`[image-monitor] 保存审核预览图失败: ${error.message}`);
+    return { saved: false, reason: 'save_failed', error: error.message };
+  }
+}
+
 async function analyzeImageWithVisionModel(cfg, imageUrl) {
   const timeout = Number(cfg.analysisTimeoutMs) > 0 ? Number(cfg.analysisTimeoutMs) : 30000;
   const client = new OpenAI({ apiKey: cfg.apiKey, baseURL: cfg.apiBase, timeout });
@@ -289,7 +336,7 @@ function saveMemeImage(buffer, hash, analysis, e, sourceUrl, cfg = {}) {
   
   const emotionDir = path.join(IMAGE_MONITOR_MEME_DIR, character, emotion);
   ensureDir(emotionDir);
-  const ext = sourceUrl.includes('.gif') ? 'gif' : sourceUrl.includes('.webp') ? 'webp' : sourceUrl.includes('.png') ? 'png' : 'jpg';
+  const ext = detectImageExtension(buffer, sourceUrl);
   const fileName = `${character}-${emotion}-${hash.slice(0, 12)}.${ext}`;
   const filePath = path.join(emotionDir, fileName);
   fs.writeFileSync(filePath, buffer);
@@ -336,12 +383,15 @@ async function processImageMonitor(e) {
   const violationAction = normalizeViolationAction(monitorConfig);
   let failureNotified = false;
   for (const imageUrl of imageUrls) {
+    let hash = '';
+    let reviewSaveResult = { saved: false, reason: 'not_downloaded' };
     try {
       const buffer = await downloadImageBuffer(imageUrl, Math.max(1000, Number(monitorConfig.analysisTimeoutMs || 30000)));
-      const hash = calcBufferHash(buffer);
+      hash = calcBufferHash(buffer);
       if (shouldSkipHash(hash, Math.max(0, Number(monitorConfig.duplicateWindowMs || 300000)))) {
         continue;
       }
+      reviewSaveResult = saveReviewImage(buffer, hash, e, imageUrl, monitorConfig);
       const analysis = await analyzeImageWithVisionModel(monitorConfig, imageUrl);
       await logAiUsage({
         stage: 'success',
@@ -393,6 +443,9 @@ async function processImageMonitor(e) {
         userId: String(e.user_id || ''),
         messageId: String(e.message_id || ''),
         imageUrl,
+        reviewFilePath: reviewSaveResult.filePath || '',
+        reviewFileName: reviewSaveResult.fileName || '',
+        reviewRelativePath: reviewSaveResult.relativePath || '',
         isMeme: analysis.isMeme,
         memeTags: analysis.memeTags,
         memeCharacter: memeSaveResult.character || '',
@@ -423,10 +476,14 @@ async function processImageMonitor(e) {
       });
       appendJsonLine(IMAGE_MONITOR_LOG, {
         reviewedAt: new Date().toISOString(),
+        hash,
         groupId,
         userId: String(e.user_id || ''),
         messageId: String(e.message_id || ''),
         imageUrl,
+        reviewFilePath: reviewSaveResult.filePath || '',
+        reviewFileName: reviewSaveResult.fileName || '',
+        reviewRelativePath: reviewSaveResult.relativePath || '',
         error: error.message,
       });
       if (!failureNotified) {

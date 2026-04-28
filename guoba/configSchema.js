@@ -1800,6 +1800,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'imageMonitor.saveReviewImages',
+    label: '保存审核预览图',
+    component: 'Switch',
+    bottomHelpMessage: '为每条图片监控审核记录保存本地预览图，避免 QQ 图床链接过期后页面无法查看。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'imageMonitor.saveMemeCharacters',
     label: '入库角色白名单',
     component: 'InputArray',
