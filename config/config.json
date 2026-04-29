@@ -28,6 +28,8 @@
   "webConsolePort": 27891,
   "?webConsolePortAutoIncrement": "端口冲突时是否自动递增",
   "webConsolePortAutoIncrement": false,
+  "?webConsoleBackgroundSourceUrl": "控制台换壁纸使用的随机图片接口，留空则使用本地动态壁纸兜底",
+  "webConsoleBackgroundSourceUrl": "https://www.loliapi.com/acg/pc/",
   "?webConsoleMaxPageSize": "控制台接口允许的最大每页数量",
   "webConsoleMaxPageSize": 100,
   "?webConsoleExposeLogs": "是否允许控制台查看日志",

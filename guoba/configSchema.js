@@ -378,6 +378,15 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.webConsoleBackgroundSourceUrl',
+    label: '控制台壁纸源',
+    component: 'Input',
+    bottomHelpMessage: '换壁纸按钮使用的随机图片接口。留空时使用本地动态壁纸兜底；建议填写直接返回图片或跳转到图片的 http/https 地址',
+    componentProps: {
+      placeholder: '例如 https://www.loliapi.com/acg/pc/',
+    },
+  },
+  {
     field: 'config.webConsolePageSize',
     label: '控制台每页数量',
     component: 'InputNumber',

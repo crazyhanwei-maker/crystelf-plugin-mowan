@@ -575,6 +575,20 @@ function validateConfig(configType, config = null) {
       if (config.webConsoleHost !== undefined && typeof config.webConsoleHost !== 'string') {
         errors.push('控制台地址必须是字符串');
       }
+      if (config.webConsoleBackgroundSourceUrl !== undefined) {
+        if (typeof config.webConsoleBackgroundSourceUrl !== 'string') {
+          errors.push('控制台壁纸源必须是字符串');
+        } else if (config.webConsoleBackgroundSourceUrl.trim()) {
+          try {
+            const parsed = new URL(config.webConsoleBackgroundSourceUrl.trim());
+            if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) {
+              errors.push('控制台壁纸源必须是 http/https 地址，且不能包含账号密码');
+            }
+          } catch {
+            errors.push('控制台壁纸源 URL 格式不正确');
+          }
+        }
+      }
       pushRangeError(errors, config.webConsolePort, 1, 65535, '控制台端口必须在 1-65535 之间');
       pushRangeError(errors, config.webConsoleLogTailLength, 1000, 200000, '日志读取长度必须在 1000-200000 之间');
       pushRangeError(errors, config.webConsoleProfileRecentMessagesLimit, 0, 100, '画像消息条数必须在 0-100 之间');
