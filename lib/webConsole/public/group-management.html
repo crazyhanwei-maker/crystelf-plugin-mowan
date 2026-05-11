@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 群管理</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="group-management-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div>
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>群管理</h1>
+        <p id="group-management-meta">查看群列表、成员列表，并集中管理本插件的群级配置。</p>
+      </div>
+      <div class="actions">
+        <button id="group-management-refresh-btn">刷新群数据</button>
+        <button id="group-management-save-btn">保存当前群</button>
+        <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+        <a class="link-btn" href="/">返回首页</a>
+      </div>
+    </header>
+
+    <div id="group-management-risk" class="risk-box hidden"></div>
+    <div id="group-management-success" class="success-box hidden"></div>
+
+    <section class="panel group-management-event-panel">
+      <div class="section-head">
+        <div>
+          <h2>实时事件流</h2>
+          <div id="group-management-event-meta" class="setting-help">自动显示刚触发的风控、申请、欢迎、总结和头衔事件。</div>
+        </div>
+        <div class="actions">
+          <button type="button" id="group-management-event-toggle-btn" class="mini-btn" data-action="toggle-event-stream">暂停自动刷新</button>
+          <button type="button" id="group-management-event-refresh-btn" class="mini-btn" data-action="refresh-event-stream">立即刷新</button>
+          <button type="button" id="group-management-event-read-btn" class="mini-btn" data-action="mark-event-read">标记已读</button>
+        </div>
+      </div>
+      <div class="toolbar group-management-toolbar group-management-event-toolbar">
+        <select id="group-management-event-type">
+          <option value="all">全部事件</option>
+          <option value="moderation">风控</option>
+          <option value="join">加群申请</option>
+          <option value="welcome">入群欢迎</option>
+          <option value="summary">群总结</option>
+          <option value="title">头衔</option>
+          <option value="config">配置</option>
+        </select>
+        <label class="group-management-event-scope">
+          <input id="group-management-event-current-group" type="checkbox" checked />
+          <span>仅当前群</span>
+        </label>
+        <label class="group-management-event-scope">
+          <input id="group-management-event-failed-only" type="checkbox" />
+          <span>只看失败</span>
+        </label>
+      </div>
+      <div id="group-management-event-stream" class="group-management-event-stream">事件加载中...</div>
+    </section>
+
+    <section class="panel group-management-toolbar-panel">
+      <div class="section-head">
+        <div>
+          <h2>群检索</h2>
+          <div id="group-management-status" class="setting-help">正在读取群数据...</div>
+        </div>
+      </div>
+      <div class="toolbar group-management-toolbar">
+        <input id="group-management-search" placeholder="搜索群号 / 群名 / 来源" />
+        <input id="group-management-direct-id" placeholder="直接输入群号" inputmode="numeric" />
+        <button id="group-management-open-id-btn" class="mini-btn">打开群号</button>
+      </div>
+      <div id="group-management-summary" class="dashboard-strip"></div>
+    </section>
+
+    <section class="panel group-management-health-panel">
+      <div class="section-head">
+        <div>
+          <h2>配置健康检查</h2>
+          <div id="group-management-health-meta" class="setting-help">扫描群管理总开关、Bot 权限、危险动作、AI/图片监控接口和群级冲突。</div>
+        </div>
+        <div class="actions">
+          <button type="button" id="group-management-health-scan-btn" class="mini-btn" data-action="run-health-check">重新扫描</button>
+          <button type="button" class="mini-btn" data-action="handle-first-health-issue">处理首项</button>
+          <button type="button" class="mini-btn" data-action="export-health-markdown">导出 MD</button>
+          <button type="button" class="mini-btn" data-action="export-health-json">导出 JSON</button>
+          <button type="button" class="mini-btn" data-action="toggle-health-ignored">显示忽略项</button>
+        </div>
+      </div>
+      <div id="group-management-health" class="group-management-health">健康检查加载中...</div>
+    </section>
+
+    <section class="panel group-management-safety-panel">
+      <div class="section-head">
+        <div>
+          <h2>群管安全开关</h2>
+          <div class="setting-help">全局保护自动撤回、禁言、踢人等高风险动作，运行时也会按这里的配置二次拦截。</div>
+        </div>
+        <div class="actions">
+          <button type="button" id="group-management-safety-save-btn" class="mini-btn" data-action="save-safety">保存安全开关</button>
+        </div>
+      </div>
+      <div id="group-management-safety">加载中...</div>
+    </section>
+
+    <section class="panel group-management-default-panel">
+      <div class="section-head">
+        <div>
+          <h2>默认群设置</h2>
+          <div class="setting-help">没有单独保存配置的群，会继承这里的入群验证、自动通过、欢迎和群消息风控设置。</div>
+        </div>
+        <div class="actions">
+          <button type="button" id="group-management-default-save-btn" class="mini-btn" data-action="save-defaults">保存默认设置</button>
+        </div>
+      </div>
+      <div id="group-management-defaults">加载中...</div>
+    </section>
+
+    <section class="panel group-management-bulk-panel">
+      <div class="section-head">
+        <div>
+          <h2>批量开启群</h2>
+          <div id="group-management-bulk-meta" class="setting-help">选择要开启的功能，再勾选群。</div>
+        </div>
+        <div class="actions">
+          <button id="group-management-bulk-apply-btn" class="mini-btn" data-action="bulk-apply" disabled>开启所选群</button>
+        </div>
+      </div>
+      <div class="toolbar group-management-bulk-controls">
+        <select id="gm-bulk-feature">
+          <option value="ai">AI 白名单</option>
+          <option value="imageMonitor">图片监控白名单</option>
+          <option value="auth">入群验证</option>
+          <option value="autoApprove">加群申请自动通过</option>
+          <option value="welcome">入群欢迎</option>
+          <option value="aiWelcome">AI 入群欢迎</option>
+          <option value="dailySummary">每日群聊总结</option>
+        </select>
+        <button type="button" class="mini-btn" data-action="bulk-select-filtered">全选当前筛选</button>
+        <button type="button" class="mini-btn" data-action="bulk-select-enabled">载入已开启群</button>
+        <button type="button" class="mini-btn" data-action="bulk-clear-selection">清空选择</button>
+      </div>
+      <div class="setting-help">保存时会给勾选群开启对应功能。AI 和图片监控会写入对应白名单，并移出对应黑名单；白名单不为空时，未在白名单的群不会工作。</div>
+      <div id="group-management-bulk-list" class="group-management-bulk-list">加载中...</div>
+    </section>
+
+    <div class="group-management-shell">
+      <section class="panel group-management-list-panel">
+        <div class="section-head">
+          <div>
+            <h2>群列表</h2>
+            <div id="group-management-list-meta" class="setting-help">加载中...</div>
+          </div>
+        </div>
+        <div id="group-management-list" class="list group-management-list">加载中...</div>
+      </section>
+
+      <section class="panel group-management-detail-panel">
+        <div id="group-management-detail">请选择一个群。</div>
+      </section>
+    </div>
+
+    <section class="panel group-management-log-panel">
+      <div class="section-head">
+        <div>
+          <h2>群管理日志</h2>
+          <div id="group-management-log-meta" class="setting-help">显示当前群最近的配置变更和入群申请处理记录。</div>
+        </div>
+        <div class="actions">
+          <button id="group-management-log-refresh-btn" class="mini-btn">刷新日志</button>
+        </div>
+      </div>
+      <div class="toolbar group-management-toolbar">
+        <input id="group-management-log-search" placeholder="搜索操作 / 用户 / 原因 / 变更内容" />
+      </div>
+      <div id="group-management-log-list" class="list group-management-log-list">日志加载中...</div>
+      <div id="group-management-log-pagination" class="pagination"></div>
+    </section>
+  </div>
+  <div id="group-management-modal-mask" class="group-management-modal-mask hidden" role="dialog" aria-modal="true" aria-labelledby="group-management-modal-title">
+    <div class="group-management-modal-card">
+      <h2 id="group-management-modal-title">确认操作</h2>
+      <div id="group-management-modal-content" class="group-management-modal-content"></div>
+      <input id="group-management-modal-input" class="group-management-modal-input hidden" />
+      <div class="actions group-management-modal-actions">
+        <button type="button" class="mini-btn" data-action="group-management-modal-cancel">取消</button>
+        <button type="button" class="mini-btn" data-action="group-management-modal-confirm">确认</button>
+      </div>
+    </div>
+  </div>
+  <script src="/auth.js"></script>
+  <script src="/group-management.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

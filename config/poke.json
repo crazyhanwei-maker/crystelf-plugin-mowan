@@ -35,7 +35,7 @@
   "maxTokens": 80,
   "?prompt": "戳一戳AI系统提示词，可引用{{botName}} {{operatorName}} {{groupName}} {{operatorId}}",
   "prompt": "你是{{botName}}，正在群里被 {{operatorName}}(QQ:{{operatorId}}) 戳了一下。请像群友一样立刻回一句自然、短促、有点情绪的吐槽或互动话，不要解释，不要自我分析，不要使用列表，不要超过两句话。可以轻微调侃对方，但不要攻击、辱骂或过度重复。若已知群名为 {{groupName}}，可在语气上贴合群聊氛围。",
-  "?fallbackReply": "戳一戳专用兜底回复，AI与普通文案都失败时使用，留空则回退到 ai.fallbackReply，再留空则使用内置短句",
+  "?fallbackReply": "戳一戳专用兜底回复，AI失败时使用；留空则使用内置戳一戳短句，不再回退到通用AI兜底",
   "fallbackReply": "",
   "?pokeMemeEmotion": "戳一戳表情包默认情绪",
   "pokeMemeEmotion": "default"

@@ -1,4 +1,5 @@
 import ConfigControl from '../lib/config/configControl.js';
+import cfg from '../../../lib/config/config.js';
 import { defaultConfig as pluginDefaultConfig } from '../constants/path.js';
 import SessionManager, { RateLimiter, MessageQueueManager, SkillSessionManager } from '../lib/ai/sessionManager.js';
 import KeywordMatcher from '../lib/ai/keywordMatcher.js';
@@ -535,7 +536,7 @@ function parseFeatureToggleCommand(text = '') {
       },
       '只保留群管功能': {
         label: '只保留群管功能',
-        enableKeys: ['auth', 'welcome'],
+        enableKeys: ['auth', 'welcome', 'groupManagement', 'groupTitle'],
       },
     };
     const target = commandMap[command];
@@ -554,7 +555,7 @@ function parseFeatureToggleCommand(text = '') {
       type: 'batch',
       enabled: allMatch[1] === '开启',
       label: '全部功能',
-      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth'],
+      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'groupManagement', 'groupTitle'],
     };
   }
 
@@ -569,7 +570,7 @@ function parseFeatureToggleCommand(text = '') {
       },
       '全部群管相关功能': {
         label: '全部群管相关功能',
-        keys: ['auth', 'welcome'],
+        keys: ['auth', 'welcome', 'groupManagement', 'groupTitle'],
       },
       '全部内容功能': {
         label: '全部内容功能',
@@ -601,7 +602,7 @@ function parseFeatureToggleCommand(text = '') {
     };
   }
 
-  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|AI|音乐|订阅|表情回复|60s|早晚安|自动更新)$/i);
+  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|音乐|订阅|表情回复|60s|早晚安|自动更新)$/i);
   if (!match) return null;
 
   const action = match[1] === '开启';
@@ -612,6 +613,9 @@ function parseFeatureToggleCommand(text = '') {
     '欢迎': { key: 'welcome', label: '欢迎' },
     '图片监控': { key: 'imageMonitor', label: '图片监控' },
     '验证': { key: 'auth', label: '验证' },
+    '群管理': { key: 'groupManagement', label: '群管理' },
+    '头衔': { key: 'groupTitle', label: '头衔' },
+    '群头衔': { key: 'groupTitle', label: '群头衔' },
     'AI': { key: 'ai', label: 'AI' },
     '音乐': { key: 'music', label: '音乐' },
     '订阅': { key: 'rss', label: '订阅' },
@@ -643,6 +647,8 @@ function buildFeatureToggleStatus(config = {}) {
     `- 自动更新：${config.autoUpdate === false ? '关闭' : '开启'}`,
     `- 图片监控：${config.imageMonitor === true ? '开启' : '关闭'}`,
     `- 验证：${config.auth === false ? '关闭' : '开启'}`,
+    `- 群管理：${config.groupManagement === false ? '关闭' : '开启'}`,
+    `- 群头衔：${config.groupTitle === false ? '关闭' : '开启'}`,
     `- AI：${config.ai === false ? '关闭' : '开启'}`,
     `- 音乐：${config.music === false ? '关闭' : '开启'}`,
     `- 表情回复：${config.faceReply === false ? '关闭' : '开启'}`,
@@ -664,6 +670,8 @@ function buildFeatureToggleCommandHelp() {
     '- #开启戳一戳 / #关闭戳一戳',
     '- #开启AI / #关闭AI',
     '- #开启欢迎 / #关闭欢迎',
+    '- #开启群管理 / #关闭群管理',
+    '- #开启群头衔 / #关闭群头衔',
     '',
     '## 批量开关',
     '- #开启全部功能 / #关闭全部功能',
@@ -699,6 +707,8 @@ function buildDisabledFeatureStatus(config = {}) {
     ['自动更新', config.autoUpdate !== false],
     ['图片监控', config.imageMonitor === true],
     ['验证', config.auth !== false],
+    ['群管理', config.groupManagement !== false],
+    ['群头衔', config.groupTitle !== false],
     ['AI', config.ai !== false],
     ['音乐', config.music !== false],
     ['表情回复', config.faceReply !== false],
@@ -756,12 +766,14 @@ function buildDefaultFeatureConfig() {
     ai: defaults.ai !== false,
     music: defaults.music !== false,
     auth: defaults.auth !== false,
+    groupManagement: defaults.groupManagement !== false,
+    groupTitle: defaults.groupTitle !== false,
     autoUpdate: defaults.autoUpdate !== false,
   };
 }
 
 function getManagedFeatureKeys() {
-  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'autoUpdate'];
+  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
 }
 
 function mergeSessionControlState(base = {}, patch = {}) {

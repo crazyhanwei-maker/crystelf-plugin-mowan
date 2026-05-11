@@ -1557,6 +1557,14 @@ textarea {
   font: inherit;
 }
 
+.auth-guarded-page .auth-guarded-content {
+  display: none;
+}
+
+.auth-guarded-page.auth-ready .auth-guarded-content {
+  display: block;
+}
+
 .grid {
   display: grid;
   gap: 16px;
@@ -2418,15 +2426,128 @@ button.danger:hover {
   height: 18px;
 }
 
+.help-diy-mode-toolbar {
+  align-items: stretch;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--soft-bg);
+}
+
+.help-diy-mode-toolbar.is-text-mode {
+  background: transparent;
+}
+
+.help-diy-mode-toolbar select {
+  flex: 0 0 132px;
+  width: auto;
+  min-width: 132px;
+  font-weight: 700;
+}
+
+.help-diy-image-input {
+  flex: 1 1 320px;
+  min-width: 220px;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 13px;
+  color: var(--soft-text);
+}
+
+button.help-diy-upload-btn,
+button.help-diy-clear-btn {
+  flex: 0 0 auto;
+  min-width: 92px;
+  box-shadow: none;
+}
+
+button.help-diy-clear-btn {
+  border-color: var(--border-strong);
+  background: var(--muted-bg);
+  color: var(--soft-text);
+}
+
+button.help-diy-clear-btn:hover {
+  background: var(--border-strong);
+  color: var(--text);
+}
+
+.help-diy-mode-toolbar.is-text-mode .help-diy-image-input,
+.help-diy-mode-toolbar.is-text-mode button.help-diy-clear-btn {
+  display: none;
+}
+
+.help-diy-mode-toolbar.is-text-mode button.help-diy-upload-btn {
+  margin-left: auto;
+}
+
+.help-diy-text-input.is-image-mode {
+  min-height: 108px;
+  color: var(--muted-text);
+  background: var(--soft-bg);
+}
+
+.help-diy-preview-shell {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel-bg);
+}
+
+.help-diy-preview-shell .detail-box {
+  min-height: 120px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.help-diy-preview-shell.is-image-mode .detail-box {
+  min-height: 64px;
+  border-bottom: 1px solid var(--border);
+  color: var(--soft-text);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 13px;
+}
+
+.help-diy-preview-shell.is-image-empty {
+  border-style: dashed;
+}
+
+.help-diy-image-preview-wrap {
+  padding: 14px;
+  background: var(--soft-bg);
+}
+
+.help-diy-image-preview-stage {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+}
+
 .help-diy-image-preview {
   display: block;
-  margin-top: 12px;
   max-width: 100%;
-  max-height: 320px;
-  border-radius: 14px;
+  max-height: 420px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--soft-bg);
   object-fit: contain;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 720px) {
+  .help-diy-mode-toolbar select,
+  .help-diy-image-input,
+  button.help-diy-upload-btn,
+  button.help-diy-clear-btn {
+    flex: 1 1 100%;
+    width: 100%;
+  }
 }
 
 .list-item small {
@@ -2482,6 +2603,866 @@ button.danger:hover {
   color: var(--muted-text);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.group-management-toolbar {
+  margin-bottom: 14px;
+}
+
+.group-management-toolbar input {
+  flex: 1 1 240px;
+  min-width: 220px;
+}
+
+.group-management-event-panel {
+  margin-bottom: 18px;
+}
+
+.group-management-event-toolbar {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.group-management-event-toolbar select {
+  min-width: 150px;
+}
+
+.group-management-event-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--soft-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.group-management-event-scope input {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+}
+
+.group-management-event-stream {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.group-management-event-item {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-event-item.tone-success {
+  border-left-color: #22c55e;
+}
+
+.group-management-event-item.tone-warning {
+  border-left-color: #f59e0b;
+}
+
+.group-management-event-item.tone-error {
+  border-left-color: #ef4444;
+}
+
+.group-management-event-item.is-unread {
+  border-color: rgba(59, 130, 246, 0.45);
+  background: color-mix(in srgb, var(--soft-bg) 82%, #3b82f6 18%);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.16);
+}
+
+.group-management-event-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-management-event-line strong,
+.group-management-event-line span {
+  display: block;
+}
+
+.group-management-event-line strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.group-management-event-line span {
+  margin-top: 3px;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-event-detail {
+  color: var(--soft-text);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.group-management-bulk-panel {
+  margin-bottom: 18px;
+}
+
+.group-management-health-panel {
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+.group-management-health {
+  display: grid;
+  gap: 14px;
+}
+
+.group-management-health-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.group-management-health-summary-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-health-summary-item span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-health-summary-item strong {
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.group-management-health-list {
+  display: grid;
+  gap: 10px;
+}
+
+.group-management-health-item {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-health-item.tone-error {
+  border-left-color: #ef4444;
+}
+
+.group-management-health-item.tone-warning {
+  border-left-color: #f59e0b;
+}
+
+.group-management-health-item.tone-success {
+  border-left-color: #22c55e;
+}
+
+.group-management-health-item.is-ignored {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.group-management-health-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-management-health-item-head strong,
+.group-management-health-item-head span {
+  display: block;
+}
+
+.group-management-health-item-head strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.group-management-health-item-head span {
+  margin-top: 3px;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-health-detail,
+.group-management-health-suggestion {
+  color: var(--soft-text);
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.group-management-health-suggestion {
+  padding: 9px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.group-management-health-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.group-management-health-group {
+  cursor: pointer;
+}
+
+.group-management-health-group span {
+  margin-left: 6px;
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+.group-management-health-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group-management-safety-panel {
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+
+.group-management-safety-status {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--soft-bg);
+}
+
+.group-management-safety-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.group-management-safety-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+:root[data-theme='dark'] .group-management-safety-note {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.group-management-bulk-controls {
+  margin-bottom: 8px;
+}
+
+.group-management-bulk-controls select {
+  min-width: 180px;
+}
+
+.group-management-bulk-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin-top: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 4px 12px;
+  scrollbar-gutter: stable;
+}
+
+.group-management-bulk-item {
+  display: flex;
+  flex: 0 0 260px;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  min-height: 72px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+  cursor: pointer;
+}
+
+.group-management-bulk-item.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.14);
+}
+
+.group-management-bulk-item input {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 18px;
+}
+
+.group-management-bulk-item > span {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+.group-management-bulk-item strong,
+.group-management-bulk-item small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-management-bulk-item small {
+  margin-top: 4px;
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.group-management-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.6fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.group-management-list-panel,
+.group-management-detail-panel {
+  min-width: 0;
+}
+
+.group-management-list {
+  max-height: 70vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.group-management-group-item {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+button.group-management-group-item {
+  display: block;
+  border-color: var(--border);
+  background: var(--soft-bg);
+  box-shadow: none;
+}
+
+button.group-management-group-item.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.16);
+}
+
+.group-management-group-main,
+.group-management-detail-head,
+.group-management-block-head,
+.group-management-members-head,
+.group-management-member-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-management-detail-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.group-management-simulator-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  color: var(--primary);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--panel-bg));
+}
+
+.group-management-simulator-link:hover {
+  background: color-mix(in srgb, var(--primary) 14%, var(--panel-bg));
+}
+
+.group-management-group-main h3,
+.group-management-detail-head h2,
+.group-management-control-block h3,
+.group-management-nested-block h4,
+.group-management-members-head h3,
+.group-management-member-item h3 {
+  margin: 0;
+}
+
+.group-management-group-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.group-management-control-block,
+.group-management-members-panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: var(--soft-bg);
+}
+
+.group-management-local-block {
+  grid-column: 1 / -1;
+}
+
+.group-management-nested-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.group-management-nested-block {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--panel-bg);
+}
+
+.group-management-nested-block h4 {
+  font-size: 15px;
+}
+
+.group-management-ops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.group-management-permission-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.group-management-effective-block {
+  grid-column: span 2;
+}
+
+.group-management-effective-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.group-management-effective-item {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-effective-item span,
+.group-management-effective-item small {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-effective-item strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.group-management-effective-item strong.tone-success {
+  color: #15803d;
+}
+
+.group-management-effective-item strong.tone-warning {
+  color: #b45309;
+}
+
+.group-management-effective-item strong.tone-error {
+  color: #dc2626;
+}
+
+.group-management-effective-item small {
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.group-management-template-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.group-management-backup-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.group-management-backup-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-switch {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.group-management-switch input {
+  min-width: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.group-management-switch strong,
+.group-management-switch small {
+  display: block;
+}
+
+.group-management-switch small {
+  margin-top: 3px;
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.group-management-small-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.group-management-textarea-item {
+  display: block;
+  margin-top: 12px;
+}
+
+.group-management-textarea-item textarea {
+  min-height: 92px;
+  margin-top: 8px;
+}
+
+.group-management-welcome-image-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  align-items: start;
+}
+
+.group-management-welcome-preview {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 150px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-welcome-preview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+.group-management-welcome-preview-empty {
+  padding: 18px;
+  color: var(--muted-text);
+  font-size: 13px;
+  text-align: center;
+}
+
+.group-management-welcome-image-actions {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.group-management-welcome-image-actions input[type="file"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 10px;
+}
+
+.group-management-moderation-block {
+  grid-column: span 2;
+}
+
+.group-management-content-block {
+  grid-column: span 2;
+}
+
+.group-management-moderation-lists {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 12px;
+}
+
+.group-management-warning-editor {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(180px, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.group-management-warning-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.group-management-warning-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-risk-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.group-management-risk-reasons span {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted-text);
+  background: var(--soft-bg);
+  font-size: 12px;
+}
+
+.group-management-members-panel {
+  margin-top: 16px;
+}
+
+.group-management-log-panel {
+  margin-top: 18px;
+}
+
+.group-management-log-list {
+  display: grid;
+  gap: 10px;
+}
+
+.group-management-log-entry {
+  display: grid;
+  gap: 10px;
+}
+
+.group-management-join-request-item {
+  display: grid;
+  gap: 10px;
+}
+
+.group-management-title-application-item {
+  display: grid;
+  gap: 10px;
+}
+
+.group-management-join-request-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-management-join-request-main h3 {
+  margin: 0;
+}
+
+.group-management-log-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-management-log-head h3 {
+  margin: 0;
+}
+
+.group-management-log-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-log-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group-management-members-toolbar {
+  justify-content: flex-end;
+  margin-bottom: 0;
+}
+
+.group-management-members-toolbar input {
+  min-width: 220px;
+}
+
+.group-management-empty {
+  color: var(--muted-text);
+}
+
+.group-management-page .dashboard-strip {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.group-management-page .dashboard-strip-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  background: var(--soft-bg);
+}
+
+.group-management-page .dashboard-strip-card span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.group-management-page .dashboard-strip-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+.group-management-page .dashboard-strip-card div {
+  margin-top: 6px;
+  color: var(--soft-text);
+  font-size: 12px;
+}
+
+@media (max-width: 980px) {
+  .group-management-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .group-management-list {
+    max-height: none;
+  }
+
+  .group-management-group-main,
+  .group-management-detail-head,
+  .group-management-block-head,
+  .group-management-event-line,
+  .group-management-join-request-main,
+  .group-management-log-head,
+  .group-management-members-head,
+  .group-management-member-item {
+    display: grid;
+  }
+
+  .group-management-detail-actions {
+    justify-items: start;
+  }
+
+  .group-management-welcome-image-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .group-management-moderation-block {
+    grid-column: auto;
+  }
+
+  .group-management-content-block {
+    grid-column: auto;
+  }
+
+  .group-management-effective-block {
+    grid-column: auto;
+  }
+
+  .group-management-warning-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .group-management-template-actions,
+  .group-management-backup-item {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
 }
 
 .plugin-settings-knowledge-card {
@@ -3161,6 +4142,1696 @@ button.danger:hover {
   word-break: break-all;
 }
 
+.qq-simulator-upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: center;
+}
+
+.qq-simulator-applicant-toolbar input,
+.qq-simulator-applicant-toolbar select {
+  flex: 1 1 160px;
+}
+
+.qq-simulator-history-toolbar {
+  margin-bottom: 10px;
+}
+
+.qq-simulator-history-input {
+  min-height: 150px;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 13px;
+}
+
+.qq-simulator-segment-builder {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.qq-simulator-segment-toolbar {
+  gap: 8px;
+  margin: 0;
+}
+
+.qq-simulator-segment-toolbar input {
+  flex: 1 1 180px;
+  min-width: 150px;
+}
+
+.qq-simulator-segment-buttons {
+  gap: 8px;
+  margin: 0;
+}
+
+.qq-simulator-segment-buttons button {
+  flex: 1 1 92px;
+  min-height: 34px;
+  padding: 0 10px;
+  box-shadow: none;
+}
+
+.qq-simulator-segment-preview {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.qq-simulator-segment-preview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.qq-simulator-segment-preview-head strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.qq-simulator-segment-preview-head span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.qq-simulator-segment-preview pre {
+  max-height: 240px;
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--soft-bg);
+  color: var(--text);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.qq-simulator-scenario-toolbar input {
+  flex: 1 1 220px;
+}
+
+.qq-simulator-scenario-toolbar select {
+  flex: 0 0 150px;
+}
+
+.qq-simulator-scenario-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--muted-text);
+}
+
+.qq-simulator-scenario-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.qq-simulator-scenario-empty {
+  padding: 10px 0;
+  color: var(--muted-text);
+}
+
+.qq-simulator-scenario-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qq-simulator-scenario-main strong,
+.qq-simulator-scenario-main span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-scenario-main strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.qq-simulator-scenario-main span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.qq-simulator-scenario-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.qq-simulator-modal-card {
+  width: min(680px, 100%);
+}
+
+.qq-simulator-modal-extra {
+  display: grid;
+  gap: 10px;
+}
+
+.qq-simulator-modal-actions {
+  justify-content: flex-end;
+}
+
+.qq-simulator-backup-list {
+  display: grid;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.qq-simulator-backup-item {
+  width: 100%;
+  text-align: left;
+  box-shadow: none;
+}
+
+.qq-simulator-backup-item.is-selected {
+  border-color: rgba(59, 130, 246, 0.55);
+  background: color-mix(in srgb, var(--soft-bg) 80%, #3b82f6 20%);
+}
+
+.qq-simulator-page button:disabled,
+.qq-simulator-page .link-btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+.qq-simulator-file-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--secondary-bg);
+  color: var(--secondary-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.qq-simulator-file-btn input {
+  display: none;
+}
+
+.qq-simulator-attachment-list {
+  display: grid;
+  gap: 10px;
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--muted-text);
+  background: var(--panel-bg);
+}
+
+.qq-simulator-attachment-card {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.qq-simulator-attachment-card audio {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.qq-simulator-preview-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--soft-bg);
+}
+
+.qq-simulator-bubble-media {
+  margin-top: 12px;
+}
+
+.qq-simulator-message-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.qq-simulator-inline-token {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  margin: 0 3px;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft-bg);
+  color: var(--secondary-text);
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: baseline;
+}
+
+.qq-simulator-segment-card {
+  margin-top: 8px;
+}
+
+.qq-simulator-media-card {
+  display: grid;
+  gap: 8px;
+}
+
+.qq-simulator-right-column {
+  gap: 16px;
+}
+
+.qq-simulator-qq-shell {
+  padding: 0;
+  overflow: hidden;
+  background: var(--soft-bg);
+}
+
+.qq-simulator-window {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: min(76vh, 760px);
+  background:
+    linear-gradient(180deg, rgba(75, 148, 255, 0.10), transparent 220px),
+    var(--soft-bg);
+}
+
+.qq-simulator-window-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.qq-simulator-group-avatar,
+.qq-simulator-message-avatar,
+.qq-simulator-member-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: #4b94ff;
+  color: #fff;
+  font-weight: 800;
+}
+
+.qq-simulator-group-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+
+.qq-simulator-group-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.qq-simulator-group-info h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.qq-simulator-chat-meta {
+  color: var(--muted-text);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.qq-simulator-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--soft-text);
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-window-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 276px;
+  min-height: 0;
+}
+
+.qq-simulator-chat-pane {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+}
+
+.qq-simulator-chat-flow {
+  max-height: none;
+  height: min(58vh, 560px);
+  min-height: 420px;
+  padding: 22px 20px;
+  overflow: auto;
+  background:
+    radial-gradient(circle at top left, rgba(75, 148, 255, 0.10), transparent 280px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.18));
+}
+
+.qq-simulator-chat-flow:empty::before {
+  content: '暂无群消息';
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  color: var(--muted-text);
+}
+
+.qq-simulator-chat-flow .sandbox-bubble-row {
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.qq-simulator-chat-flow .sandbox-bubble-row.user {
+  flex-direction: row-reverse;
+}
+
+.qq-simulator-message-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 13px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.qq-simulator-message-avatar.assistant {
+  background: #4b94ff;
+}
+
+.qq-simulator-message-avatar.user {
+  background: #18a058;
+}
+
+.qq-simulator-message-stack {
+  display: grid;
+  gap: 6px;
+  max-width: min(72%, 680px);
+  min-width: 0;
+}
+
+.sandbox-bubble-row.user .qq-simulator-message-stack {
+  justify-items: end;
+}
+
+.qq-simulator-chat-flow .sandbox-bubble-title {
+  margin: 0;
+  color: var(--soft-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.qq-simulator-chat-flow .sandbox-bubble {
+  max-width: 100%;
+  border-radius: 8px;
+  padding: 11px 13px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  line-height: 1.6;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.qq-simulator-chat-flow .sandbox-bubble.user {
+  background: #d7f7bf;
+  color: #162312;
+}
+
+.qq-simulator-chat-flow .sandbox-bubble.assistant {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--text);
+}
+
+.qq-simulator-chat-flow .sandbox-bubble-time {
+  margin-top: 0;
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+.qq-simulator-composer {
+  display: grid;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  background: rgba(255, 255, 255, 0.76);
+  border-top: 1px solid var(--border);
+}
+
+.qq-simulator-composer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.qq-simulator-composer-tools span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--soft-bg);
+  border: 1px solid var(--border);
+}
+
+#qq-simulator-composer-tip {
+  margin-left: auto;
+  background: transparent;
+  border-color: transparent;
+}
+
+.qq-simulator-chat-input {
+  min-height: 82px;
+  max-height: 160px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--panel-bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.qq-simulator-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.qq-simulator-side-pane {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.qq-simulator-side-card {
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.qq-simulator-side-card:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.qq-simulator-side-card h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--soft-text);
+}
+
+.qq-simulator-member-list {
+  display: grid;
+  gap: 10px;
+}
+
+.qq-simulator-member-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+}
+
+.qq-simulator-member-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.qq-simulator-member-avatar.user {
+  background: #18a058;
+}
+
+.qq-simulator-member-avatar.group {
+  background: #7c3aed;
+}
+
+.qq-simulator-member-row strong,
+.qq-simulator-member-row span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-member-row strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.qq-simulator-member-row span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.qq-simulator-side-box {
+  max-height: 170px;
+  overflow: auto;
+  font-size: 12px;
+}
+
+.qq-simulator-event-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.qq-simulator-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.qq-simulator-panel-title h2 {
+  margin: 0;
+}
+
+.qq-simulator-report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.qq-simulator-report-actions select {
+  min-height: 32px;
+  width: auto;
+  min-width: 112px;
+  padding: 0 28px 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.qq-simulator-batch-report {
+  display: grid;
+  gap: 12px;
+  color: var(--muted-text);
+}
+
+.qq-simulator-report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.qq-simulator-report-summary > div {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+}
+
+.qq-simulator-report-summary span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.qq-simulator-report-summary strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.qq-simulator-report-list {
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.qq-simulator-report-item {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.qq-simulator-report-item.status-success {
+  border-left-color: #22c55e;
+}
+
+.qq-simulator-report-item.status-failed {
+  border-left-color: #ef4444;
+}
+
+.qq-simulator-report-item.status-skipped {
+  border-left-color: #94a3b8;
+}
+
+.qq-simulator-report-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.qq-simulator-report-head strong {
+  min-width: 0;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-report-head span {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--soft-bg);
+  color: var(--soft-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.qq-simulator-report-item.status-success .qq-simulator-report-head span {
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.16);
+}
+
+.qq-simulator-report-item.status-failed .qq-simulator-report-head span {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.qq-simulator-report-meta {
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.qq-simulator-report-item pre {
+  margin: 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--soft-bg);
+  color: var(--soft-text);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.qq-simulator-report-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.qq-simulator-report-card-actions button {
+  box-shadow: none;
+}
+
+.qq-simulator-event-list {
+  max-height: 220px;
+  overflow: auto;
+}
+
+.qq-simulator-timeline-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+
+.qq-simulator-timeline-marker {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--secondary-bg);
+  color: var(--secondary-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.qq-simulator-timeline-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qq-simulator-timeline-body strong,
+.qq-simulator-timeline-body small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-timeline-body small {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.qq-simulator-timeline-body pre {
+  margin: 4px 0 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--soft-bg);
+  color: var(--soft-text);
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.qq-simulator-timeline-item.tone-matched .qq-simulator-timeline-marker,
+.qq-simulator-timeline-item.tone-action .qq-simulator-timeline-marker,
+.qq-simulator-timeline-item.tone-success .qq-simulator-timeline-marker {
+  background: rgba(34, 197, 94, 0.16);
+  color: #15803d;
+}
+
+.qq-simulator-timeline-item.tone-skipped .qq-simulator-timeline-marker {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--muted-text);
+}
+
+.qq-simulator-timeline-item.tone-warn .qq-simulator-timeline-marker,
+.qq-simulator-timeline-item.tone-warning .qq-simulator-timeline-marker {
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+}
+
+.qq-simulator-timeline-item.tone-error .qq-simulator-timeline-marker {
+  background: rgba(239, 68, 68, 0.16);
+  color: #dc2626;
+}
+
+.qq-simulator-debug-panel summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+:root[data-theme='dark'] .qq-simulator-window,
+:root[data-theme='dark'] .qq-simulator-chat-flow {
+  background:
+    radial-gradient(circle at top left, rgba(75, 148, 255, 0.18), transparent 280px),
+    var(--soft-bg);
+}
+
+:root[data-theme='dark'] .qq-simulator-window-head,
+:root[data-theme='dark'] .qq-simulator-composer,
+:root[data-theme='dark'] .qq-simulator-side-pane {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+:root[data-theme='dark'] .qq-simulator-chat-flow .sandbox-bubble.assistant {
+  background: rgba(30, 41, 59, 0.96);
+}
+
+:root[data-theme='dark'] .qq-simulator-chat-flow .sandbox-bubble.user {
+  background: rgba(34, 197, 94, 0.22);
+  color: var(--text);
+}
+
+@media (max-width: 1180px) {
+  .qq-simulator-window-body {
+    grid-template-columns: 1fr;
+  }
+
+  .qq-simulator-chat-pane {
+    border-right: 0;
+  }
+
+  .qq-simulator-side-pane {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--border);
+  }
+
+  .qq-simulator-side-card {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .qq-simulator-window {
+    min-height: 640px;
+  }
+
+  .qq-simulator-window-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .qq-simulator-head-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .qq-simulator-chat-flow {
+    min-height: 360px;
+    height: 52vh;
+    padding: 16px 12px;
+  }
+
+  .qq-simulator-message-stack {
+    max-width: calc(100% - 48px);
+  }
+
+  .qq-simulator-side-pane {
+    grid-template-columns: 1fr;
+  }
+
+  #qq-simulator-composer-tip {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+  }
+}
+
+.qq-simulator-page .page {
+  max-width: 1540px;
+}
+
+.qq-simulator-hero {
+  margin-bottom: 16px;
+}
+
+.qq-simulator-desktop {
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr) 306px;
+  height: min(78vh, 820px);
+  min-height: 680px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f4f6fa;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+}
+
+.qq-simulator-session-pane {
+  display: grid;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
+  min-width: 0;
+  background: #edf1f7;
+  border-right: 1px solid rgba(15, 23, 42, 0.10);
+}
+
+.qq-simulator-client-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 14px;
+  color: #334155;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.qq-simulator-window-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.qq-simulator-window-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.qq-simulator-window-dots span:first-child {
+  background: #ff5f57;
+}
+
+.qq-simulator-window-dots span:nth-child(2) {
+  background: #febc2e;
+}
+
+.qq-simulator-window-dots span:nth-child(3) {
+  background: #28c840;
+}
+
+.qq-simulator-self-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 16px 14px 12px;
+}
+
+.qq-simulator-self-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 800;
+}
+
+.qq-simulator-self-card strong,
+.qq-simulator-self-card span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-self-card strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.qq-simulator-self-card span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.qq-simulator-search-box {
+  margin: 0 14px 14px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 7px;
+  background: #dfe5ee;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.qq-simulator-session-label {
+  padding: 0 14px 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.qq-simulator-session-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 66px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #111827;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.qq-simulator-session-item:hover,
+.qq-simulator-session-item.is-active {
+  transform: none;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.qq-simulator-session-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 800;
+}
+
+.qq-simulator-session-avatar.request {
+  background: #f97316;
+}
+
+.qq-simulator-session-avatar.join {
+  background: #16a34a;
+}
+
+.qq-simulator-session-avatar.poke {
+  background: #7c3aed;
+}
+
+.qq-simulator-session-main {
+  min-width: 0;
+}
+
+.qq-simulator-session-main strong,
+.qq-simulator-session-main small,
+.qq-simulator-session-item time {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qq-simulator-session-main strong {
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.qq-simulator-session-main small,
+.qq-simulator-session-item time {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.qq-simulator-chat-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  background: #f2f3f5;
+}
+
+.qq-simulator-chat-card .qq-simulator-window-head {
+  min-height: 68px;
+  padding: 12px 18px;
+  background: #f9fafc;
+}
+
+.qq-simulator-chat-card .qq-simulator-group-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.qq-simulator-chat-card .qq-simulator-chat-flow {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  padding: 24px 24px 18px;
+  background: #f2f3f5;
+}
+
+.qq-simulator-chat-card .qq-simulator-composer {
+  background: #fff;
+  padding: 10px 14px 14px;
+}
+
+.qq-simulator-composer-tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  box-shadow: none;
+  font-size: 13px;
+}
+
+.qq-simulator-composer-tools button:hover {
+  transform: none;
+  background: #edf2f7;
+  box-shadow: none;
+}
+
+.qq-simulator-chat-card .qq-simulator-chat-input {
+  min-height: 96px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+  padding: 6px 2px;
+}
+
+.qq-simulator-chat-card .qq-simulator-chat-input:focus {
+  outline: none;
+}
+
+.qq-simulator-profile-pane {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px;
+  background: #f8fafc;
+  border-left: 1px solid rgba(15, 23, 42, 0.10);
+  overflow: auto;
+}
+
+.qq-simulator-profile-card {
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.qq-simulator-profile-cover {
+  height: 76px;
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(20, 184, 166, 0.78)),
+    #2563eb;
+}
+
+.qq-simulator-profile-body {
+  position: relative;
+  padding: 34px 14px 14px;
+}
+
+.qq-simulator-profile-avatar {
+  position: absolute;
+  top: -26px;
+  left: 14px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 3px solid #fff;
+  border-radius: 14px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 800;
+}
+
+.qq-simulator-profile-body h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.qq-simulator-profile-body p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.qq-simulator-profile-pane .qq-simulator-side-card {
+  padding: 0 0 14px;
+}
+
+.qq-simulator-profile-pane .detail-box {
+  background: #fff;
+}
+
+.qq-simulator-config-drawer {
+  margin-top: 18px;
+}
+
+.qq-simulator-config-drawer > summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.qq-simulator-config-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(360px, 0.9fr);
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.qq-simulator-config-column {
+  min-width: 0;
+}
+
+:root[data-theme='dark'] .qq-simulator-desktop {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.24);
+}
+
+:root[data-theme='dark'] .qq-simulator-session-pane,
+:root[data-theme='dark'] .qq-simulator-profile-pane {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+:root[data-theme='dark'] .qq-simulator-client-head,
+:root[data-theme='dark'] .qq-simulator-self-card strong,
+:root[data-theme='dark'] .qq-simulator-session-main strong {
+  color: #e5e7eb;
+}
+
+:root[data-theme='dark'] .qq-simulator-search-box,
+:root[data-theme='dark'] .qq-simulator-session-item:hover,
+:root[data-theme='dark'] .qq-simulator-session-item.is-active {
+  background: rgba(30, 41, 59, 0.88);
+}
+
+:root[data-theme='dark'] .qq-simulator-chat-card,
+:root[data-theme='dark'] .qq-simulator-chat-card .qq-simulator-chat-flow {
+  background: #0f172a;
+}
+
+:root[data-theme='dark'] .qq-simulator-chat-card .qq-simulator-window-head,
+:root[data-theme='dark'] .qq-simulator-chat-card .qq-simulator-composer,
+:root[data-theme='dark'] .qq-simulator-chat-card .qq-simulator-chat-input,
+:root[data-theme='dark'] .qq-simulator-profile-card,
+:root[data-theme='dark'] .qq-simulator-profile-pane .detail-box {
+  background: #1e293b;
+}
+
+:root[data-theme='dark'] .qq-simulator-profile-body p,
+:root[data-theme='dark'] .qq-simulator-session-main small,
+:root[data-theme='dark'] .qq-simulator-session-item time {
+  color: #94a3b8;
+}
+
+@media (max-width: 1220px) {
+  .qq-simulator-desktop {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
+  .qq-simulator-profile-pane {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .qq-simulator-page .page {
+    padding: 10px;
+  }
+
+  .qq-simulator-hero {
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .qq-simulator-hero h1 {
+    font-size: 20px;
+    line-height: 1.18;
+    letter-spacing: 0;
+  }
+
+  .qq-simulator-hero p {
+    display: none;
+  }
+
+  .qq-simulator-hero > .actions {
+    width: 100%;
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .qq-simulator-hero > .actions > button,
+  .qq-simulator-hero > .actions > .link-btn {
+    flex: 1 1 96px;
+    min-height: 38px;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+
+  .qq-simulator-desktop {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: calc(100svh - 146px);
+    min-height: 560px;
+    max-height: 820px;
+    border-radius: 8px;
+  }
+
+  .qq-simulator-session-pane {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .qq-simulator-client-head,
+  .qq-simulator-self-card,
+  .qq-simulator-search-box,
+  .qq-simulator-session-label {
+    display: none;
+  }
+
+  .qq-simulator-session-item {
+    flex: 0 0 172px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    min-height: 58px;
+    width: auto;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.48);
+  }
+
+  .qq-simulator-session-item.is-active {
+    background: #fff;
+  }
+
+  .qq-simulator-session-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    font-size: 13px;
+  }
+
+  .qq-simulator-session-main strong {
+    font-size: 13px;
+  }
+
+  .qq-simulator-session-main small {
+    font-size: 11px;
+  }
+
+  .qq-simulator-session-item time {
+    display: none;
+  }
+
+  .qq-simulator-chat-card {
+    min-height: 0;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-window-head {
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    padding: 9px 10px;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-group-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    font-size: 14px;
+  }
+
+  .qq-simulator-group-info h2 {
+    margin-bottom: 2px;
+    font-size: 15px;
+  }
+
+  .qq-simulator-chat-meta {
+    font-size: 11px;
+  }
+
+  .qq-simulator-head-actions {
+    gap: 5px;
+    max-width: 38%;
+  }
+
+  .qq-simulator-pill {
+    min-height: 24px;
+    max-width: 108px;
+    padding: 0 7px;
+    font-size: 11px;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-chat-flow {
+    padding: 14px 10px 12px;
+  }
+
+  .qq-simulator-chat-flow .sandbox-bubble-row {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .qq-simulator-message-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .qq-simulator-message-stack {
+    max-width: calc(100% - 44px);
+  }
+
+  .qq-simulator-chat-flow .sandbox-bubble {
+    padding: 9px 11px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-composer {
+    gap: 8px;
+    padding: 8px 10px 10px;
+  }
+
+  .qq-simulator-composer-tools {
+    gap: 6px;
+  }
+
+  .qq-simulator-composer-tools button {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  #qq-simulator-composer-tip {
+    display: none;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-chat-input {
+    min-height: 66px;
+    max-height: 116px;
+    padding: 6px 0;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .qq-simulator-composer-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .qq-simulator-composer-actions > button {
+    min-height: 38px;
+    width: 100%;
+  }
+
+  .qq-simulator-config-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .qq-simulator-scenario-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .qq-simulator-scenario-actions {
+    justify-content: stretch;
+  }
+
+  .qq-simulator-scenario-actions > button {
+    flex: 1 1 72px;
+  }
+
+  .qq-simulator-panel-title {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qq-simulator-report-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+
+  .qq-simulator-report-actions > button,
+  .qq-simulator-report-actions > select {
+    width: 100%;
+  }
+
+  .qq-simulator-segment-toolbar input,
+  .qq-simulator-segment-buttons button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .qq-simulator-page .page {
+    padding: 8px;
+  }
+
+  .qq-simulator-hero {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 10px;
+  }
+
+  .qq-simulator-hero > div:first-child {
+    gap: 0;
+  }
+
+  .qq-simulator-hero h1 {
+    margin-bottom: 0;
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .qq-simulator-hero .hero-badge {
+    display: none;
+  }
+
+  .qq-simulator-hero > .actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 0;
+    padding: 6px;
+  }
+
+  .qq-simulator-hero > .actions > button,
+  .qq-simulator-hero > .actions > .link-btn {
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .qq-simulator-desktop {
+    height: clamp(460px, calc(100svh - 184px), 720px);
+    min-height: 0;
+    border-radius: 0;
+  }
+
+  .qq-simulator-session-pane {
+    padding: 7px;
+  }
+
+  .qq-simulator-session-item {
+    flex-basis: 134px;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 8px;
+    min-height: 52px;
+  }
+
+  .qq-simulator-session-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .qq-simulator-session-main small {
+    display: none;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-window-head {
+    min-height: 54px;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-group-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .qq-simulator-head-actions {
+    max-width: 96px;
+  }
+
+  .qq-simulator-head-actions .qq-simulator-pill:first-child {
+    display: none;
+  }
+
+  .qq-simulator-pill {
+    max-width: 96px;
+  }
+
+  .qq-simulator-chat-card .qq-simulator-chat-flow {
+    padding: 12px 8px 10px;
+  }
+
+  .qq-simulator-message-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .qq-simulator-message-stack {
+    max-width: calc(100% - 40px);
+  }
+
+  .qq-simulator-bubble-media {
+    max-width: min(260px, 100%);
+  }
+
+  .qq-simulator-composer-tools button {
+    flex: 1 1 28%;
+  }
+
+  .qq-simulator-config-drawer {
+    margin-top: 10px;
+  }
+}
+
 #sandbox-template-toolbar button {
   background: var(--secondary-bg);
   color: var(--secondary-text);
@@ -3414,6 +6085,49 @@ button.danger:hover {
   color: var(--soft-text);
   max-height: 420px;
   overflow: auto;
+}
+
+.group-management-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.group-management-modal-card {
+  width: min(620px, 100%);
+  max-height: min(78vh, 720px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+}
+
+.group-management-modal-card h2 {
+  margin: 0;
+}
+
+.group-management-modal-content {
+  margin: 12px 0 16px;
+  color: var(--soft-text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.group-management-modal-input {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.group-management-modal-actions {
+  justify-content: flex-end;
 }
 
 .file-browser-conflict-modal {
@@ -4958,6 +7672,17 @@ textarea {
   border-radius: 12px;
   border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.92);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 18px;
+  accent-color: var(--primary);
 }
 
 :root[data-theme='dark'] input,
@@ -7142,7 +9867,7 @@ pre {
 /* Console atmosphere */
 :root {
   --console-photo-image: none;
-  --console-atmosphere-image: url('/assets/console-background-light.svg');
+  --console-atmosphere-image: url('/assets/console-wallpaper-default.webp');
   --console-hero-image: url('/assets/console-hero-light.svg');
   --console-panel-surface: rgba(255, 255, 255, 0.62);
   --console-widget-surface: rgba(255, 255, 255, 0.52);
@@ -7171,7 +9896,7 @@ pre {
 
 :root[data-theme='dark'] {
   --console-photo-image: none;
-  --console-atmosphere-image: url('/assets/console-background-dark.svg');
+  --console-atmosphere-image: url('/assets/console-wallpaper-default.webp');
   --console-hero-image: url('/assets/console-hero-dark.svg');
   --console-panel-surface: rgba(15, 23, 42, 0.56);
   --console-widget-surface: rgba(15, 23, 42, 0.48);

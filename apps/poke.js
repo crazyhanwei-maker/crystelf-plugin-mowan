@@ -1,6 +1,5 @@
 import cfg from '../../../lib/config/config.js';
 import tool from '../components/tool.js';
-import axios from 'axios';
 import OpenAI from 'openai';
 import configControl from '../lib/config/configControl.js';
 import ConfigControl from '../lib/config/configControl.js';
@@ -20,6 +19,14 @@ const pokeRuntimeState = {
   groupWindow: new Map(),
   followWindows: new Map(),
 };
+
+const DEFAULT_POKE_FALLBACK_REPLIES = [
+  '别戳啦，我在呢。',
+  '干嘛呀，突然戳我一下。',
+  '收到收到，别连戳啦。',
+  '我看见啦，有事直接说。',
+  '再戳我要反击啦。',
+];
 
 const EMOJI_SEQUENCE_REGEX = /(?:\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/gu;
 const EMOJI_FLAG_REGEX = /\p{Regional_Indicator}{2}/gu;
@@ -135,20 +142,23 @@ export default class ChuochuoPlugin extends plugin {
       return;
     }
 
+    if (isSameQQ(e.target_id, e.self_id)) {
+      if (!allowPokeReply(e)) {
+        return true;
+      }
+      return await handleBotPoke(e);
+    }
+
     if (!allowPokeReply(e)) {
       return;
     }
 
-    if (cfg.masterQQ.includes(e.target_id) && e.operator_id !== e.target_id) {
+    if (includesQQ(cfg.masterQQ, e.target_id) && !isSameQQ(e.operator_id, e.target_id)) {
       return await pokeMaster(e);
     }
 
-    if (cfg.masterQQ.includes(e.operator_id) && e.target_id !== e.self_id) {
+    if (includesQQ(cfg.masterQQ, e.operator_id) && !isSameQQ(e.target_id, e.self_id)) {
       return await masterPoke(e);
-    }
-
-    if (e.target_id === e.self_id) {
-      return await handleBotPoke(e);
     }
   }
 
@@ -346,7 +356,7 @@ function allowPokeReply(e) {
 
 async function pokeMaster(e) {
   logger.info('谁戳主人了。');
-  if (cfg.masterQQ.includes(e.operator_id) || e.self_id === e.operator_id) {
+  if (includesQQ(cfg.masterQQ, e.operator_id) || isSameQQ(e.self_id, e.operator_id)) {
     return;
   }
   await e.reply(`小嘿子不许戳!`, false, { recallMsg: 60 });
@@ -356,7 +366,7 @@ async function pokeMaster(e) {
 }
 
 async function masterPoke(e) {
-  if(e.target_id === e.self_id) return;
+  if(isSameQQ(e.target_id, e.self_id)) return;
   logger.info(`跟主人一起戳!`);
   return await Group.groupPoke(e, e.target_id, e.group_id);
 }
@@ -564,9 +574,48 @@ async function sendPokeReply(e, replyText) {
 
 function getPokeFallbackReply(maxReplies = 2) {
   const pokeConfig = configControl.get('poke') || {};
+  const configuredReply = String(pokeConfig.fallbackReply || '').trim();
+  if (configuredReply) {
+    return sanitizePokeReply(configuredReply, maxReplies);
+  }
+  const index = Math.floor(Math.random() * DEFAULT_POKE_FALLBACK_REPLIES.length);
+  return sanitizePokeReply(DEFAULT_POKE_FALLBACK_REPLIES[index] || '我在呢。', maxReplies);
+}
+
+function isSameQQ(left, right) {
+  return String(left ?? '') === String(right ?? '');
+}
+
+function includesQQ(list, target) {
+  const normalizedTarget = String(target ?? '');
+  return Array.isArray(list) && list.some(item => String(item ?? '') === normalizedTarget);
+}
+
+function normalizeFallbackReplyText(text = '') {
+  return String(text || '')
+    .replace(/\s+/g, '')
+    .replace(/[~～。.!！?？]+$/g, '')
+    .trim();
+}
+
+function isConfiguredGenericFallbackReply(text = '') {
+  const normalizedText = normalizeFallbackReplyText(text);
+  if (!normalizedText) {
+    return false;
+  }
+
   const aiConfig = configControl.get('ai') || {};
-  const configuredReply = String(pokeConfig.fallbackReply || aiConfig.fallbackReply || '').trim();
-  return sanitizePokeReply(configuredReply || '我在。', maxReplies);
+  const candidates = [
+    aiConfig.fallbackReply,
+    aiConfig.fallbackTimeoutReply,
+    aiConfig.fallbackGenericReply,
+    aiConfig.fallbackSearchReply,
+  ];
+
+  return candidates.some(candidate => {
+    const normalizedCandidate = normalizeFallbackReplyText(candidate);
+    return normalizedCandidate && normalizedCandidate === normalizedText;
+  });
 }
 
 async function getPokeReplyText(e) {
@@ -574,31 +623,41 @@ async function getPokeReplyText(e) {
   const replyMode = normalizeReplyMode(pokeConfig);
   const maxReplies = Math.max(1, Number(pokeConfig.maxReplyMessages || 1));
 
-  const fallbackReply = async () => {
-    const remoteReply = await fetchRemotePokeReply(maxReplies);
-    return remoteReply || getPokeFallbackReply(maxReplies);
+  const fallbackReply = () => getPokeFallbackReply(maxReplies);
+  const generateWithRetry = async () => {
+    const attempts = Math.max(1, Number(pokeConfig.aiRetryCount || 2) || 2);
+    for (let index = 0; index < attempts; index += 1) {
+      const aiReply = await generateAiPokeReply(e, pokeConfig);
+      if (aiReply) {
+        return aiReply;
+      }
+      if (index < attempts - 1) {
+        await tool.sleep(350);
+      }
+    }
+    return '';
   };
 
   if (replyMode === 'ai') {
-    const aiReply = await generateAiPokeReply(e, pokeConfig);
+    const aiReply = await generateWithRetry();
     if (aiReply) {
       logger.info(`[poke] 使用AI生成戳一戳回复: ${aiReply}`);
       return aiReply;
     }
-    return await fallbackReply();
+    return fallbackReply();
   }
 
   if (replyMode === 'normal') {
-    return await fallbackReply();
+    return fallbackReply();
   }
 
-  const aiReply = await generateAiPokeReply(e, pokeConfig);
+  const aiReply = await generateWithRetry();
   if (aiReply) {
     logger.info(`[poke] 使用AI生成戳一戳回复: ${aiReply}`);
     return aiReply;
   }
 
-  return await fallbackReply();
+  return fallbackReply();
 }
 
 async function generateAiPokeReply(e, pokeConfig) {
@@ -615,9 +674,7 @@ async function generateAiPokeReply(e, pokeConfig) {
   const operatorName = await getOperatorName(e);
   const groupName = e?.group?.info?.group_name || e?.group_name || '当前群聊';
   const context = await getRecentPokeContext(e);
-  const model = context.useMultimodal
-    ? (aiConfig.multimodalModel || pokeConfig.model || aiConfig.workingModel || aiConfig.modelType)
-    : (pokeConfig.model || aiConfig.workingModel || aiConfig.modelType);
+  const model = String(pokeConfig.model || '').trim();
   const systemPrompt = renderPokePrompt(pokeConfig.prompt, {
     botName,
     operatorName,
@@ -653,9 +710,13 @@ async function generateAiPokeReply(e, pokeConfig) {
       }]
     : null;
 
-  const result = await AiCaller.callAiDirect(prompt, [], [], null, [], {
+  const aiEvent = {
+    ...e,
+    user_id: e?.operator_id || e?.user_id,
+  };
+  const result = await AiCaller.callAiDirect(prompt, [], [], aiEvent, [], {
     systemPrompt,
-    model,
+    model: model || undefined,
     temperature: pokeConfig.temperature ?? 0.9,
     max_tokens: pokeConfig.maxTokens ?? 80,
     messages,
@@ -686,28 +747,18 @@ async function generateAiPokeReply(e, pokeConfig) {
     lastImageSummary: context.latestImageSummary,
     useMultimodal: context.useMultimodal,
   });
-  return sanitizePokeReply(result.response, maxReplies);
-}
-
-async function fetchRemotePokeReply(maxReplies = 2) {
-  try {
-    const nickName = configControl.get('profile')?.nickName;
-    const legacyCoreUrl = configControl.get('coreConfig')?.coreUrl;
-    const targetUrl = `${legacyCoreUrl}/api/words/getText`;
-    const res = await axios.post(targetUrl, {
-      type: 'poke',
-      id: 'poke',
-      name: nickName,
+  const sanitizedReply = sanitizePokeReply(result.response, maxReplies);
+  if (isConfiguredGenericFallbackReply(sanitizedReply)) {
+    logger.warn('[poke] AI返回了通用兜底回复，改用戳一戳专用兜底');
+    setPokeDebugSnapshot(e.group_id, {
+      lastAction: 'poke_ai_generic_fallback',
+      lastPrompt: prompt,
+      lastReply: sanitizedReply,
+      lastOperatorId: e.operator_id,
     });
-
-    if (res.data.success) {
-      return sanitizePokeReply(res.data.data, maxReplies);
-    }
-  } catch (error) {
-    logger.warn(`[poke] 从旧核心兼容服务获取普通戳一戳文案失败: ${error.message}`);
+    return '';
   }
-
-  return '';
+  return sanitizedReply;
 }
 
 async function getOperatorName(e) {

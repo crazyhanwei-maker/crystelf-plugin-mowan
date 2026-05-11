@@ -1,0 +1,32 @@
+{
+  "//": "群头衔申请配置。设置头衔需要机器人在该群是群主。",
+  "?enabled": "是否启用群头衔申请功能",
+  "enabled": false,
+  "?allowedGroups": "允许使用群头衔申请的群号，留空表示全部群可用",
+  "allowedGroups": [],
+  "?blockedGroups": "禁止使用群头衔申请的群号",
+  "blockedGroups": [],
+  "?approvalRoles": "可审核头衔申请的群身份，支持 owner/admin；主人始终可审核",
+  "approvalRoles": ["owner", "admin"],
+  "?forbiddenKeywords": "头衔禁用关键词，命中后会拒绝申请，也会阻止控制台发放旧申请",
+  "forbiddenKeywords": ["管理员", "群主", "官方", "客服", "广告", "代充", "引流"],
+  "?maxDisplayWidth": "头衔最大显示宽度，中文通常按 2 计算；QQ 群头衔常见限制约为 6 个中文",
+  "maxDisplayWidth": 12,
+  "?pendingExpireHours": "待审核申请过期时间，单位小时",
+  "pendingExpireHours": 72,
+  "?aiReview": "AI 自动审核头衔配置。开启后合法头衔会自动通过并发放。",
+  "aiReview": {
+    "?enabled": "是否启用 AI 自动审核并自动发放合法头衔",
+    "enabled": false,
+    "?autoRejectIllegal": "AI 判断不合法时是否自动拒绝；关闭则保留人工审核",
+    "autoRejectIllegal": true,
+    "?model": "AI 审核使用模型，留空使用 ai.workingModel/modelType",
+    "model": "",
+    "?temperature": "AI 审核温度，建议 0",
+    "temperature": 0,
+    "?maxTokens": "AI 审核最大输出 token",
+    "maxTokens": 300,
+    "?policy": "头衔审核规则",
+    "policy": "禁止色情、暴力、辱骂、广告、政治敏感、冒充管理、欺诈、引战、泄露隐私；允许普通昵称、角色名、轻度玩梗，但不得攻击他人。"
+  }
+}

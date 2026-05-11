@@ -3,6 +3,7 @@ import axios from 'axios';
 import tools from '../components/tool.js';
 import Group from '../lib/yunzai/group.js';
 import Message from '../lib/yunzai/message.js';
+import { handleJoinRequestAutoApprove } from '../lib/groupManagement/joinRequestAutoApprove.js';
 
 let pending = new Map();
 export class CarbonAuth extends plugin {
@@ -160,6 +161,18 @@ Bot.on?.('notice.group.increase', async (e) => {
   await auth(e, e.group_id, e.user_id);
 });
 
+// 加群申请自动通过。只处理满足条件的申请，不满足时保留人工审核。
+Bot.on?.('request.group.add', async (e) => {
+  try {
+    const cfg = await configControl.get('auth');
+    if (!cfg) return false;
+    return await handleJoinRequestAutoApprove(e, cfg);
+  } catch (error) {
+    logger.warn(`[crystelf-plugin] 加群申请自动通过处理失败: ${error.message}`);
+    return false;
+  }
+});
+
 /**
  * 验证
  * @param e 事件
@@ -170,8 +183,9 @@ Bot.on?.('notice.group.increase', async (e) => {
 async function auth(e, group_id, user_id) {
   const cfg = await configControl.get('auth');
   if (!cfg) return;
-  let groupCfg = cfg.groups[group_id] || cfg.default;
-  if (!groupCfg.enable) return;
+  const groups = cfg.groups && typeof cfg.groups === 'object' ? cfg.groups : {};
+  let groupCfg = groups[String(group_id)] || cfg.default || {};
+  if (!groupCfg?.enable) return;
   const key = `${group_id}_${user_id}`;
   if (groupCfg.carbon.enable) {
     try {

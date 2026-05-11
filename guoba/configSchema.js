@@ -113,6 +113,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.status',
+    label: '状态查询',
+    component: 'Switch',
+    bottomHelpMessage: '是否启用 #灵晶状态 运行状态查询命令',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'config.auth',
     label: '入群验证功能',
     component: 'Switch',
@@ -123,10 +133,20 @@ const guobaSchema = [
     },
   },
   {
-    field: 'config.welcome',
-    label: '入群欢迎功能',
+    field: 'config.groupManagement',
+    label: '群管理运行时',
     component: 'Switch',
-    bottomHelpMessage: '是否启用欢迎功能',
+    bottomHelpMessage: '是否启用群消息风控、黑白名单、警告积分等群管理运行时能力',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.groupTitle',
+    label: '群头衔申请',
+    component: 'Switch',
+    bottomHelpMessage: '是否启用群头衔申请功能；实际设置头衔要求机器人在对应群是群主',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
@@ -170,6 +190,158 @@ const guobaSchema = [
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
+    },
+  },
+  {
+    label: '本群管理',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'config.welcome',
+    label: '入群欢迎功能',
+    component: 'Switch',
+    bottomHelpMessage: '是否启用欢迎功能；本群欢迎文案和欢迎图片请在控制台“群管理”里按群配置',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    label: '群头衔申请',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'groupTitle.enabled',
+    label: '启用头衔申请',
+    component: 'Switch',
+    bottomHelpMessage: '开启后群成员可发送 #申请头衔 xxx，管理员审核后由机器人设置专属头衔',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'groupTitle.allowedGroups',
+    label: '允许申请群',
+    component: 'InputArray',
+    bottomHelpMessage: '允许使用头衔申请的群号，留空表示全部群可用',
+    componentProps: {
+      placeholder: '请输入群号，按回车添加',
+    },
+  },
+  {
+    field: 'groupTitle.blockedGroups',
+    label: '禁止申请群',
+    component: 'InputArray',
+    bottomHelpMessage: '命中这些群号时不会处理头衔申请',
+    componentProps: {
+      placeholder: '请输入群号，按回车添加',
+    },
+  },
+  {
+    field: 'groupTitle.approvalRoles',
+    label: '审核身份',
+    component: 'InputArray',
+    bottomHelpMessage: '可填写 owner、admin；机器人主人始终可审核',
+    componentProps: {
+      placeholder: 'owner 或 admin',
+    },
+  },
+  {
+    field: 'groupTitle.forbiddenKeywords',
+    label: '头衔禁用词',
+    component: 'InputArray',
+    bottomHelpMessage: '申请头衔或控制台发放时命中这些词会被拒绝；适合填写管理员、官方、广告等词',
+    componentProps: {
+      placeholder: '请输入禁用词，按回车添加',
+    },
+  },
+  {
+    field: 'groupTitle.maxDisplayWidth',
+    label: '头衔长度上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '中文通常按 2 计算；12 约等于 6 个中文字符',
+    componentProps: {
+      min: 2,
+      max: 24,
+      step: 1,
+      placeholder: '请输入头衔长度上限',
+    },
+  },
+  {
+    field: 'groupTitle.pendingExpireHours',
+    label: '申请过期小时',
+    component: 'InputNumber',
+    bottomHelpMessage: '待审核申请超过该时间后自动过期',
+    componentProps: {
+      min: 1,
+      max: 720,
+      step: 1,
+      placeholder: '请输入过期小时',
+    },
+  },
+  {
+    field: 'groupTitle.aiReview.enabled',
+    label: 'AI自动审核头衔',
+    component: 'Switch',
+    bottomHelpMessage: '开启后 #申请头衔 会先让 AI 判断是否合法；合法则自动通过并发放头衔',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'groupTitle.aiReview.autoRejectIllegal',
+    label: 'AI自动拒绝违规',
+    component: 'Switch',
+    bottomHelpMessage: '开启后 AI 判断不合法会直接拒绝；关闭则保留申请给管理员人工审核',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'groupTitle.aiReview.model',
+    label: 'AI审核模型',
+    component: 'Input',
+    bottomHelpMessage: '留空时使用 ai.workingModel、ai.modelType 或 ai.model',
+    componentProps: {
+      placeholder: '例如 gpt-5.2-mini，留空自动回退',
+    },
+  },
+  {
+    field: 'groupTitle.aiReview.temperature',
+    label: 'AI审核温度',
+    component: 'InputNumber',
+    bottomHelpMessage: '建议保持 0，让审核结果更稳定',
+    componentProps: {
+      min: 0,
+      max: 2,
+      step: 0.1,
+      precision: 1,
+      placeholder: '请输入审核温度',
+    },
+  },
+  {
+    field: 'groupTitle.aiReview.maxTokens',
+    label: 'AI审核输出上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '只需要输出短 JSON，默认 300 通常足够',
+    componentProps: {
+      min: 100,
+      max: 1000,
+      step: 50,
+      placeholder: '请输入最大 token',
+    },
+  },
+  {
+    field: 'groupTitle.aiReview.policy',
+    label: 'AI审核规则',
+    component: 'InputTextArea',
+    bottomHelpMessage: '用于告诉 AI 哪些头衔应通过或拒绝',
+    componentProps: {
+      rows: 4,
+      placeholder: '请输入头衔审核规则',
     },
   },
   {
@@ -1202,6 +1374,149 @@ const guobaSchema = [
       placeholder: '请输入最大验证次数',
     },
   },
+  {
+    label: '加群申请默认自动通过',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'auth.default.autoApprove.enable',
+    label: '默认启用自动通过',
+    component: 'Switch',
+    bottomHelpMessage: '作为未单独配置群的默认加群申请自动通过开关；建议按群开启更稳妥',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.minQqLevel',
+    label: '默认最低 QQ 等级',
+    component: 'InputNumber',
+    bottomHelpMessage: '0 表示不检查；资料无法读取时不会自动通过',
+    componentProps: {
+      min: 0,
+      max: 255,
+      step: 1,
+      placeholder: '请输入默认最低 QQ 等级',
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.minAge',
+    label: '默认最低年龄',
+    component: 'InputNumber',
+    bottomHelpMessage: '0 表示不检查；资料无法读取时不会自动通过',
+    componentProps: {
+      min: 0,
+      max: 150,
+      step: 1,
+      placeholder: '请输入默认最低年龄',
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.commentKeywords',
+    label: '默认必要关键词',
+    component: 'InputArray',
+    bottomHelpMessage: '申请理由必须包含其中至少一个关键词才会自动通过；留空表示不检查',
+    componentProps: {
+      placeholder: '请输入关键词，按回车添加',
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.blockedKeywords',
+    label: '默认拦截关键词',
+    component: 'InputArray',
+    bottomHelpMessage: '申请理由命中这些关键词时不自动通过',
+    componentProps: {
+      placeholder: '请输入关键词，按回车添加',
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.customRules',
+    label: '默认自定义条件',
+    component: 'InputArray',
+    bottomHelpMessage: '支持如“qq等级 >= 20”“年龄 >= 18”“申请理由 包含 原神”；按群配置会覆盖默认值',
+    componentProps: {
+      placeholder: '请输入自定义条件，按回车添加',
+    },
+  },
+  {
+    label: '入群风险评分默认',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'auth.default.autoApprove.risk.enabled',
+    label: '默认启用风险评分',
+    component: 'Switch',
+    bottomHelpMessage: '开启后申请列表会记录风险评分，并接入群管黑白名单和警告积分',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.risk.scoreEnabled',
+    label: '默认记录风险分',
+    component: 'Switch',
+    bottomHelpMessage: '关闭后只按普通自动通过条件处理，不计算风险分',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.risk.blockBlacklistAutoApprove',
+    label: '默认黑名单不自动通过',
+    component: 'Switch',
+    bottomHelpMessage: '申请人命中群管黑名单时保留人工审核',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.risk.autoApproveWhitelisted',
+    label: '默认白名单直接通过',
+    component: 'Switch',
+    bottomHelpMessage: '申请人命中群管白名单时可跳过等级、年龄和申请理由条件',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.risk.holdHighRisk',
+    label: '默认高风险保留人工',
+    component: 'Switch',
+    bottomHelpMessage: '风险分达到阈值时不自动通过',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.risk.highRiskScore',
+    label: '默认高风险阈值',
+    component: 'InputNumber',
+    bottomHelpMessage: '风险分达到该值时视为高风险',
+    componentProps: {
+      min: 1,
+      max: 100,
+      step: 1,
+      placeholder: '请输入高风险阈值',
+    },
+  },
+  {
+    field: 'auth.default.autoApprove.risk.warningBlockThreshold',
+    label: '默认警告拦截阈值',
+    component: 'InputNumber',
+    bottomHelpMessage: '0 表示不按警告积分拦截自动通过',
+    componentProps: {
+      min: 0,
+      max: 100,
+      step: 1,
+      placeholder: '请输入警告拦截阈值',
+    },
+  },
 
   // ai.json - AI配置
   {
@@ -1392,6 +1707,188 @@ const guobaSchema = [
       max: 100,
       step: 1,
       placeholder: '请输入抓取群历史条数',
+    },
+  },
+  {
+    label: '每日群聊总结',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'ai.dailyGroupSummary.enabled',
+    label: '启用每日总结',
+    component: 'Switch',
+    bottomHelpMessage: '每天到设定时间后，每个开启群最多自动发送一次群聊总结',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.targetMode',
+    label: '总结范围',
+    component: 'Select',
+    bottomHelpMessage: '选择 selected 时只总结启用群；选择 all 时总结所有有聊天记录的群，但仍会排除禁用群',
+    componentProps: {
+      options: [
+        { label: '只总结启用群', value: 'selected' },
+        { label: '总结全部群', value: 'all' },
+      ],
+      placeholder: '请选择总结范围',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.enabledGroups',
+    label: '每日总结启用群',
+    component: 'InputArray',
+    bottomHelpMessage: 'targetMode=selected 时生效；也可以在控制台“群管理”里按群开启',
+    componentProps: {
+      placeholder: '请输入群号，按回车添加',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.blockedGroups',
+    label: '每日总结禁用群',
+    component: 'InputArray',
+    bottomHelpMessage: '无论总结范围如何，命中这些群号都不会发送每日总结',
+    componentProps: {
+      placeholder: '请输入群号，按回车添加',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.hour',
+    label: '总结小时',
+    component: 'InputNumber',
+    bottomHelpMessage: '每天几点开始总结，使用机器人本机时区',
+    componentProps: {
+      min: 0,
+      max: 23,
+      step: 1,
+      placeholder: '请输入小时',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.minute',
+    label: '总结分钟',
+    component: 'InputNumber',
+    bottomHelpMessage: '每天几分开始总结',
+    componentProps: {
+      min: 0,
+      max: 59,
+      step: 1,
+      placeholder: '请输入分钟',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.minMessages',
+    label: '最低消息数',
+    component: 'InputNumber',
+    bottomHelpMessage: '当天群消息少于该数量时跳过总结，避免空群刷屏',
+    componentProps: {
+      min: 1,
+      max: 500,
+      step: 1,
+      placeholder: '请输入最低消息数',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.maxMessages',
+    label: '总结消息上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '每群每天最多取最近多少条消息生成总结',
+    componentProps: {
+      min: 10,
+      max: 1000,
+      step: 10,
+      placeholder: '请输入消息上限',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.maxMessageChars',
+    label: '单条消息长度',
+    component: 'InputNumber',
+    bottomHelpMessage: '记录群消息时单条消息最多保留多少字符',
+    componentProps: {
+      min: 20,
+      max: 1000,
+      step: 20,
+      placeholder: '请输入单条消息长度',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.maxSummaryChars',
+    label: '总结文本长度',
+    component: 'InputNumber',
+    bottomHelpMessage: '发送到群里的总结正文最大字符数',
+    componentProps: {
+      min: 100,
+      max: 3000,
+      step: 100,
+      placeholder: '请输入总结文本长度',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.retentionDays',
+    label: '记录保留天数',
+    component: 'InputNumber',
+    bottomHelpMessage: '本地群聊总结原始消息记录保留天数',
+    componentProps: {
+      min: 1,
+      max: 60,
+      step: 1,
+      placeholder: '请输入保留天数',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.temperature',
+    label: '总结温度',
+    component: 'InputNumber',
+    bottomHelpMessage: '每日总结生成温度，越低越稳定',
+    componentProps: {
+      min: 0,
+      max: 2,
+      step: 0.1,
+      placeholder: '请输入总结温度',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.maxTokens',
+    label: '总结输出上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '每日总结请求模型时允许输出的最大 token',
+    componentProps: {
+      min: 100,
+      max: 4000,
+      step: 100,
+      placeholder: '请输入输出 token 上限',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.includeCommands',
+    label: '纳入命令消息',
+    component: 'Switch',
+    bottomHelpMessage: '是否把 #、＃ 或 / 开头的命令消息也纳入群聊总结',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.title',
+    label: '总结标题',
+    component: 'Input',
+    bottomHelpMessage: '发送到群里的总结标题',
+    componentProps: {
+      placeholder: '今日群聊总结',
+    },
+  },
+  {
+    field: 'ai.dailyGroupSummary.prompt',
+    label: '额外总结要求',
+    component: 'InputTextArea',
+    bottomHelpMessage: '留空使用默认总结规则；可补充例如“重点列出待办”或“语气更活泼”',
+    componentProps: {
+      rows: 4,
+      placeholder: '请输入额外总结要求',
     },
   },
   {
@@ -2822,7 +3319,7 @@ const guobaSchema = [
     field: 'poke.fallbackReply',
     label: '戳一戳专用兜底回复',
     component: 'InputTextArea',
-    bottomHelpMessage: '当 AI 与普通文案都失败时使用；留空则回退到 ai.fallbackReply',
+    bottomHelpMessage: 'AI 失败时使用；留空则使用内置戳一戳短句，不再回退到通用 AI 兜底',
     componentProps: {
       rows: 4,
       placeholder: '请输入戳一戳专用兜底回复',

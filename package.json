@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "check:encoding": "node ./scripts/check-encoding.mjs"
+    "check:encoding": "node ./scripts/check-encoding.mjs",
+    "check:structure": "node ./scripts/check-structure.mjs",
+    "check": "npm run check:encoding && npm run check:structure"
   },
   "repository": {
     "type": "git",

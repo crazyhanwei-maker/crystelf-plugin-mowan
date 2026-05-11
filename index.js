@@ -88,11 +88,13 @@ function getConfigKey(fileName) {
     'face-reply': 'faceReply',
     'face-reply-message': 'faceReply',
     'fanqie': 'fanqie',
+    'group-title': 'groupTitle',
     'help': 'help',
     'image-monitor': 'imageMonitor',
     'music': 'music',
     'poke': 'poke',
     'rssPush': 'rss',
+    'status': 'status',
     'welcome': 'welcome',
     'welcome-set': 'welcome',
     'zwa': 'zwa'

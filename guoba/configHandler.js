@@ -350,6 +350,38 @@ function validateConfig(configType, config = null) {
       if (config.whiteGroup !== undefined && !Array.isArray(config.whiteGroup)) {
         errors.push('白名单群聊必须是数组');
       }
+      if (config.dailyGroupSummary !== undefined) {
+        const daily = config.dailyGroupSummary || {};
+        if (daily.enabled !== undefined && typeof daily.enabled !== 'boolean') {
+          errors.push('每日群聊总结开关必须是布尔值');
+        }
+        if (daily.targetMode !== undefined && !['selected', 'all'].includes(String(daily.targetMode))) {
+          errors.push('每日群聊总结范围必须是 selected 或 all');
+        }
+        if (daily.enabledGroups !== undefined && !Array.isArray(daily.enabledGroups)) {
+          errors.push('每日群聊总结启用群必须是数组');
+        }
+        if (daily.blockedGroups !== undefined && !Array.isArray(daily.blockedGroups)) {
+          errors.push('每日群聊总结禁用群必须是数组');
+        }
+        pushRangeError(errors, daily.hour, 0, 23, '每日群聊总结小时必须在 0-23 之间');
+        pushRangeError(errors, daily.minute, 0, 59, '每日群聊总结分钟必须在 0-59 之间');
+        pushRangeError(errors, daily.minMessages, 1, 500, '每日群聊总结最低消息数必须在 1-500 之间');
+        pushRangeError(errors, daily.maxMessages, 10, 1000, '每日群聊总结消息上限必须在 10-1000 之间');
+        pushRangeError(errors, daily.maxMessageChars, 20, 1000, '每日群聊总结单条消息长度必须在 20-1000 之间');
+        pushRangeError(errors, daily.maxSummaryChars, 100, 3000, '每日群聊总结文本长度必须在 100-3000 之间');
+        pushRangeError(errors, daily.retentionDays, 1, 60, '每日群聊总结记录保留天数必须在 1-60 之间');
+        pushRangeError(errors, daily.temperature, 0, 2, '每日群聊总结温度必须在 0-2 之间');
+        pushRangeError(errors, daily.maxTokens, 100, 4000, '每日群聊总结输出 token 必须在 100-4000 之间');
+        if (daily.includeCommands !== undefined && typeof daily.includeCommands !== 'boolean') {
+          errors.push('每日群聊总结命令消息开关必须是布尔值');
+        }
+        ['title', 'prompt'].forEach((field) => {
+          if (daily[field] !== undefined && typeof daily[field] !== 'string') {
+            errors.push(`每日群聊总结 ${field} 必须是字符串`);
+          }
+        });
+      }
       if (config.fallbackReply !== undefined && typeof config.fallbackReply !== 'string') {
         errors.push('模型故障降级回复必须是字符串');
       }
@@ -447,6 +479,60 @@ function validateConfig(configType, config = null) {
       if (!config.url) {
         errors.push('URL 不能为空');
       }
+      if (config.default !== undefined) {
+        if (!isPlainObject(config.default)) {
+          errors.push('默认入群验证配置必须是对象');
+          break;
+        }
+        ['enable', 'recall'].forEach((field) => {
+          if (config.default[field] !== undefined && typeof config.default[field] !== 'boolean') {
+            errors.push(`默认入群验证 ${field} 必须是布尔值`);
+          }
+        });
+        if (config.default.carbon !== undefined) {
+          if (!isPlainObject(config.default.carbon)) {
+            errors.push('默认手性碳验证配置必须是对象');
+          } else {
+            ['enable', 'hint', 'hard-mode'].forEach((field) => {
+              if (config.default.carbon[field] !== undefined && typeof config.default.carbon[field] !== 'boolean') {
+                errors.push(`默认手性碳验证 ${field} 必须是布尔值`);
+              }
+            });
+          }
+        }
+        pushRangeError(errors, config.default.timeout, 30, 1800, '默认验证超时时间必须在 30-1800 秒之间');
+        pushRangeError(errors, config.default.frequency, 1, 24, '默认验证次数必须在 1-24 之间');
+        if (config.default.autoApprove !== undefined) {
+          if (!isPlainObject(config.default.autoApprove)) {
+            errors.push('默认加群申请自动通过配置必须是对象');
+          } else {
+            const auto = config.default.autoApprove;
+            if (auto.enable !== undefined && typeof auto.enable !== 'boolean') {
+              errors.push('默认加群申请自动通过开关必须是布尔值');
+            }
+            pushRangeError(errors, auto.minQqLevel, 0, 255, '默认最低 QQ 等级必须在 0-255 之间');
+            pushRangeError(errors, auto.minAge, 0, 150, '默认最低年龄必须在 0-150 之间');
+            ['commentKeywords', 'blockedKeywords', 'customRules'].forEach((field) => {
+              if (auto[field] !== undefined && !Array.isArray(auto[field])) {
+                errors.push(`默认自动通过 ${field} 必须是数组`);
+              }
+            });
+            if (auto.risk !== undefined) {
+              if (!isPlainObject(auto.risk)) {
+                errors.push('默认入群风险评分配置必须是对象');
+              } else {
+                ['enabled', 'scoreEnabled', 'blockBlacklistAutoApprove', 'autoApproveWhitelisted', 'holdHighRisk'].forEach((field) => {
+                  if (auto.risk[field] !== undefined && typeof auto.risk[field] !== 'boolean') {
+                    errors.push(`默认入群风险评分 ${field} 必须是布尔值`);
+                  }
+                });
+                pushRangeError(errors, auto.risk.highRiskScore, 1, 100, '默认高风险阈值必须在 1-100 之间');
+                pushRangeError(errors, auto.risk.warningBlockThreshold, 0, 100, '默认警告拦截阈值必须在 0-100 之间');
+              }
+            }
+          }
+        }
+      }
       break;
 
     case 'music':
@@ -490,6 +576,64 @@ function validateConfig(configType, config = null) {
     case 'profile':
       if (!config.nickName) {
         errors.push('机器人昵称不能为空');
+      }
+      break;
+
+    case 'groupTitle':
+      if (config.enabled !== undefined && typeof config.enabled !== 'boolean') {
+        errors.push('群头衔申请开关必须是布尔值');
+      }
+      if (config.allowedGroups !== undefined && !Array.isArray(config.allowedGroups)) {
+        errors.push('群头衔申请允许群必须是数组');
+      }
+      if (config.blockedGroups !== undefined && !Array.isArray(config.blockedGroups)) {
+        errors.push('群头衔申请禁止群必须是数组');
+      }
+      if (config.approvalRoles !== undefined) {
+        if (!Array.isArray(config.approvalRoles)) {
+          errors.push('群头衔申请审核身份必须是数组');
+        } else if (config.approvalRoles.some(role => !['owner', 'admin'].includes(String(role)))) {
+          errors.push('群头衔申请审核身份只能是 owner 或 admin');
+        }
+      }
+      if (config.forbiddenKeywords !== undefined) {
+        if (!Array.isArray(config.forbiddenKeywords)) {
+          errors.push('群头衔禁用词必须是数组');
+        } else if (config.forbiddenKeywords.some(keyword => typeof keyword !== 'string')) {
+          errors.push('群头衔禁用词必须是字符串数组');
+        } else if (config.forbiddenKeywords.length > 200) {
+          errors.push('群头衔禁用词最多 200 个');
+        }
+      }
+      pushRangeError(errors, config.maxDisplayWidth, 2, 24, '群头衔长度上限必须在 2-24 之间');
+      pushRangeError(errors, config.pendingExpireHours, 1, 720, '群头衔申请过期时间必须在 1-720 小时之间');
+      if (config.aiReview !== undefined) {
+        if (!isPlainObject(config.aiReview)) {
+          errors.push('群头衔 AI 审核配置必须是对象');
+        } else {
+          if (config.aiReview.enabled !== undefined && typeof config.aiReview.enabled !== 'boolean') {
+            errors.push('群头衔 AI 审核开关必须是布尔值');
+          }
+          if (
+            config.aiReview.autoRejectIllegal !== undefined
+            && typeof config.aiReview.autoRejectIllegal !== 'boolean'
+          ) {
+            errors.push('群头衔 AI 自动拒绝开关必须是布尔值');
+          }
+          ['model', 'policy'].forEach((field) => {
+            if (config.aiReview[field] !== undefined && typeof config.aiReview[field] !== 'string') {
+              errors.push(`群头衔 AI 审核 ${field} 必须是字符串`);
+            }
+          });
+          pushRangeError(errors, config.aiReview.temperature, 0, 2, '群头衔 AI 审核温度必须在 0-2 之间');
+          pushRangeError(
+            errors,
+            config.aiReview.maxTokens,
+            100,
+            1000,
+            '群头衔 AI 审核输出 token 必须在 100-1000 之间'
+          );
+        }
       }
       break;
 
@@ -556,9 +700,31 @@ function validateConfig(configType, config = null) {
       break;
 
     case 'config':
-      if (config.imageMonitor !== undefined && typeof config.imageMonitor !== 'boolean') {
-        errors.push('图片监控主开关必须是布尔值');
-      }
+      [
+        'autoUpdate',
+        'poke',
+        '60s',
+        'zwa',
+        'rss',
+        'help',
+        'welcome',
+        'faceReply',
+        'imageMonitor',
+        'ai',
+        'music',
+        'auth',
+        'groupManagement',
+        'groupTitle',
+        'webConsole',
+        'webConsoleReadOnly',
+        'webConsolePortAutoIncrement',
+        'webConsoleExposeLogs',
+        'webConsoleMaskSensitiveConfig',
+      ].forEach((field) => {
+        if (config[field] !== undefined && typeof config[field] !== 'boolean') {
+          errors.push(`配置开关 ${field} 必须是布尔值`);
+        }
+      });
       pushRangeError(errors, config.maxFeed, 1, 50, '最长订阅数量必须在 1-50 之间');
       pushRangeError(errors, config.webConsolePageSize, 1, 100, '控制台每页数量必须在 1-100 之间');
       pushRangeError(errors, config.webConsoleMaxPageSize, 1, 500, '控制台最大每页数量必须在 1-500 之间');

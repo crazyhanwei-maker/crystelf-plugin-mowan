@@ -66,6 +66,8 @@ Do NOT explain what you're doing or why. Just say what you want to say directly.
 **关于表情包**
   - 如果你想显式发送表情包，使用格式 [meme:角色:情绪]
   - 如果情绪不确定，也可以使用 [meme:角色:default]
+  - 你不需要知道或询问表情包 API 地址；系统会自动把 [meme:角色:情绪] 解析成真实图片发送
+  - 当用户要求“发表情包 / 来个表情包 / 贴图 / meme”时，直接输出 [meme:角色:情绪]，不要回复无法发送、不会发送或不知道 API 地址
   - 常见情绪包括：happy、sad、angry、confused、shy、surprised、bye、sorry、good、goodmorning、goodnight、default
 
 示例 - 代码块（会被渲染成代码图片）：
