@@ -303,6 +303,37 @@
                 </div>
               </div>
             </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>本地保存与入库</h3>
+                  <p>控制审核预览图保存、表情包本地入库，以及只保存指定角色或关键词的图片。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">保存审核预览图</div>
+                  <button class="plugin-settings-switch off" id="imageMonitor-saveReviewImages">已关闭</button>
+                  <div class="setting-help">开启后审核日志页面使用本地预览图，避免 QQ 图床链接过期。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">保存表情包图片</div>
+                  <button class="plugin-settings-switch off" id="imageMonitor-saveMemeImages">已关闭</button>
+                  <div class="setting-help">默认关闭；开启后识别为表情包的图片才会按角色/情绪保存到本地。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">入库角色白名单</div>
+                  <textarea id="imageMonitor-saveMemeCharacters" rows="3" placeholder="一行一个角色名，留空表示不按角色限制"></textarea>
+                  <div class="setting-help">只保存命中这些角色的表情包；角色白名单和关键词白名单任一命中即可保存。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">入库关键词白名单</div>
+                  <textarea id="imageMonitor-saveMemeKeywords" rows="3" placeholder="一行一个关键词，留空表示不按关键词限制"></textarea>
+                  <div class="setting-help">匹配角色名、标签或摘要；留空表示不按关键词限制。</div>
+                </div>
+              </div>
+            </section>
           </div>
         </section>
 

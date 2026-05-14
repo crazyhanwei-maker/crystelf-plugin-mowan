@@ -39,7 +39,7 @@
         },
         "headers": {
           "Accept": "application/json",
-          "User-Agent": "crystelf-plugin/1.6.4"
+          "User-Agent": "crystelf-plugin/2.0.0"
         }
       },
       "response": {
@@ -82,7 +82,7 @@
         },
         "headers": {
           "Accept": "application/json",
-          "User-Agent": "crystelf-plugin/1.6.4"
+          "User-Agent": "crystelf-plugin/2.0.0"
         }
       },
       "response": {

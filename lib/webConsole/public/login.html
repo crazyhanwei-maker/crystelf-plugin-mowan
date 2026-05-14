@@ -9,22 +9,64 @@
 </head>
 <body class="login-page">
   <main class="login-shell">
-    <section class="login-card">
-      <div class="hero-badge">魔丸控制台</div>
-      <h1>控制台登录</h1>
-      <p id="login-subtitle">输入控制台登录口令后进入管理台。</p>
-      <form id="login-form" class="login-form">
-        <label for="login-token">登录口令</label>
-        <input id="login-token" type="password" autocomplete="current-password" placeholder="请输入控制台登录口令" />
-        <button id="login-submit-btn" type="submit">登录控制台</button>
-      </form>
-      <div id="login-direct-link" class="login-actions hidden">
-        <a class="link-btn" href="/index.html">直接进入控制台</a>
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="login-visual" aria-hidden="true">
+        <div class="login-visual-brand">
+          <div class="login-brand-mark">魔</div>
+          <div>
+            <strong>魔丸控制台</strong>
+            <span>Crystelf Console</span>
+          </div>
+        </div>
+        <div class="login-visual-copy">
+          <span>Bot Management Platform</span>
+          <strong>魔丸核心</strong>
+          <p>聚合群管理、插件管理、运行状态与日志排查。</p>
+        </div>
+        <div class="login-visual-preview">
+          <div class="login-preview-top">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="login-preview-body">
+            <i></i>
+            <i></i>
+            <i></i>
+          </div>
+        </div>
+        <div class="login-signal-grid">
+          <div><span>接口</span><strong>在线</strong></div>
+          <div><span>机器人</span><strong>就绪</strong></div>
+          <div><span>日志</span><strong>同步</strong></div>
+        </div>
       </div>
-      <div id="login-message" class="login-message tone-neutral">等待验证控制台状态...</div>
-      <div class="login-actions">
-        <a class="link-btn" href="/index.html">返回首页</a>
-        <button type="button" id="theme-toggle-btn" data-theme-toggle>切换主题</button>
+
+      <div class="login-panel">
+        <div class="login-top-tools">
+          <a class="link-btn" href="/index.html">返回首页</a>
+          <button type="button" id="theme-toggle-btn" data-theme-toggle>切换主题</button>
+        </div>
+        <div class="login-panel-head">
+          <div class="login-panel-brand">
+            <span class="login-panel-mark">魔</span>
+            <span>魔丸控制台</span>
+          </div>
+          <h1 id="login-title">欢迎回来</h1>
+          <p id="login-subtitle">输入控制台登录口令进入管理台。</p>
+        </div>
+        <form id="login-form" class="login-form">
+          <label for="login-token">登录口令</label>
+          <div class="login-input-wrap">
+            <span class="login-input-icon" aria-hidden="true"></span>
+            <input id="login-token" type="password" autocomplete="current-password" placeholder="请输入控制台登录口令" />
+          </div>
+          <button id="login-submit-btn" type="submit">登录控制台</button>
+        </form>
+        <div id="login-direct-link" class="login-actions hidden">
+          <a class="link-btn" href="/index.html">直接进入控制台</a>
+        </div>
+        <div id="login-message" class="login-message tone-neutral">等待验证控制台状态...</div>
       </div>
     </section>
   </main>

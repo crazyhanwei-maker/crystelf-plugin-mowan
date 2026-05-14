@@ -31,6 +31,7 @@
             <a class="link-btn" href="/qq-simulator.html">QQ 通信模拟器</a>
             <a class="link-btn" href="/api-settings.html">接口设置中心</a>
             <a class="link-btn" href="/plugin-settings.html">插件设置中心</a>
+            <a class="link-btn" href="/bot-plugins.html">插件管理 / 目录</a>
             <a class="link-btn" href="/file-browser.html">文件浏览编辑器</a>
             <a class="link-btn" href="/group-management.html">群管理</a>
             <a class="link-btn" href="/usage-center.html">AI 用量日志中心</a>
@@ -75,6 +76,29 @@
         <h2>巡检结果</h2>
         <div id="health-issues" class="list">加载中...</div>
       </div>
+    </section>
+
+    <section class="panel log-diagnosis-panel">
+      <div class="section-head">
+        <div>
+          <h2>日志排查</h2>
+          <div class="setting-help">读取最近 Bot / 插件日志尾部，提取错误与告警片段后交给 LLM 输出中文排查建议。点击按钮后才会开始分析。</div>
+        </div>
+        <div class="actions">
+          <select id="log-diagnosis-source" aria-label="日志来源">
+            <option value="auto">自动选择</option>
+            <option value="bot">只看 Bot 日志</option>
+            <option value="plugin">只看插件日志</option>
+            <option value="all">全部候选</option>
+          </select>
+          <label class="inline-check">
+            <input id="log-diagnosis-include-warnings" type="checkbox" checked />
+            包含告警
+          </label>
+          <button id="log-diagnosis-run-btn">开始排查</button>
+        </div>
+      </div>
+      <div id="log-diagnosis-result" class="log-diagnosis-result detail-box">等待开始排查。</div>
     </section>
 
     <section class="panel">

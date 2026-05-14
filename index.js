@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import Version from './lib/system/version.js';
 import fc from './components/json.js';
 import Path from './constants/path.js';
 import { crystelfInit } from './lib/system/init.js';
@@ -14,7 +13,7 @@ const logger = globalThis.logger || {
 };
 
 logger.info(
-  chalk.rgb(134, 142, 204)(`crystelf-plugin ${Version.ver} 初始化~ by ${Version.author}`)
+  chalk.rgb(134, 142, 204)('灵晶初始化开始')
 );
 
 await crystelfInit.CSH().then(() => logger.mark('[crystelf-plugin] crystelf-plugin 完成初始化'));
@@ -62,15 +61,21 @@ let ret = enabledApps.map((file) => {
 ret = await Promise.allSettled(ret);
 
 let apps = {};
+const failedApps = [];
 for (let i in enabledApps) {
   let name = enabledApps[i].replace('.js', '');
   if (ret[i].status !== 'fulfilled') {
     logger.error(`[crystelf-plugin] 插件 ${name} 加载失败:`, ret[i].reason);
+    failedApps.push(name);
     continue;
   }
   apps[name] = ret[i].value[Object.keys(ret[i].value)[0]];
 }
-logger.info(`[crystelf-plugin] 成功加载 ${Object.keys(apps).length} 个插件`);
+if (failedApps.length === 0) {
+  logger.info('灵晶已经完成初始化，没有发现异常');
+} else {
+  logger.warn(`[crystelf-plugin] 已加载 ${Object.keys(apps).length} 个插件，${failedApps.length} 个插件加载失败: ${failedApps.join(', ')}`);
+}
 
 export { apps };
 

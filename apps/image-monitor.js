@@ -415,7 +415,7 @@ async function processImageMonitor(e) {
         keywords: resolveMemeKeywords(analysis),
         reason: 'not_meme',
       };
-      if (analysis.isMeme && monitorConfig.saveMemeImages !== false) {
+      if (analysis.isMeme && monitorConfig.saveMemeImages === true) {
         memeSaveResult = saveMemeImage(buffer, hash, analysis, e, imageUrl, monitorConfig);
       } else if (analysis.isMeme) {
         const disabledCharacter = resolveMemeCharacter(analysis);

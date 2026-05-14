@@ -33,6 +33,8 @@ async function main() {
   const webConsoleRoutes = await readText('lib/webConsole/webConsoleRoutes.js');
   const webConsoleHandlerContext = await readText('lib/webConsole/webConsoleHandlerContext.js');
   const fileBrowserRoutes = await readText('lib/webConsole/fileBrowserRoutes.js');
+  const botPluginRoutes = await readText('lib/webConsole/botPluginRoutes.js');
+  const pluginCatalogRoutes = await readText('lib/webConsole/pluginCatalogRoutes.js');
   const dependencyRoutes = await readText('lib/webConsole/dependencyRoutes.js');
   const userDataRoutes = await readText('lib/webConsole/userDataRoutes.js');
   const logRoutes = await readText('lib/webConsole/logRoutes.js');
@@ -55,6 +57,8 @@ async function main() {
     sandboxSimulatorConsoleSuite,
     webConsoleRoutes,
     fileBrowserRoutes,
+    botPluginRoutes,
+    pluginCatalogRoutes,
     dependencyRoutes,
     userDataRoutes,
     logRoutes,
@@ -79,6 +83,8 @@ async function main() {
   addCheck('web console route modules', includesAll(webConsoleRoutes, [
     'createWebConsoleHandler',
     'createFileBrowserRoutes',
+    'createBotPluginRoutes',
+    'createPluginCatalogRoutes',
     'createDependencyRoutes',
     'createUserDataRoutes',
     'createLogRoutes',
@@ -93,6 +99,16 @@ async function main() {
     'createFileBrowserRoutes',
     '/api/file-browser/tree',
     '/api/file-browser/write',
+  ]) && includesAll(botPluginRoutes, [
+    'createBotPluginRoutes',
+    '/api/bot-plugins',
+    'buildBotPluginManagementPayload',
+  ]) && includesAll(pluginCatalogRoutes, [
+    'createPluginCatalogRoutes',
+    '/api/plugin-catalog',
+    '/api/plugin-catalog/install',
+    'createPluginCatalogInstallTask',
+    'refreshPluginCatalogRemoteSource',
   ]) && includesAll(dependencyRoutes, [
     'createDependencyRoutes',
     '/api/dependencies/install',
@@ -135,6 +151,7 @@ async function main() {
     '/console-background-image',
   ]) && includesAll(webConsoleHandlerContext, [
     'createWebConsoleHandlerContext',
+    'buildBotPluginManagementPayload',
     'buildGroupManagementPayload',
     'serveGroupManagementEventStream',
     'runSandboxChat',
@@ -657,6 +674,36 @@ async function main() {
     'buildDependencyReport',
     'resolveDependencyInstallRequest',
     'runDependencyInstallTargetExclusive',
+  ]));
+  const botPluginConsole = await readText('lib/webConsole/botPluginConsole.js');
+  const botPluginsHtml = await readText('lib/webConsole/public/bot-plugins.html');
+  const botPluginsJs = await readText('lib/webConsole/public/bot-plugins.js');
+  const pluginCatalogAliasHtml = await readText('lib/webConsole/public/plugin-catalog.html');
+  addCheck('bot plugin management console module', includesAll(webConsoleSurface, [
+    'createBotPluginConsole',
+    'botPluginConsole',
+    'buildBotPluginManagementPayload',
+    '/api/bot-plugins',
+  ]) && includesAll(botPluginConsole, [
+    'createBotPluginConsole',
+    'readGitInfo',
+    'buildPayload',
+    'PLUGIN_SCAN_LIMIT',
+  ]) && includesAll(botPluginsHtml, [
+    'bot-plugins.js',
+    'Bot 插件管理',
+    'bot-plugins-list',
+    'installed-tab',
+    'catalog-tab',
+  ]) && includesAll(botPluginsJs, [
+    '/api/bot-plugins',
+    'renderPluginList',
+    'buildFileBrowserUrl',
+    'switchTopTab',
+    'getInitialTab',
+  ]) && includesAll(pluginCatalogAliasHtml, [
+    '/bot-plugins.html?tab=catalog',
+    'window.location.replace',
   ]));
   const featureConfigConsole = await readText('lib/webConsole/featureConfigConsole.js');
   addCheck('feature config console module', includesAll(webConsoleSurface, [

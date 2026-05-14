@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - Bot 插件管理</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="page bot-plugins-page plugin-catalog-merged-page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>Bot 插件管理</h1>
+        <p id="bot-plugins-meta">正在扫描 Yunzai 插件目录...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="bot-plugins-refresh-btn" type="button">重新扫描</button>
+            <a class="link-btn" href="/dependency-check.html">依赖检查</a>
+            <a class="link-btn" href="/file-browser.html">文件浏览</a>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" type="button" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="tab-header">
+        <button class="tab-btn active" data-tab-target="installed-tab" type="button">已装插件</button>
+        <button class="tab-btn" data-tab-target="catalog-tab" type="button">插件目录</button>
+      </div>
+    </section>
+
+    <section id="installed-tab" class="tab-panel">
+      <section class="panel">
+        <div class="dashboard-entry-card bot-plugins-toolbar-card">
+          <div>
+            <h2>插件概览</h2>
+            <div id="bot-plugins-status" class="setting-help">正在准备插件数据...</div>
+          </div>
+          <div class="bot-plugins-toolbar">
+            <input id="bot-plugins-search" type="search" placeholder="搜索插件名 / 目录 / Git / 描述" />
+            <select id="bot-plugins-type-filter">
+              <option value="all">全部类型</option>
+              <option value="package">package</option>
+              <option value="yunzai-plugin">Yunzai 插件</option>
+              <option value="plugin">plugin</option>
+              <option value="directory">普通目录</option>
+            </select>
+            <select id="bot-plugins-git-filter">
+              <option value="all">全部 Git 状态</option>
+              <option value="git">仅 Git 仓库</option>
+              <option value="dirty">仅有改动</option>
+              <option value="clean">仅干净</option>
+              <option value="none">非 Git</option>
+            </select>
+            <button id="bot-plugins-clear-filter-btn" type="button">清空筛选</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid cards bot-plugins-summary" id="bot-plugins-summary"></section>
+
+      <section class="panel bot-plugins-warning-panel hidden" id="bot-plugins-warning-panel">
+        <h2>扫描提醒</h2>
+        <div id="bot-plugins-warnings" class="list"></div>
+      </section>
+
+      <section class="panel panel-two bot-plugins-layout">
+        <div>
+          <div class="section-head">
+            <div>
+              <h2>插件列表</h2>
+              <div id="bot-plugins-list-meta" class="setting-help">加载中...</div>
+            </div>
+          </div>
+          <div id="bot-plugins-list" class="list bot-plugins-list">加载中...</div>
+        </div>
+        <aside class="bot-plugins-detail-panel">
+          <h2>插件详情</h2>
+          <div id="bot-plugins-detail" class="detail-box">选择左侧插件查看详情。</div>
+        </aside>
+      </section>
+    </section>
+
+    <section id="catalog-tab" class="tab-panel hidden">
+      <section class="panel">
+        <div class="dashboard-entry-card plugin-catalog-toolbar-card">
+          <div>
+            <h2>插件目录</h2>
+            <div id="plugin-catalog-status" class="setting-help">等待加载目录数据...</div>
+          </div>
+          <div class="bot-plugins-toolbar plugin-catalog-toolbar">
+            <button id="plugin-catalog-refresh-btn" type="button">刷新目录</button>
+            <input id="plugin-catalog-search" type="search" placeholder="搜索插件名 / 仓库 / 简介 / 标签" />
+            <select id="plugin-catalog-category-filter">
+              <option value="all">全部分类</option>
+            </select>
+            <select id="plugin-catalog-state-filter">
+              <option value="all">全部状态</option>
+              <option value="installed">已安装</option>
+              <option value="not-installed">未安装</option>
+              <option value="installable">可自动安装</option>
+            </select>
+            <button id="plugin-catalog-clear-filter-btn" type="button">清空筛选</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid cards bot-plugins-summary" id="plugin-catalog-summary"></section>
+
+      <section class="panel plugin-catalog-task-panel">
+        <div class="section-head">
+          <div>
+            <h2>安装任务</h2>
+            <div id="plugin-catalog-task-meta" class="setting-help">当前无进行中的插件安装任务。</div>
+          </div>
+        </div>
+        <div id="plugin-catalog-install-panel" class="setting-item plugin-catalog-install-panel hidden">
+          <div class="plugin-catalog-install-head">
+            <h3>安装设置</h3>
+            <div class="setting-help">安装前可先改目标目录名；默认仅克隆仓库，不执行第三方安装脚本。</div>
+          </div>
+          <div class="plugin-catalog-install-grid">
+            <label class="plugin-catalog-field">
+              <span class="plugin-catalog-field-label">目标目录名</span>
+              <input id="plugin-catalog-install-directory" type="text" placeholder="例如：foo-plugin" />
+            </label>
+            <label class="plugin-catalog-field">
+              <span class="plugin-catalog-field-label">安装依赖</span>
+              <select id="plugin-catalog-install-deps">
+                <option value="false">仅克隆仓库</option>
+                <option value="true">安装依赖（忽略脚本）</option>
+              </select>
+            </label>
+          </div>
+          <div class="actions plugin-catalog-install-actions">
+            <button id="plugin-catalog-install-btn" type="button">安装当前插件</button>
+            <button id="plugin-catalog-install-reset-btn" type="button" class="mini-btn">恢复默认</button>
+          </div>
+          <div id="plugin-catalog-install-hint" class="setting-help">选择左侧目录项后可执行安装。</div>
+        </div>
+        <div id="plugin-catalog-task-list" class="list plugin-catalog-task-list"></div>
+      </section>
+
+      <section class="panel panel-two bot-plugins-layout plugin-catalog-layout">
+        <div>
+          <div class="section-head">
+            <div>
+              <h2>目录列表</h2>
+              <div id="plugin-catalog-list-meta" class="setting-help">加载中...</div>
+            </div>
+            <div class="plugin-catalog-list-search">
+              <input id="plugin-catalog-list-search" type="search" placeholder="在当前目录中搜索插件 / 仓库 / 标签" />
+              <button id="plugin-catalog-list-clear-btn" type="button" class="mini-btn">清空</button>
+            </div>
+          </div>
+          <div id="plugin-catalog-list" class="list bot-plugins-list">加载中...</div>
+        </div>
+        <aside class="bot-plugins-detail-panel plugin-catalog-detail-panel">
+          <h2>目录详情</h2>
+          <div id="plugin-catalog-detail" class="detail-box">选择左侧插件查看详情。</div>
+        </aside>
+      </section>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/bot-plugins.js"></script>
+  <script src="/plugin-catalog.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>
