@@ -5,7 +5,7 @@
   "?baseApi": "主对话API基础地址，通常填写到 /v1",
   "baseApi": "https://chat.crystelf.top/freechatapi/v1",
   "?apiKey": "api密钥",
-  "apiKey": "crystelf-free",
+  "apiKey": "free",
   "?modelType": "模型名称,请根据baseApi填写的服务商的对应的模型",
   "modelType": "gpt-5.4-mini",
   "?workingModel": "工作模型(用于规划器、记忆检索等辅助任务)",
