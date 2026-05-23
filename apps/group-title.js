@@ -84,6 +84,7 @@ function normalizeGroupTitleConfig(value = {}) {
     forbiddenKeywords: normalizeKeywordList(source.forbiddenKeywords),
     maxDisplayWidth: Math.max(2, Math.min(24, Number(source.maxDisplayWidth || 12))),
     pendingExpireHours: Math.max(1, Math.min(720, Number(source.pendingExpireHours || 72))),
+    autoApprove: source.autoApprove === true,
     aiReview: normalizeAiReviewConfig(source.aiReview),
   };
 }
@@ -127,7 +128,13 @@ function findForbiddenTitleKeyword(title = '', config = {}) {
   const cfg = normalizeGroupTitleConfig(config);
   const normalizedTitle = sanitizeTitleText(title).toLowerCase();
   if (!normalizedTitle) return '';
-  return (cfg.forbiddenKeywords || []).find(keyword => normalizedTitle.includes(String(keyword || '').toLowerCase())) || '';
+  const exactRoleKeywords = new Set(['管理员', '群主', '官方', '客服']);
+  return (cfg.forbiddenKeywords || []).find(keyword => {
+    const text = String(keyword || '').toLowerCase();
+    if (!text) return false;
+    if (exactRoleKeywords.has(keyword)) return normalizedTitle === text;
+    return normalizedTitle.includes(text);
+  }) || '';
 }
 
 function validateTitle(title = '', config = {}) {
@@ -173,6 +180,42 @@ function getAtUserId(e = {}) {
     ? e.message.find(item => item?.type === 'at' && normalizeUserId(item.qq) && String(item.qq) !== selfId)
     : null;
   return normalizeUserId(at?.qq);
+}
+
+function isAtSelf(e = {}) {
+  const selfId = getSelfId(e);
+  if (!selfId || !Array.isArray(e.message)) return false;
+  return e.message.some(item => item?.type === 'at' && String(item.qq) === selfId);
+}
+
+function stripSelfAtText(e = {}) {
+  const selfId = getSelfId(e);
+  let text = String(e.msg || '');
+  if (selfId) {
+    text = text.replace(new RegExp(`\\[CQ:at,qq=${selfId}[^\\]]*\\]`, 'g'), ' ');
+  }
+  return text
+    .replace(/\[CQ:at,qq=\d+[^\]]*\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseConversationalTitleRequest(e = {}) {
+  if (!isAtSelf(e)) return '';
+  const text = stripSelfAtText(e);
+  if (!/(头衔|称号)/.test(text)) return '';
+
+  const patterns = [
+    /(?:给我|帮我|为我|我要|我想要|申请|设置|设为|设成|改成|换成)(?:一个|个)?(.+?)(?:的)?(?:头衔|称号)(?:吧|呀|啦|呗|可以吗|行吗)?[。.!！?？\s]*$/,
+    /(?:把我的)?(?:头衔|称号)(?:设置为|设为|设成|改成|换成|叫|为|是)(.+?)(?:吧|呀|啦|呗|可以吗|行吗)?[。.!！?？\s]*$/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    const title = sanitizeTitleText(match?.[1] || '');
+    if (title) return title;
+  }
+  return '';
 }
 
 function parseApplicationId(text = '') {
@@ -387,9 +430,10 @@ export class groupTitleApplication extends plugin {
       name: 'group-title-application',
       dsc: '群头衔申请',
       event: 'message.group',
-      priority: -1000,
+      priority: -2000,
       rule: [
         { reg: '^#申请头衔[\\s\\S]*$', fnc: 'applyTitle' },
+        { reg: '^[\\s\\S]*(头衔|称号)[\\s\\S]*$', fnc: 'applyConversationalTitle' },
         { reg: '^#头衔申请列表$', fnc: 'listApplications' },
         { reg: '^#同意头衔(?:\\s|$)[\\s\\S]*$', fnc: 'approveTitle' },
         { reg: '^#拒绝头衔(?:\\s|$)[\\s\\S]*$', fnc: 'rejectTitle' },
@@ -424,10 +468,62 @@ export class groupTitleApplication extends plugin {
   }
 
   async applyTitle(e) {
+    const rawTitle = String(e.msg || '').replace(/^#申请头衔/, '').trim();
+    return this.submitTitleApplication(e, rawTitle);
+  }
+
+  async applyConversationalTitle(e) {
+    if (/^#(申请头衔|头衔申请列表|同意头衔|拒绝头衔|取消头衔申请)(?:\s|$)/.test(String(e.msg || ''))) {
+      return false;
+    }
+    const rawTitle = parseConversationalTitleRequest(e);
+    if (!rawTitle) return false;
+    return this.setConversationalTitle(e, rawTitle);
+  }
+
+  async setConversationalTitle(e, rawTitle = '') {
     const guard = await this.guardFeature(e);
     if (!guard.ok) return e.reply(guard.error, true);
 
-    const rawTitle = String(e.msg || '').replace(/^#申请头衔/, '').trim();
+    const validated = validateTitle(rawTitle, guard.cfg);
+    if (!validated.ok) return e.reply(validated.error, true);
+
+    try {
+      await setGroupSpecialTitle(e, e.user_id, validated.title);
+      appendTitleManagementLog({
+        action: 'group_title_conversation_set',
+        success: true,
+        group_id: String(e.group_id || ''),
+        user_id: String(e.user_id || ''),
+        nickname: getSenderName(e),
+        changes: [`对话直接发放头衔：${validated.title}`],
+        summary: {
+          title: validated.title,
+        },
+      });
+      return e.reply([buildAt(e.user_id), ` 头衔已设置为：${validated.title}`], true);
+    } catch (error) {
+      logger.warn(`[group-title] 对话设置群头衔失败: ${error.message}`);
+      appendTitleManagementLog({
+        action: 'group_title_conversation_set_failed',
+        success: false,
+        group_id: String(e.group_id || ''),
+        user_id: String(e.user_id || ''),
+        nickname: getSenderName(e),
+        error: error.message,
+        changes: [`对话发放头衔失败：${validated.title}`],
+        summary: {
+          title: validated.title,
+        },
+      });
+      return e.reply(`设置群头衔失败：${error.message}`, true);
+    }
+  }
+
+  async submitTitleApplication(e, rawTitle = '') {
+    const guard = await this.guardFeature(e);
+    if (!guard.ok) return e.reply(guard.error, true);
+
     const validated = validateTitle(rawTitle, guard.cfg);
     if (!validated.ok) return e.reply(validated.error, true);
 
@@ -449,6 +545,55 @@ export class groupTitleApplication extends plugin {
         title: record.title,
       },
     });
+
+    if (guard.cfg.autoApprove) {
+      try {
+        await setGroupSpecialTitle(e, record.userId, record.title);
+        updateTitleApplicationStatus(record.id, 'approved', {
+          reviewerId: 'auto',
+          reviewerName: '自动通过',
+          reason: '自动通过',
+          error: '',
+        });
+        appendTitleManagementLog({
+          action: 'group_title_auto_approved',
+          success: true,
+          group_id: record.groupId,
+          user_id: record.userId,
+          nickname: record.nickname,
+          reason: '自动通过',
+          changes: [`自动通过并发放头衔：${record.title}`],
+          summary: {
+            applicationId: record.id,
+            title: record.title,
+          },
+        });
+        return e.reply([buildAt(record.userId), ` 头衔申请已自动通过：${record.title}`], true);
+      } catch (error) {
+        logger.warn(`[group-title] 自动通过但设置群头衔失败: ${error.message}`);
+        updateTitleApplicationStatus(record.id, 'failed', {
+          reviewerId: 'auto',
+          reviewerName: '自动通过',
+          reason: '自动通过',
+          error: error.message,
+        });
+        appendTitleManagementLog({
+          action: 'group_title_auto_approve_failed',
+          success: false,
+          group_id: record.groupId,
+          user_id: record.userId,
+          nickname: record.nickname,
+          reason: '自动通过',
+          error: error.message,
+          changes: [`自动通过但发放头衔失败：${record.title}`],
+          summary: {
+            applicationId: record.id,
+            title: record.title,
+          },
+        });
+        return e.reply(`头衔申请已自动通过，但设置群头衔失败：${error.message}`, true);
+      }
+    }
 
     if (guard.cfg.aiReview.enabled) {
       if (!isAiTitleReviewAvailable(guard.mainConfig, guard.aiConfig, guard.cfg.aiReview)) {

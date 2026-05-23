@@ -14,6 +14,8 @@
   "maxDisplayWidth": 12,
   "?pendingExpireHours": "待审核申请过期时间，单位小时",
   "pendingExpireHours": 72,
+  "?autoApprove": "是否自动通过 #申请头衔。开启后合法头衔会跳过人工/AI审核并立即发放。",
+  "autoApprove": false,
   "?aiReview": "AI 自动审核头衔配置。开启后合法头衔会自动通过并发放。",
   "aiReview": {
     "?enabled": "是否启用 AI 自动审核并自动发放合法头衔",

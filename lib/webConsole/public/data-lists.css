@@ -137,6 +137,35 @@
   gap: 8px;
 }
 
+.audit-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.audit-detail-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+.audit-detail-item span {
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.audit-detail-item strong {
+  min-width: 0;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .log-entry-label {
   color: var(--muted-text);
   font-size: 12px;

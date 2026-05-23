@@ -291,6 +291,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'groupTitle.autoApprove',
+    label: '自动通过申请',
+    component: 'Switch',
+    bottomHelpMessage: '开启后 #申请头衔 的合法头衔会跳过人工/AI审核并立即发放；仍要求机器人是群主',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'groupTitle.aiReview.enabled',
     label: 'AI自动审核头衔',
     component: 'Switch',

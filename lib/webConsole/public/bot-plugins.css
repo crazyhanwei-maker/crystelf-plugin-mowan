@@ -251,6 +251,88 @@
   word-break: break-all;
 }
 
+.plugin-catalog-task-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.plugin-catalog-task-step {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.plugin-catalog-task-step-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plugin-catalog-task-step-head strong {
+  font-size: 13px;
+}
+
+.plugin-catalog-task-step-head .detail-tag {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.plugin-catalog-task-step-message,
+.plugin-catalog-task-step-meta {
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.plugin-catalog-task-step-command {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  color: var(--soft-text);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.plugin-catalog-task-residue {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.10);
+  color: var(--soft-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.plugin-catalog-task-residue strong {
+  color: var(--text);
+}
+
+.plugin-catalog-task-residue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plugin-catalog-task-residue-actions code {
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  overflow-wrap: anywhere;
+}
+
 .plugin-catalog-task-log {
   display: grid;
   gap: 8px;
@@ -285,6 +367,11 @@
 .plugin-catalog-task-actions {
   align-items: center;
   justify-content: space-between;
+}
+
+.plugin-catalog-task-actions .danger {
+  border-color: var(--error-border);
+  color: var(--danger);
 }
 
 .plugin-catalog-detail .setting-help {

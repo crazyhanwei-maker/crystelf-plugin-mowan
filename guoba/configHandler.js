@@ -583,6 +583,9 @@ function validateConfig(configType, config = null) {
       if (config.enabled !== undefined && typeof config.enabled !== 'boolean') {
         errors.push('群头衔申请开关必须是布尔值');
       }
+      if (config.autoApprove !== undefined && typeof config.autoApprove !== 'boolean') {
+        errors.push('群头衔自动通过开关必须是布尔值');
+      }
       if (config.allowedGroups !== undefined && !Array.isArray(config.allowedGroups)) {
         errors.push('群头衔申请允许群必须是数组');
       }
