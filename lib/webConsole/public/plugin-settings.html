@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>魔丸控制台 - 插件设置中心</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/plugin-settings.css" />
 </head>
 <body class="plugin-settings-page">
   <div class="page">
@@ -12,7 +13,7 @@
       <div>
         <div class="hero-badge">魔丸控制台</div>
         <h1>插件设置中心</h1>
-        <p id="plugin-settings-meta">基于锅巴配置项渲染，统一管理插件配置、控制台与 HTTP skills。</p>
+        <p id="plugin-settings-meta">统一管理插件功能、控制台访问和可选工具能力。</p>
       </div>
       <div class="actions">
         <button id="plugin-settings-save-btn">保存插件设置</button>
@@ -25,7 +26,7 @@
       <aside id="plugin-settings-drawer" class="panel plugin-settings-drawer">
         <div class="plugin-settings-sidebar-head">
           <h2>设置导航</h2>
-          <div class="setting-status">固定侧栏，切换后右侧直接显示内容。</div>
+          <div class="setting-status">从左侧选择分类，右侧会显示对应设置。</div>
         </div>
         <div class="plugin-settings-sidebar-card">
           <div class="kv-label">当前分组</div>
@@ -34,10 +35,10 @@
         <div class="plugin-settings-side-section">
           <div class="kv-label">导航搜索</div>
           <div class="plugin-settings-search-row">
-            <input id="plugin-settings-search" placeholder="搜索分类、分组、字段" />
+            <input id="plugin-settings-search" placeholder="搜索设置名称、分类或说明" />
             <button id="plugin-settings-search-clear-btn">清空</button>
           </div>
-          <div id="plugin-settings-search-status" class="setting-status">可搜索分类、分组、字段名和说明。</div>
+          <div id="plugin-settings-search-status" class="setting-status">可按设置名称、分类或说明快速定位。</div>
         </div>
         <div class="plugin-settings-side-section">
           <div class="kv-label">主导航</div>
@@ -62,7 +63,7 @@
         <section id="plugin-settings-config-panel" class="panel">
           <div class="plugin-settings-content-head">
             <h2 id="plugin-settings-group-title">配置项</h2>
-            <div id="plugin-settings-group-desc" class="setting-status">按分组编辑当前配置项。</div>
+            <div id="plugin-settings-group-desc" class="setting-status">在这里修改当前分组的配置。</div>
             <div id="plugin-settings-config-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-form" class="plugin-settings-form-grid">加载中...</div>
@@ -71,7 +72,7 @@
         <section id="plugin-settings-features-panel" class="panel hidden">
           <div class="plugin-settings-content-head">
             <h2>功能状态</h2>
-            <div class="setting-status">集中查看主要能力开关与本地控制台的运行状态。</div>
+            <div class="setting-status">查看主要功能是否开启，以及控制台当前运行状态。</div>
             <div id="plugin-settings-features-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-feature-list" class="tag-list"></div>
@@ -80,7 +81,7 @@
         <section id="plugin-settings-console-panel" class="panel hidden">
           <div class="plugin-settings-content-head">
             <h2>控制台设置</h2>
-            <div class="setting-status">控制台相关运行参数、访问安全、数据展示上限，以及常用 API 的超时与保底文案配置。</div>
+            <div class="setting-status">设置控制台访问方式、安全策略、展示数量，以及常用超时和提示文案。</div>
             <div id="plugin-settings-console-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-console-box" class="settings-grid"></div>
@@ -89,7 +90,7 @@
         <section id="plugin-settings-skills-panel" class="panel hidden">
           <div class="plugin-settings-content-head">
             <h2>Skills 设置</h2>
-            <div class="setting-status">查看每个 HTTP skill 的用途说明、工具数量和当前启用状态，并决定是否自动加载到 AI 会话。</div>
+            <div class="setting-status">查看可选工具的用途，决定哪些工具可以被 AI 使用。</div>
             <div id="plugin-settings-skills-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-skills-box" class="settings-grid">加载中...</div>
@@ -98,7 +99,18 @@
     </div>
   </div>
 <script src="/auth.js"></script>
+<script src="/plugin-settings-state.js"></script>
+<script src="/plugin-settings-skills-data.js"></script>
+<script src="/plugin-settings-skills.js"></script>
+<script src="/plugin-settings-knowledge.js"></script>
+<script src="/plugin-settings-recommendations.js"></script>
+<script src="/plugin-settings-render.js"></script>
+<script src="/plugin-settings-feature-render.js"></script>
+<script src="/plugin-settings-console-render.js"></script>
+<script src="/plugin-settings-skills-panel.js"></script>
+<script src="/plugin-settings-skills-render.js"></script>
 <script src="/plugin-settings.js"></script>
+<script src="/plugin-settings-events.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

@@ -2,7 +2,6 @@ import ConfigControl from '../lib/config/configControl.js';
 import cfg from '../../../lib/config/config.js';
 import { defaultConfig as pluginDefaultConfig } from '../constants/path.js';
 import SessionManager, { RateLimiter, MessageQueueManager, SkillSessionManager } from '../lib/ai/sessionManager.js';
-import KeywordMatcher from '../lib/ai/keywordMatcher.js';
 import AiCaller from '../lib/ai/aiCaller.js';
 import MemorySystem from '../lib/ai/memorySystem.js';
 import Renderer from '../lib/ai/renderer.js';
@@ -1082,7 +1081,6 @@ export class crystelfAI extends plugin {
       );
       await this.humanize.init();
       
-      KeywordMatcher.init();
       AiCaller.init();
       MemorySystem.init();
       Renderer.init();

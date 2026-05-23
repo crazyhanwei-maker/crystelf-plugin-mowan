@@ -67,13 +67,13 @@ git pull
 
 ## 控制台
 
-默认本机入口：
+默认监听所有网卡，常用入口：
 
 ```text
 http://127.0.0.1:27891/
 ```
 
-首次使用需要设置控制台登录口令。控制台页面始终要求登录；非本机监听前必须先设置口令。
+`webConsoleHost` 默认是 `0.0.0.0`。启动时如果没有配置 `webConsoleToken`，会自动生成随机登录口令、写入运行配置，并在启动日志里显示“控制台登录口令”。控制台页面始终要求登录；公网暴露时请限制来源并尽快改成强口令。
 
 常用页面：
 
@@ -86,7 +86,7 @@ http://127.0.0.1:27891/
 | 群管理 | `/group-management.html` |
 | 图片监控 | `/image-monitor-center.html` |
 | QQ 模拟器 | `/qq-simulator.html` |
-| 调试对话 | `/sandbox-chat.html` |
+| 对话测试 | `/sandbox-chat.html` |
 | 文件编辑 | `/file-browser.html` |
 | 依赖检查 | `/dependency-check.html` |
 | AI 用量 | `/usage-center.html` |
@@ -128,8 +128,8 @@ AI 生图使用自然语言触发，例如“生成一张花海图片”。插�
 - URL 安全检查默认关闭，开启后支持白名单和本地缓存。
 - 插件目录安装默认“仅克隆仓库”；如果手动选择安装依赖，会使用 `npm install --ignore-scripts`。
 - 插件删除会移入 `plugins/.crystelf-plugin-trash`，不会直接硬删。
-- 控制台 API 受登录、Same-Origin 和 CSRF 保护。
-- 日志排查会把脱敏后的日志片段交给 LLM 分析，建议只在可信接口下使用。
+- 控制台 API 受登录校验、来源校验和防跨站请求保护。
+- 日志排查会把脱敏后的日志片段交给已配置的 AI 服务分析，建议只在可信接口下使用。
 
 ## 本地检查
 

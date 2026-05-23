@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>魔丸控制台 - 群管理</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/group-management.css" />
+  <link rel="stylesheet" href="/data-lists.css" />
 </head>
 <body class="group-management-page auth-guarded-page">
   <div class="page auth-guarded-content">
@@ -12,7 +14,7 @@
       <div>
         <div class="hero-badge">魔丸控制台</div>
         <h1>群管理</h1>
-        <p id="group-management-meta">查看群列表、成员列表，并集中管理本插件的群级配置。</p>
+        <p id="group-management-meta">查看群列表和成员信息，并为不同群单独设置欢迎、风控和 AI 功能。</p>
       </div>
       <div class="actions">
         <button id="group-management-refresh-btn">刷新群数据</button>
@@ -29,7 +31,7 @@
       <div class="section-head">
         <div>
           <h2>实时事件流</h2>
-          <div id="group-management-event-meta" class="setting-help">自动显示刚触发的风控、申请、欢迎、总结和头衔事件。</div>
+          <div id="group-management-event-meta" class="setting-help">这里会显示刚发生的群管事件，方便确认自动处理是否正常。</div>
         </div>
         <div class="actions">
           <button type="button" id="group-management-event-toggle-btn" class="mini-btn" data-action="toggle-event-stream">暂停自动刷新</button>
@@ -63,7 +65,7 @@
       <div class="section-head">
         <div>
           <h2>群检索</h2>
-          <div id="group-management-status" class="setting-help">正在读取群数据...</div>
+          <div id="group-management-status" class="setting-help">正在读取群列表...</div>
         </div>
       </div>
       <div class="toolbar group-management-toolbar">
@@ -78,13 +80,13 @@
       <div class="section-head">
         <div>
           <h2>配置健康检查</h2>
-          <div id="group-management-health-meta" class="setting-help">扫描群管理总开关、Bot 权限、危险动作、AI/图片监控接口和群级冲突。</div>
+          <div id="group-management-health-meta" class="setting-help">检查群管理开关、机器人权限、危险动作和群级配置冲突。</div>
         </div>
         <div class="actions">
           <button type="button" id="group-management-health-scan-btn" class="mini-btn" data-action="run-health-check">重新扫描</button>
           <button type="button" class="mini-btn" data-action="handle-first-health-issue">处理首项</button>
-          <button type="button" class="mini-btn" data-action="export-health-markdown">导出 MD</button>
-          <button type="button" class="mini-btn" data-action="export-health-json">导出 JSON</button>
+          <button type="button" class="mini-btn" data-action="export-health-markdown">导出报告</button>
+          <button type="button" class="mini-btn" data-action="export-health-json">导出原始数据</button>
           <button type="button" class="mini-btn" data-action="toggle-health-ignored">显示忽略项</button>
         </div>
       </div>
@@ -95,7 +97,7 @@
       <div class="section-head">
         <div>
           <h2>群管安全开关</h2>
-          <div class="setting-help">全局保护自动撤回、禁言、踢人等高风险动作，运行时也会按这里的配置二次拦截。</div>
+          <div class="setting-help">为撤回、禁言、踢人等高风险操作设置保护规则，避免误操作影响群聊。</div>
         </div>
         <div class="actions">
           <button type="button" id="group-management-safety-save-btn" class="mini-btn" data-action="save-safety">保存安全开关</button>
@@ -108,7 +110,7 @@
       <div class="section-head">
         <div>
           <h2>默认群设置</h2>
-          <div class="setting-help">没有单独保存配置的群，会继承这里的入群验证、自动通过、欢迎和群消息风控设置。</div>
+          <div class="setting-help">没有单独设置的群，会使用这里的入群验证、欢迎语和群消息风控规则。</div>
         </div>
         <div class="actions">
           <button type="button" id="group-management-default-save-btn" class="mini-btn" data-action="save-defaults">保存默认设置</button>
@@ -121,7 +123,7 @@
       <div class="section-head">
         <div>
           <h2>批量开启群</h2>
-          <div id="group-management-bulk-meta" class="setting-help">选择要开启的功能，再勾选群。</div>
+          <div id="group-management-bulk-meta" class="setting-help">先选择功能，再勾选要批量开启的群。</div>
         </div>
         <div class="actions">
           <button id="group-management-bulk-apply-btn" class="mini-btn" data-action="bulk-apply" disabled>开启所选群</button>
@@ -141,7 +143,7 @@
         <button type="button" class="mini-btn" data-action="bulk-select-enabled">载入已开启群</button>
         <button type="button" class="mini-btn" data-action="bulk-clear-selection">清空选择</button>
       </div>
-      <div class="setting-help">保存时会给勾选群开启对应功能。AI 和图片监控会写入对应白名单，并移出对应黑名单；白名单不为空时，未在白名单的群不会工作。</div>
+      <div class="setting-help">应用后会为所选群开启对应功能。AI 和图片监控会自动加入白名单，并从黑名单移除。</div>
       <div id="group-management-bulk-list" class="group-management-bulk-list">加载中...</div>
     </section>
 
@@ -165,7 +167,7 @@
       <div class="section-head">
         <div>
           <h2>群管理日志</h2>
-          <div id="group-management-log-meta" class="setting-help">显示当前群最近的配置变更和入群申请处理记录。</div>
+          <div id="group-management-log-meta" class="setting-help">查看当前群最近的配置变更、入群申请和处理结果。</div>
         </div>
         <div class="actions">
           <button id="group-management-log-refresh-btn" class="mini-btn">刷新日志</button>
@@ -190,7 +192,16 @@
     </div>
   </div>
   <script src="/auth.js"></script>
+  <script src="/group-management-core.js"></script>
+  <script src="/group-management-render.js"></script>
+  <script src="/group-management-defaults-render.js"></script>
+  <script src="/group-management-detail-render.js"></script>
+  <script src="/group-management-health.js"></script>
+  <script src="/group-management-events.js"></script>
+  <script src="/group-management-settings.js"></script>
+  <script src="/group-management-lists.js"></script>
   <script src="/group-management.js"></script>
+  <script src="/group-management-ui-events.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

@@ -192,7 +192,8 @@ function buildHealthItems(allConfigs = {}) {
   const ttsConfig = coreConfig.tools?.tts || {};
   const imageMonitorConfig = allConfigs.imageMonitor || {};
 
-  const aiReady = Boolean(aiConfig.apiKey && aiConfig.baseApi && (aiConfig.workingModel || aiConfig.modelType || aiConfig.model));
+  const chatModel = aiConfig.modelType || aiConfig.model || aiConfig.workingModel;
+  const aiReady = Boolean(aiConfig.apiKey && aiConfig.baseApi && chatModel);
   const imageMode = String(imageConfig.imageMode || 'openai');
   const imageReady = imageConfig.enabled === false
     ? false
@@ -207,7 +208,7 @@ function buildHealthItems(allConfigs = {}) {
     {
       label: 'AI 接口',
       tone: aiReady ? 'success' : 'warn',
-      detail: aiReady ? `已配置 ${aiConfig.workingModel || aiConfig.modelType || aiConfig.model}` : '未完整配置',
+      detail: aiReady ? `主对话 ${chatModel}` : '未完整配置',
     },
     {
       label: '图片生成',

@@ -123,6 +123,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.logDiagnosis',
+    label: 'QQ 日志排查',
+    component: 'Switch',
+    bottomHelpMessage: '是否启用 #灵晶排查日志；仅主人可触发，会读取最近日志并交给 AI 排查',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'config.auth',
     label: '入群验证功能',
     component: 'Switch',
@@ -503,7 +513,7 @@ const guobaSchema = [
     label: '控制台登录口令',
     component: 'InputPassword',
     required: false,
-    bottomHelpMessage: '控制台登录页使用的口令。首次使用时需先在本机控制台完成初始化并设置它；控制台始终要求登录',
+    bottomHelpMessage: '控制台登录页使用的口令。留空时启动控制台会自动生成随机口令、写入运行配置并在启动日志输出；控制台始终要求登录',
     componentProps: {
       placeholder: '请输入控制台登录口令',
     },
@@ -522,7 +532,7 @@ const guobaSchema = [
     field: 'config.webConsoleHost',
     label: '控制台地址',
     component: 'Input',
-    bottomHelpMessage: '默认 127.0.0.1，仅本机可访问；改为 0.0.0.0 可局域网访问，但建议先设置登录口令，且口令为空时远程无法完成首次初始化',
+    bottomHelpMessage: '默认 0.0.0.0 监听所有网卡，可局域网/公网访问；请务必使用强口令并限制访问来源',
     componentProps: {
       placeholder: '请输入监听地址',
     },
@@ -665,19 +675,10 @@ const guobaSchema = [
     },
   },
 
-  // coreConfig.json - 旧核心兼容配置
+  // coreConfig.json - 核心与工具配置
   {
-    label: '旧核心兼容配置',
+    label: '核心与工具配置',
     component: 'SOFT_GROUP_BEGIN',
-  },
-  {
-    field: 'coreConfig.coreUrl',
-    label: '兼容旧核心服务地址',
-    component: 'Input',
-    bottomHelpMessage: '兼容旧核心服务地址，仅用于旧词库、早晚安、普通戳一戳与表情包兜底，默认值是示例占位地址',
-    componentProps: {
-      placeholder: '请输入兼容旧核心服务地址',
-    },
   },
   {
     label: '使用量限制',
@@ -1565,7 +1566,7 @@ const guobaSchema = [
     field: 'ai.modelType',
     label: '文本模型',
     component: 'Input',
-    bottomHelpMessage: '用于文本生成的模型名称',
+    bottomHelpMessage: '机器人日常聊天主回复优先使用这个模型',
     required: true,
     componentProps: {
       placeholder: '请输入模型名称，如: deepseek-ai/DeepSeek-V3.2-Exp',
@@ -1975,7 +1976,7 @@ const guobaSchema = [
     field: 'ai.memeConfig.apiBase',
     label: '表情包API地址',
     component: 'Input',
-    bottomHelpMessage: '随机取图与角色列表接口基础地址，例如 http://165.99.42.28:5555',
+    bottomHelpMessage: '随机取图与角色列表接口基础地址，例如 http://38.22.95.201:5555',
     componentProps: {
       placeholder: '请输入表情包API地址',
     },
@@ -2076,7 +2077,7 @@ const guobaSchema = [
     field: 'ai.workingModel',
     label: '辅助工作模型',
     component: 'Input',
-    bottomHelpMessage: '用于动作规划、记忆检索、话题分析等辅助任务的模型名称',
+    bottomHelpMessage: '用于动作规划、记忆检索、总结、欢迎、头衔审核等后台任务；留空时复用文本模型',
     componentProps: {
       placeholder: '请输入辅助工作模型名称，留空时默认复用文本模型',
     },
@@ -2142,7 +2143,7 @@ const guobaSchema = [
     field: 'ai.imageConfig.jimengApiUrl',
     label: '即梦接口地址',
     component: 'Input',
-    bottomHelpMessage: '即梦绘图/改图接口基础地址，例如 http://165.99.42.28:985',
+    bottomHelpMessage: '即梦绘图/改图接口基础地址；不用即梦模式时建议留空',
     componentProps: {
       placeholder: '请输入即梦接口地址',
     },

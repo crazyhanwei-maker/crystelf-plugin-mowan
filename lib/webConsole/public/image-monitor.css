@@ -1,0 +1,39 @@
+/* 图片监控页面样式。 */
+
+.image-monitor-card-head {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.image-monitor-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.image-monitor-thumb-link,
+.image-monitor-thumb-placeholder {
+  width: 92px;
+  height: 92px;
+  flex: 0 0 92px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--soft-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.image-monitor-thumb-placeholder {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.image-monitor-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

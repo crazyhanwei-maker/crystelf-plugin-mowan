@@ -6,6 +6,9 @@
   <title>魔丸控制台</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/dashboard.css" />
+  <link rel="stylesheet" href="/dependency-check.css" />
+  <link rel="stylesheet" href="/data-lists.css" />
 </head>
 <body class="dashboard-page">
   <div class="page">
@@ -27,7 +30,7 @@
         <div class="hero-action-group hero-action-group-links">
           <div class="hero-action-label">快捷入口</div>
           <div class="actions hero-actions-grid">
-            <a class="link-btn" href="/sandbox-chat.html">网页调试对话</a>
+            <a class="link-btn" href="/sandbox-chat.html">网页对话测试</a>
             <a class="link-btn" href="/qq-simulator.html">QQ 通信模拟器</a>
             <a class="link-btn" href="/api-settings.html">接口设置中心</a>
             <a class="link-btn" href="/plugin-settings.html">插件设置中心</a>
@@ -51,6 +54,47 @@
     </section>
 
     <section id="dashboard-strip" class="dashboard-strip"></section>
+
+    <section class="panel console-health-overview-panel">
+      <div class="section-head">
+        <div>
+          <h2>控制台健康总览</h2>
+          <div class="setting-help">这里汇总控制台是否能正常使用、有没有访问风险，以及需要优先处理的问题。</div>
+        </div>
+        <div class="actions">
+          <a class="link-btn" href="/usage-center.html">查看审计日志</a>
+        </div>
+      </div>
+      <div id="console-health-overview" class="console-health-overview-grid">加载中...</div>
+    </section>
+
+    <section class="panel operation-task-center-panel">
+      <div class="section-head">
+        <div>
+          <h2>操作任务中心</h2>
+          <div class="setting-help">这里汇总正在进行或刚完成的安装任务，方便查看是否还在排队、是否成功。</div>
+        </div>
+        <div class="actions">
+          <a class="link-btn" href="/dependency-check.html">依赖任务</a>
+          <a class="link-btn" href="/bot-plugins.html?tab=catalog">插件任务</a>
+        </div>
+      </div>
+      <div id="operation-task-center" class="operation-task-center">加载中...</div>
+    </section>
+
+    <section class="panel public-security-panel">
+      <div class="section-head">
+        <div>
+          <h2>公网访问安全</h2>
+          <div class="setting-help">这里提示控制台是否允许外部设备访问，以及当前访问方式是否需要注意安全。</div>
+        </div>
+        <div class="actions">
+          <button class="mini-btn" type="button" data-security-action="copy-current-url">复制当前地址</button>
+          <a class="link-btn" href="/plugin-settings.html">控制台设置</a>
+        </div>
+      </div>
+      <div id="public-security-overview" class="public-security-overview">加载中...</div>
+    </section>
 
     <section class="panel dashboard-control-panel">
       <div class="dashboard-control-head">
@@ -82,12 +126,12 @@
       <div class="section-head">
         <div>
           <h2>日志排查</h2>
-          <div class="setting-help">读取最近 Bot / 插件日志尾部，提取错误与告警片段后交给 LLM 输出中文排查建议。点击按钮后才会开始分析。</div>
+          <div class="setting-help">点击后会读取最近的机器人和插件日志，整理错误片段并生成中文排查建议。</div>
         </div>
         <div class="actions">
           <select id="log-diagnosis-source" aria-label="日志来源">
             <option value="auto">自动选择</option>
-            <option value="bot">只看 Bot 日志</option>
+            <option value="bot">只看机器人日志</option>
             <option value="plugin">只看插件日志</option>
             <option value="all">全部候选</option>
           </select>
@@ -101,11 +145,25 @@
       <div id="log-diagnosis-result" class="log-diagnosis-result detail-box">等待开始排查。</div>
     </section>
 
+    <section class="panel support-bundle-panel">
+      <div class="section-head">
+        <div>
+          <h2>页面巡检与脱敏排障包</h2>
+          <div class="setting-help">先检查首页、常用页面、关键接口和前端资源，再导出已脱敏的排障包，方便远程协助定位问题。</div>
+        </div>
+        <div class="actions">
+          <button id="console-page-check-run-btn" type="button">开始页面巡检</button>
+          <button id="support-bundle-export-btn" type="button">导出脱敏排障包</button>
+        </div>
+      </div>
+      <div id="console-page-check-result" class="console-page-check-result detail-box">等待开始巡检。</div>
+    </section>
+
     <section class="panel">
       <div class="section-head">
         <div>
           <h2>依赖状态</h2>
-          <div class="setting-help">首页仅显示是否缺失运行依赖；完整清单与版本偏差请进入独立检查页。</div>
+          <div class="setting-help">首页只显示是否有会影响运行的依赖缺失；完整明细可进入依赖检查页查看。</div>
         </div>
       </div>
       <div id="dependency-summary" class="config-summary">加载中...</div>
@@ -134,8 +192,8 @@
     <section class="panel">
       <div class="section-head">
         <div>
-          <h2>独立调试入口</h2>
-          <div class="setting-help">最近会话、好感度 Top 和用户画像已拆分到独立页面，主页仅保留快捷入口。</div>
+          <h2>独立工具入口</h2>
+          <div class="setting-help">会话、好感度和用户画像放在独立页面，首页只保留常用入口。</div>
         </div>
       </div>
       <div id="collection-entry-grid" class="settings-grid">加载中...</div>
@@ -146,7 +204,7 @@
         <div class="dashboard-entry-card">
           <div>
             <h2>AI 用量日志中心</h2>
-            <div class="setting-help">AI 用量日志、场景筛选、趋势图和详情页已拆到独立页面，首页只保留今日概览。</div>
+            <div class="setting-help">查看请求次数、失败记录、消耗趋势和单条请求详情。</div>
           </div>
           <div class="actions">
             <a class="link-btn" href="/usage-center.html">打开 AI 用量日志中心</a>
@@ -169,7 +227,7 @@
       <div class="dashboard-entry-card">
         <div>
           <h2>图片监控中心</h2>
-          <div class="setting-help">图片监控日志和表情包入库记录已拆分到独立页面，便于单独排查与翻页浏览。</div>
+          <div class="setting-help">查看图片审核记录、表情包入库记录和相关排查信息。</div>
         </div>
         <div class="actions">
           <a class="link-btn" href="/image-monitor-center.html">打开图片监控中心</a>
@@ -179,8 +237,21 @@
 
     <section class="panel">
       <h2>配置摘要</h2>
-      <div class="setting-status">“一键备份配置”会导出当前运行中的全部插件配置 JSON；“从备份恢复”会直接覆盖当前配置，请谨慎操作。</div>
+      <div class="setting-status">“一键备份配置”会导出当前插件配置；“从备份恢复”会覆盖现有配置，恢复前请确认备份来源可信。</div>
       <div id="config-box" class="config-summary">加载中...</div>
+    </section>
+
+    <section class="panel config-history-panel">
+      <div class="section-head">
+        <div>
+          <h2>配置变更历史</h2>
+          <div class="setting-help">这里记录最近的配置保存动作，遇到设置错误时可以回滚到保存前状态。</div>
+        </div>
+        <div class="actions">
+          <button id="refresh-config-history-btn" class="mini-btn" type="button">刷新历史</button>
+        </div>
+      </div>
+      <div id="config-history-box" class="config-history-list">加载中...</div>
     </section>
 
   </div>
@@ -195,7 +266,19 @@
     </div>
   </div>
   <script src="/auth.js"></script>
+  <script src="/dashboard-core.js"></script>
+  <script src="/dashboard-usage.js"></script>
+  <script src="/dashboard-health.js"></script>
+  <script src="/dashboard-tasks.js"></script>
+  <script src="/dashboard-security.js"></script>
+  <script src="/dashboard-overview.js"></script>
+  <script src="/dashboard-collections.js"></script>
+  <script src="/dashboard-logs.js"></script>
+  <script src="/dashboard-image-monitor.js"></script>
+  <script src="/dashboard-config.js"></script>
+  <script src="/dashboard-support.js"></script>
   <script src="/app.js"></script>
+  <script src="/dashboard-events.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

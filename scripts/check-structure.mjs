@@ -3,6 +3,26 @@ import path from 'path';
 
 const root = process.cwd();
 const checks = [];
+const FORBIDDEN_RUNTIME_PATTERNS = [
+  {
+    label: 'legacy-core.example.com',
+    pattern: 'legacy-core.example.com',
+  },
+  {
+    label: '旧词库接口 /api/words',
+    pattern: '/api/words',
+  },
+  {
+    label: '旧核心配置 coreUrl',
+    pattern: 'coreUrl',
+  },
+  {
+    label: '旧即梦接口 165.99.42.28',
+    pattern: '165.99.42.28',
+  },
+];
+const FORBIDDEN_RUNTIME_SCAN_EXTENSIONS = new Set(['.js', '.mjs', '.json', '.html', '.md']);
+const FORBIDDEN_RUNTIME_SCAN_EXCLUDE_DIRS = new Set(['.git', 'node_modules', 'temp', 'data']);
 
 function addCheck(name, ok, detail = '') {
   checks.push({ name, ok: Boolean(ok), detail });
@@ -16,11 +36,155 @@ function includesAll(text, patterns = []) {
   return patterns.every(pattern => text.includes(pattern));
 }
 
+async function listFilesByExtension(dir, extension) {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await listFilesByExtension(fullPath, extension));
+    } else if (path.extname(entry.name) === extension) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+function isSkippableHtmlResource(value = '') {
+  return /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(value);
+}
+
+async function findMissingPublicHtmlResources() {
+  const publicRoot = path.join(root, 'lib/webConsole/public');
+  const htmlFiles = await listFilesByExtension(publicRoot, '.html');
+  const missing = [];
+  const resourcePattern = /<(?:script|link)\b[^>]*(?:src|href)=["']([^"']+)["']/gi;
+
+  for (const file of htmlFiles) {
+    const html = await fs.readFile(file, 'utf8');
+    const htmlDir = path.dirname(file);
+    const relativeHtmlPath = path.relative(root, file).replace(/\\/g, '/');
+    for (const match of html.matchAll(resourcePattern)) {
+      const rawValue = String(match[1] || '').trim();
+      if (!rawValue || isSkippableHtmlResource(rawValue)) {
+        continue;
+      }
+
+      const cleanValue = rawValue.split(/[?#]/, 1)[0];
+      const target = cleanValue.startsWith('/')
+        ? path.join(publicRoot, cleanValue.slice(1))
+        : path.resolve(htmlDir, cleanValue);
+      const relativeTargetPath = path.relative(publicRoot, target);
+      if (relativeTargetPath.startsWith('..') || path.isAbsolute(relativeTargetPath)) {
+        missing.push(`${relativeHtmlPath}: ${rawValue} 越过 public 目录`);
+        continue;
+      }
+
+      try {
+        await fs.access(target);
+      } catch {
+        missing.push(`${relativeHtmlPath}: ${rawValue}`);
+      }
+    }
+  }
+
+  return missing;
+}
+
+async function findPublicHtmlPagesMissingAuth() {
+  const publicRoot = path.join(root, 'lib/webConsole/public');
+  const htmlFiles = await listFilesByExtension(publicRoot, '.html');
+  const publicRedirectPages = new Set(['login.html', 'plugin-catalog.html']);
+  const missing = [];
+
+  for (const file of htmlFiles) {
+    const relativePath = path.relative(publicRoot, file).replace(/\\/g, '/');
+    if (publicRedirectPages.has(relativePath)) {
+      continue;
+    }
+    const html = await fs.readFile(file, 'utf8');
+    if (!html.includes('src="/auth.js"')) {
+      missing.push(relativePath);
+    }
+  }
+
+  return missing;
+}
+
+async function findNativePublicDialogUsages() {
+  const publicRoot = path.join(root, 'lib/webConsole/public');
+  const jsFiles = await listFilesByExtension(publicRoot, '.js');
+  const hits = [];
+
+  for (const file of jsFiles) {
+    const relativePath = path.relative(root, file).replace(/\\/g, '/');
+    if (relativePath === 'lib/webConsole/public/auth.js') {
+      continue;
+    }
+    const text = await fs.readFile(file, 'utf8');
+    if (/\bwindow\.(?:alert|confirm)\s*\(/.test(text) || /(?<![\w.])(?:alert|confirm)\s*\(/.test(text)) {
+      hits.push(relativePath);
+    }
+  }
+
+  return hits;
+}
+
+async function listTextFiles(dir) {
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    if (FORBIDDEN_RUNTIME_SCAN_EXCLUDE_DIRS.has(entry.name)) {
+      continue;
+    }
+
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await listTextFiles(fullPath));
+    } else if (FORBIDDEN_RUNTIME_SCAN_EXTENSIONS.has(path.extname(entry.name))) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+async function findForbiddenRuntimeReferences() {
+  const files = await listTextFiles(root);
+  const hits = [];
+
+  for (const file of files) {
+    const relativePath = path.relative(root, file).replace(/\\/g, '/');
+    if (relativePath === 'scripts/check-structure.mjs' || relativePath === 'lib/config/configControl.js') {
+      continue;
+    }
+    const text = await fs.readFile(file, 'utf8');
+    for (const item of FORBIDDEN_RUNTIME_PATTERNS) {
+      if (text.includes(item.pattern)) {
+        hits.push(`${relativePath}: ${item.label}`);
+      }
+    }
+  }
+
+  return hits;
+}
+
 async function main() {
   const pkg = JSON.parse(await readText('package.json'));
   addCheck('package name', pkg.name === 'crystelf-plugin', `name=${pkg.name}`);
   addCheck('encoding script exists', Boolean(pkg.scripts?.['check:encoding']));
   addCheck('structure script exists', Boolean(pkg.scripts?.['check:structure']));
+  const forbiddenRuntimeRefs = await findForbiddenRuntimeReferences();
+  addCheck('no removed legacy runtime endpoints', forbiddenRuntimeRefs.length === 0, forbiddenRuntimeRefs.join('; '));
+  const missingPublicHtmlResources = await findMissingPublicHtmlResources();
+  addCheck('web console static resource references', missingPublicHtmlResources.length === 0, missingPublicHtmlResources.join('; '));
+  const publicHtmlPagesMissingAuth = await findPublicHtmlPagesMissingAuth();
+  addCheck('web console protected pages load auth script', publicHtmlPagesMissingAuth.length === 0, publicHtmlPagesMissingAuth.join('; '));
+  const nativePublicDialogUsages = await findNativePublicDialogUsages();
+  addCheck('web console public pages use unified dialog', nativePublicDialogUsages.length === 0, nativePublicDialogUsages.join('; '));
 
   const server = await readText('lib/webConsole/server.js');
   const configFeatureConsoleSuite = await readText('lib/webConsole/configFeatureConsoleSuite.js');
@@ -84,6 +248,9 @@ async function main() {
     'createWebConsoleHandler',
     'createFileBrowserRoutes',
     'createBotPluginRoutes',
+    '/api/version/check',
+    '/api/tasks',
+    'buildVersionCheckPayload',
     'createPluginCatalogRoutes',
     'createDependencyRoutes',
     'createUserDataRoutes',
@@ -112,6 +279,8 @@ async function main() {
   ]) && includesAll(dependencyRoutes, [
     'createDependencyRoutes',
     '/api/dependencies/install',
+    '/api/dependencies/install-precheck',
+    '/api/dependencies/install-missing',
     '/api/dependencies/install-history',
   ]) && includesAll(userDataRoutes, [
     'createUserDataRoutes',
@@ -119,6 +288,7 @@ async function main() {
     '/api/sessions/reset',
   ]) && includesAll(logRoutes, [
     'createLogRoutes',
+    '/api/logs/audit',
     '/api/logs/image-monitor',
     '/api/trend/usage',
   ]) && includesAll(groupManagementRoutes, [
@@ -127,7 +297,9 @@ async function main() {
     '/api/group-management/save',
   ]) && includesAll(settingsRoutes, [
     'createSettingsRoutes',
+    '/api/api-settings/precheck',
     '/api/api-settings/save',
+    '/api/plugin-settings/precheck',
     '/api/plugin-settings/skills-config/save',
   ]) && includesAll(helpDiyRoutes, [
     'createHelpDiyRoutes',
@@ -144,6 +316,8 @@ async function main() {
   ]) && includesAll(configBackupRoutes, [
     'createConfigBackupRoutes',
     '/api/config-backup',
+    '/api/config-history',
+    '/api/config-history/rollback',
     '/api/config-restore',
   ]) && includesAll(mediaRoutes, [
     'createMediaRoutes',
@@ -365,10 +539,12 @@ async function main() {
   addCheck('plugin settings console module', includesAll(webConsoleSurface, [
     'createPluginSettingsConsole',
     'buildPluginSettingsPayload',
+    'precheckPluginSettings',
     'savePluginSettings',
     'buildSkillConfigEditorPayload',
   ]) && includesAll(pluginSettingsConsole, [
     'createPluginSettingsConsole',
+    'precheckPluginSettings',
     'validateSkillConfigPayload',
     'restoreMaskedSkillConfigSecrets',
     'maskDisplayUrlSecrets',
@@ -378,12 +554,117 @@ async function main() {
     'createOverviewConsole',
     'buildOverviewPayload',
     'buildHealthPayload',
+    'buildVersionCheckPayload',
     'resolvePluginsDirectory',
   ]) && includesAll(overviewConsole, [
     'createOverviewConsole',
     'getChatSnapshot',
     'buildOverviewPayload',
     'buildHealthPayload',
+    'buildVersionCheckPayload',
+  ]));
+  const dashboardIndexHtml = await readText('lib/webConsole/public/index.html');
+  const dashboardHealthJs = await readText('lib/webConsole/public/dashboard-health.js');
+  const dashboardTasksJs = await readText('lib/webConsole/public/dashboard-tasks.js');
+  const dashboardSecurityJs = await readText('lib/webConsole/public/dashboard-security.js');
+  const dashboardAppJs = await readText('lib/webConsole/public/app.js');
+  const dashboardCss = await readText('lib/webConsole/public/dashboard.css');
+  addCheck('dashboard console health overview UI', includesAll(overviewConsole, [
+    'webConsoleSecurity',
+    'startupSelfCheck',
+    'staticAssets',
+    'htmlResourceVersioning',
+  ]) && includesAll(dashboardIndexHtml, [
+    'console-health-overview',
+    '控制台健康总览',
+    '需要优先处理的问题',
+    '查看审计日志',
+  ]) && includesAll(dashboardHealthJs, [
+    'renderConsoleHealthOverview',
+    'buildStartupSelfCheckHealthCard',
+    'buildStaticCacheHealthCard',
+    'buildSecurityHealthCard',
+    'buildAuditHealthCard',
+  ]) && includesAll(dashboardAppJs, [
+    '/api/logs/audit?pageSize=1',
+    'renderConsoleHealthOverview(overview, health, null, auditLogs)',
+    'renderConsoleHealthOverview(overview, health, result, auditLogs)',
+  ]) && includesAll(dashboardCss, [
+    'console-health-overview-grid',
+    'console-health-card',
+    'tone-warning',
+  ]));
+  addCheck('dashboard operation task center UI', includesAll(webConsoleRoutes, [
+    '/api/tasks',
+    'buildOperationTaskCenterPayload',
+    'listDependencyInstallTasks',
+    'listPluginCatalogInstallTasks',
+  ]) && includesAll(dashboardIndexHtml, [
+    'operation-task-center',
+    '操作任务中心',
+    'dashboard-tasks.js',
+  ]) && includesAll(dashboardTasksJs, [
+    'renderOperationTaskCenter',
+    'renderOperationTaskSummary',
+    'renderOperationTaskItem',
+  ]) && includesAll(dashboardAppJs, [
+    "fetchJsonSafe('/api/tasks'",
+    'renderOperationTaskCenter(tasks)',
+  ]) && includesAll(dashboardCss, [
+    'operation-task-center-panel',
+    'operation-task-summary',
+    'operation-task-item',
+  ]));
+  addCheck('dashboard public security panel UI', includesAll(overviewConsole, [
+    'riskItems',
+    'publicAccessHint',
+    'writeOperationsAllowed',
+  ]) && includesAll(dashboardIndexHtml, [
+    'public-security-overview',
+    '公网访问安全',
+    'dashboard-security.js',
+  ]) && includesAll(dashboardSecurityJs, [
+    'renderPublicSecurityOverview',
+    'copyPublicSecurityUrl',
+    'enableWebConsoleReadOnlyMode',
+  ]) && includesAll(dashboardAppJs, [
+    "fetchJsonSafe('/api/auth/status'",
+    'renderPublicSecurityOverview(overview, authStatus)',
+  ]) && includesAll(dashboardCss, [
+    'public-security-panel',
+    'public-security-stats',
+    'public-security-risk-list',
+  ]));
+  const publicAuthJs = await readText('lib/webConsole/public/auth.js');
+  const apiSettingsPageJs = await readText('lib/webConsole/public/api-settings.js');
+  const pluginSettingsPageJs = await readText('lib/webConsole/public/plugin-settings.js');
+  const sharedRequestConsumerScripts = [
+    await readText('lib/webConsole/public/dashboard-core.js'),
+    await readText('lib/webConsole/public/usage-center.js'),
+    await readText('lib/webConsole/public/collection-center.js'),
+    await readText('lib/webConsole/public/dependency-check.js'),
+    await readText('lib/webConsole/public/help-diy.js'),
+    await readText('lib/webConsole/public/api-settings-utils.js'),
+  ].join('\n');
+  addCheck('web console shared request helper', includesAll(publicAuthJs, [
+    'window.CrystelfRequest',
+    'requestJson',
+    'fetchJsonSafe',
+    'downloadExport',
+  ]) && includesAll(sharedRequestConsumerScripts, [
+    'window.CrystelfRequest',
+  ]) && !/(?:async\s+function|function)\s+(?:fetchJson|postJson|fetchJsonSafe)\s*\(/.test(sharedRequestConsumerScripts));
+  addCheck('config save precheck UI', includesAll(settingsRoutes, [
+    '/api/api-settings/precheck',
+    '/api/plugin-settings/precheck',
+  ]) && includesAll(apiSettingsPageJs, [
+    '/api/api-settings/precheck',
+    'confirmApiSettingsPrecheck',
+    '保存 API 配置预检',
+  ]) && includesAll(pluginSettingsPageJs, [
+    '/api/plugin-settings/precheck',
+    'confirmPluginSettingsPrecheck',
+    '保存插件配置预检',
   ]));
   const webConsoleAuth = await readText('lib/webConsole/webConsoleAuth.js');
   addCheck('web console auth module', includesAll(webConsoleSurface, [
@@ -395,6 +676,7 @@ async function main() {
     'createWebConsoleAuth',
     'parseWebConsoleSession',
     'requireSameOrigin',
+    'buildLoginAttemptStatus',
     'webConsoleLoginAttempts',
   ]));
   const webConsoleConfig = await readText('lib/webConsole/webConsoleConfig.js');
@@ -409,9 +691,11 @@ async function main() {
     'getPricingConfig',
     'createPaginator',
   ]));
+  const startupSelfCheck = await readText('lib/webConsole/startupSelfCheck.js');
   const webConsoleConstants = await readText('lib/webConsole/webConsoleConstants.js');
   addCheck('web console constants module', includesAll(webConsoleSurface, [
     'WEB_CONSOLE_REQUEST_BODY_MAX_BYTES',
+    'WEB_CONSOLE_AUDIT_LOG_FILE',
     'FILE_BROWSER_TEXT_EXTENSIONS',
     'PUBLIC_DIR',
     'QQ_SIMULATOR_ADAPTER_FORMATS',
@@ -429,14 +713,29 @@ async function main() {
     'webConsoleRuntime.getInfo',
   ]) && includesAll(webConsoleRuntime, [
     'createWebConsoleRuntime',
+    'buildStartupSelfCheckPayload',
+    'formatStartupSelfCheckLines',
+    'Startup self-check',
     'portAutoIncrement',
     'server.close',
     'getInfo',
+  ]));
+  addCheck('web console startup self check module', includesAll(server, [
+    'createStartupSelfCheck',
+    'startupSelfCheck',
+    'buildStartupSelfCheckPayload',
+  ]) && includesAll(startupSelfCheck, [
+    'createStartupSelfCheck',
+    'buildConfigFileChecks',
+    'buildDependencySelfCheck',
+    'formatStartupSelfCheckLines',
+    '配置 JSON 完整性',
   ]));
   addCheck('core web console suite module', includesAll(webConsoleSurface, [
     'createCoreWebConsoleSuite',
     'httpUtils',
     'webConsoleAuth',
+    'auditConsole',
     'fileBrowserConsole',
     'helpDiyConsole',
     'staticConsole',
@@ -444,6 +743,7 @@ async function main() {
     'createCoreWebConsoleSuite',
     'createWebConsoleHttpUtils',
     'createWebConsoleAuth',
+    'createWebConsoleAuditLog',
     'createFileBrowserConsole',
     'createHelpDiyConsole',
     'createStaticConsole',
@@ -508,6 +808,11 @@ async function main() {
     'serveStatic',
     'plugin-settings.html',
     'normalizeWebConsoleRedirectPath',
+    'ETag',
+    'Last-Modified',
+    'isStaticCacheFresh',
+    'injectStaticResourceVersions',
+    'appendStaticResourceVersion',
   ]));
   const logFileUtils = await readText('lib/webConsole/logFileUtils.js');
   addCheck('log file utils module', includesAll(webConsoleSurface, [
@@ -570,11 +875,16 @@ async function main() {
   addCheck('config backup console module', includesAll(webConsoleSurface, [
     'createConfigBackupConsole',
     'buildConfigBackupPayload',
+    'buildConfigHistoryPayload',
     'buildConfigRestorePreviewPayload',
+    'rollbackConfigHistoryPayload',
     'restoreConfigBackupPayload',
+    'rollbackConfigHistory',
   ]) && includesAll(configBackupConsole, [
     'createConfigBackupConsole',
     'isSensitiveConfigKeySegment',
+    'buildHistoryPayload',
+    'rollbackHistoryPayload',
     'buildRestorePreviewPayload',
     'restoreBackupPayload',
   ]));
@@ -668,10 +978,15 @@ async function main() {
     'createDependencyConsole',
     'buildDependencyReport',
     'createDependencyInstallTask',
+    'createMissingDependencyInstallTasks',
+    'precheckDependencyInstallRequest',
+    'precheckMissingDependencyInstallTasks',
     'listDependencyInstallTasks',
   ]) && includesAll(dependencyConsole, [
     'createDependencyConsole',
     'buildDependencyReport',
+    'collectInstallableDependencyItems',
+    'precheckDependencyInstallTarget',
     'resolveDependencyInstallRequest',
     'runDependencyInstallTargetExclusive',
   ]));
@@ -691,7 +1006,7 @@ async function main() {
     'PLUGIN_SCAN_LIMIT',
   ]) && includesAll(botPluginsHtml, [
     'bot-plugins.js',
-    'Bot 插件管理',
+    '机器人插件管理',
     'bot-plugins-list',
     'installed-tab',
     'catalog-tab',
@@ -721,11 +1036,13 @@ async function main() {
   addCheck('api settings console module', includesAll(webConsoleSurface, [
     'createApiSettingsConsole',
     'buildApiSettingsPayload',
+    'precheckApiSettings',
     'saveApiSettings',
     'testImageApiConnection',
   ]) && includesAll(apiSettingsConsole, [
     'createApiSettingsConsole',
     'resolveSecretSaveValue',
+    'precheckApiSettings',
     'testImageMonitorApiConnection',
     'testSearchApiConnection',
   ]));
@@ -771,7 +1088,10 @@ async function main() {
     'groupManagementLogSubscribers',
   ]));
 
-  const qqSimulator = await readText('lib/webConsole/public/qq-simulator.js');
+  const qqSimulator = [
+    await readText('lib/webConsole/public/qq-simulator.js'),
+    await readText('lib/webConsole/public/qq-simulator-scenarios.js'),
+  ].join('\n');
   addCheck('qq simulator scenario UI handlers', includesAll(qqSimulator, [
     'scenarioSearch',
     'scenarioFilter',
@@ -780,7 +1100,11 @@ async function main() {
     'confirmQqSimulatorModal',
   ]));
 
-  const groupManagement = await readText('lib/webConsole/public/group-management.js');
+  const groupManagement = [
+    await readText('lib/webConsole/public/group-management.js'),
+    await readText('lib/webConsole/public/group-management-health.js'),
+    await readText('lib/webConsole/public/group-management-events.js'),
+  ].join('\n');
   addCheck('group management frontend health fix and SSE', includesAll(groupManagement, [
     'applyGroupManagementHealthFix',
     'buildGroupManagementEventStreamUrl',

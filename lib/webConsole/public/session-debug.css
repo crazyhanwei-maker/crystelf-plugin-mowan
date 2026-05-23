@@ -1,0 +1,104 @@
+/* 对话调试页面样式。 */
+
+.session-debug-runtime-box {
+  margin-top: 12px;
+  display: grid;
+  gap: 14px;
+}
+
+.session-debug-runtime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.session-debug-runtime-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--panel-bg);
+}
+
+.session-debug-runtime-sections {
+  display: grid;
+  gap: 12px;
+}
+
+.session-debug-runtime-section {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+}
+
+.session-debug-runtime-section h3 {
+  margin: 0;
+}
+
+.session-debug-decision-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-debug-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.session-debug-decision-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--soft-bg);
+}
+
+.session-debug-decision-card h4 {
+  margin: 0;
+}
+
+.session-debug-expandable {
+  margin-top: 10px;
+}
+
+.session-debug-expandable summary {
+  cursor: pointer;
+  color: var(--secondary-text);
+}
+
+.session-debug-json-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.session-debug-json-block {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+  max-height: 260px;
+  overflow: auto;
+}
+
+.session-debug-panel-toolbar {
+  margin-bottom: 12px;
+}
+
+.session-debug-panel-toolbar input {
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.session-debug-log-box {
+  white-space: pre-wrap;
+  max-height: 640px;
+  overflow: auto;
+}

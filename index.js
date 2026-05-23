@@ -96,6 +96,7 @@ function getConfigKey(fileName) {
     'group-title': 'groupTitle',
     'help': 'help',
     'image-monitor': 'imageMonitor',
+    'log-diagnosis': 'logDiagnosis',
     'music': 'music',
     'poke': 'poke',
     'rssPush': 'rss',

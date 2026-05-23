@@ -1,6 +1,4 @@
 {
-  "?coreUrl": "兼容旧核心服务地址，仅用于旧词库、早晚安、普通戳一戳与表情包兜底，默认值是示例占位地址",
-  "coreUrl": "https://legacy-core.example.com",
   "usageControl": {
     "?enabled": "是否启用AI用量限制",
     "enabled": false,

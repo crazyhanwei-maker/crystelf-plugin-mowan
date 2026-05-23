@@ -1,113 +1,85 @@
-# Skill Candidates
+# HTTP Skills 候选能力
 
-更新时间：2026-04-27
+这个目录记录后续可考虑接入的 HTTP Skills。它面向使用者和维护者，帮助判断哪些外部能力值得加入插件。
 
-这份目录用于给 `crystelf-plugin` 挑选下一批适合接入 `config/skills.json` 的候选接口。
+## 选择标准
 
-筛选标准：
+优先考虑：
 
-- 适合当前 `HTTP skills` 框架
-- 优先公开、免登录或低门槛
-- 优先单次 HTTP 请求即可返回结构化 JSON
-- 避免与当前已接入能力重复
-- 对群聊 bot / 控制台 / AI 工具有实际价值
+- 对群聊问答、控制台诊断或日常工具有实际价值。
+- 接口结构稳定，适合一次请求返回结果。
+- 返回 JSON 或简洁文本。
+- 可通过域名白名单限制访问范围。
+- 不需要复杂登录流程。
 
-当前已接入，默认不再重复选：
+暂缓考虑：
 
-- 天气
-- 快递查询 / 快递公司识别
-- 热榜
-- 节假日 / 农历
-- 网页元数据 / 网页图片提取
-- 内置搜索 / 网页正文抓取 / TTS
+- 需要上传本地文件。
+- 需要多阶段轮询。
+- 返回内容过大。
+- 和现有能力高度重复。
+- 对密钥权限要求较高，且默认启用风险较大。
 
-优先级说明：
+## 优先级说明
 
-- `A`：很适合，且可直接按当前 skill 框架接入
-- `B`：有用，但优先级略低或场景更窄
-- `C`：有价值，但当前框架接入成本偏高，需要运行时升级
+| 优先级 | 含义 |
+| --- | --- |
+| A | 很适合，适合优先接入 |
+| B | 有价值，但使用场景相对窄 |
+| C | 当前框架不够合适，建议等能力升级后再接 |
 
-## 总表
+## 当前已接入能力
 
-| 分类 | 候选 | 优先级 | 说明 |
-| --- | --- | --- | --- |
-| 网络 | UAPI IP 信息查询 | A | 查 IP / 域名归属、ISP、ASN、经纬度 |
-| 网络 | RDAP.org | A | 标准化域名 RDAP 查询，JSON 比传统 WHOIS 更适合 skill |
-| 网络 | Google Public DNS JSON API | A | 做 DNS 解析最稳，字段天然适合 `pick` |
-| 网络 | UAPI 手机归属地 | A | 查手机号归属省市和运营商 |
-| 网络 | UAPI ICP 备案查询 | A | 查域名备案主体，适合站点背景核验 |
-| 网络 | UAPI WHOIS 查询 | A | 查注册商、到期时间、域名状态 |
-| 网络 | UAPI URL 状态检查 | A | 查 URL 是否可达，适合链路检测 |
-| 社交 | UAPI GitHub 仓库信息 | A | 查 star / fork / release / 维护者 |
-| 社交 | UAPI GitHub 用户信息 | A | 查开发者画像、组织、活跃数据 |
-| 社交 | UAPI B 站视频信息 | A | 查标题、封面、UP 主、统计数据 |
-| 社交 | UAPI B 站直播间信息 | A | 查是否开播、标题、人气、分区 |
-| 社交 | UAPI B 站用户信息 | B | 查 UID 对应资料，适合补充 |
-| 日常 | UAPI 世界时间 | A | 查任意时区当前时间 |
-| 日常 | UAPI 程序员历史上的今天 | A | 很适合 bot 日常互动和定时推送 |
-| 日常 | UAPI 程序员历史事件 | B | 指定月日查询，适合命令式使用 |
-| 日常 | UAPI 一言 | B | 适合轻互动，但不是核心能力 |
-| 日常 | UAPI 行政区域查询 | A | 地点解析、adcode 反查、坐标反查 |
-| 日常 | UAPI 每日新闻图 | C | 返回图片二进制，当前 skill 框架不优 |
-| 媒体 | OCR.Space OCR API | A | URL 直调、JSON 返回，适合图转文 |
-| 媒体 | goQR 读码 API | A | 读二维码，公开可用，JSON 小而稳 |
-| 媒体 | Sightengine 图片审核 | B | 审核很强，但需要账号和密钥 |
-| 媒体 | Microlink Logo API | B | 抽站点 logo，适合链接卡片补图 |
-| 媒体 | UAPI OCR / NSFW / 二维码生成 | C | 主要是 multipart 或图片响应，不适合现框架 |
-| 游戏 | UAPI Steam 用户摘要 | A | 查 Steam 资料，支持多种标识 |
-| 游戏 | UAPI MC 服务器状态 | A | 查在线状态、人数、版本、MOTD |
-| 游戏 | UAPI MC 玩家信息 | A | 查 UUID、皮肤地址 |
-| 游戏 | UAPI Epic 免费游戏 | A | 很适合做群推送与提醒 |
-| 文本 | UAPI 敏感词快速检测 | A | 审核评论、输入前置检查 |
-| 文本 | MyMemory Translation API | A | 免登录即可用，短句翻译门槛最低 |
-| 文本 | Detect Language API | B | 适合翻译 / 审核前置做语言检测 |
-| 文本 | TextGears Summarize | B | 适合把长文本压短，和正文抓取互补 |
-| 文本 | UAPI 翻译 | B | 有用，但和现有 AI 有功能重叠 |
-| 文本 | UAPI 文本分析 | B | 轻量统计有用，但不是高频核心 |
+这些方向已经具备基础能力，通常不需要重复接入：
 
-## 文件列表
+- 天气。
+- 快递查询和快递公司识别。
+- 热榜。
+- 节假日和农历。
+- 网页元数据和网页图片提取。
+- 搜索、网页正文抓取、语音合成。
 
-- [01-network.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/01-network.md)
-- [02-social.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/02-social.md)
-- [03-daily.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/03-daily.md)
-- [04-media.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/04-media.md)
-- [05-games.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/05-games.md)
-- [06-text.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/06-text.md)
-- [07-public-apis.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/07-public-apis.md)
+## 推荐优先方向
 
-## 2026-04-27 新增公开接口实测
+| 分类 | 推荐能力 | 说明 |
+| --- | --- | --- |
+| 网络 | IP 信息、DNS、域名备案、URL 可达性 | 适合站点核验和链路诊断 |
+| 社交 | GitHub、B 站视频和直播信息 | 适合项目查询、视频链接解析 |
+| 日常 | 世界时间、行政区域、历史上的今天 | 适合日常问答和群互动 |
+| 媒体 | OCR、二维码识别、站点 Logo | 适合图片文字和链接卡片补充 |
+| 游戏 | Steam、Minecraft、Epic 免费游戏 | 适合游戏群 |
+| 文本 | 敏感词检测、翻译、文本统计 | 适合审核、翻译和内容分析 |
+| 公共资料 | 开源安全、包信息、词典、动漫、航天 | 适合扩展知识查询能力 |
 
-已在 bot 所在 VPS 上用 `curl` 实测一批免 key 公开接口，结论记录在 [07-public-apis.md](D:/群机器人插件/crystelf-plugin-main/skill-candidates/07-public-apis.md)。
+## 文件说明
 
-最值得下一批接入：
+| 文件 | 内容 |
+| --- | --- |
+| `01-network.md` | 网络和域名相关能力 |
+| `02-social.md` | GitHub、B 站等社交/平台资料 |
+| `03-daily.md` | 日常查询和轻互动能力 |
+| `04-media.md` | OCR、二维码、图片审核等媒体能力 |
+| `05-games.md` | Steam、Minecraft、Epic 等游戏能力 |
+| `06-text.md` | 翻译、敏感词、文本分析能力 |
+| `07-public-apis.md` | 更多公开接口方向 |
 
-1. Open-Meteo Air Quality / Geocoding / Elevation：空气质量、城市坐标、海拔
-2. OSV + NVD：开源包与 CVE 漏洞查询
-3. npm Registry + PyPI JSON + Stack Exchange + Hacker News：开发者查询
-4. PubChem：化合物与药品基础信息
-5. Open Food Facts：条形码食品信息
-6. Dictionary API + Datamuse：英文词典、近义词、联想词
-7. Jikan + CheapShark：动漫与游戏折扣
-8. GBIF + NASA EONET / Images + Launch Library：物种、自然事件、航天图片与发射
+## 建议接入顺序
 
-## 最推荐先做
+如果只先做一小批，推荐从这些开始：
 
-如果只先挑一小批，我建议这 10 个先选：
+1. IP 信息查询。
+2. DNS 解析。
+3. 域名备案或域名注册信息。
+4. GitHub 仓库信息。
+5. B 站视频信息。
+6. 世界时间。
+7. 行政区域查询。
+8. Epic 免费游戏。
+9. 敏感词检测。
+10. 短句翻译。
 
-1. UAPI `network/ipinfo`
-2. RDAP.org `domain/{domain}`
-3. Google DNS JSON API `resolve`
-4. UAPI `network/icp`
-5. UAPI `github/repo`
-6. UAPI `github/user`
-7. UAPI `social/bilibili/videoinfo`
-8. UAPI `misc/worldtime`
-9. UAPI `misc/district`
-10. UAPI `game/epic-free`
-11. UAPI `text/profanitycheck`
-12. MyMemory Translation API
+如果还想补图片能力，可以继续考虑：
 
-如果你还想补图像能力，再加：
-
-13. OCR.Space OCR API
-14. goQR `read-qr-code`
+1. OCR 图片转文字。
+2. 二维码识别。
+3. 站点 Logo 提取。

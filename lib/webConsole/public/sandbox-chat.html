@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>魔丸控制台 - 网页调试对话</title>
+  <title>魔丸控制台 - 网页对话测试</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/sandbox-chat.css" />
 </head>
 <body>
   <div class="page">
     <header class="hero">
       <div>
         <div class="hero-badge">魔丸控制台</div>
-        <h1>网页调试对话</h1>
-        <p>当前为沙箱模式：只在网页返回结果，不发送到群，不写入真实会话。</p>
+        <h1>网页对话测试</h1>
+        <p>在网页里测试机器人回复，不会发送到群，也不会写入真实会话。</p>
       </div>
       <div class="actions">
         <button id="sandbox-clear-btn">清空对话</button>
@@ -24,8 +25,8 @@
     <div class="sandbox-workbench">
       <section class="panel sandbox-left-panel">
         <div class="sandbox-panel-head">
-          <h2>调试输入</h2>
-          <div class="setting-status">左侧配置输入，右侧直接看结果与对话。</div>
+          <h2>测试输入</h2>
+          <div class="setting-status">左侧填写测试条件，右侧查看回复、调用记录和结果。</div>
         </div>
         <details class="sandbox-group" open>
           <summary>模板与快捷场景</summary>
@@ -61,9 +62,9 @@
           <summary>基础身份与模型参数</summary>
           <div class="sandbox-group-body">
             <div class="toolbar">
-              <input id="sandbox-session-id" placeholder="沙箱会话标识，默认 default" />
-              <input id="sandbox-user-id" placeholder="模拟 userId，留空则跟随 sessionId" />
-              <input id="sandbox-group-id" placeholder="模拟 groupId，可留空" />
+              <input id="sandbox-session-id" placeholder="测试会话名，默认 default" />
+              <input id="sandbox-user-id" placeholder="模拟用户 ID，留空则跟随会话名" />
+              <input id="sandbox-group-id" placeholder="模拟群号，可留空" />
               <input id="sandbox-user-name" placeholder="模拟用户昵称，可留空" />
             </div>
             <div class="toolbar">
@@ -71,7 +72,7 @@
               <input id="sandbox-is-master" placeholder="是否主人 true/false" />
               <input id="sandbox-model" placeholder="模型名称，留空则使用当前配置" />
               <input id="sandbox-temperature" placeholder="温度，默认当前配置" />
-              <input id="sandbox-max-tokens" placeholder="最大输出 tokens，可留空" />
+              <input id="sandbox-max-tokens" placeholder="最大输出长度，可留空" />
             </div>
           </div>
         </details>
@@ -81,7 +82,7 @@
           <div class="sandbox-group-body">
             <textarea id="sandbox-context-note" class="sandbox-input" placeholder="可选：补充模拟上下文，例如当前场景、最近群聊摘要、你希望 AI 参考的信息"></textarea>
             <div class="sandbox-history-editor-head">
-              <div class="setting-status">结构化编辑最近群聊记录，右下方文本框会自动同步为兼容格式。</div>
+              <div class="setting-status">可以用表格编辑最近群聊记录，下方文本会自动同步。</div>
               <div class="actions">
                 <button id="sandbox-add-history-row-btn">新增记录</button>
               </div>
@@ -92,7 +93,7 @@
 用户B|10002|at|123456
 用户C|10003|image|"></textarea>
             <div class="sandbox-history-editor-head">
-              <div class="setting-status">结构化编辑模拟记忆，右下方文本框会自动同步为兼容格式。</div>
+              <div class="setting-status">可以用表格编辑模拟记忆，下方文本会自动同步。</div>
               <div class="actions">
                 <button id="sandbox-add-memory-row-btn">新增记忆</button>
               </div>
@@ -113,7 +114,7 @@
         </details>
 
         <details class="sandbox-group" open>
-          <summary>沙箱知识库 RAG</summary>
+          <summary>沙箱知识库</summary>
           <div class="sandbox-group-body">
             <div class="toolbar">
               <input id="sandbox-knowledge-topk" placeholder="召回条数，默认 3" />
@@ -125,14 +126,14 @@
             <div class="toolbar">
               <input id="sandbox-knowledge-library-name" placeholder="知识库名称" />
               <button id="sandbox-save-knowledge-library-btn">保存当前知识库</button>
-              <button id="sandbox-export-knowledge-library-btn">导出知识库库</button>
-              <button id="sandbox-import-knowledge-library-btn">导入知识库库</button>
+              <button id="sandbox-export-knowledge-library-btn">导出知识库</button>
+              <button id="sandbox-import-knowledge-library-btn">导入知识库</button>
               <input id="sandbox-import-knowledge-library-input" class="hidden" type="file" accept="application/json" />
             </div>
-            <div id="sandbox-knowledge-library-status" class="setting-status">当前知识库库仅保存在浏览器本地。</div>
+            <div id="sandbox-knowledge-library-status" class="setting-status">当前知识库仅保存在浏览器本地。</div>
             <div id="sandbox-knowledge-library-list" class="list"></div>
             <div class="sandbox-history-editor-head">
-              <div class="setting-status">结构化编辑知识片段，右下方文本框会自动同步为兼容格式。</div>
+              <div class="setting-status">可以用表格编辑知识片段，下方文本会自动同步。</div>
             </div>
             <div id="sandbox-knowledge-editor" class="sandbox-history-editor"></div>
             <textarea id="sandbox-knowledge-base" class="sandbox-input" placeholder="按空行分隔知识片段。每段第一行作为标题，其余行为正文。
@@ -154,7 +155,7 @@
               <button id="sandbox-web-read-btn">读取网页正文</button>
               <button id="sandbox-web-read-inject-btn">注入当前对话</button>
             </div>
-            <div id="sandbox-web-read-status" class="setting-status">这里可以单独测试网页转 Markdown 接口是否正常返回正文。</div>
+            <div id="sandbox-web-read-status" class="setting-status">这里可以单独测试网页读取是否能正常返回正文。</div>
           </div>
         </details>
 
@@ -165,7 +166,7 @@
           <button id="sandbox-export-btn">导出当前会话</button>
         </div>
 
-        <div id="sandbox-note" class="risk-box">当前模式不会向真实群发送消息，也不会写入真实 chat.json、画像、好感与学习数据。</div>
+        <div id="sandbox-note" class="risk-box">当前模式不会向真实群发送消息，也不会写入真实聊天、画像、好感或学习数据。</div>
       </section>
 
       <section class="sandbox-right-column">
@@ -211,7 +212,7 @@
         </section>
 
         <section class="panel sandbox-raw-panel">
-          <h2>网页正文 Markdown</h2>
+          <h2>网页正文</h2>
           <pre id="sandbox-web-read-result" class="detail-box sandbox-scroll-box">尚未读取网页</pre>
         </section>
 
@@ -221,13 +222,13 @@
         </section>
 
         <section class="panel sandbox-raw-panel">
-          <h2>RAG 命中结果</h2>
+          <h2>知识库命中结果</h2>
           <div id="sandbox-rag-matches" class="list">当前尚未进行知识库召回</div>
         </section>
 
         <section class="panel sandbox-raw-panel">
-          <h2>RAG 调试中间值</h2>
-          <pre id="sandbox-rag-debug" class="detail-box sandbox-scroll-box">当前尚无 RAG 调试数据</pre>
+          <h2>知识库排查数据</h2>
+          <pre id="sandbox-rag-debug" class="detail-box sandbox-scroll-box">当前尚无知识库排查数据</pre>
         </section>
 
         <section class="panel sandbox-compare-panel">
@@ -254,7 +255,12 @@
     </div>
   </div>
 <script src="/auth.js"></script>
+<script src="/sandbox-core.js"></script>
+<script src="/sandbox-state.js"></script>
+<script src="/sandbox-library.js"></script>
+<script src="/sandbox-chat-render.js"></script>
 <script src="/sandbox-chat.js"></script>
+<script src="/sandbox-chat-events.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

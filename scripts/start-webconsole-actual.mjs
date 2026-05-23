@@ -13,6 +13,7 @@ const info = await startWebConsole();
 console.log(JSON.stringify({
   ok: true,
   info,
+  tokenGenerated: info?.authTokenGenerated === true,
 }, null, 2));
 
 setInterval(() => {}, 1 << 30);

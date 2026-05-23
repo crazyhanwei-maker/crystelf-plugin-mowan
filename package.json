@@ -7,7 +7,9 @@
   "scripts": {
     "check:encoding": "node ./scripts/check-encoding.mjs",
     "check:structure": "node ./scripts/check-structure.mjs",
-    "check": "npm run check:encoding && npm run check:structure"
+    "check:js": "node ./scripts/check-webconsole-js.mjs",
+    "check:webconsole": "node ./scripts/check-webconsole-smoke.mjs",
+    "check": "npm run check:encoding && npm run check:structure && npm run check:js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +28,8 @@
     "highlight.js": "^11.11.1",
     "lodash.merge": "^4.6.2",
     "markdown-it": "^14.1.1",
+    "node-schedule": "^2.1.1",
+    "oicq": "^2.3.1",
     "openai": "^4.104.0",
     "pinyin-pro": "^3.28.0",
     "puppeteer": "^24.39.0",

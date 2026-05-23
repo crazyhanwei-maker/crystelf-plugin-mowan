@@ -638,9 +638,6 @@ function validateConfig(configType, config = null) {
       break;
 
     case 'coreConfig':
-      if (!config.coreUrl) {
-        errors.push('兼容旧核心服务地址不能为空；不用旧核心时可保留示例占位地址，使用时请改成你自己的旧核心服务地址');
-      }
       pushMinError(errors, config.usageControl?.dailyTokenLimit, 0, '每日 Token 上限不能小于 0');
       pushMinError(errors, config.usageControl?.dailyRequestLimit, 0, '每日请求上限不能小于 0');
       pushMinError(errors, config.usageControl?.promptPricePer1M, 0, '输入 token 单价不能小于 0');

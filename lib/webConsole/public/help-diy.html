@@ -12,7 +12,7 @@
       <div>
         <div class="hero-badge">魔丸控制台</div>
         <h1>用户帮助 DIY</h1>
-        <p>在这里直接自定义 #灵晶帮助 返回内容，支持总帮助与分类帮助。</p>
+        <p>在这里编辑用户发送 #灵晶帮助 时看到的内容，支持总帮助和分类帮助。</p>
       </div>
       <div class="actions">
         <button id="help-diy-save-btn">保存帮助内容</button>
@@ -24,18 +24,18 @@
         <input id="help-diy-import-input" class="hidden" type="file" accept="application/json" />
       </div>
       <div class="toolbar">
-        <input id="help-diy-history-note" placeholder="本次保存备注，可选，例如：活动版帮助 / 管理版帮助" />
+        <input id="help-diy-history-note" placeholder="保存备注，可选，例如：活动版帮助、管理版帮助" />
       </div>
     </header>
 
     <section class="panel panel-two help-diy-grid">
       <div class="panel-inner">
         <h2>使用说明</h2>
-        <div class="detail-box">1. 启用后，#灵晶帮助 会优先返回这里保存的内容。
-2. 分类键固定为 AI / 管理 / 娱乐 / 调试。
-3. 不启用时，帮助命令仍走内置默认内容。
-4. 文本支持多行，按发送内容原样返回。
-5. 若有未保存修改，离开页面前会弹出提醒。</div>
+        <div class="detail-box">1. 开启后，用户发送 #灵晶帮助 会优先看到这里保存的内容。
+2. 分类固定为 AI、管理、娱乐和调试。
+3. 关闭后会继续使用系统内置帮助。
+4. 文本可以换行，会按这里填写的内容发送。
+5. 有未保存修改时，离开页面前会提醒你。</div>
         <div class="actions">
           <label class="help-diy-toggle-row">
             <input id="help-diy-enabled" type="checkbox" />
@@ -87,12 +87,12 @@
           <option value="text">文字发送</option>
           <option value="image">图片发送</option>
         </select>
-        <input id="help-diy-home-image" class="help-diy-image-input" placeholder="总帮助图片地址，仅支持上传后生成的 /uploads/help-diy/ 地址" />
+        <input id="help-diy-home-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
         <button type="button" class="help-diy-upload-btn" data-help-upload="home">上传图片</button>
         <button type="button" class="help-diy-clear-btn" data-help-clear="home">清除图片</button>
         <input id="help-diy-home-upload" class="hidden" type="file" accept="image/*" />
       </div>
-      <textarea id="help-diy-home" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 默认返回内容"></textarea>
+      <textarea id="help-diy-home" class="help-diy-text-input" rows="14" placeholder="填写用户发送 #灵晶帮助 时看到的总帮助内容"></textarea>
     </section>
 
     <section class="panel panel-two help-diy-grid">
@@ -103,7 +103,7 @@
             <option value="text">文字发送</option>
             <option value="image">图片发送</option>
           </select>
-          <input id="help-diy-ai-image" class="help-diy-image-input" placeholder="AI 帮助图片地址，仅支持上传图片" />
+          <input id="help-diy-ai-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
           <button type="button" class="help-diy-upload-btn" data-help-upload="ai">上传图片</button>
           <button type="button" class="help-diy-clear-btn" data-help-clear="ai">清除图片</button>
           <input id="help-diy-ai-upload" class="hidden" type="file" accept="image/*" />
@@ -117,7 +117,7 @@
             <option value="text">文字发送</option>
             <option value="image">图片发送</option>
           </select>
-          <input id="help-diy-manage-image" class="help-diy-image-input" placeholder="管理帮助图片地址，仅支持上传图片" />
+          <input id="help-diy-manage-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
           <button type="button" class="help-diy-upload-btn" data-help-upload="manage">上传图片</button>
           <button type="button" class="help-diy-clear-btn" data-help-clear="manage">清除图片</button>
           <input id="help-diy-manage-upload" class="hidden" type="file" accept="image/*" />
@@ -131,7 +131,7 @@
             <option value="text">文字发送</option>
             <option value="image">图片发送</option>
           </select>
-          <input id="help-diy-fun-image" class="help-diy-image-input" placeholder="娱乐帮助图片地址，仅支持上传图片" />
+          <input id="help-diy-fun-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
           <button type="button" class="help-diy-upload-btn" data-help-upload="fun">上传图片</button>
           <button type="button" class="help-diy-clear-btn" data-help-clear="fun">清除图片</button>
           <input id="help-diy-fun-upload" class="hidden" type="file" accept="image/*" />
@@ -145,7 +145,7 @@
             <option value="text">文字发送</option>
             <option value="image">图片发送</option>
           </select>
-          <input id="help-diy-debug-image" class="help-diy-image-input" placeholder="调试帮助图片地址，仅支持上传图片" />
+          <input id="help-diy-debug-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
           <button type="button" class="help-diy-upload-btn" data-help-upload="debug">上传图片</button>
           <button type="button" class="help-diy-clear-btn" data-help-clear="debug">清除图片</button>
           <input id="help-diy-debug-upload" class="hidden" type="file" accept="image/*" />

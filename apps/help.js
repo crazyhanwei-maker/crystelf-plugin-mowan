@@ -66,7 +66,7 @@ function sanitizeHelpDiyImageValue(value = '') {
 
 function getWebConsoleDisplayUrl() {
   const config = ConfigControl.get('config') || {};
-  const rawHost = String(config.webConsoleHost || '127.0.0.1').trim() || '127.0.0.1';
+  const rawHost = String(config.webConsoleHost || '0.0.0.0').trim() || '0.0.0.0';
   const host = rawHost === '0.0.0.0' || rawHost === '::' ? '127.0.0.1' : rawHost;
   const port = Number(config.webConsolePort) || 27891;
   return `http://${host}:${port}/`;
@@ -232,6 +232,7 @@ function getDefaultHelpContent() {
           '- #查看知识命中',
           '- #查看工具调用',
           '- #灵晶状态',
+          '- #灵晶排查日志',
           '- #更新灵晶',
           '',
           '建议',

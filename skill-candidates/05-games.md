@@ -1,60 +1,26 @@
-# Games Candidates
+# 游戏类候选能力
 
-## 1. UAPI Steam 用户摘要
+游戏类 Skills 适合游戏群、开黑群和日常娱乐问答。优先选择公开资料查询、服务器状态和优惠信息。
 
-- 优先级：`A`
-- 文档：<https://uapis.cn/docs/api-reference/get-game-steam-summary>
-- 方法：`GET`
-- 接口：`https://uapis.cn/api/v1/game/steam/summary`
-- 鉴权：可不传 `key`；如你自己有 Steam key 可作为可选项
-- 核心参数：`steamid` / `id` / `id3`
-- 成功响应核心字段：`personaname`、`avatarfull`、`personastate`、`profileurl`、`steamid`
-- 适合原因：支持多种 Steam 标识输入，群聊里很好用
-- 风险 / 限制：文档里允许传自定义 key，默认接入时建议不暴露该参数
-- 推荐命名：`steam.get_user_summary`
+## 推荐能力
 
-## 2. UAPI MC 服务器状态
+| 能力 | 优先级 | 适合场景 |
+| --- | --- | --- |
+| Steam 用户摘要 | A | 查询 Steam 公开资料、头像、在线状态和主页链接 |
+| Minecraft 服务器状态 | A | 查询服务器是否在线、人数、版本和 MOTD |
+| Minecraft 玩家信息 | A | 查询正版玩家名、UUID 和皮肤地址 |
+| Epic 免费游戏 | A | 查询当前可领取的免费游戏，适合群提醒 |
 
-- 优先级：`A`
-- 文档：<https://uapis.cn/docs/api-reference/get-game-minecraft-serverstatus>
-- 方法：`GET`
-- 接口：`https://uapis.cn/api/v1/game/minecraft/serverstatus`
-- 鉴权：免 key
-- 核心参数：`server`
-- 成功响应核心字段：`online`、`players`、`max_players`、`version`、`motd_clean`
-- 适合原因：非常适合群聊命令和游戏群 bot
-- 风险 / 限制：玩家列表可能为空或不完整
-- 推荐命名：`minecraft.get_server_status`
+## 使用建议
 
-## 3. UAPI MC 玩家信息
+- Minecraft 服务器状态适合游戏群高频使用。
+- Epic 免费游戏适合做定时提醒或手动查询。
+- Steam 用户信息依赖公开资料，隐私设置可能导致字段为空。
+- 游戏折扣和价格信息可能随时间变化，回复时建议提示以商店页面为准。
 
-- 优先级：`A`
-- 文档：<https://uapis.cn/docs/api-reference/get-game-minecraft-userinfo>
-- 方法：`GET`
-- 接口：`https://uapis.cn/api/v1/game/minecraft/userinfo`
-- 鉴权：免 key
-- 核心参数：`username`
-- 成功响应核心字段：`username`、`uuid`、`skin_url`
-- 适合原因：适合根据玩家名查 UUID 和皮肤
-- 风险 / 限制：仅正版用户名场景更稳
-- 推荐命名：`minecraft.get_user_info`
+## 建议优先接入
 
-## 4. UAPI Epic 免费游戏
-
-- 优先级：`A`
-- 文档：<https://uapis.cn/docs/api-reference/get-game-epic-free>
-- 方法：`GET`
-- 接口：`https://uapis.cn/api/v1/game/epic-free`
-- 鉴权：免 key
-- 核心参数：无
-- 成功响应核心字段：`data[].title`、`cover`、`original_price`、`free_end`、`link`
-- 适合原因：非常适合做群提醒、游戏推荐、定时任务
-- 风险 / 限制：返回列表可能较长，接入时建议 `pick`
-- 推荐命名：`epic.list_free_games`
-
-## 这一组建议先接入
-
-1. `epic.list_free_games`
-2. `minecraft.get_server_status`
-3. `steam.get_user_summary`
-4. `minecraft.get_user_info`
+1. Epic 免费游戏。
+2. Minecraft 服务器状态。
+3. Steam 用户摘要。
+4. Minecraft 玩家信息。

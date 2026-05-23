@@ -1,0 +1,317 @@
+.plugin-settings-page .page {
+  padding-top: 18px;
+}
+
+.plugin-settings-page .hero {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 92px;
+  padding: 16px 22px;
+  border-radius: 18px;
+}
+
+.plugin-settings-page .hero::before {
+  inset: -34% -2% -42% 54%;
+  opacity: 0.72;
+}
+
+.plugin-settings-page .hero > div:first-child {
+  gap: 4px;
+}
+
+.plugin-settings-page .hero-badge {
+  width: fit-content;
+  padding: 3px 10px;
+  font-size: 11px;
+}
+
+.plugin-settings-page .hero h1 {
+  margin: 0;
+  font-size: clamp(24px, 2.8vw, 32px);
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.plugin-settings-page .hero p {
+  margin: 0;
+  max-width: 58ch;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.plugin-settings-page .hero > .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 14px;
+}
+
+.plugin-settings-page .hero > .actions > button,
+.plugin-settings-page .hero > .actions > .link-btn {
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.plugin-settings-page .hero > .actions > .console-inline-btn {
+  border-color: color-mix(in srgb, var(--border) 78%, var(--primary) 22%);
+  background: color-mix(in srgb, var(--panel-bg) 78%, var(--primary) 8%);
+  color: var(--text);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.plugin-settings-page .plugin-settings-main {
+  display: grid;
+  gap: 18px;
+}
+
+.plugin-settings-page #plugin-settings-risk.hidden {
+  display: none !important;
+}
+
+.plugin-settings-page #plugin-settings-risk:not(.hidden) {
+  display: block;
+}
+
+@media (min-width: 901px) {
+  .plugin-settings-page .plugin-settings-drawer {
+    max-height: calc(100vh - 36px);
+    overflow: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .plugin-settings-page .page {
+    padding: 14px 14px 34px;
+  }
+
+  .plugin-settings-page .hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .plugin-settings-page .hero::before {
+    inset: 16% -18% -32% 22%;
+    opacity: 0.36;
+  }
+
+  .plugin-settings-page .hero h1 {
+    font-size: 26px;
+  }
+
+  .plugin-settings-page .hero p {
+    display: none;
+  }
+
+  .plugin-settings-page .hero > .actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .plugin-settings-page .hero > .actions > button,
+  .plugin-settings-page .hero > .actions > .link-btn {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .plugin-settings-page .plugin-settings-shell {
+    display: block;
+  }
+
+  .plugin-settings-page .plugin-settings-drawer {
+    position: static;
+    margin-bottom: 14px;
+    max-height: none;
+  }
+
+  .plugin-settings-page .plugin-settings-shell.nav-collapsed .plugin-settings-drawer {
+    display: none;
+  }
+
+  .plugin-settings-page .plugin-settings-shell.nav-collapsed .plugin-settings-main {
+    width: 100%;
+  }
+
+  .plugin-settings-page .plugin-settings-shell.nav-collapsed .plugin-settings-side-btn,
+  .plugin-settings-page .plugin-settings-shell.nav-collapsed .plugin-settings-group-btn {
+    font-size: inherit;
+  }
+}
+
+@media (max-width: 380px) {
+  .plugin-settings-page .hero > .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile UX polish */
+.plugin-settings-page .plugin-settings-content-head,
+.plugin-settings-page .plugin-settings-field-card,
+.plugin-settings-page .plugin-settings-feature-panel-card,
+.plugin-settings-page .plugin-settings-skill-card,
+.plugin-settings-page .plugin-settings-knowledge-card {
+  min-width: 0;
+}
+
+.plugin-settings-page .plugin-settings-meta-chip,
+.plugin-settings-page .plugin-settings-field-path,
+.plugin-settings-page .plugin-settings-group-btn,
+.plugin-settings-page .plugin-settings-side-btn {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .plugin-settings-page .plugin-settings-drawer {
+    max-height: min(54vh, 520px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px;
+  }
+
+  .plugin-settings-page .plugin-settings-side-nav,
+  .plugin-settings-page .plugin-settings-group-nav {
+    gap: 8px;
+  }
+
+  .plugin-settings-page .plugin-settings-side-btn,
+  .plugin-settings-page .plugin-settings-group-btn {
+    min-height: 40px;
+    padding: 10px 12px;
+    line-height: 1.3;
+    white-space: normal;
+  }
+
+  .plugin-settings-page .plugin-settings-content-head {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .plugin-settings-page .plugin-settings-panel-meta {
+    gap: 6px;
+  }
+
+  .plugin-settings-page .plugin-settings-meta-chip {
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .plugin-settings-page .plugin-settings-form-grid,
+  .plugin-settings-page .plugin-settings-special-panel-grid,
+  .plugin-settings-page #plugin-settings-console-box,
+  .plugin-settings-page #plugin-settings-feature-list {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-field-head,
+  .plugin-settings-page .plugin-settings-field-meta,
+  .plugin-settings-page .plugin-settings-feature-panel-head,
+  .plugin-settings-page .plugin-settings-knowledge-segment-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-feature-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plugin-settings-page .plugin-settings-feature-actions > button,
+  .plugin-settings-page .plugin-settings-feature-actions > .link-btn {
+    width: 100%;
+  }
+
+  .plugin-settings-page .plugin-settings-skill-card {
+    height: auto;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .plugin-settings-page .page {
+    padding: 10px 10px 32px;
+  }
+
+  .plugin-settings-page .hero {
+    padding: 14px;
+  }
+
+  .plugin-settings-page .hero > .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plugin-settings-page .plugin-settings-drawer {
+    max-height: 50vh;
+    border-radius: 16px;
+  }
+
+  .plugin-settings-page .plugin-settings-search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-search-row button {
+    width: 100%;
+  }
+
+  .plugin-settings-page .plugin-settings-side-section .plugin-settings-side-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plugin-settings-page #plugin-settings-category-tabs,
+  .plugin-settings-page #plugin-settings-group-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-side-btn {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .plugin-settings-page .plugin-settings-group-btn {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    text-align: left;
+  }
+
+  .plugin-settings-page .plugin-settings-content-head h2 {
+    font-size: 20px;
+  }
+
+  .plugin-settings-page .plugin-settings-feature-actions,
+  .plugin-settings-page .plugin-settings-knowledge-toolbar,
+  .plugin-settings-page .plugin-settings-knowledge-history-actions,
+  .plugin-settings-page .plugin-settings-skill-card-actions,
+  .plugin-settings-page .plugin-settings-skill-control-split,
+  .plugin-settings-page .plugin-settings-skill-action-cluster-grid,
+  .plugin-settings-page .plugin-settings-skill-preset-actions,
+  .plugin-settings-page .plugin-settings-skill-batch-actions,
+  .plugin-settings-page .plugin-settings-skill-filter-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-knowledge-toolbar,
+  .plugin-settings-page .plugin-settings-knowledge-history-actions {
+    display: grid;
+  }
+}
+
+@media (max-width: 380px) {
+  .plugin-settings-page .hero > .actions,
+  .plugin-settings-page .plugin-settings-side-section .plugin-settings-side-nav {
+    grid-template-columns: 1fr;
+  }
+}

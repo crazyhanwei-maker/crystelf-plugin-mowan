@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>魔丸控制台 - QQ 与 Bot 通信模拟器</title>
+  <title>魔丸控制台 - QQ 与机器人通信模拟器</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/qq-simulator.css" />
 </head>
 <body class="qq-simulator-page auth-guarded-page">
   <div class="page auth-guarded-content">
     <header class="hero qq-simulator-hero">
       <div>
         <div class="hero-badge">魔丸控制台</div>
-        <h1>QQ 与 Bot 通信模拟器</h1>
-        <p>按 QQ 桌面群聊窗口模拟用户、群、消息、图片、截图、语音和 Bot 回复。</p>
+        <h1>QQ 与机器人通信模拟器</h1>
+        <p>按 QQ 桌面群聊窗口模拟用户、群、消息、图片、截图、语音和机器人回复。</p>
       </div>
       <div class="actions">
         <button id="qq-simulator-clear-top-btn">清空</button>
@@ -69,7 +70,7 @@
           <span class="qq-simulator-session-avatar poke">戳</span>
           <span class="qq-simulator-session-main">
             <strong>戳一戳</strong>
-            <small>模拟用户戳 Bot</small>
+            <small>模拟用户戳机器人</small>
           </span>
           <time>互动</time>
         </button>
@@ -134,7 +135,7 @@
     </section>
 
     <details class="panel qq-simulator-config-drawer">
-      <summary>事件参数、附件与调试</summary>
+      <summary>事件参数、附件与排查</summary>
       <div class="qq-simulator-config-layout">
         <section class="qq-simulator-config-column">
           <div class="sandbox-panel-head">
@@ -203,10 +204,10 @@
                   <option value="admin">admin 管理员</option>
                   <option value="owner">owner 群主</option>
                 </select>
-                <select id="qq-simulator-bot-role" aria-label="Bot群角色">
-                  <option value="member">Bot 是成员</option>
-                  <option value="admin">Bot 是管理员</option>
-                  <option value="owner">Bot 是群主</option>
+                <select id="qq-simulator-bot-role" aria-label="机器人群角色">
+                  <option value="member">机器人是成员</option>
+                  <option value="admin">机器人是管理员</option>
+                  <option value="owner">机器人是群主</option>
                 </select>
                 <select id="qq-simulator-adapter-format" aria-label="适配器事件格式">
                   <option value="onebot">OneBot 标准</option>
@@ -216,18 +217,18 @@
                 </select>
               </div>
               <div class="toolbar">
-                <input id="qq-simulator-group-id" placeholder="groupId，例如 10001" />
-                <input id="qq-simulator-user-id" placeholder="userId，例如 20001" />
-                <input id="qq-simulator-nickname" placeholder="nickname，例如 测试用户" />
+                <input id="qq-simulator-group-id" placeholder="群号，例如 10001" />
+                <input id="qq-simulator-user-id" placeholder="用户 QQ，例如 20001" />
+                <input id="qq-simulator-nickname" placeholder="用户昵称，例如 测试用户" />
               </div>
               <div class="toolbar">
                 <select id="qq-simulator-is-master" aria-label="是否主人">
                   <option value="false">非主人身份</option>
                   <option value="true">主人身份</option>
                 </select>
-                <select id="qq-simulator-include-at" aria-label="是否包含 @Bot">
-                  <option value="true">消息包含 @Bot</option>
-                  <option value="false">消息不包含 @Bot</option>
+                <select id="qq-simulator-include-at" aria-label="是否包含 @机器人">
+                  <option value="true">消息包含 @机器人</option>
+                  <option value="false">消息不包含 @机器人</option>
                 </select>
                 <select id="qq-simulator-conversation-mode" aria-label="连续对话">
                   <option value="true">连续对话开启</option>
@@ -271,15 +272,15 @@
               <div class="qq-simulator-segment-builder">
                 <div class="toolbar qq-simulator-segment-toolbar">
                   <input id="qq-simulator-segment-user-id" placeholder="@用户 QQ，例如 20001" inputmode="numeric" />
-                  <input id="qq-simulator-segment-media-url" placeholder="图片/语音 URL 或 file" />
+                  <input id="qq-simulator-segment-media-url" placeholder="图片/语音链接或本地文件" />
                 </div>
                 <div class="toolbar qq-simulator-segment-toolbar">
                   <input id="qq-simulator-segment-face-id" placeholder="表情 ID，例如 14" inputmode="numeric" />
-                  <input id="qq-simulator-segment-reply-id" placeholder="回复 message_id，例如 900001" inputmode="numeric" />
+                  <input id="qq-simulator-segment-reply-id" placeholder="回复消息 ID，例如 900001" inputmode="numeric" />
                 </div>
                 <div class="toolbar qq-simulator-segment-toolbar">
-                  <input id="qq-simulator-segment-meme-character" placeholder="meme 角色，例如 芙宁娜" />
-                  <input id="qq-simulator-segment-meme-emotion" placeholder="meme 情绪，例如 default" />
+                  <input id="qq-simulator-segment-meme-character" placeholder="表情包角色，例如 芙宁娜" />
+                  <input id="qq-simulator-segment-meme-emotion" placeholder="表情包情绪，例如 default" />
                   <input id="qq-simulator-segment-cq-code" placeholder="自定义 CQ 码，例如 [CQ:poke,qq=10000]" />
                 </div>
                 <div class="toolbar qq-simulator-segment-buttons">
@@ -289,17 +290,17 @@
                   <button type="button" data-segment-insert="face">插入表情</button>
                   <button type="button" data-segment-insert="reply">插入回复</button>
                   <button type="button" data-segment-insert="cq">插入 CQ 码</button>
-                  <button type="button" data-segment-insert="meme">插入 meme</button>
+                  <button type="button" data-segment-insert="meme">插入表情包</button>
                 </div>
                 <div class="qq-simulator-segment-preview">
                   <div class="qq-simulator-segment-preview-head">
-                    <strong>最终事件对象预览</strong>
+                    <strong>最终事件预览</strong>
                     <span id="qq-simulator-segment-preview-meta">跟随当前适配器</span>
                   </div>
                   <pre id="qq-simulator-segment-preview">[]</pre>
                 </div>
               </div>
-              <textarea id="qq-simulator-message-text" class="sandbox-input" placeholder="messageText：发送消息事件时填写正文"></textarea>
+              <textarea id="qq-simulator-message-text" class="sandbox-input" placeholder="发送消息时填写正文"></textarea>
               <textarea id="qq-simulator-images" class="sandbox-input" placeholder="图片 URL：每行一个，可留空"></textarea>
               <div class="qq-simulator-upload-row">
                 <label class="qq-simulator-file-btn">
@@ -317,9 +318,9 @@
                 </label>
                 <button id="qq-simulator-clear-voice-btn" type="button">清除语音</button>
               </div>
-              <textarea id="qq-simulator-voice-transcript" class="sandbox-input" placeholder="语音转写：模拟 bot 识别到的语音文字，可留空"></textarea>
+              <textarea id="qq-simulator-voice-transcript" class="sandbox-input" placeholder="语音转写：模拟机器人识别到的语音文字，可留空"></textarea>
               <div id="qq-simulator-voice-preview" class="qq-simulator-attachment-list">暂无语音</div>
-              <textarea id="qq-simulator-comment" class="sandbox-input" placeholder="comment：加群申请理由、事件备注或额外调试说明"></textarea>
+              <textarea id="qq-simulator-comment" class="sandbox-input" placeholder="加群申请理由、事件备注或额外说明"></textarea>
             </div>
           </details>
 
@@ -331,7 +332,7 @@
                 <button id="qq-simulator-history-clear-btn" type="button">清空历史</button>
               </div>
               <textarea id="qq-simulator-group-history" class="sandbox-input qq-simulator-history-input" placeholder="每行一条历史：昵称|QQ号|类型|内容&#10;例如：花花|20001|text|刚才有人问群总结&#10;类型支持 text/image/record/at/reply"></textarea>
-              <div class="setting-help">这些历史会作为模拟的群上下文传给后端，用来模拟 e.group.getChatHistory()、AI 上下文和 #群总结。</div>
+              <div class="setting-help">这些历史会作为模拟群聊上下文使用，方便测试连续对话和 #群总结。</div>
             </div>
           </details>
 
@@ -375,15 +376,15 @@
                   <option value="skipped">只看跳过</option>
                 </select>
                 <button id="qq-simulator-copy-report-btn" type="button" class="mini-btn" disabled>复制报告</button>
-                <button id="qq-simulator-export-report-md-btn" type="button" class="mini-btn" disabled>导出 Markdown</button>
+                <button id="qq-simulator-export-report-md-btn" type="button" class="mini-btn" disabled>导出报告</button>
                 <button id="qq-simulator-clear-report-btn" type="button" class="mini-btn" disabled>清空报告</button>
               </div>
             </div>
             <div id="qq-simulator-batch-report" class="qq-simulator-batch-report">暂无批量回放报告</div>
           </section>
           <section class="panel-inner">
-            <h2>调试面板</h2>
-            <pre id="qq-simulator-debug" class="detail-box sandbox-scroll-box">尚无调试数据</pre>
+            <h2>排查面板</h2>
+            <pre id="qq-simulator-debug" class="detail-box sandbox-scroll-box">尚无排查数据</pre>
           </section>
         </section>
       </div>
@@ -403,6 +404,13 @@
   </div>
 
   <script src="/auth.js"></script>
+  <script src="/qq-simulator-config.js"></script>
+  <script src="/qq-simulator-runtime.js"></script>
+  <script src="/qq-simulator-segments.js"></script>
+  <script src="/qq-simulator-media.js"></script>
+  <script src="/qq-simulator-batch-report.js"></script>
+  <script src="/qq-simulator-scenarios.js"></script>
+  <script src="/qq-simulator-events.js"></script>
   <script src="/qq-simulator.js"></script>
   <script src="/theme.js"></script>
 </body>

@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>魔丸控制台 - 文件浏览编辑器</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/file-browser.css" />
 </head>
-<body>
+<body class="file-browser-page">
   <div class="page">
     <header class="hero">
       <div class="hero-copy">
         <div class="hero-badge">魔丸控制台</div>
         <h1>文件浏览编辑器</h1>
-        <p id="file-browser-meta">以当前 Yunzai 运行目录为根，支持受限范围内的文本文件树状浏览、搜索、新建、重命名、安全删除，以及本地语法高亮预览。</p>
+        <p id="file-browser-meta">浏览和编辑机器人目录内的文本文件，支持搜索、新建、重命名、删除和预览。</p>
       </div>
       <div class="actions hero-actions-grid">
         <button id="file-browser-refresh-dir-btn" type="button">刷新目录</button>
@@ -39,7 +40,7 @@
         </div>
         <div>
           <div class="kv-label">编辑限制</div>
-          <div class="setting-status">仅文本文件，单文件大小不超过 2MB，目录删除只允许空目录</div>
+          <div class="setting-status">只能编辑文本文件；单个文件不超过 2MB，非空目录不能直接删除。</div>
         </div>
       </div>
       <div id="file-browser-auth-banner" class="file-browser-banner hidden"></div>
@@ -55,15 +56,15 @@
         </div>
         <div id="file-browser-breadcrumbs" class="file-browser-breadcrumbs"></div>
         <div class="file-browser-search-row">
-          <input id="file-browser-search-input" type="search" placeholder="搜索当前目录树中已加载的文件或目录" />
+          <input id="file-browser-search-input" type="search" placeholder="搜索左侧已加载的文件或目录" />
           <button id="file-browser-search-clear-btn" type="button" class="mini-btn">清空</button>
         </div>
         <div class="file-browser-open-row">
-          <input id="file-browser-open-input" type="text" placeholder="输入相对路径并打开，例如 lib/webConsole/server.js" />
+          <input id="file-browser-open-input" type="text" placeholder="输入项目内路径，例如 lib/webConsole/server.js" />
           <button id="file-browser-open-btn" type="button" class="mini-btn">打开</button>
         </div>
         <div class="file-browser-project-search-row">
-          <input id="file-browser-project-search-input" type="search" placeholder="全文搜索整个项目，例如 renderPreview" />
+          <input id="file-browser-project-search-input" type="search" placeholder="搜索整个项目里的文字，例如 renderPreview" />
           <button id="file-browser-project-search-btn" type="button" class="mini-btn">全文搜</button>
         </div>
         <div class="file-browser-project-search-tools">
@@ -97,7 +98,7 @@
         <div class="file-browser-main-head">
           <div>
             <h2 id="file-browser-file-title">未选择文件</h2>
-            <div id="file-browser-file-meta" class="setting-status">选择左侧文本文件后可查看和编辑。</div>
+            <div id="file-browser-file-meta" class="setting-status">从左侧选择文本文件后，可以在这里查看和编辑。</div>
             <div id="file-browser-file-stats" class="file-browser-file-stats">暂无内容</div>
           </div>
           <div id="file-browser-dirty-indicator" class="file-browser-dirty-indicator hidden">有未保存修改</div>
@@ -105,7 +106,7 @@
 
         <div id="file-browser-target-summary" class="file-browser-target-summary">
           <div id="file-browser-target-tags" class="file-browser-target-tags"></div>
-          <div id="file-browser-target-hint" class="file-browser-target-hint">当前未选中文件，可先从左侧目录树或路径输入框打开目标。</div>
+          <div id="file-browser-target-hint" class="file-browser-target-hint">还没有选择文件。可以从左侧目录树打开，也可以输入项目内路径打开。</div>
         </div>
 
         <div class="file-browser-view-toolbar">
@@ -124,7 +125,7 @@
         <div id="file-browser-editor-action-bar" class="file-browser-editor-action-bar hidden">
           <div class="file-browser-editor-action-copy">
             <div id="file-browser-editor-action-title" class="file-browser-editor-action-title">未选择文件</div>
-            <div id="file-browser-editor-action-subtitle" class="file-browser-editor-action-subtitle">选择文本文件后即可在这里保存或重载。</div>
+            <div id="file-browser-editor-action-subtitle" class="file-browser-editor-action-subtitle">打开文本文件后，可以在这里保存修改或重新载入文件。</div>
           </div>
           <div class="file-browser-editor-action-buttons">
             <button id="file-browser-inline-save-btn" type="button">保存</button>
@@ -137,7 +138,7 @@
 
         <div id="file-browser-find-panel" class="file-browser-find-panel hidden">
           <div class="file-browser-find-row">
-            <input id="file-browser-find-input" type="search" placeholder="查找当前文件内容" />
+            <input id="file-browser-find-input" type="search" placeholder="在当前文件里查找文字" />
             <button id="file-browser-find-prev-btn" type="button" class="file-browser-inline-secondary-btn">上一个</button>
             <button id="file-browser-find-next-btn" type="button" class="file-browser-inline-secondary-btn">下一个</button>
             <button id="file-browser-find-case-btn" type="button" class="file-browser-inline-secondary-btn">区分大小写</button>
@@ -149,8 +150,8 @@
             <button id="file-browser-replace-all-btn" type="button" class="file-browser-inline-secondary-btn">全部替换</button>
           </div>
           <div class="file-browser-find-meta-row">
-            <div id="file-browser-find-status" class="file-browser-find-status">输入关键字后开始查找</div>
-            <div id="file-browser-find-tip" class="file-browser-find-tip">Enter 下一个，Shift + Enter 上一个，Esc 关闭</div>
+            <div id="file-browser-find-status" class="file-browser-find-status">输入关键词后开始查找</div>
+            <div id="file-browser-find-tip" class="file-browser-find-tip">Enter 查下一个，Shift + Enter 查上一个，Esc 关闭</div>
           </div>
         </div>
 
@@ -158,7 +159,7 @@
           <div class="file-browser-project-search-head">
             <div>
               <h3>全文搜索结果</h3>
-              <div id="file-browser-project-search-status" class="setting-status">输入关键字开始搜索</div>
+              <div id="file-browser-project-search-status" class="setting-status">输入关键词后搜索整个项目</div>
             </div>
           </div>
           <div id="file-browser-project-search-results" class="file-browser-project-search-results"></div>
@@ -168,10 +169,10 @@
 
         <div id="file-browser-workspace" class="file-browser-workspace mode-edit">
           <div class="file-browser-pane file-browser-editor-pane">
-            <textarea id="file-browser-editor" class="file-browser-editor" spellcheck="false" placeholder="选择一个可编辑的文本文件"></textarea>
+            <textarea id="file-browser-editor" class="file-browser-editor" spellcheck="false" placeholder="请选择一个可编辑的文本文件"></textarea>
           </div>
           <div class="file-browser-pane file-browser-preview-pane">
-            <div id="file-browser-preview" class="file-browser-preview is-placeholder">选择文本文件后可在这里查看语法高亮预览</div>
+            <div id="file-browser-preview" class="file-browser-preview is-placeholder">选择文本文件后，这里会显示带高亮的预览</div>
           </div>
         </div>
       </main>
@@ -192,6 +193,17 @@
   <div id="file-browser-context-menu" class="file-browser-context-menu hidden"></div>
 
   <script src="/auth.js"></script>
+  <script src="/file-browser-state.js"></script>
+  <script src="/file-browser-search.js"></script>
+  <script src="/file-browser-editor.js"></script>
+  <script src="/file-browser-tree.js"></script>
+  <script src="/file-browser-ui.js"></script>
+  <script src="/file-browser-conflict.js"></script>
+  <script src="/file-browser-preview.js"></script>
+  <script src="/file-browser-render.js"></script>
+  <script src="/file-browser-io.js"></script>
+  <script src="/file-browser-project-actions.js"></script>
+  <script src="/file-browser-crud.js"></script>
   <script src="/file-browser.js"></script>
   <script src="/theme.js"></script>
 </body>

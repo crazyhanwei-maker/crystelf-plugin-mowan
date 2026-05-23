@@ -1,0 +1,342 @@
+/* Bot 插件管理与插件目录页面样式。 */
+
+.bot-plugins-page {
+  display: grid;
+  gap: 18px;
+}
+
+.plugin-catalog-page {
+  display: grid;
+  gap: 18px;
+}
+
+.bot-plugins-toolbar-card {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.plugin-catalog-toolbar-card {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.bot-plugins-toolbar {
+  width: min(760px, 100%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.bot-plugins-toolbar input {
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.bot-plugins-toolbar select {
+  flex: 0 1 170px;
+  min-width: 148px;
+}
+
+.bot-plugins-toolbar button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.plugin-catalog-toolbar {
+  width: min(920px, 100%);
+}
+
+.plugin-catalog-toolbar input {
+  flex-basis: 300px;
+}
+
+.plugin-catalog-toolbar select {
+  flex-basis: 160px;
+}
+
+.bot-plugins-summary {
+  margin-bottom: 0;
+}
+
+.bot-plugin-summary-card {
+  min-height: 138px;
+}
+
+.bot-plugin-summary-card .setting-help {
+  line-height: 1.5;
+}
+
+.bot-plugins-warning-panel {
+  margin-top: 0;
+}
+
+.bot-plugins-layout {
+  align-items: start;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+}
+
+.plugin-catalog-merged-page {
+  gap: 18px;
+}
+
+.plugin-catalog-merged-page > .panel:first-of-type {
+  margin-top: 0;
+}
+
+.plugin-catalog-merged-page .tab-header {
+  margin-bottom: 0;
+}
+
+.plugin-catalog-layout {
+  align-items: start;
+  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+}
+
+.plugin-catalog-layout > div:first-child {
+  min-height: 0;
+}
+
+.plugin-catalog-list-search {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: min(100%, 360px);
+}
+
+.plugin-catalog-list-search input {
+  width: min(320px, 100%);
+}
+
+.plugin-catalog-layout #plugin-catalog-list {
+  max-height: clamp(520px, calc(100vh - 230px), 860px);
+  overflow: auto;
+  padding-right: 6px;
+  scroll-padding: 8px;
+}
+
+.plugin-catalog-layout .plugin-catalog-detail-panel {
+  max-height: clamp(520px, calc(100vh - 230px), 860px);
+  overflow: auto;
+}
+
+.bot-plugins-list {
+  align-content: start;
+}
+
+.bot-plugin-card {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.bot-plugin-card:hover,
+.bot-plugin-card:focus-visible,
+.bot-plugin-card.is-selected {
+  border-color: var(--primary);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+.bot-plugin-card.is-selected {
+  outline: 2px solid color-mix(in srgb, var(--primary) 36%, transparent);
+  outline-offset: 2px;
+}
+
+.bot-plugin-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bot-plugin-card-head h3 {
+  margin: 0 0 6px;
+}
+
+.bot-plugin-card-path,
+.bot-plugin-card-desc,
+.bot-plugin-card-meta {
+  color: var(--muted-text);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.bot-plugin-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.bot-plugins-detail-panel {
+  position: sticky;
+  top: 18px;
+}
+
+.plugin-catalog-detail-panel {
+  top: 18px;
+}
+
+.plugin-catalog-task-panel {
+  margin-top: 0;
+}
+
+.plugin-catalog-install-panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.plugin-catalog-install-head {
+  display: grid;
+  gap: 6px;
+}
+
+.plugin-catalog-install-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.plugin-catalog-field {
+  display: grid;
+  gap: 8px;
+}
+
+.plugin-catalog-field-label {
+  color: var(--muted-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plugin-catalog-field input,
+.plugin-catalog-field select {
+  width: 100%;
+}
+
+.plugin-catalog-install-actions {
+  justify-content: flex-start;
+}
+
+.plugin-catalog-task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.plugin-catalog-task-card {
+  display: grid;
+  gap: 10px;
+}
+
+.plugin-catalog-task-meta-line {
+  color: var(--muted-text);
+  font-size: 13px;
+}
+
+.plugin-catalog-task-command {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg-strong);
+  color: var(--soft-text);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.plugin-catalog-task-log {
+  display: grid;
+  gap: 8px;
+}
+
+.plugin-catalog-task-log-block {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.plugin-catalog-task-log-block span {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plugin-catalog-task-log-block pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.plugin-catalog-task-actions {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plugin-catalog-detail .setting-help {
+  margin-top: 6px;
+}
+
+.bot-plugin-detail {
+  display: grid;
+  gap: 16px;
+  white-space: normal;
+}
+
+.plugin-catalog-detail {
+  white-space: normal;
+}
+
+.bot-plugin-detail-head {
+  display: grid;
+  gap: 10px;
+}
+
+.bot-plugin-detail-head h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.bot-plugin-detail-actions {
+  justify-content: flex-start;
+}
+
+.bot-plugin-detail-actions .danger {
+  border-color: var(--error-border);
+  color: var(--danger);
+}
+
+.bot-plugin-detail-actions .danger:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.bot-plugin-detail-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.bot-plugin-detail-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+
+.bot-plugin-detail-section h3 {
+  margin: 0;
+  font-size: 15px;
+}

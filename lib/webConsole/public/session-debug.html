@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>魔丸控制台 - 对话调试</title>
+  <title>魔丸控制台 - 对话排查</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/session-debug.css" />
 </head>
 <body>
   <div class="page">
     <header class="hero">
       <div>
         <div class="hero-badge">魔丸控制台</div>
-        <h1>对话调试</h1>
+        <h1>对话排查</h1>
         <p id="session-debug-meta">正在加载...</p>
       </div>
       <div class="actions">
-        <button id="copy-session-debug-json-btn">复制 JSON</button>
+        <button id="copy-session-debug-json-btn">复制原始数据</button>
         <button id="toggle-session-debug-raw-btn">查看原始数据</button>
         <button id="reset-session-messages-debug-btn">仅清空消息</button>
         <button id="reset-session-debug-btn" class="danger">重置当前会话</button>
@@ -32,9 +33,9 @@
     </section>
 
     <section class="panel">
-      <h2>调试筛选</h2>
+      <h2>排查筛选</h2>
       <div class="toolbar">
-        <input id="session-debug-user-filter" placeholder="聚焦用户 ID" />
+        <input id="session-debug-user-filter" placeholder="只看某个用户 ID" />
         <button id="session-debug-apply-filter-btn">应用筛选</button>
       </div>
       <div id="session-debug-alerts" class="list">加载中...</div>
@@ -46,7 +47,7 @@
         <div id="session-debug-main" class="kv-grid">加载中...</div>
       </div>
       <div class="panel-inner">
-        <h2>调试摘要</h2>
+        <h2>排查摘要</h2>
         <div id="session-debug-summary" class="detail-box">加载中...</div>
         <div id="session-debug-runtime" class="detail-box session-debug-runtime-box">加载中...</div>
       </div>
@@ -76,9 +77,9 @@
 
     <section class="panel panel-two">
       <div class="panel-inner">
-        <h2>知识命中详情</h2>
+        <h2>知识匹配详情</h2>
         <div class="toolbar session-debug-panel-toolbar">
-          <input id="session-debug-knowledge-filter" placeholder="筛选知识命中" />
+          <input id="session-debug-knowledge-filter" placeholder="搜索匹配到的知识" />
           <button id="session-debug-knowledge-export-btn">导出</button>
         </div>
         <div id="session-debug-knowledge" class="list">加载中...</div>
@@ -86,7 +87,7 @@
       <div class="panel-inner">
         <h2>工具调用详情</h2>
         <div class="toolbar session-debug-panel-toolbar">
-          <input id="session-debug-tool-filter" placeholder="筛选工具调用" />
+          <input id="session-debug-tool-filter" placeholder="搜索工具调用记录" />
           <button id="session-debug-tool-export-btn">导出</button>
         </div>
         <div id="session-debug-tool-calls" class="list">加载中...</div>
@@ -94,16 +95,16 @@
     </section>
 
     <section class="panel">
-      <h2>Prompt 摘要详情</h2>
+      <h2>提示词摘要</h2>
       <div class="toolbar session-debug-panel-toolbar">
-        <input id="session-debug-prompt-filter" placeholder="筛选 Prompt 摘要" />
+        <input id="session-debug-prompt-filter" placeholder="搜索提示词摘要" />
         <button id="session-debug-prompt-export-btn">导出</button>
       </div>
       <div id="session-debug-prompt" class="list">加载中...</div>
     </section>
 
     <section class="panel">
-      <h2>戳一戳调试</h2>
+      <h2>戳一戳排查</h2>
       <div class="toolbar session-debug-panel-toolbar">
         <button id="session-debug-poke-export-btn">导出</button>
       </div>
@@ -111,9 +112,9 @@
     </section>
 
     <section class="panel">
-      <h2>完整调试日志</h2>
+      <h2>完整排查日志</h2>
       <div class="toolbar session-debug-panel-toolbar">
-        <input id="session-debug-log-filter" placeholder="筛选完整日志" />
+        <input id="session-debug-log-filter" placeholder="搜索完整日志" />
         <button id="session-debug-log-copy-btn">复制日志</button>
         <button id="session-debug-log-export-btn">导出</button>
       </div>
@@ -143,6 +144,11 @@
   </div>
 <script src="/auth.js"></script>
 <script src="/session-debug.js"></script>
+<script src="/session-debug-render.js"></script>
+<script src="/session-debug-decision-render.js"></script>
+<script src="/session-debug-runtime-render.js"></script>
+<script src="/session-debug-events.js"></script>
+<script src="/session-debug-init.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

@@ -39,8 +39,8 @@ start "crystelf-webconsole" /min "%RUNNER%"
 
 echo starting web console...
 echo root : %ROOT%
-echo token: use the web console token configured in plugin settings.
-echo firewall: unchanged. Open the port manually only when LAN access is needed.
+echo token: see "Login token" in the stdout tail below.
+echo firewall: unchanged. Open the port manually when LAN/public access is needed.
 
 for /l %%i in (1,1,45) do (
   powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:27891/index.html' -TimeoutSec 2; if ($r.StatusCode -eq 200) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>nul
@@ -70,4 +70,10 @@ del "%LAN_IP_FILE%" >nul 2>nul
 if defined LAN_IP echo lan : http://%LAN_IP%:27891/
 echo bot plugins: http://127.0.0.1:27891/bot-plugins.html
 echo logs: %OUT_LOG%
+echo.
+echo --- stdout tail ---
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '%OUT_LOG%') { Get-Content -LiteralPath '%OUT_LOG%' -Tail 30 }"
+echo.
+echo --- stderr tail ---
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "if (Test-Path '%ERR_LOG%') { Get-Content -LiteralPath '%ERR_LOG%' -Tail 30 }"
 pause

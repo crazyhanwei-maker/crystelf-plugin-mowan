@@ -6,6 +6,7 @@
   <title>魔丸控制台 - 依赖检查</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/dependency-check.css" />
 </head>
 <body>
   <div class="page">
@@ -32,6 +33,14 @@
         <div>
           <h2>检查状态</h2>
           <div id="refresh-status" class="setting-help">正在准备依赖数据...</div>
+          <div id="dependency-bulk-fix-panel" class="dependency-bulk-fix-panel hidden">
+            <div>
+              <strong id="dependency-bulk-fix-title">可一键修复依赖</strong>
+              <div id="dependency-bulk-fix-desc" class="setting-help">会根据当前检查结果自动创建安装任务。</div>
+              <div id="dependency-bulk-fix-result" class="dependency-bulk-fix-result hidden"></div>
+            </div>
+            <button id="install-missing-dependencies-btn" type="button">一键修复依赖</button>
+          </div>
           <div class="dependency-active-panel">
             <div class="dependency-active-head">
               <h3>当前安装任务</h3>
@@ -45,7 +54,7 @@
               <div id="install-history-summary" class="setting-help">正在加载最近安装记录...</div>
             </div>
             <div class="dependency-search-row dependency-history-toolbar">
-              <input id="install-history-search" class="dependency-search-input" placeholder="筛选依赖名 / 插件 / 路径 / 错误信息" />
+              <input id="install-history-search" class="dependency-search-input" placeholder="搜索依赖名、插件、目录或错误信息" />
               <select id="install-history-status">
                 <option value="all">全部状态</option>
                 <option value="error">仅失败</option>
@@ -69,10 +78,10 @@
       <div class="dashboard-entry-card dependency-search-card">
         <div>
           <h2>其他插件依赖搜索</h2>
-          <div id="other-plugin-dependency-meta" class="setting-help">正在扫描其他插件的 package.json 依赖...</div>
+          <div id="other-plugin-dependency-meta" class="setting-help">正在查看其他插件声明了哪些依赖...</div>
         </div>
         <div class="dependency-search-row">
-          <input id="other-plugin-dependency-search" class="dependency-search-input" placeholder="搜索插件名 / 依赖名 / 版本 / 路径" />
+          <input id="other-plugin-dependency-search" class="dependency-search-input" placeholder="搜索插件名、依赖名、版本或目录" />
           <button id="clear-other-plugin-search-btn">清空搜索</button>
         </div>
       </div>
@@ -93,6 +102,8 @@
 
 <script src="/auth.js"></script>
 <script src="/dependency-check.js"></script>
+<script src="/dependency-check-render.js"></script>
+<script src="/dependency-check-events.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>
