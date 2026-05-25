@@ -376,6 +376,9 @@ function validateConfig(configType, config = null) {
         if (daily.includeCommands !== undefined && typeof daily.includeCommands !== 'boolean') {
           errors.push('每日群聊总结命令消息开关必须是布尔值');
         }
+        if (daily.imageEnabled !== undefined && typeof daily.imageEnabled !== 'boolean') {
+          errors.push('每日群聊总结图片模式开关必须是布尔值');
+        }
         ['title', 'prompt'].forEach((field) => {
           if (daily[field] !== undefined && typeof daily[field] !== 'string') {
             errors.push(`每日群聊总结 ${field} 必须是字符串`);

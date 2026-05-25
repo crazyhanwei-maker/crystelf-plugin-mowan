@@ -1884,6 +1884,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'ai.dailyGroupSummary.imageEnabled',
+    label: '图片模式',
+    component: 'Switch',
+    bottomHelpMessage: '开启后 #群总结 和每日自动总结会优先发送日报图片，渲染失败时自动回退文本',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'ai.dailyGroupSummary.title',
     label: '总结标题',
     component: 'Input',

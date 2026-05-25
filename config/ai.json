@@ -139,6 +139,8 @@
     "maxTokens": 800,
     "?includeCommands": "是否把 # / 开头的命令消息也纳入总结",
     "includeCommands": false,
+    "?imageEnabled": "是否把群聊总结渲染成图片发送，失败时自动回退文本",
+    "imageEnabled": true,
     "?title": "每日总结标题",
     "title": "今日群聊总结",
     "?prompt": "每日总结额外要求，留空使用默认规则",

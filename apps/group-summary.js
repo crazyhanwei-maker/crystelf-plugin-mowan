@@ -14,6 +14,7 @@ import {
   readDailyGroupSummaryMessages,
   recordDailyGroupSummaryMessage,
 } from '../lib/groupSummary/dailyGroupSummaryStore.js';
+import { renderDailyGroupSummaryImage } from '../lib/groupSummary/dailyGroupSummaryImageRenderer.js';
 
 const logger = globalThis.logger || {
   info: (...args) => console.log(...args),
@@ -58,6 +59,22 @@ function normalizeGroupId(value = '') {
 function getApiGroupId(groupId = '') {
   const numeric = Number(groupId);
   return Number.isSafeInteger(numeric) ? numeric : String(groupId);
+}
+
+function normalizeOneBotMessage(message = '') {
+  if (Array.isArray(message)) return message;
+  if (message && typeof message === 'object') {
+    if (message.type === 'image' && message.file) {
+      return [{
+        type: 'image',
+        data: {
+          file: message.file,
+        },
+      }];
+    }
+    return [message];
+  }
+  return String(message || '');
 }
 
 function sanitizeSummaryText(text = '', maxLength = 1200) {
@@ -229,7 +246,7 @@ async function sendGroupMessage(groupId = '', message = '') {
       try {
         return await bot.sendApi('send_group_msg', {
           group_id: getApiGroupId(normalizedGroupId),
-          message,
+          message: normalizeOneBotMessage(message),
         });
       } catch {
         // Try the next bot instance.
@@ -246,6 +263,62 @@ async function sendGroupMessage(groupId = '', message = '') {
   }
 
   throw new Error('当前运行时不支持发送群消息');
+}
+
+function getSegment() {
+  return typeof globalThis !== 'undefined' ? globalThis.segment : undefined;
+}
+
+function buildSummaryImagePayload({
+  groupId = '',
+  groupName = '',
+  dateKey = '',
+  messages = [],
+  summary = '',
+  cfg = {},
+  sourceLabel = '群聊总结',
+} = {}) {
+  return {
+    title: cfg.title || '今日群聊总结',
+    groupId,
+    groupName,
+    dateKey,
+    messages,
+    summary,
+    messageCount: messages.length,
+    sourceLabel,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+async function buildSummaryMessage(summary = '', payload = {}, cfg = {}) {
+  if (cfg.imageEnabled === false) {
+    return summary;
+  }
+  const imagePath = await renderDailyGroupSummaryImage(payload);
+  const segment = getSegment();
+  if (typeof segment?.image === 'function') {
+    return segment.image(imagePath);
+  }
+  return { type: 'image', file: `file://${imagePath}` };
+}
+
+async function replyGroupSummary(e, summary = '', payload = {}, cfg = {}) {
+  try {
+    return await e.reply(await buildSummaryMessage(summary, payload, cfg), true);
+  } catch (error) {
+    logger.warn(`[daily-group-summary] 群总结图片发送失败，回退文本: ${error.message}`);
+    return await e.reply(summary, true);
+  }
+}
+
+async function sendGroupSummary(groupId = '', summary = '', payload = {}, cfg = {}) {
+  try {
+    return await sendGroupMessage(groupId, await buildSummaryMessage(summary, payload, cfg));
+  } catch (error) {
+    logger.warn(`[daily-group-summary] 群总结图片发送失败，回退文本: ${error.message}`);
+    return await sendGroupMessage(groupId, summary);
+  }
 }
 
 export class dailyGroupSummary extends plugin {
@@ -334,6 +407,15 @@ export class dailyGroupSummary extends plugin {
         || e.group_name
         || '';
       const summary = await generateGroupSummaryText(groupId, groupName, dateKey, messages, cfg, aiConfig);
+      const imagePayload = buildSummaryImagePayload({
+        groupId,
+        groupName,
+        dateKey,
+        messages,
+        summary,
+        cfg,
+        sourceLabel: '手动总结',
+      });
       appendDailyGroupSummaryResult({
         dateKey,
         groupId,
@@ -355,7 +437,7 @@ export class dailyGroupSummary extends plugin {
           messageCount: messages.length,
         },
       });
-      return e.reply(summary);
+      return replyGroupSummary(e, summary, imagePayload, cfg);
     } catch (error) {
       logger.warn(`[daily-group-summary] 手动生成群 ${groupId} 总结失败: ${error.message}`);
       appendDailyGroupSummaryResult({
@@ -451,7 +533,15 @@ export class dailyGroupSummary extends plugin {
 
       const summary = await generateGroupSummaryText(normalizedGroupId, groupName, dateKey, messages, cfg, aiConfig);
 
-      await sendGroupMessage(normalizedGroupId, summary);
+      await sendGroupSummary(normalizedGroupId, summary, buildSummaryImagePayload({
+        groupId: normalizedGroupId,
+        groupName,
+        dateKey,
+        messages,
+        summary,
+        cfg,
+        sourceLabel: '每日自动总结',
+      }), cfg);
       markDailyGroupSummaryRun(dateKey, normalizedGroupId, {
         status: 'sent',
         messageCount: messages.length,

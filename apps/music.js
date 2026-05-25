@@ -1,3 +1,4 @@
+import path from 'path';
 import MusicSearch from '../lib/music/musicSearch.js';
 import Group from '../lib/yunzai/group.js';
 import Message from '../lib/yunzai/message.js';
@@ -31,6 +32,10 @@ export class CrystelfMusic extends plugin {
         {
           reg: '^#?听\\s*(.+)',
           fnc: 'handleDirectPlay'
+        },
+        {
+          reg: '^#?(?:发送|发|文件)\\s*([1-9]|1\\d|20)$',
+          fnc: 'handleFileSelection'
         },
         {
           reg: '^([1-9]|1\\d|20)$',
@@ -93,7 +98,7 @@ export class CrystelfMusic extends plugin {
         await Message.emojiLike(e, e.message_id, 60, e.group_id, adapter);
         const result = await musicSearch.handleSelection(e, index);
         if (result.success) {
-          await this.sendMusicResult(e, result);
+          await this.sendMusicResult(e, result, { mode: 'voice' });
         } else {
           await e.reply(`${result.message}`, true);
         }
@@ -103,7 +108,7 @@ export class CrystelfMusic extends plugin {
 
         const result = await musicSearch.handleDirectPlay(e, content);
         if (result.success) {
-          await this.sendMusicResult(e, result);
+          await this.sendMusicResult(e, result, { mode: 'voice' });
         } else {
           await e.reply(`${result.message}`, true);
         }
@@ -135,7 +140,7 @@ export class CrystelfMusic extends plugin {
       await Message.emojiLike(e,e.message_id,60,e.group_id,adapter);
       const result = await musicSearch.handleSelection(e, index);
       if (result.success) {
-        await this.sendMusicResult(e, result);
+        await this.sendMusicResult(e, result, { mode: 'file' });
       } else {
         await e.reply(`${result.message}`, true);
       }
@@ -145,30 +150,66 @@ export class CrystelfMusic extends plugin {
   }
 
   /**
+   * 处理群文件发送选择
+   * @param {Object} e 事件对象
+   */
+  async handleFileSelection(e) {
+    try {
+      if (!ConfigControl.get()?.config?.music) {
+        return;
+      }
+      const matched = String(e.msg || '').match(/^#?(?:发送|发|文件)\s*([1-9]|1\d|20)$/);
+      const index = Number(matched?.[1]);
+      if (!index || index < 1 || index > 20) {
+        return;
+      }
+      const searchResult = musicSearch.getGroupSearchResult(e.group_id);
+      if (!searchResult) {
+        return await e.reply('没有找到当前可发送的音乐列表，请先搜索歌曲。', true);
+      }
+      const adapter = await YunzaiUtils.getAdapter(e);
+      await Message.emojiLike(e, e.message_id, 60, e.group_id, adapter);
+      const result = await musicSearch.handleSelection(e, index);
+      if (result.success) {
+        await this.sendMusicResult(e, result, { mode: 'file' });
+      } else {
+        await e.reply(`${result.message}`, true);
+      }
+    } catch (error) {
+      logger.error('[crystelf-music] 处理群文件发送选择失败:', error);
+      await e.reply('发送音乐文件失败，请稍后重试。', true);
+    }
+  }
+
+  /**
    * 发送音乐结果
    * @param {Object} e 事件对象
    * @param {Object} result 播放结果
+   * @param {Object} options 发送选项
    */
-  async sendMusicResult(e, result) {
+  async sendMusicResult(e, result, options = {}) {
     try {
       const { song, audioFile, type, quality, message } = result;
       //await e.reply(message);
       const adapter = await YunzaiUtils.getAdapter(e);
-      if (type === 'voice' || Number(quality) === 1) {
-        await Group.sendGroupRecord(e, e.group_id, `file://${audioFile}`, adapter);
-      } else {
-        const extension = await this.getFileExtension();
-        // 过滤非法字符
-        const sanitize = (str) => str.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+      const mode = options.mode || 'voice';
 
-        const sanitizedTitle = sanitize(song.displayTitle);
-        const sanitizedArtist = sanitize(song.displayArtist);
-        const filename = `${sanitizedTitle} - ${sanitizedArtist}.${extension}`;
+      if (mode === 'file') {
+        const filename = await this.buildMusicFilename(song, audioFile);
+        await Group.sendGroupFile(e, e.group_id, `file://${audioFile}`, filename, adapter);
+        logger.info(`[crystelf-music] 文件发送成功: ${filename} -> ${e.group_id}`);
+      } else if (type === 'voice' || Number(quality) === 1) {
+        await Group.sendGroupRecord(e, e.group_id, `file://${audioFile}`, adapter);
+        logger.info(`[crystelf-music] 语音发送成功: ${song.displayTitle} -> ${e.group_id}`);
+      } else {
         try {
-            await Group.sendGroupFile(e, e.group_id, `file://${audioFile}`, filename, adapter);
-        } catch (fileErr) {
-            logger.warn(`[crystelf-music] 文件发送失败,尝试转为语音: ${fileErr.message}`);
             await Group.sendGroupRecord(e, e.group_id, `file://${audioFile}`, adapter);
+            logger.info(`[crystelf-music] 超长语音发送成功: ${song.displayTitle} -> ${e.group_id}`);
+        } catch (voiceErr) {
+            const filename = await this.buildMusicFilename(song, audioFile);
+            logger.warn(`[crystelf-music] 超长语音发送失败,尝试发送群文件: ${voiceErr.message}`);
+            await Group.sendGroupFile(e, e.group_id, `file://${audioFile}`, filename, adapter);
+            logger.info(`[crystelf-music] 文件发送成功: ${filename} -> ${e.group_id}`);
         }
       }
       musicSearch.clearUserSelection(e.group_id, e.user_id);
@@ -180,13 +221,27 @@ export class CrystelfMusic extends plugin {
 
   /**
    * 获取文件扩展名
+   * @param {string} audioFile 音频文件路径
    * @returns {string} 文件扩展名
    */
-  async getFileExtension() {
+  async getFileExtension(audioFile = '') {
+    const ext = path.extname(String(audioFile || '')).replace('.', '').trim();
+    if (ext) {
+      return ext;
+    }
     const musicConfig = await ConfigControl.get('music');
-    //if(musicConfig.quality === '3'){
-      //return 'flac'
-    //}
-    return 'flac'
+    const quality = Number(musicConfig?.quality || 3);
+    if (quality === 1 || quality === 2) {
+      return 'mp3';
+    }
+    return 'flac';
+  }
+
+  async buildMusicFilename(song, audioFile = '') {
+    const extension = await this.getFileExtension(audioFile);
+    const sanitize = (str) => String(str || '').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+    const sanitizedTitle = sanitize(song.displayTitle || song.title || 'music');
+    const sanitizedArtist = sanitize(song.displayArtist || song.artist || 'unknown');
+    return `${sanitizedTitle} - ${sanitizedArtist}.${extension}`;
   }
 }
