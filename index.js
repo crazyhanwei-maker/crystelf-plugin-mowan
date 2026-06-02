@@ -90,6 +90,7 @@ function getConfigKey(fileName) {
     'ai': 'ai',
     'auth': 'auth',
     'auth-set': 'auth',
+    'dependency-repair': 'dependencyRepair',
     'face-reply': 'faceReply',
     'face-reply-message': 'faceReply',
     'fanqie': 'fanqie',

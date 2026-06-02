@@ -710,6 +710,7 @@ function validateConfig(configType, config = null) {
         'zwa',
         'rss',
         'help',
+        'dependencyRepair',
         'welcome',
         'faceReply',
         'imageMonitor',

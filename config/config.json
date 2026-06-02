@@ -9,6 +9,7 @@
   "rss": true,
   "status": true,
   "logDiagnosis": true,
+  "dependencyRepair": true,
   "help": true,
   "welcome": false,
   "faceReply": true,
