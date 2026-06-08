@@ -5,6 +5,7 @@ import axios from 'axios';
 import OpenAI from 'openai';
 import ConfigControl from '../lib/config/configControl.js';
 import { logAiUsage } from '../lib/ai/usageLogger.js';
+import { buildImageMonitorFallbackConfig, hasImageMonitorApiConfig } from '../lib/ai/apiFallback.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 import Path from '../constants/path.js';
@@ -317,6 +318,36 @@ async function analyzeImageWithVisionModel(cfg, imageUrl) {
   };
 }
 
+async function analyzeImageWithVisionFallback(cfg, imageUrl) {
+  try {
+    const analysis = await analyzeImageWithVisionModel(cfg, imageUrl);
+    return {
+      ...analysis,
+      usedFallback: false,
+      usedConfig: cfg,
+    };
+  } catch (error) {
+    const fallbackConfig = buildImageMonitorFallbackConfig(cfg);
+    if (!fallbackConfig) {
+      throw error;
+    }
+
+    logger.warn(`[image-monitor] 图片识别主接口失败，尝试备用API: ${error.message}`);
+    try {
+      const analysis = await analyzeImageWithVisionModel(fallbackConfig, imageUrl);
+      return {
+        ...analysis,
+        usedFallback: true,
+        usedConfig: fallbackConfig,
+        primaryError: error.message,
+      };
+    } catch (fallbackError) {
+      fallbackError.message = `主接口失败: ${error.message}; 备用接口失败: ${fallbackError.message}`;
+      throw fallbackError;
+    }
+  }
+}
+
 function saveMemeImage(buffer, hash, analysis, e, sourceUrl, cfg = {}) {
   const character = resolveMemeCharacter(analysis);
   const emotion = resolveMemeEmotion(analysis);
@@ -366,7 +397,7 @@ async function processImageMonitor(e) {
   if (!mainConfig.imageMonitor || !monitorConfig.enabled) {
     return false;
   }
-  if (!monitorConfig.apiBase || !monitorConfig.apiKey || !monitorConfig.model) {
+  if (!hasImageMonitorApiConfig(monitorConfig) && !buildImageMonitorFallbackConfig(monitorConfig)) {
     return false;
   }
   const groupId = String(e.group_id || '');
@@ -392,11 +423,19 @@ async function processImageMonitor(e) {
         continue;
       }
       reviewSaveResult = saveReviewImage(buffer, hash, e, imageUrl, monitorConfig);
-      const analysis = await analyzeImageWithVisionModel(monitorConfig, imageUrl);
+      const fallbackOnlyConfig = buildImageMonitorFallbackConfig(monitorConfig);
+      const analysis = hasImageMonitorApiConfig(monitorConfig)
+        ? await analyzeImageWithVisionFallback(monitorConfig, imageUrl)
+        : {
+            ...(await analyzeImageWithVisionModel(fallbackOnlyConfig, imageUrl)),
+            usedFallback: true,
+            usedConfig: fallbackOnlyConfig,
+          };
+      const usedMonitorConfig = analysis.usedConfig || monitorConfig;
       await logAiUsage({
         stage: 'success',
-        scene: 'image_monitor_review',
-        model: monitorConfig.model,
+        scene: analysis.usedFallback ? 'image_monitor_review_fallback' : 'image_monitor_review',
+        model: usedMonitorConfig.model,
         provider: 'openai-compatible',
         sessionId: groupId ? `group:${groupId}` : `user:${String(e.user_id || 'unknown')}`,
         groupId,

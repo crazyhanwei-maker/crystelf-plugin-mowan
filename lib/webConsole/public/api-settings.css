@@ -3,6 +3,7 @@
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 18px;
   margin-top: 16px;
+  min-width: 0;
 }
 
 .api-settings-nav {
@@ -10,6 +11,8 @@
   gap: 8px;
   position: sticky;
   top: 18px;
+  align-self: start;
+  min-width: 0;
 }
 
 .api-settings-nav-btn {
@@ -25,6 +28,7 @@
   font-weight: 600;
   box-shadow: none;
   text-align: left;
+  min-width: 0;
 }
 
 .api-settings-nav-btn.active {
@@ -43,6 +47,8 @@
 
 .api-settings-section {
   margin-bottom: 18px;
+  min-width: 0;
+  scroll-margin-top: 92px;
 }
 
 .api-settings-section .section-header {
@@ -60,7 +66,10 @@
 
 .api-settings-group-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr));
+  align-items: start;
   gap: 14px;
+  min-width: 0;
 }
 
 .api-settings-subgroup {
@@ -70,13 +79,24 @@
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--soft-bg);
+  min-width: 0;
+}
+
+.api-settings-subgroup.is-wide {
+  grid-column: 1 / -1;
 }
 
 .api-settings-subgroup-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+}
+
+.api-settings-subgroup-head > * {
+  min-width: 0;
 }
 
 .api-settings-subgroup-head h3 {
@@ -89,10 +109,50 @@
   color: var(--muted-text);
   font-size: 13px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .api-settings-subgroup .settings-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   margin-bottom: 0;
+  min-width: 0;
+}
+
+.api-settings-subgroup .setting-item {
+  min-width: 0;
+}
+
+.api-settings-page input,
+.api-settings-page select,
+.api-settings-page textarea,
+.api-settings-page .inline-field-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.api-settings-page .plugin-settings-switch {
+  width: auto;
+  max-width: 100%;
+}
+
+.api-settings-page .preview-box,
+.api-settings-page .detail-box,
+.api-settings-page .setting-help,
+.api-settings-page .kv-label {
+  overflow-wrap: anywhere;
+}
+
+.api-settings-page .hero > .actions {
+  min-width: 0;
+  max-width: min(560px, 100%);
+}
+
+.api-settings-page .hero > .actions > button,
+.api-settings-page .hero > .actions > .link-btn,
+.api-settings-page .actions > button,
+.api-settings-page .actions > .link-btn {
+  min-width: 0;
+  white-space: normal;
 }
 
 .api-settings-overview-panel {
@@ -110,6 +170,7 @@
 
 .api-settings-source-note {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
@@ -189,7 +250,7 @@
 
 .api-settings-source-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -304,7 +365,7 @@
 
 .api-settings-overview-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -335,6 +396,7 @@
 
 .api-settings-overview-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
@@ -643,6 +705,10 @@
     min-width: 140px;
   }
 
+  .api-settings-group-grid {
+    grid-template-columns: 1fr;
+  }
+
   .batch-test-head,
   .batch-item {
     grid-template-columns: 1fr;
@@ -658,5 +724,30 @@
 
   .batch-time {
     text-align: left;
+  }
+}
+
+@media (max-width: 560px) {
+  .api-settings-page .hero > .actions,
+  .batch-test-actions,
+  .api-settings-page .actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .api-settings-nav {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .api-settings-nav-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .api-settings-subgroup {
+    padding: 14px;
+    border-radius: 16px;
   }
 }

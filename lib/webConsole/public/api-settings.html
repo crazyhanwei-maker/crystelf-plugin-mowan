@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/api-settings.css" />
 </head>
-<body>
+<body class="api-settings-page">
   <div class="page">
     <header class="hero">
       <div>
@@ -77,7 +77,7 @@
             <p class="section-desc">这里决定机器人平时聊天用哪个 AI 服务。</p>
           </div>
           <div class="api-settings-group-grid">
-            <section class="api-settings-subgroup">
+            <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>基础接入</h3>
@@ -116,7 +116,7 @@
               </div>
             </section>
 
-            <section class="api-settings-subgroup">
+            <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>超时</h3>
@@ -131,6 +131,50 @@
                 </div>
               </div>
             </section>
+
+            <section class="api-settings-subgroup is-wide">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>备用 API</h3>
+                  <p>主接口不可用时可供运行时切换使用；这里单独维护备用地址、密钥和模型。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用主对话备用 API</div>
+                  <button class="plugin-settings-switch off" id="ai-fallback-enabled">已关闭</button>
+                  <div class="setting-help">默认关闭；开启后请补完整备用接口信息。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用 API 基础地址</div>
+                  <input type="text" id="ai-fallback-baseApi" placeholder="https://backup.example.com/v1" />
+                  <div class="setting-help">备用服务商的 OpenAI 兼容基础地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用 API 密钥</div>
+                  <form class="inline-field-form" onsubmit="return false;">
+                    <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+                    <input type="password" id="ai-fallback-apiKey" placeholder="备用 API Key" autocomplete="new-password" />
+                  </form>
+                  <div class="setting-help">备用服务商密钥；留空会保持已保存密钥。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用文本模型</div>
+                  <input type="text" id="ai-fallback-modelType" placeholder="gpt-4o-mini" />
+                  <div class="setting-help">备用主回复模型。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用工作模型</div>
+                  <input type="text" id="ai-fallback-workingModel" placeholder="留空则由运行时复用备用文本模型" />
+                  <div class="setting-help">备用后台任务模型。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用多模态模型</div>
+                  <input type="text" id="ai-fallback-multimodalModel" placeholder="gpt-4o-mini" />
+                  <div class="setting-help">备用图片理解模型。</div>
+                </div>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -141,7 +185,7 @@
             <p class="section-desc">这里决定生图和改图走哪个服务。</p>
           </div>
           <div class="api-settings-group-grid">
-            <section class="api-settings-subgroup">
+            <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>基础接入</h3>
@@ -229,7 +273,7 @@
               </div>
             </section>
 
-            <section class="api-settings-subgroup">
+            <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>超时与保底</h3>
@@ -254,6 +298,54 @@
                 </div>
               </div>
             </section>
+
+            <section class="api-settings-subgroup is-wide">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>备用 API</h3>
+                  <p>生图主服务失败时可使用备用生图服务，模式、地址、密钥和模型都独立配置。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用生图备用 API</div>
+                  <button class="plugin-settings-switch off" id="image-fallback-enabled">已关闭</button>
+                  <div class="setting-help">默认关闭；开启后建议先在批量测试里验证备用服务。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用图像生成模式</div>
+                  <select id="image-fallback-imageMode">
+                    <option value="openai">OpenAI 风格 (/v1/images/generations)</option>
+                    <option value="chat">对话式生图模型</option>
+                    <option value="jimeng">即梦接口</option>
+                  </select>
+                  <div class="setting-help">可与主生图模式不同。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用图像模型</div>
+                  <input type="text" id="image-fallback-model" placeholder="gpt-image-2" />
+                  <div class="setting-help">备用生图服务要求的模型名称。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用 API 基础地址</div>
+                  <input type="text" id="image-fallback-baseApi" placeholder="https://backup.example.com" />
+                  <div class="setting-help">OpenAI 风格或对话式生图备用地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用即梦接口地址</div>
+                  <input type="text" id="image-fallback-jimengApiUrl" placeholder="http://backup-jimeng:985" />
+                  <div class="setting-help">只有备用模式选择即梦时才需要填写。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用 API 密钥</div>
+                  <form class="inline-field-form" onsubmit="return false;">
+                    <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+                    <input type="password" id="image-fallback-apiKey" placeholder="备用生图 API Key" autocomplete="new-password" />
+                  </form>
+                  <div class="setting-help">备用生图服务密钥；留空会保持已保存密钥。</div>
+                </div>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -264,7 +356,7 @@
             <p class="section-desc">这里决定群聊图片是否审核、是否保存为本地表情包。</p>
           </div>
           <div class="api-settings-group-grid">
-            <section class="api-settings-subgroup">
+            <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>基础接入</h3>
@@ -298,7 +390,7 @@
               </div>
             </section>
 
-            <section class="api-settings-subgroup">
+            <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>超时与保底</h3>
@@ -320,6 +412,40 @@
                   <div class="kv-label">超时提示文案</div>
                   <textarea id="imageMonitor-fallbackTimeoutReply" rows="3" placeholder="留空表示识别超时时不发送群提示"></textarea>
                   <div class="setting-help">识别超时时回复给群里的提示；留空则不发提示。</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup is-wide">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>备用 API</h3>
+                  <p>图片识别主服务不可用时可切换到备用视觉模型服务。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用图片监控备用 API</div>
+                  <button class="plugin-settings-switch off" id="imageMonitor-fallback-enabled">已关闭</button>
+                  <div class="setting-help">默认关闭；开启后请填写备用识别地址、密钥和模型。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用 API 基础地址</div>
+                  <input type="text" id="imageMonitor-fallback-apiBase" placeholder="https://backup.example.com/v1" />
+                  <div class="setting-help">备用图片识别服务地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用 API 密钥</div>
+                  <form class="inline-field-form" onsubmit="return false;">
+                    <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
+                    <input type="password" id="imageMonitor-fallback-apiKey" placeholder="备用识别 API Key" autocomplete="new-password" />
+                  </form>
+                  <div class="setting-help">备用图片识别服务密钥；留空会保持已保存密钥。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用审核模型</div>
+                  <input type="text" id="imageMonitor-fallback-model" placeholder="gpt-4o-mini" />
+                  <div class="setting-help">备用图片识别模型名称。</div>
                 </div>
               </div>
             </section>
@@ -383,6 +509,11 @@
                   <div class="setting-help">搜索服务提供的密钥；如果你的搜索服务不需要密钥可留空。</div>
                 </div>
                 <div class="setting-item">
+                  <div class="kv-label">搜索接口地址</div>
+                  <input type="text" id="search-apiUrl" placeholder="https://uapis.cn/api/v1/search/aggregate" />
+                  <div class="setting-help">用于提交搜索关键词并返回搜索结果的接口地址。</div>
+                </div>
+                <div class="setting-item">
                   <div class="kv-label">网页读取提交地址</div>
                   <input type="text" id="search-markdownApiUrl" placeholder="https://uapis.cn/api/v1/web/tomarkdown/async" />
                   <div class="setting-help">用于把网页内容转成可读文本的提交地址。</div>
@@ -410,6 +541,42 @@
                 </div>
               </div>
             </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>备用 API</h3>
+                  <p>网页读取服务不稳定时可准备一组备用提交/查询地址。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用搜索备用 API</div>
+                  <button class="plugin-settings-switch off" id="search-fallback-enabled">已关闭</button>
+                  <div class="setting-help">默认关闭；开启后备用网页读取地址会单独保存。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用搜索 API 密钥</div>
+                  <input type="password" id="search-fallback-apiKey" placeholder="备用搜索服务 API Key" />
+                  <div class="setting-help">备用搜索或网页读取服务密钥；不需要密钥可留空。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用搜索接口地址</div>
+                  <input type="text" id="search-fallback-apiUrl" placeholder="https://backup.example.com/search/aggregate" />
+                  <div class="setting-help">主搜索接口失败时使用的备用搜索地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用网页读取提交地址</div>
+                  <input type="text" id="search-fallback-markdownApiUrl" placeholder="https://backup.example.com/tomarkdown/async" />
+                  <div class="setting-help">备用网页转 Markdown 任务提交地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用网页读取状态查询地址</div>
+                  <input type="text" id="search-fallback-markdownStatusUrl" placeholder="https://backup.example.com/tomarkdown/async" />
+                  <div class="setting-help">备用网页读取状态查询地址。</div>
+                </div>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -432,6 +599,16 @@
                   <div class="kv-label">表情包 API 地址</div>
                   <input type="text" id="meme-apiBase" placeholder="http://38.22.95.201:5555" />
                   <div class="setting-help">远程表情包服务地址；关闭远程服务时可以留空。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">启用表情包备用 API</div>
+                  <button class="plugin-settings-switch off" id="meme-fallback-enabled">已关闭</button>
+                  <div class="setting-help">默认关闭；远程主表情服务不可用时可使用备用地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用表情包 API 地址</div>
+                  <input type="text" id="meme-fallback-apiBase" placeholder="http://backup.example.com:5555" />
+                  <div class="setting-help">备用远程表情包服务地址。</div>
                 </div>
               </div>
               <div class="settings-grid">

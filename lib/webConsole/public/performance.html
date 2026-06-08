@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 性能监测</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/performance.css" />
+</head>
+<body>
+  <div class="page performance-page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">只读监测</div>
+        <h1>性能监测</h1>
+        <p id="performance-meta">正在读取 AI、图片生成和运行时性能数据...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">监测操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="performance-refresh-btn">刷新数据</button>
+            <label class="performance-threshold-control">
+              <span>慢请求阈值</span>
+              <select id="performance-slow-threshold">
+                <option value="3000">3 秒</option>
+                <option value="5000">5 秒</option>
+                <option value="10000" selected>10 秒</option>
+                <option value="30000">30 秒</option>
+                <option value="60000">60 秒</option>
+              </select>
+            </label>
+            <a class="link-btn" href="/usage-center.html">AI 用量日志</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel performance-readonly-note">
+      <div>
+        <h2>只读页面</h2>
+        <div id="performance-refresh-status" class="setting-help">此页面只读取现有运行数据和日志，不会修改配置、删除日志或触发修复任务。</div>
+      </div>
+    </section>
+
+    <section class="performance-kpi-grid" id="performance-kpi-grid"></section>
+
+    <section class="panel performance-runtime-panel">
+      <div class="section-head">
+        <div>
+          <h2>运行时资源</h2>
+          <div class="setting-help">展示当前 Node 进程、物理内存和系统负载。CPU 为进程运行态估算外的基础系统信息。</div>
+        </div>
+      </div>
+      <div id="performance-runtime-grid" class="performance-runtime-grid">加载中...</div>
+    </section>
+
+    <section class="panel panel-two">
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>AI 近 24 小时趋势</h2>
+            <div class="setting-help">按小时汇总请求数、平均耗时和错误数。</div>
+          </div>
+        </div>
+        <div id="performance-ai-trend" class="performance-chart">加载中...</div>
+      </div>
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>生图近 24 小时趋势</h2>
+            <div class="setting-help">按小时汇总图片生成请求耗时。</div>
+          </div>
+        </div>
+        <div id="performance-image-trend" class="performance-chart">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel panel-two">
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>按模型统计</h2>
+            <div class="setting-help">今日 AI 请求按模型聚合，按请求量排序。</div>
+          </div>
+        </div>
+        <div id="performance-model-table" class="performance-table-wrap">加载中...</div>
+      </div>
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>按场景统计</h2>
+            <div class="setting-help">今日 AI 请求按场景聚合，便于定位慢场景。</div>
+          </div>
+        </div>
+        <div id="performance-scene-table" class="performance-table-wrap">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>慢请求与错误</h2>
+          <div class="setting-help">展示今日超过慢请求阈值的 AI 请求，以及发生错误的请求。按耗时优先排序。</div>
+        </div>
+      </div>
+      <div id="performance-slow-list" class="performance-slow-list">加载中...</div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/performance.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>
