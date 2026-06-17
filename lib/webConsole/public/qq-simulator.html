@@ -9,38 +9,32 @@
 </head>
 <body class="qq-simulator-page auth-guarded-page">
   <div class="page auth-guarded-content">
-    <header class="hero qq-simulator-hero">
-      <div>
-        <div class="hero-badge">魔丸控制台</div>
-        <h1>QQ 与机器人通信模拟器</h1>
-        <p>按 QQ 桌面群聊窗口模拟用户、群、消息、图片、截图、语音和机器人回复。</p>
-      </div>
-      <div class="actions">
-        <button id="qq-simulator-clear-top-btn">清空</button>
-        <button id="theme-toggle-btn">深色主题</button>
-        <a class="link-btn" href="/">返回首页</a>
-      </div>
-    </header>
-
     <section class="qq-simulator-desktop">
+      <aside class="qq-simulator-nav-rail" aria-label="QQ 导航">
+        <div class="qq-simulator-rail-avatar">魔</div>
+        <nav class="qq-simulator-rail-nav" aria-label="模拟器导航">
+          <span class="qq-simulator-rail-item is-active">聊</span>
+          <span class="qq-simulator-rail-item">群</span>
+          <span class="qq-simulator-rail-item">文</span>
+          <span class="qq-simulator-rail-item">设</span>
+        </nav>
+      </aside>
+
       <aside class="qq-simulator-session-pane">
-        <div class="qq-simulator-client-head">
-          <div class="qq-simulator-window-dots">
-            <span></span><span></span><span></span>
-          </div>
-          <strong>QQ</strong>
+        <div class="qq-simulator-search-row">
+          <div class="qq-simulator-search-box">搜索</div>
+          <button class="qq-simulator-add-session" type="button" aria-label="新增会话">+</button>
         </div>
 
-        <div class="qq-simulator-self-card">
-          <div class="qq-simulator-self-avatar">魔</div>
+        <div class="qq-simulator-todo-row">
+          <div class="qq-simulator-todo-icon">✓</div>
           <div>
-            <strong>魔丸控制台</strong>
+            <strong>待办 · 0</strong>
             <span id="qq-simulator-client-status">模拟在线</span>
           </div>
         </div>
 
-        <div class="qq-simulator-search-box">搜索</div>
-        <div class="qq-simulator-session-label">最近会话</div>
+        <div class="qq-simulator-session-label">群聊</div>
 
         <button class="qq-simulator-session-item is-active" data-preset="message" data-sim-event="message">
           <span class="qq-simulator-session-avatar">群</span>
@@ -86,6 +80,12 @@
           <div class="qq-simulator-head-actions">
             <span id="qq-simulator-current-role" class="qq-simulator-pill">member</span>
             <span id="qq-simulator-current-user" class="qq-simulator-pill">测试用户</span>
+            <span class="qq-simulator-head-icon">文件</span>
+            <span class="qq-simulator-head-icon">相册</span>
+            <span class="qq-simulator-head-icon">设置</span>
+            <button id="qq-simulator-clear-top-btn" class="qq-simulator-title-btn" type="button">清空</button>
+            <button id="theme-toggle-btn" class="qq-simulator-title-btn" type="button">浅色</button>
+            <a class="qq-simulator-title-btn link-btn" href="/">返回</a>
           </div>
         </div>
 
@@ -96,39 +96,47 @@
             <button id="qq-simulator-composer-image-btn" type="button">图片</button>
             <button id="qq-simulator-composer-capture-btn" type="button">截图</button>
             <button id="qq-simulator-composer-voice-btn" type="button">语音</button>
+            <button id="qq-simulator-chat-poke-btn" type="button">戳一戳</button>
             <span id="qq-simulator-composer-tip">Enter 发送，Shift+Enter 换行</span>
           </div>
           <textarea id="qq-simulator-chat-input" class="qq-simulator-chat-input" placeholder="在这里像 QQ 群一样输入消息"></textarea>
           <div class="qq-simulator-composer-actions">
-            <button id="qq-simulator-chat-poke-btn" type="button">戳一戳</button>
             <button id="qq-simulator-chat-cancel-btn" type="button" disabled>取消</button>
-            <button id="qq-simulator-chat-send-btn" type="button">发送</button>
+            <button id="qq-simulator-chat-send-btn" type="button">发送(S)</button>
           </div>
         </div>
       </main>
 
       <aside class="qq-simulator-profile-pane">
-        <section class="qq-simulator-profile-card">
-          <div class="qq-simulator-profile-cover"></div>
-          <div class="qq-simulator-profile-body">
-            <div class="qq-simulator-profile-avatar">群</div>
-            <h2 id="qq-simulator-dock-group-name">群 10001</h2>
-            <p id="qq-simulator-dock-group-meta">当前群聊模拟环境</p>
+        <section class="qq-simulator-side-card qq-simulator-notice-card">
+          <div class="qq-simulator-side-title">
+            <h3>群公告</h3>
+            <span>›</span>
           </div>
+          <h2 id="qq-simulator-dock-group-name">群 10001</h2>
+          <p id="qq-simulator-dock-group-meta">当前群聊模拟环境</p>
+          <p>用于检查机器人在群聊中的回复、图片、语音、戳一戳和群管理事件表现。</p>
         </section>
 
         <section class="qq-simulator-side-card">
-          <h3>群成员</h3>
+          <div class="qq-simulator-side-title">
+            <h3>群成员 <span>(3/149)</span></h3>
+          </div>
+          <div class="qq-simulator-member-search">搜索群成员</div>
           <div id="qq-simulator-member-list" class="qq-simulator-member-list"></div>
         </section>
 
-        <section class="qq-simulator-side-card">
-          <h3>请求摘要</h3>
+        <section class="qq-simulator-side-card qq-simulator-debug-card">
+          <div class="qq-simulator-side-title">
+            <h3>请求摘要</h3>
+          </div>
           <div id="qq-simulator-summary" class="detail-box qq-simulator-side-box">尚未发送请求</div>
         </section>
 
-        <section class="qq-simulator-side-card">
-          <h3>最近结果</h3>
+        <section class="qq-simulator-side-card qq-simulator-debug-card">
+          <div class="qq-simulator-side-title">
+            <h3>最近结果</h3>
+          </div>
           <div id="qq-simulator-result" class="detail-box qq-simulator-side-box">等待模拟事件。</div>
         </section>
       </aside>

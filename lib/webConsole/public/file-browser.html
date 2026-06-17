@@ -4,184 +4,213 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>魔丸控制台 - 文件浏览编辑器</title>
+  <link rel="icon" href="data:," />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/file-browser.css" />
 </head>
-<body class="file-browser-page">
-  <div class="page">
-    <header class="hero">
-      <div class="hero-copy">
-        <div class="hero-badge">魔丸控制台</div>
-        <h1>文件浏览编辑器</h1>
-        <p id="file-browser-meta">浏览和编辑机器人目录内的文本文件，支持搜索、新建、重命名、删除和预览。</p>
-      </div>
-      <div class="actions hero-actions-grid">
-        <button id="file-browser-refresh-dir-btn" type="button">刷新目录</button>
-        <button id="file-browser-new-dir-btn" type="button">新建目录</button>
-        <button id="file-browser-new-file-btn" type="button">新建文件</button>
-        <button id="file-browser-rename-btn" type="button">重命名当前</button>
-        <button id="file-browser-delete-btn" type="button">删除当前</button>
-        <button id="file-browser-reload-btn" type="button">重新加载</button>
-        <button id="file-browser-save-btn" type="button">保存文件</button>
-        <button id="theme-toggle-btn" type="button" data-theme-toggle>深色主题</button>
-        <a class="link-btn" href="/">返回首页</a>
-      </div>
-    </header>
-
-    <section class="panel file-browser-summary">
-      <div class="file-browser-summary-grid">
-        <div>
-          <div class="kv-label">根目录</div>
-          <div id="file-browser-root-path" class="setting-status">加载中...</div>
-        </div>
-        <div>
-          <div class="kv-label">当前目录</div>
-          <div id="file-browser-current-dir" class="setting-status">加载中...</div>
-        </div>
-        <div>
-          <div class="kv-label">编辑限制</div>
-          <div class="setting-status">只能编辑文本文件；单个文件不超过 2MB，非空目录不能直接删除。</div>
-        </div>
+<body class="file-browser-page auth-guarded-page file-manager-page">
+  <div class="file-manager-app">
+    <header class="file-manager-topline">
+      <div class="file-manager-brand">
+        <a class="file-manager-brand-name" href="/index.html">魔丸控制台</a>
+        <span class="file-manager-brand-link">文件管理</span>
       </div>
       <div id="file-browser-auth-banner" class="file-browser-banner hidden"></div>
-    </section>
+    </header>
 
-    <div id="file-browser-shell" class="file-browser-shell">
-      <aside class="panel file-browser-sidebar">
-        <div class="file-browser-sidebar-head">
+    <div class="file-manager-pathbar">
+      <div class="file-manager-nav-buttons">
+        <button id="file-browser-back-btn" type="button" class="file-manager-icon-btn" title="后退" aria-label="后退">‹</button>
+        <button id="file-browser-forward-btn" type="button" class="file-manager-icon-btn" title="前进" aria-label="前进">›</button>
+        <button id="file-browser-up-btn" type="button" class="file-manager-icon-btn" title="返回上一级" aria-label="返回上一级">↑</button>
+        <button id="file-browser-refresh-dir-btn" type="button" class="file-manager-icon-btn" title="刷新" aria-label="刷新">⟳</button>
+        <button id="file-browser-show-hidden-btn" type="button" class="file-manager-icon-btn" title="显示隐藏文件" aria-pressed="true" aria-label="显示隐藏文件">⊙</button>
+      </div>
+      <div id="file-browser-breadcrumbs" class="file-manager-breadcrumbs"></div>
+      <div class="file-manager-search-row">
+        <input id="file-browser-open-input" type="text" placeholder="输入项目内路径，例如 lib/webConsole/server.js" />
+        <button id="file-browser-open-btn" type="button" class="mini-btn">打开</button>
+      </div>
+    </div>
+
+    <div class="file-manager-toolbar">
+      <button id="file-browser-new-file-btn" type="button" class="file-manager-primary-btn">创建文件</button>
+      <button id="file-browser-new-dir-btn" type="button" class="file-manager-secondary-btn">创建目录</button>
+      <button id="file-browser-copy-file-btn" type="button" class="file-manager-secondary-btn" disabled>复制文件</button>
+      <button id="file-browser-settings-btn" type="button" class="file-manager-icon-btn" aria-label="设置">⚙</button>
+      <div class="file-manager-spacer"></div>
+      <label class="file-manager-flag">
+        <input id="file-manager-subdir-toggle" type="checkbox" checked />
+        子目录
+      </label>
+      <div class="file-manager-search-inline">
+        <input id="file-browser-search-input" type="search" placeholder="在当前目录查找" />
+        <button id="file-browser-search-clear-btn" type="button" class="mini-btn">清空</button>
+      </div>
+      <button id="file-browser-project-search-btn" type="button" class="file-manager-search-btn">AI 搜索</button>
+    </div>
+
+    <main class="file-manager-content">
+      <section class="file-manager-table-panel">
+        <div class="file-manager-table-headline">
           <div>
-            <h2>目录树</h2>
-            <div id="file-browser-tree-status" class="setting-status">加载中...</div>
+            <h2 id="file-browser-current-dir">/</h2>
+            <div id="file-browser-directory-status" class="setting-status">等待加载目录内容</div>
+          </div>
+          <div class="file-manager-table-actions">
+            <button id="file-browser-reload-btn" type="button" class="file-manager-secondary-btn">重载</button>
+            <button id="file-browser-rename-btn" type="button" class="file-manager-secondary-btn">重命名</button>
+            <button id="file-browser-delete-btn" type="button" class="file-manager-secondary-btn">删除</button>
           </div>
         </div>
-        <div id="file-browser-breadcrumbs" class="file-browser-breadcrumbs"></div>
-        <div class="file-browser-search-row">
-          <input id="file-browser-search-input" type="search" placeholder="搜索左侧已加载的文件或目录" />
-          <button id="file-browser-search-clear-btn" type="button" class="mini-btn">清空</button>
-        </div>
-        <div class="file-browser-open-row">
-          <input id="file-browser-open-input" type="text" placeholder="输入项目内路径，例如 lib/webConsole/server.js" />
-          <button id="file-browser-open-btn" type="button" class="mini-btn">打开</button>
-        </div>
-        <div class="file-browser-project-search-row">
-          <input id="file-browser-project-search-input" type="search" placeholder="搜索整个项目里的文字，例如 renderPreview" />
-          <button id="file-browser-project-search-btn" type="button" class="mini-btn">全文搜</button>
-        </div>
-        <div class="file-browser-project-search-tools">
-          <button id="file-browser-project-search-case-btn" type="button" class="file-browser-inline-secondary-btn">区分大小写</button>
-          <button id="file-browser-project-search-clear-btn" type="button" class="file-browser-inline-secondary-btn">清空结果</button>
-        </div>
-        <div class="file-browser-tree-toolbar">
-          <div class="file-browser-tree-filter-row" role="tablist" aria-label="目录树过滤">
-            <button id="file-browser-filter-all-btn" type="button" class="file-browser-tree-filter-btn is-active" data-tree-filter="all">全部</button>
-            <button id="file-browser-filter-dir-btn" type="button" class="file-browser-tree-filter-btn" data-tree-filter="directory">仅目录</button>
-            <button id="file-browser-filter-file-btn" type="button" class="file-browser-tree-filter-btn" data-tree-filter="file">仅文件</button>
-          </div>
-          <div class="file-browser-tree-tools">
-            <button id="file-browser-expand-path-btn" type="button" class="file-browser-tree-tool-btn">展开当前路径</button>
-            <button id="file-browser-collapse-tree-btn" type="button" class="file-browser-tree-tool-btn">收起其他</button>
-          </div>
-        </div>
-        <div id="file-browser-entry-list" class="file-browser-entry-list"></div>
-      </aside>
-
-      <div
-        id="file-browser-sidebar-resizer"
-        class="file-browser-sidebar-resizer"
-        role="separator"
-        aria-label="调整目录树宽度"
-        aria-orientation="vertical"
-        tabindex="0"
-      ></div>
-
-      <main class="panel file-browser-main">
-        <div class="file-browser-main-head">
-          <div>
-            <h2 id="file-browser-file-title">未选择文件</h2>
-            <div id="file-browser-file-meta" class="setting-status">从左侧选择文本文件后，可以在这里查看和编辑。</div>
-            <div id="file-browser-file-stats" class="file-browser-file-stats">暂无内容</div>
-          </div>
-          <div id="file-browser-dirty-indicator" class="file-browser-dirty-indicator hidden">有未保存修改</div>
-        </div>
-
-        <div id="file-browser-target-summary" class="file-browser-target-summary">
-          <div id="file-browser-target-tags" class="file-browser-target-tags"></div>
-          <div id="file-browser-target-hint" class="file-browser-target-hint">还没有选择文件。可以从左侧目录树打开，也可以输入项目内路径打开。</div>
-        </div>
-
-        <div class="file-browser-view-toolbar">
-          <div class="file-browser-view-switch" role="tablist" aria-label="查看模式">
-            <button id="file-browser-view-edit-btn" class="file-browser-view-btn is-active" type="button" data-view-mode="edit">编辑</button>
-            <button id="file-browser-view-preview-btn" class="file-browser-view-btn" type="button" data-view-mode="preview">预览</button>
-            <button id="file-browser-view-split-btn" class="file-browser-view-btn" type="button" data-view-mode="split">分栏</button>
-          </div>
-          <div id="file-browser-preview-meta" class="setting-status">当前仅显示编辑区</div>
-        </div>
-
-        <div id="file-browser-tab-strip" class="file-browser-tab-strip hidden">
-          <div id="file-browser-tab-list" class="file-browser-tab-list"></div>
-        </div>
-
-        <div id="file-browser-editor-action-bar" class="file-browser-editor-action-bar hidden">
-          <div class="file-browser-editor-action-copy">
-            <div id="file-browser-editor-action-title" class="file-browser-editor-action-title">未选择文件</div>
-            <div id="file-browser-editor-action-subtitle" class="file-browser-editor-action-subtitle">打开文本文件后，可以在这里保存修改或重新载入文件。</div>
-          </div>
-          <div class="file-browser-editor-action-buttons">
-            <button id="file-browser-inline-save-btn" type="button">保存</button>
-            <button id="file-browser-inline-reload-btn" type="button">重载</button>
-            <button id="file-browser-find-btn" type="button" class="file-browser-inline-secondary-btn">查找</button>
-            <button id="file-browser-replace-btn" type="button" class="file-browser-inline-secondary-btn">替换</button>
-            <button id="file-browser-copy-path-btn" type="button" class="file-browser-inline-secondary-btn">复制路径</button>
-          </div>
-        </div>
-
-        <div id="file-browser-find-panel" class="file-browser-find-panel hidden">
-          <div class="file-browser-find-row">
-            <input id="file-browser-find-input" type="search" placeholder="在当前文件里查找文字" />
-            <button id="file-browser-find-prev-btn" type="button" class="file-browser-inline-secondary-btn">上一个</button>
-            <button id="file-browser-find-next-btn" type="button" class="file-browser-inline-secondary-btn">下一个</button>
-            <button id="file-browser-find-case-btn" type="button" class="file-browser-inline-secondary-btn">区分大小写</button>
-            <button id="file-browser-find-close-btn" type="button" class="file-browser-inline-secondary-btn">关闭</button>
-          </div>
-          <div id="file-browser-replace-row" class="file-browser-find-row hidden">
-            <input id="file-browser-replace-input" type="text" placeholder="替换为" />
-            <button id="file-browser-replace-one-btn" type="button">替换当前</button>
-            <button id="file-browser-replace-all-btn" type="button" class="file-browser-inline-secondary-btn">全部替换</button>
-          </div>
-          <div class="file-browser-find-meta-row">
-            <div id="file-browser-find-status" class="file-browser-find-status">输入关键词后开始查找</div>
-            <div id="file-browser-find-tip" class="file-browser-find-tip">Enter 查下一个，Shift + Enter 查上一个，Esc 关闭</div>
-          </div>
-        </div>
-
-        <section id="file-browser-project-search-panel" class="file-browser-project-search-panel hidden">
-          <div class="file-browser-project-search-head">
-            <div>
-              <h3>全文搜索结果</h3>
-              <div id="file-browser-project-search-status" class="setting-status">输入关键词后搜索整个项目</div>
+        <div id="file-browser-editor-status" class="file-browser-banner hidden"></div>
+        <div id="file-browser-directory-table" class="file-manager-table"></div>
+        <div class="file-manager-footer">
+          <div id="file-browser-root-path" class="file-manager-footer-left">根目录：加载中...</div>
+          <div class="file-manager-footer-right">
+            <span id="file-browser-file-stats" class="file-manager-footer-stats">暂无内容</span>
+            <div class="file-manager-footer-controls">
+            <select id="file-browser-page-size-select" aria-label="每页数量">
+              <option value="50">50条/页</option>
+              <option value="100" selected>100条/页</option>
+              <option value="200">200条/页</option>
+            </select>
+            <button id="file-browser-prev-page-btn" type="button" class="file-manager-pager-btn" aria-label="上一页">‹</button>
+            <span id="file-browser-current-page" class="file-manager-current-page">1</span>
+            <button id="file-browser-next-page-btn" type="button" class="file-manager-pager-btn" aria-label="下一页">›</button>
             </div>
           </div>
-          <div id="file-browser-project-search-results" class="file-browser-project-search-results"></div>
-        </section>
+        </div>
+      </section>
 
-        <div id="file-browser-editor-status" class="file-browser-banner hidden"></div>
-
-        <div id="file-browser-workspace" class="file-browser-workspace mode-edit">
-          <div class="file-browser-pane file-browser-editor-pane">
-            <textarea id="file-browser-editor" class="file-browser-editor" spellcheck="false" placeholder="请选择一个可编辑的文本文件"></textarea>
+      <section id="file-browser-project-search-panel" class="file-browser-project-search-panel hidden">
+        <div class="file-browser-project-search-head">
+          <div>
+            <h3>全文搜索结果</h3>
+            <div id="file-browser-project-search-status" class="setting-status">输入关键词后搜索整个项目</div>
           </div>
-          <div class="file-browser-pane file-browser-preview-pane">
-            <div id="file-browser-preview" class="file-browser-preview is-placeholder">选择文本文件后，这里会显示带高亮的预览</div>
+          <div class="file-manager-table-actions">
+            <button id="file-browser-project-search-case-btn" type="button" class="file-manager-secondary-btn">区分大小写</button>
+            <button id="file-browser-project-search-clear-btn" type="button" class="file-manager-secondary-btn">清空结果</button>
           </div>
         </div>
-      </main>
-    </div>
+        <div id="file-browser-project-search-results" class="file-browser-project-search-results"></div>
+      </section>
+
+    </main>
   </div>
+
+  <section id="file-browser-editor-shell" class="file-manager-editor-shell hidden" role="dialog" aria-modal="true" aria-labelledby="file-browser-file-title">
+    <div class="file-manager-editor-window">
+      <div class="file-manager-editor-head">
+        <div class="file-manager-editor-title">
+          <h3>目录 - <span id="file-browser-file-title">未选择文件</span></h3>
+          <div id="file-browser-file-meta" class="setting-status">从当前目录选择文本文件后，可以在这里查看和编辑。</div>
+        </div>
+        <div class="file-manager-editor-window-actions">
+          <div id="file-browser-dirty-indicator" class="file-browser-dirty-indicator hidden">有未保存修改</div>
+          <button id="file-browser-editor-maximize-btn" type="button" class="file-manager-window-btn" aria-label="最大化编辑窗口" title="最大化">□</button>
+          <button id="file-browser-editor-close-btn" type="button" class="file-manager-window-btn" aria-label="关闭编辑窗口" title="关闭">×</button>
+        </div>
+      </div>
+
+      <div id="file-browser-editor-action-bar" class="file-browser-editor-action-bar hidden">
+        <div class="file-browser-editor-action-copy">
+          <div id="file-browser-editor-action-title" class="file-browser-editor-action-title">未选择文件</div>
+          <div id="file-browser-editor-action-subtitle" class="file-browser-editor-action-subtitle">打开文本文件后，可以在这里保存修改或重新载入文件。</div>
+        </div>
+        <div class="file-browser-editor-action-buttons">
+          <button id="file-browser-inline-reload-btn" type="button">重置</button>
+          <button id="file-browser-inline-save-btn" type="button">保存</button>
+          <button id="file-browser-find-btn" type="button" class="file-browser-inline-secondary-btn">查找</button>
+          <button id="file-browser-replace-btn" type="button" class="file-browser-inline-secondary-btn">替换</button>
+          <button id="file-browser-copy-path-btn" type="button" class="file-browser-inline-secondary-btn">复制路径</button>
+          <button id="file-browser-copy-current-file-btn" type="button" class="file-browser-inline-secondary-btn">复制文件</button>
+          <button id="file-browser-editor-theme-btn" type="button" class="file-browser-inline-secondary-btn" disabled>主题</button>
+          <button id="file-browser-editor-language-btn" type="button" class="file-browser-inline-secondary-btn" disabled>语言</button>
+          <button id="file-browser-editor-eol-btn" type="button" class="file-browser-inline-secondary-btn" disabled>行尾符</button>
+          <button id="file-browser-editor-settings-btn" type="button" class="file-browser-inline-secondary-btn" disabled>设置</button>
+        </div>
+      </div>
+
+      <div id="file-browser-tab-strip" class="file-browser-tab-strip hidden">
+        <div id="file-browser-tab-list" class="file-browser-tab-list"></div>
+      </div>
+
+      <div id="file-browser-find-panel" class="file-browser-find-panel hidden">
+        <div class="file-browser-find-row">
+          <input id="file-browser-find-input" type="search" placeholder="在当前文件里查找文字" />
+          <button id="file-browser-find-prev-btn" type="button" class="file-browser-inline-secondary-btn">上一个</button>
+          <button id="file-browser-find-next-btn" type="button" class="file-browser-inline-secondary-btn">下一个</button>
+          <button id="file-browser-find-case-btn" type="button" class="file-browser-inline-secondary-btn">区分大小写</button>
+          <button id="file-browser-find-close-btn" type="button" class="file-browser-inline-secondary-btn">关闭</button>
+        </div>
+        <div id="file-browser-replace-row" class="file-browser-find-row hidden">
+          <input id="file-browser-replace-input" type="text" placeholder="替换为" />
+          <button id="file-browser-replace-one-btn" type="button">替换当前</button>
+          <button id="file-browser-replace-all-btn" type="button" class="file-browser-inline-secondary-btn">全部替换</button>
+        </div>
+        <div class="file-browser-find-meta-row">
+          <div id="file-browser-find-status" class="file-browser-find-status">输入关键词后开始查找</div>
+          <div id="file-browser-find-tip" class="file-browser-find-tip">Enter 查下一个，Shift + Enter 查上一个，Esc 关闭</div>
+        </div>
+      </div>
+
+      <div class="file-manager-editor-main">
+        <aside class="file-manager-editor-side" aria-label="已打开文件">
+          <div class="file-manager-editor-side-actions">
+            <button type="button" disabled>上一级</button>
+            <button type="button" disabled>刷新</button>
+            <button type="button" disabled>创建</button>
+          </div>
+          <div id="file-browser-open-file-list" class="file-manager-editor-file-list"></div>
+        </aside>
+
+        <div class="file-manager-editor-body">
+          <div class="file-browser-view-toolbar">
+            <div class="file-browser-view-switch" role="tablist" aria-label="查看模式">
+              <button id="file-browser-view-edit-btn" class="file-browser-view-btn is-active" type="button" data-view-mode="edit">编辑</button>
+              <button id="file-browser-view-preview-btn" class="file-browser-view-btn" type="button" data-view-mode="preview">预览</button>
+              <button id="file-browser-view-split-btn" class="file-browser-view-btn" type="button" data-view-mode="split">分栏</button>
+            </div>
+            <div id="file-browser-preview-meta" class="setting-status">当前仅显示编辑区</div>
+          </div>
+
+          <div id="file-browser-target-summary" class="file-browser-target-summary">
+            <div id="file-browser-target-tags" class="file-browser-target-tags"></div>
+            <div id="file-browser-target-hint" class="file-browser-target-hint">还没有选择文件。可以从当前目录打开，也可以输入项目内路径打开。</div>
+          </div>
+
+          <div id="file-browser-workspace" class="file-browser-workspace mode-edit">
+            <div class="file-browser-pane file-browser-editor-pane">
+              <div id="file-browser-editor-line-gutter" class="file-browser-editor-line-gutter" aria-hidden="true"></div>
+              <textarea id="file-browser-editor" class="file-browser-editor" spellcheck="false" placeholder="请选择一个可编辑的文本文件"></textarea>
+            </div>
+            <div class="file-browser-pane file-browser-preview-pane">
+              <div id="file-browser-preview" class="file-browser-preview is-placeholder">选择文本文件后，这里会显示带高亮的预览</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="file-manager-editor-statusbar">
+        <span id="file-browser-editor-overlay-status" class="file-manager-editor-message hidden"></span>
+        <span>Visual Studio Dark</span>
+        <span>LF (Linux)</span>
+        <span>历史版本 (0)</span>
+        <span id="file-browser-editor-language-status">语言：plaintext</span>
+        <span>自动换行：启用</span>
+        <span>缩略图：启用</span>
+      </div>
+    </div>
+  </section>
 
   <div id="file-browser-modal-mask" class="modal-mask hidden">
     <div class="modal-card">
-      <h3 id="file-browser-modal-title">操作确认</h3>
+      <div class="file-manager-modal-head">
+        <h3 id="file-browser-modal-title">操作确认</h3>
+        <button id="file-browser-modal-close-btn" type="button" class="file-manager-window-btn" aria-label="关闭弹窗" title="关闭">×</button>
+      </div>
       <div id="file-browser-modal-content" class="modal-content"></div>
       <div class="actions">
         <button id="file-browser-modal-cancel-btn" type="button">取消</button>
@@ -193,6 +222,7 @@
   <div id="file-browser-context-menu" class="file-browser-context-menu hidden"></div>
 
   <script src="/auth.js"></script>
+  <script src="/console-shell.js"></script>
   <script src="/file-browser-state.js"></script>
   <script src="/file-browser-search.js"></script>
   <script src="/file-browser-editor.js"></script>

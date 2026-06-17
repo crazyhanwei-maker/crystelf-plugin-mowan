@@ -265,6 +265,7 @@ async function main() {
   ]) && includesAll(fileBrowserRoutes, [
     'createFileBrowserRoutes',
     '/api/file-browser/tree',
+    '/api/file-browser/copy-file',
     '/api/file-browser/write',
   ]) && includesAll(botPluginRoutes, [
     'createBotPluginRoutes',
