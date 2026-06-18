@@ -136,6 +136,15 @@ window.MowanSiteData = {
   simulatorTags: ['@用户', '图片', '语音', '表情', '回复', 'CQ 码', 'meme', '批量回放', '超时取消'],
   changelog: [
     {
+      version: '2.0.1',
+      date: '2026-06',
+      items: [
+        '帮助 DIY 控制台新增「生成图片」按钮，支持把帮助文本直接渲染为 PNG 作为 #灵晶帮助 发送图。',
+        '复用 Markdown 渲染器，与功能开关帮助图同一套渲染管线，生成的图片自动落到 /uploads/help-diy/ 并替换旧图。',
+        '同步更新插件 User-Agent 与状态图版本文案到 2.0.1。',
+      ],
+    },
+    {
       version: '2.0.0',
       date: '2026-05',
       items: [

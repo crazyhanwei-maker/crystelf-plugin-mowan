@@ -1,6 +1,24 @@
 import OpenAI from 'openai';
 import { logAiUsage } from '../../lib/ai/usageLogger.js';
 
+const ALLOWED_MESSAGE_ROLES = new Set(['system', 'user', 'assistant', 'tool']);
+
+/**
+ * 把消息数组的 role 限制在 OpenAI 兼容端点公认的白名单内，
+ * 避免上游/中转写入的 'developer' 等非法 role 触发 400。
+ */
+function sanitizeMessages(messages) {
+  if (!Array.isArray(messages)) return [];
+  return messages
+    .filter(msg => msg && typeof msg === 'object')
+    .map(msg => {
+      let role = String(msg.role || '').trim().toLowerCase();
+      if (role === 'developer') role = 'system';
+      if (!ALLOWED_MESSAGE_ROLES.has(role)) role = 'user';
+      return { ...msg, role };
+    });
+}
+
 function normalizeAiErrorMessage(error, timeoutMs = 60000) {
   const name = String(error?.name || '').trim();
   const code = String(error?.code || '').trim();
@@ -74,7 +92,7 @@ class OpenaiChat {
       //});
 
       const completion = await this.openai.chat.completions.create({
-        messages: finalMessages,
+        messages: sanitizeMessages(finalMessages),
         model: model,
         temperature: temperature,
         frequency_penalty: 0.2,

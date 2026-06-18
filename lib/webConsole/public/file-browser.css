@@ -2531,7 +2531,8 @@ body.file-manager-page .file-manager-brand-link {
 }
 
 body.file-manager-page .file-browser-banner {
-  max-width: min(620px, 56vw);
+  max-width: min(420px, 50vw);
+  width: fit-content;
   padding: 3px 8px;
   border: 1px solid #b9ddff;
   border-radius: 4px;
@@ -3743,6 +3744,8 @@ body.file-manager-page .file-manager-editor-shell .file-browser-banner {
   padding: 0 14px;
   border: 0;
   border-radius: 0;
+  width: auto;
+  max-width: none;
 }
 
 body.file-manager-page .file-manager-editor-shell .file-browser-banner:not(.hidden) {

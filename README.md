@@ -1,6 +1,6 @@
 # crystelf-plugin
 
-面向 Yunzai / TRSS-Yunzai 的群聊增强插件。当前版本：`2.0.0`。
+面向 Yunzai / TRSS-Yunzai 的群聊增强插件。当前版本：`2.0.1`。
 
 插件主要围绕 AI 对话、图像生成、HTTP Skills、群管理、图片监控、QQ 群模拟器、帮助 DIY、运行状态图和本地控制台展开。日常配置建议优先使用“魔丸控制台”，只有少量高级项再直接编辑 JSON。
 

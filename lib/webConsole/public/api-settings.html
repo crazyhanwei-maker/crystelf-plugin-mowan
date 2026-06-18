@@ -94,7 +94,7 @@
                   <div class="kv-label">API 密钥 <span class="required">*</span></div>
                   <form class="inline-field-form" onsubmit="return false;">
                     <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
-                    <input type="password" id="ai-apiKey" placeholder="sk-..." autocomplete="new-password" />
+                    <input type="password" id="ai-apiKey" placeholder="请填写 API Key" autocomplete="new-password" />
                   </form>
                   <div class="setting-help">填写服务商提供的密钥；页面会隐藏已保存的密钥内容。</div>
                 </div>
@@ -221,7 +221,7 @@
                   <div class="kv-label">API 密钥</div>
                   <form class="inline-field-form" onsubmit="return false;">
                     <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
-                    <input type="password" id="image-apiKey" placeholder="sk-..." autocomplete="new-password" />
+                    <input type="password" id="image-apiKey" placeholder="请填写 API Key" autocomplete="new-password" />
                   </form>
                   <div class="setting-help">生图服务提供的密钥；如果服务不需要密钥可留空。</div>
                 </div>
@@ -288,12 +288,12 @@
                 </div>
                 <div class="setting-item">
                   <div class="kv-label">失败保底文案</div>
-                  <textarea id="image-fallbackReply" rows="3" placeholder="图像生成失败了,待会儿再试试吧~"></textarea>
+                  <textarea id="image-fallbackReply" rows="3" placeholder="图像生成失败，请稍后再试。"></textarea>
                   <div class="setting-help">生图或改图失败时回复给用户；留空则使用通用失败提示。</div>
                 </div>
                 <div class="setting-item">
                   <div class="kv-label">超时保底文案</div>
-                  <textarea id="image-fallbackTimeoutReply" rows="3" placeholder="图像生成超时了,你可以稍后再试试，或者把要求说短一点~"></textarea>
+                  <textarea id="image-fallbackTimeoutReply" rows="3" placeholder="图像生成超时，请稍后再试，或简化提示词后重试。"></textarea>
                   <div class="setting-help">生图或改图等太久时回复给用户；留空则使用通用超时提示。</div>
                 </div>
               </div>
@@ -353,7 +353,7 @@
         <section id="section-image-monitor" class="api-settings-section hidden">
           <div class="section-header">
             <h2>图片监控 API</h2>
-            <p class="section-desc">这里决定群聊图片是否审核、是否保存为本地表情包。</p>
+            <p class="section-desc">这里决定群聊图片是否审核、是否保存为本地表情包（推荐使用小模型，不用担心费用，提示词等有缓存不怎么花钱）。</p>
           </div>
           <div class="api-settings-group-grid">
             <section class="api-settings-subgroup is-wide">
@@ -378,7 +378,7 @@
                   <div class="kv-label">API 密钥</div>
                   <form class="inline-field-form" onsubmit="return false;">
                     <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
-                    <input type="password" id="imageMonitor-apiKey" placeholder="sk-..." autocomplete="new-password" />
+                    <input type="password" id="imageMonitor-apiKey" placeholder="请填写 API Key" autocomplete="new-password" />
                   </form>
                   <div class="setting-help">图片识别服务提供的密钥。</div>
                 </div>
@@ -477,6 +477,77 @@
                   <div class="kv-label">入库关键词白名单</div>
                   <textarea id="imageMonitor-saveMemeKeywords" rows="3" placeholder="一行一个关键词，留空表示不按关键词限制"></textarea>
                   <div class="setting-help">只保存命中这些关键词的图片；会匹配角色名、标签和摘要。</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>审核策略</h3>
+                  <p>违规处置策略、风险阈值、群范围限制等审核行为参数。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">违规处置策略</div>
+                  <select id="imageMonitor-violationAction">
+                    <option value="recall">recall（撤回 + 警告）</option>
+                    <option value="warn">warn（仅警告）</option>
+                    <option value="ignore">ignore（不处置）</option>
+                  </select>
+                  <div class="setting-help">命中违规时的处置方式：recall 撤回消息并警告；warn 仅发警告；ignore 静默记录。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">风险阈值</div>
+                  <input type="number" id="imageMonitor-riskThreshold" min="0" max="1" step="0.05" placeholder="0.7" />
+                  <div class="setting-help">0-1 之间，模型给出的风险分超过此值才判定为违规。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">监控引用消息中的图片</div>
+                  <button class="plugin-settings-switch off" id="imageMonitor-monitorQuotedImages">已关闭</button>
+                  <div class="setting-help">开启后会一并分析引用消息中携带的图片。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">白名单群</div>
+                  <textarea id="imageMonitor-allowedGroups" rows="3" placeholder="一行一个群号，留空表示全部监控"></textarea>
+                  <div class="setting-help">只在这些群里启用监控；留空表示所有群都监控。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">黑名单群</div>
+                  <textarea id="imageMonitor-blockedGroups" rows="3" placeholder="一行一个群号，留空表示不排除任何群"></textarea>
+                  <div class="setting-help">这些群完全跳过监控；优先级高于白名单。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">单条消息最多审核张数</div>
+                  <input type="number" id="imageMonitor-maxImagesPerMessage" min="1" max="20" step="1" placeholder="3" />
+                  <div class="setting-help">同一条消息含多张图时最多审核前几张；超过的忽略。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">去重时间窗（毫秒）</div>
+                  <input type="number" id="imageMonitor-duplicateWindowMs" min="0" step="1000" placeholder="60000" />
+                  <div class="setting-help">在此时间窗内重复出现的相同图片只审核一次；0 表示不去重。</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup is-wide">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>识别参数</h3>
+                  <p>传给图片识别模型的 temperature 与 system prompt，可按需自定义审核风格。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">识别 temperature</div>
+                  <input type="number" id="imageMonitor-temperature" min="0" max="2" step="0.1" placeholder="0.2" />
+                  <div class="setting-help">图片识别 LLM 的温度参数，0-2 之间；越低输出越稳定。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">识别 system prompt</div>
+                  <textarea id="imageMonitor-prompt" rows="6" placeholder="留空表示使用内置默认审核提示词"></textarea>
+                  <div class="setting-help">自定义图片识别的 system prompt；留空使用内置默认值。</div>
                 </div>
               </div>
             </section>
