@@ -34,6 +34,21 @@ if(appConfig.autoUpdate) {
   });
 }
 
+// 启动时异步刷新一次 TTS 模型列表，避免缓存长期不更新导致 bot 看不到远端新加的角色。
+// fetchTtsModels 内部会自行校验 tts.enabled / modelsUrl，未启用时直接 no-op。
+import('./lib/ai/ttsRegistry.js')
+  .then(({ fetchTtsModels }) => fetchTtsModels())
+  .then((result) => {
+    if (result?.success) {
+      logger.info(`[crystelf-plugin] TTS 模型列表已刷新，共 ${result.count} 个模型`);
+    } else if (result?.error && result.error !== '内置语音工具未启用' && result.error !== '未配置语音模型列表地址') {
+      logger.warn(`[crystelf-plugin] TTS 模型列表刷新失败: ${result.error}`);
+    }
+  })
+  .catch((err) => {
+    logger.warn(`[crystelf-plugin] TTS 模型列表刷新异常: ${err?.message || err}`);
+  });
+
 const appPath = Path.apps;
 const jsFiles = await fc.readDirRecursive(appPath, 'js');
 const enabledApps = [];
