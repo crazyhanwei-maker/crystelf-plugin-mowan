@@ -1178,6 +1178,19 @@ button.help-diy-generate-btn:disabled {
   box-shadow: none;
 }
 
+.plugin-settings-tts-refresh-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.plugin-settings-tts-refresh-bar .setting-status {
+  flex: 1;
+  min-width: 200px;
+}
+
 .plugin-settings-knowledge-preview {
   display: grid;
   gap: 10px;

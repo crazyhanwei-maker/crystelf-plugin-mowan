@@ -1689,7 +1689,7 @@ const guobaSchema = [
     bottomHelpMessage: '最大同时存在的活跃群聊数量',
     componentProps: {
       min: 1,
-      max: 50,
+      max: 500,
       step: 1,
       placeholder: '请输入最大会话数',
     },
