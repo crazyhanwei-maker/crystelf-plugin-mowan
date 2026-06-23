@@ -4,9 +4,9 @@ import { appendGroupManagementLog } from '../lib/groupManagement/groupManagement
 import {
   appendDailyGroupSummaryResult,
   cleanupDailyGroupSummaryFiles,
-  getDailyGroupSummaryRun,
   getDailyGroupSummaryTargetGroupIds,
   getDailySummaryDateKey,
+  hasDailyGroupSummarySent,
   isDailySummaryScheduleDue,
   isGroupDailySummaryEnabled,
   markDailyGroupSummaryRun,
@@ -321,6 +321,15 @@ async function sendGroupSummary(groupId = '', summary = '', payload = {}, cfg = 
   }
 }
 
+function markDailyGroupSummaryRunSafe(dateKey, groupId, run) {
+  try {
+    markDailyGroupSummaryRun(dateKey, groupId, run);
+  } catch (error) {
+    // state.json 写失败不应影响主流程；内存去重（sentGroups）仍会兜底防止重复发送。
+    logger.warn(`[daily-group-summary] 写入总结状态失败: ${error.message}`);
+  }
+}
+
 export class dailyGroupSummary extends plugin {
   constructor() {
     super({
@@ -336,6 +345,8 @@ export class dailyGroupSummary extends plugin {
       ],
     });
     this.processingGroups = new Set();
+    this.sentGroups = new Set();
+    this.lastScheduleRunKey = '';
     this.lastCleanupDate = '';
     this.ensureScheduler();
   }
@@ -475,6 +486,11 @@ export class dailyGroupSummary extends plugin {
     const now = new Date();
     if (!isDailySummaryScheduleDue(now, cfg)) return;
 
+    // 同一分钟内可能被多个 tick/bot 并发触发，用「年月日时分」键去重，保证每分钟最多跑一次。
+    const runKey = `${getDailySummaryDateKey(now)}:${now.getHours()}:${now.getMinutes()}`;
+    if (this.lastScheduleRunKey === runKey) return;
+    this.lastScheduleRunKey = runKey;
+
     const dateKey = getDailySummaryDateKey(now);
     if (this.lastCleanupDate !== dateKey) {
       cleanupDailyGroupSummaryFiles(cfg.retentionDays);
@@ -492,9 +508,13 @@ export class dailyGroupSummary extends plugin {
   async runGroupSummary(groupId = '', dateKey = getDailySummaryDateKey(), cfg = {}, aiConfig = {}) {
     const normalizedGroupId = normalizeGroupId(groupId);
     if (!normalizedGroupId) return;
-    if (getDailyGroupSummaryRun(dateKey, normalizedGroupId)) return;
 
-    const processingKey = `${dateKey}:${normalizedGroupId}`;
+    const sentKey = `${dateKey}:${normalizedGroupId}`;
+    // 双重去重：持久化 state（hasDailyGroupSummarySent 只在 status==='sent' 时为真，
+    // 允许 skipped/failed 后补发）+ 进程内存（防止 state.json 写失败时反复发送）。
+    if (this.sentGroups?.has(sentKey) || hasDailyGroupSummarySent(dateKey, normalizedGroupId)) return;
+
+    const processingKey = sentKey;
     if (this.processingGroups.has(processingKey)) return;
     this.processingGroups.add(processingKey);
 
@@ -502,7 +522,7 @@ export class dailyGroupSummary extends plugin {
       const messages = readDailyGroupSummaryMessages(dateKey, normalizedGroupId, cfg);
       const groupName = [...messages].reverse().find(item => item.groupName)?.groupName || '';
       if (messages.length < cfg.minMessages) {
-        markDailyGroupSummaryRun(dateKey, normalizedGroupId, {
+        markDailyGroupSummaryRunSafe(dateKey, normalizedGroupId, {
           status: 'skipped',
           messageCount: messages.length,
           error: `消息数 ${messages.length} 小于 ${cfg.minMessages}`,
@@ -542,7 +562,9 @@ export class dailyGroupSummary extends plugin {
         cfg,
         sourceLabel: '每日自动总结',
       }), cfg);
-      markDailyGroupSummaryRun(dateKey, normalizedGroupId, {
+      // 发送成功后立即在内存里登记，避免同一进程内因 state 写失败导致下一分钟重复发送。
+      this.sentGroups?.add(sentKey);
+      markDailyGroupSummaryRunSafe(dateKey, normalizedGroupId, {
         status: 'sent',
         messageCount: messages.length,
       });
@@ -568,7 +590,7 @@ export class dailyGroupSummary extends plugin {
       });
       logger.info(`[daily-group-summary] 已发送群 ${normalizedGroupId} 的每日总结，消息数 ${messages.length}`);
     } catch (error) {
-      markDailyGroupSummaryRun(dateKey, normalizedGroupId, {
+      markDailyGroupSummaryRunSafe(dateKey, normalizedGroupId, {
         status: 'failed',
         messageCount: readDailyGroupSummaryMessages(dateKey, normalizedGroupId, cfg).length,
         error: error.message,
