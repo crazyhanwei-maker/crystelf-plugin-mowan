@@ -340,6 +340,7 @@ function validateConfig(configType, config = null) {
       if (config.maxIterations !== undefined && Number(config.maxIterations) < -1) {
         errors.push('最大推理轮次不能小于 -1');
       }
+      pushRangeError(errors, config.retryCount, 0, 10, 'AI调用重试次数必须在 0-10 之间');
       pushRangeError(errors, config.chatHistory, 1, 100, '聊天历史长度必须在 1-100 之间');
       pushRangeError(errors, config.getChatHistoryLength, 1, 100, '抓取群历史条数必须在 1-100 之间');
       pushMinError(errors, config.maxMessageLength, 1, '最大消息长度必须大于 0');

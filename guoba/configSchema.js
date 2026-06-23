@@ -1633,6 +1633,18 @@ const guobaSchema = [
     },
   },
   {
+    field: 'ai.retryCount',
+    label: 'AI调用重试次数',
+    component: 'InputNumber',
+    bottomHelpMessage: 'AI 接口失败时的重试次数，0 表示不重试；仅对网络错误/超时/429/5xx 重试，指数退避(500ms起,上限8s)；重试耗尽后仍会尝试备用API',
+    componentProps: {
+      min: 0,
+      max: 10,
+      step: 1,
+      placeholder: '请输入重试次数，0表示不重试',
+    },
+  },
+  {
     field: 'ai.emojiSuppression',
     label: 'Emoji抑制',
     component: 'Switch',

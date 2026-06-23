@@ -65,6 +65,8 @@
   "knowledgeBase": "",
   "?timeout": "AI调用超时时间(毫秒)",
   "timeout": 60000,
+  "?retryCount": "AI接口调用失败时的重试次数，0表示不重试(默认)，仅对网络错误/超时/429/5xx生效，重试耗尽后仍会尝试备用API",
+  "retryCount": 0,
   "?emojiSuppression": "是否抑制 AI 文本回复中的 Unicode emoji 字符，不影响 [meme:角色:情绪] 这类表情包指令",
   "emojiSuppression": false,
   "?fallbackReply": "模型故障、超时或没有产出内容时发送的兜底回复，留空则按内置策略生成",
