@@ -107,7 +107,13 @@ class OpenaiChat {
         }),
         {
           retries: this.retryCount,
-          onRetry: (info) => logger.warn(`[crystelf-ai] AI请求重试 ${info.attempt}/${this.retryCount}，${info.delay}ms 后重试: ${info.error?.message || info.error}`),
+          isFailureResult: (completion) => {
+            const parsed = typeof completion === 'string' ? (() => {
+              try { return JSON.parse(completion); } catch { return null; }
+            })() : completion;
+            return !String(parsed?.choices?.[0]?.message?.content || '').trim();
+          },
+          onRetry: (info) => logger.warn(`[crystelf-ai] AI请求重试 ${info.attempt}/${this.retryCount}，${info.delay}ms 后重试: ${info.error?.message || info.error || '模型没有产出可发送内容'}`),
         },
       );
       let parsedCompletion = completion;
