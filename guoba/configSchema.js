@@ -136,7 +136,7 @@ const guobaSchema = [
     field: 'config.dependencyRepair',
     label: 'QQ 依赖修复',
     component: 'Switch',
-    bottomHelpMessage: '是否启用 #灵晶修复依赖 与 #灵晶修复依赖状态；仅主人可触发，会复用控制台依赖修复任务',
+    bottomHelpMessage: '是否启用 #灵晶修复依赖、#修复依赖 与依赖修复状态；#修复依赖允许群主/管理员预检后确认修复，并在成功后重启 Bot',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
