@@ -3,7 +3,7 @@
   "?mode": "对话模式,保留字段用于兼容旧配置,当前统一使用AI对话流程",
   "mode": "ai",
   "?baseApi": "主对话API基础地址，通常填写到 /v1",
-  "baseApi": "https://chat.crystelf.top/freechatapi/v1",
+  "baseApi": "https://chat.furina.info/freechatapi/v1",
   "?apiKey": "api密钥",
   "apiKey": "free",
   "?modelType": "模型名称,请根据baseApi填写的服务商的对应的模型",
