@@ -22,6 +22,13 @@ import { segment } from 'oicq';
 import tools from '../components/tool.js';
 import { getTtsTools } from '../lib/ai/ttsRegistry.js';
 import { getGroupVoiceModel } from '../lib/ai/ttsGroupModelStore.js';
+import {
+  resetVoiceModel,
+  selectPendingVoiceModel,
+  showCurrentVoiceModel,
+  showVoiceModelList,
+  switchVoiceModelDirectly,
+} from '../lib/ai/ttsVoiceModelCommand.js';
 import { loadAutoSessionSkills } from '../lib/ai/httpSkillRegistry.js';
 
 const nickname = await ConfigControl.get('profile')?.nickName;
@@ -1024,6 +1031,26 @@ export class crystelfAI extends plugin {
           fnc: 'synthesizeVoiceCommand',
         },
         {
+          reg: '^[#＃/]?灵晶\\s*语音模型\\s*$',
+          fnc: 'showVoiceModelCommand',
+        },
+        {
+          reg: '^[#＃/]?灵晶\\s*切换语音模型\\s*$',
+          fnc: 'showVoiceModelListCommand',
+        },
+        {
+          reg: '^[#＃/]?灵晶\\s*切换语音模型\\s+([\\s\\S]+)$',
+          fnc: 'switchVoiceModelCommand',
+        },
+        {
+          reg: '^[#＃/]?灵晶\\s*重置语音模型\\s*$',
+          fnc: 'resetVoiceModelCommand',
+        },
+        {
+          reg: '^\\d{1,3}$',
+          fnc: 'selectVoiceModelCommand',
+        },
+        {
           reg: '^[\\s\\S]*$',
           fnc: 'watchGroupMessage',
         },
@@ -1305,6 +1332,26 @@ export class crystelfAI extends plugin {
 
     await this.handleDirectVoiceCommand(e, text, config?.coreConfig || {});
     return true;
+  }
+
+  async showVoiceModelCommand(e) {
+    return showCurrentVoiceModel(e);
+  }
+
+  async showVoiceModelListCommand(e) {
+    return showVoiceModelList(e);
+  }
+
+  async switchVoiceModelCommand(e) {
+    return switchVoiceModelDirectly(e);
+  }
+
+  async resetVoiceModelCommand(e) {
+    return resetVoiceModel(e);
+  }
+
+  async selectVoiceModelCommand(e) {
+    return selectPendingVoiceModel(e);
   }
 
   async showHelp(e) {
