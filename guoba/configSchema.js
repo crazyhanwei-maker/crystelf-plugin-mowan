@@ -539,6 +539,15 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.webConsolePublicUrl',
+    label: '控制台公网地址',
+    component: 'Input',
+    bottomHelpMessage: '用于 #灵晶登录 生成一次性登录链接。部署到服务器或反向代理后建议填写完整 http/https 地址，留空则使用当前监听地址',
+    componentProps: {
+      placeholder: '例如 https://console.example.com',
+    },
+  },
+  {
     field: 'config.webConsoleReadOnly',
     label: '只读模式',
     component: 'Switch',
@@ -1112,9 +1121,9 @@ const guobaSchema = [
     field: 'coreConfig.tools.tts.allowedAutoScenes',
     label: '自动语音场景',
     component: 'Input',
-    bottomHelpMessage: '允许AI自动语音的场景，逗号分隔，如 reply,poked',
+    bottomHelpMessage: '逗号分隔。reply=普通群聊/被@/昵称触发回复；poked=戳一戳回复（不是 poke）；留空=不限制场景。#合成语音 属于强制语音，不受这里限制',
     componentProps: {
-      placeholder: '请输入允许自动语音的场景',
+      placeholder: '例如 reply,poked',
     },
   },
   {

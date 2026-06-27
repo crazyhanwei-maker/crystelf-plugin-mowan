@@ -25,6 +25,8 @@
   "webConsole": true,
   "?webConsoleToken": "控制台登录页使用的口令；留空时启动控制台会自动生成随机口令、写入运行配置并在启动日志输出",
   "webConsoleToken": "",
+  "?webConsolePublicUrl": "控制台公网访问地址；用于 #灵晶登录 生成可在浏览器打开的一次性登录链接，留空则使用当前监听地址",
+  "webConsolePublicUrl": "",
   "?webConsolePageSize": "本地控制台列表每页数量",
   "webConsolePageSize": 20,
   "?webConsoleReadOnly": "是否启用只读模式，开启后禁止写操作",

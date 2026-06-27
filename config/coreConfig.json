@@ -71,7 +71,7 @@
       "allowAiTrigger": true,
       "?maxAutoVoiceTextLength": "自动语音允许的最大文本长度",
       "maxAutoVoiceTextLength": 120,
-      "?allowedAutoScenes": "允许AI自动语音的场景，逗号分隔，如 reply,poked",
+      "?allowedAutoScenes": "允许AI自动语音的场景，逗号分隔。reply=普通群聊/被@/昵称触发回复；poked=戳一戳回复（注意不是 poke）；留空表示不限制场景。显式 #合成语音 不受此项限制",
       "allowedAutoScenes": "reply,poked,comment",
       "?requireVoiceKeywords": "是否要求出现显式语音意图关键词才允许AI自动语音",
       "requireVoiceKeywords": false,

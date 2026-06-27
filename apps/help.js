@@ -224,6 +224,7 @@ function getDefaultHelpContent() {
           '',
           '控制台',
           `- 地址：${webConsoleUrl}`,
+          '- #灵晶登录',
           '- 配置、日志、会话、画像、好感和用量',
           '- 图片监控、群管理、Help DIY 与 Skills 设置',
           '',
