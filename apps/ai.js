@@ -20,7 +20,12 @@ import { clearSessionDebugSnapshot, setSessionDebugSnapshot } from '../lib/ai/ru
 import { processPokeFollowUpMessage } from './poke.js';
 import { segment } from 'oicq';
 import tools from '../components/tool.js';
-import { getTtsTools } from '../lib/ai/ttsRegistry.js';
+import {
+  handleDirectVoiceCommand as handleSharedDirectVoiceCommand,
+  handleDirectVoiceEvent,
+  parseDirectVoiceCommand,
+  sendVoiceMessage,
+} from '../lib/ai/ttsSynthesisCommand.js';
 import { getGroupVoiceModel } from '../lib/ai/ttsGroupModelStore.js';
 import {
   resetVoiceModel,
@@ -930,47 +935,6 @@ function buildDecisionExplanation({
   };
 }
 
-function parseDirectVoiceCommand(text = '') {
-  const content = String(text || '').trim();
-  if (!content) return null;
-
-  const patterns = [
-    /^(#|\/)?合成语音[：:，,\s]*(.+)$/i,
-    /^(#|\/)?语音\s+(.+)$/i,
-    /^(#|\/)?tts\s+(.+)$/i,
-    /^(#|\/)?配音\s+(.+)$/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = content.match(pattern);
-    if (match?.[2]) {
-      return match[2].trim();
-    }
-  }
-
-  const naturalPatterns = [
-    /用语音说[一下一遍个]?(.+)$/,
-    /发语音说[一下一遍个]?(.+)$/,
-    /语音说[一下一遍个]?(.+)$/,
-    /帮我用语音说[一下一遍个]?(.+)$/,
-    /帮我发语音说[一下一遍个]?(.+)$/,
-    /发个语音[：:，,\s]*(.+)$/,
-    /来个语音[：:，,\s]*(.+)$/,
-    /整个语音[：:，,\s]*(.+)$/,
-    /念一下[：:，,\s]*(.+)$/,
-    /朗读一下[：:，,\s]*(.+)$/,
-  ];
-
-  for (const pattern of naturalPatterns) {
-    const match = content.match(pattern);
-    if (match?.[1]) {
-      return match[1].trim().replace(/^['"“”‘’]+|['"“”‘’]+$/g, '');
-    }
-  }
-
-  return null;
-}
-
 function createEventSnapshot(e, content) {
   return {
     group_id: e?.group_id,
@@ -1314,24 +1278,7 @@ export class crystelfAI extends plugin {
     if (!this.isInitialized) {
       await this.init();
     }
-
-    const config = await ConfigControl.get();
-    const aiConfig = config?.ai || {};
-    if (!this.isGroupAllowed(e.group_id, aiConfig)) {
-      return false;
-    }
-    if (isBotUser(e.user_id, e)) {
-      return false;
-    }
-
-    const text = parseDirectVoiceCommand(e.msg);
-    if (!text) {
-      await e.reply('请输入要合成的语音内容，例如：#合成语音你好。', true);
-      return true;
-    }
-
-    await this.handleDirectVoiceCommand(e, text, config?.coreConfig || {});
-    return true;
+    return handleDirectVoiceEvent(e);
   }
 
   async showVoiceModelCommand(e) {
@@ -2732,12 +2679,7 @@ export class crystelfAI extends plugin {
 
   async handleVoiceMessage(e, message) {
     try {
-      const adapter = await YunzaiUtils.getAdapter(e);
-      if (!message?.audioUrl) {
-        logger.warn('[crystelf-ai] 语音消息缺少 audioUrl');
-        return;
-      }
-      await Group.sendGroupRecord(e, e.group_id, message.audioUrl, adapter);
+      await sendVoiceMessage(e, message);
     } catch (error) {
       logger.error(`[crystelf-ai] 处理语音消息失败: ${error.message}`);
       if (message?.text) {
@@ -2747,33 +2689,7 @@ export class crystelfAI extends plugin {
   }
 
   async handleDirectVoiceCommand(e, text, coreConfig = {}) {
-    try {
-      const ttsTool = getTtsTools().find(tool => tool.name === 'speak_text');
-      if (!ttsTool) {
-        await e.reply('语音工具暂时不可用。', true);
-        return;
-      }
-
-      const toolCtx = {
-        event: e,
-        groupId: e.group_id,
-        userId: e.user_id,
-        defaultVoiceModel: getGroupVoiceModel(e.group_id),
-        targetMessage: { content: e.msg },
-        promptCtx: { replyContext: { type: 'reply' } },
-      };
-
-      const result = await ttsTool.handler({ text, force: true }, toolCtx);
-      if (result?.voiceMessage) {
-        await this.sendResponse(e, [result.voiceMessage], coreConfig?.ai || {});
-        return;
-      }
-
-      await e.reply(result?.error || '语音生成失败。', true);
-    } catch (error) {
-      logger.error(`[crystelf-ai] 处理显式语音命令失败: ${error.message}`);
-      await e.reply('语音生成失败，稍后再试。', true);
-    }
+    return handleSharedDirectVoiceCommand(e, text, coreConfig);
   }
 
   buildAffinityContext(e, affinityRecord = {}) {

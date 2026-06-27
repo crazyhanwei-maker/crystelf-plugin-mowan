@@ -118,6 +118,7 @@ function getConfigKey(fileName) {
     'rssPush': 'rss',
     'status': 'status',
     'voice-model': 'voiceModel',
+    'voice-synthesis': 'voiceModel',
     'welcome': 'welcome',
     'welcome-set': 'welcome',
     'zwa': 'zwa'
