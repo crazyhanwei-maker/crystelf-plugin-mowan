@@ -21,6 +21,7 @@ import { processPokeFollowUpMessage } from './poke.js';
 import { segment } from 'oicq';
 import tools from '../components/tool.js';
 import { getTtsTools } from '../lib/ai/ttsRegistry.js';
+import { getGroupVoiceModel } from '../lib/ai/ttsGroupModelStore.js';
 import { loadAutoSessionSkills } from '../lib/ai/httpSkillRegistry.js';
 
 const nickname = await ConfigControl.get('profile')?.nickName;
@@ -554,7 +555,7 @@ function parseFeatureToggleCommand(text = '') {
       type: 'batch',
       enabled: allMatch[1] === '开启',
       label: '全部功能',
-      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'groupManagement', 'groupTitle'],
+      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle'],
     };
   }
 
@@ -565,7 +566,7 @@ function parseFeatureToggleCommand(text = '') {
     const categoryMap = {
       '全部AI相关功能': {
         label: '全部AI相关功能',
-        keys: ['ai', 'help', 'imageMonitor', 'faceReply'],
+        keys: ['ai', 'help', 'imageMonitor', 'faceReply', 'voiceModel'],
       },
       '全部群管相关功能': {
         label: '全部群管相关功能',
@@ -601,7 +602,7 @@ function parseFeatureToggleCommand(text = '') {
     };
   }
 
-  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|音乐|订阅|表情回复|60s|早晚安|自动更新)$/i);
+  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|音乐|语音模型|订阅|表情回复|60s|早晚安|自动更新)$/i);
   if (!match) return null;
 
   const action = match[1] === '开启';
@@ -617,6 +618,7 @@ function parseFeatureToggleCommand(text = '') {
     '群头衔': { key: 'groupTitle', label: '群头衔' },
     'AI': { key: 'ai', label: 'AI' },
     '音乐': { key: 'music', label: '音乐' },
+    '语音模型': { key: 'voiceModel', label: '语音模型' },
     '订阅': { key: 'rss', label: '订阅' },
     '表情回复': { key: 'faceReply', label: '表情回复' },
     '60s': { key: '60s', label: '60s' },
@@ -650,6 +652,7 @@ function buildFeatureToggleStatus(config = {}) {
     `- 群头衔：${config.groupTitle === false ? '关闭' : '开启'}`,
     `- AI：${config.ai === false ? '关闭' : '开启'}`,
     `- 音乐：${config.music === false ? '关闭' : '开启'}`,
+    `- 语音模型：${config.voiceModel === false ? '关闭' : '开启'}`,
     `- 表情回复：${config.faceReply === false ? '关闭' : '开启'}`,
   ];
   return lines.join('\n');
@@ -668,6 +671,7 @@ function buildFeatureToggleCommandHelp() {
     '## 单项开关',
     '- #开启戳一戳 / #关闭戳一戳',
     '- #开启AI / #关闭AI',
+    '- #开启语音模型 / #关闭语音模型',
     '- #开启欢迎 / #关闭欢迎',
     '- #开启群管理 / #关闭群管理',
     '- #开启群头衔 / #关闭群头衔',
@@ -710,6 +714,7 @@ function buildDisabledFeatureStatus(config = {}) {
     ['群头衔', config.groupTitle !== false],
     ['AI', config.ai !== false],
     ['音乐', config.music !== false],
+    ['语音模型', config.voiceModel !== false],
     ['表情回复', config.faceReply !== false],
   ];
   const disabled = entries.filter(([, enabled]) => !enabled).map(([label]) => `- ${label}`);
@@ -764,6 +769,7 @@ function buildDefaultFeatureConfig() {
     imageMonitor: defaults.imageMonitor === true,
     ai: defaults.ai !== false,
     music: defaults.music !== false,
+    voiceModel: defaults.voiceModel !== false,
     auth: defaults.auth !== false,
     groupManagement: defaults.groupManagement !== false,
     groupTitle: defaults.groupTitle !== false,
@@ -772,7 +778,7 @@ function buildDefaultFeatureConfig() {
 }
 
 function getManagedFeatureKeys() {
-  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
+  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
 }
 
 function mergeSessionControlState(base = {}, patch = {}) {
@@ -1197,6 +1203,7 @@ export class crystelfAI extends plugin {
       const toolCtx = {
         sessionId: groupSessionId,
         groupId,
+        defaultVoiceModel: getGroupVoiceModel(groupId),
         config,
         db: this.db,
         pendingImageUrls: [],
@@ -1922,6 +1929,7 @@ export class crystelfAI extends plugin {
         sessionId: groupSessionId,
         groupId,
         userId,
+        defaultVoiceModel: getGroupVoiceModel(groupId),
         config: {
           ...aiConfig,
           tools: {
@@ -2674,6 +2682,7 @@ export class crystelfAI extends plugin {
         event: e,
         groupId: e.group_id,
         userId: e.user_id,
+        defaultVoiceModel: getGroupVoiceModel(e.group_id),
         targetMessage: { content: e.msg },
         promptCtx: { replyContext: { type: 'reply' } },
       };

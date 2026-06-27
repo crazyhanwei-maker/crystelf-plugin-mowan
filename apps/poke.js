@@ -12,6 +12,7 @@ import Meme from '../lib/core/meme.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 import { segment } from 'oicq';
 import { getTtsTools } from '../lib/ai/ttsRegistry.js';
+import { getGroupVoiceModel } from '../lib/ai/ttsGroupModelStore.js';
 import { setPokeDebugSnapshot } from '../lib/ai/runtimePokeDebugStore.js';
 import { getPokeFollowWindow, setPokeFollowWindow } from '../lib/ai/runtimePokeFollowStore.js';
 
@@ -524,6 +525,7 @@ async function sendPokeReply(e, replyText) {
         event: e,
         groupId: e.group_id,
         userId: e.operator_id,
+        defaultVoiceModel: getGroupVoiceModel(e.group_id),
         targetMessage: { content: `${await getOperatorName(e)} 戳了你一下` },
         promptCtx: { replyContext: { type: 'poked' } },
       });

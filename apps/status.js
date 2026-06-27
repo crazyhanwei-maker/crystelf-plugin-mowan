@@ -178,6 +178,7 @@ function getFeatureEntries() {
     ['RSS', cfg.rss !== false],
     ['戳一戳', cfg.poke !== false],
     ['图片监控', cfg.imageMonitor !== false],
+    ['语音模型', cfg.voiceModel !== false],
     ['群管理', cfg.groupManagement !== false],
     ['头衔', cfg.groupTitle !== false],
     ['欢迎', cfg.welcome !== false],

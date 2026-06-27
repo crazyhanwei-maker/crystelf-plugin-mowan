@@ -16,6 +16,8 @@
   "imageMonitor": false,
   "ai": true,
   "music": true,
+  "?voiceModel": "是否启用群内语音模型切换命令",
+  "voiceModel": true,
   "auth": false,
   "groupManagement": false,
   "groupTitle": false,

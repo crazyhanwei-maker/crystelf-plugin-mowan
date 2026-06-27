@@ -117,6 +117,7 @@ function getConfigKey(fileName) {
     'poke': 'poke',
     'rssPush': 'rss',
     'status': 'status',
+    'voice-model': 'voiceModel',
     'welcome': 'welcome',
     'welcome-set': 'welcome',
     'zwa': 'zwa'
