@@ -350,7 +350,7 @@ function buildChatHelpMessage(aiConfig = {}) {
     '- 根据知识库告诉我怎么开启验证',
     '- 帮我总结这个网页讲了什么',
     '- 我刚发了一张什么图片',
-    '- 发个语音测试',
+    '- #合成语音今天也要好好休息',
     '',
     '## 管理命令',
     '- #查看功能开关',
@@ -369,7 +369,7 @@ function buildChatHelpMessage(aiConfig = {}) {
     '',
     '## 使用提示',
     '- 发图后可以直接追问“这是什么图”',
-    '- 想测语音时直接说“发个语音测试”',
+    '- 想测语音时可以发送“#合成语音要读出来的内容”',
     '- 如果管理员配置了知识库，我会优先参考知识库回答',
     '- 管理命令仅主人可用',
   ];
@@ -928,6 +928,7 @@ function parseDirectVoiceCommand(text = '') {
   if (!content) return null;
 
   const patterns = [
+    /^(#|\/)?合成语音[：:，,\s]*(.+)$/i,
     /^(#|\/)?语音\s+(.+)$/i,
     /^(#|\/)?tts\s+(.+)$/i,
     /^(#|\/)?配音\s+(.+)$/i,
@@ -1017,6 +1018,10 @@ export class crystelfAI extends plugin {
         {
           reg: `^${nickname}([\\s\\S]*)?$`,
           fnc: 'in',
+        },
+        {
+          reg: '^(#|/)?合成语音[：:，,\\s]*([\\s\\S]*)$',
+          fnc: 'synthesizeVoiceCommand',
         },
         {
           reg: '^[\\s\\S]*$',
@@ -1276,6 +1281,30 @@ export class crystelfAI extends plugin {
       return false;
     }
     return await this.handleMessage(e);
+  }
+
+  async synthesizeVoiceCommand(e) {
+    if (!this.isInitialized) {
+      await this.init();
+    }
+
+    const config = await ConfigControl.get();
+    const aiConfig = config?.ai || {};
+    if (!this.isGroupAllowed(e.group_id, aiConfig)) {
+      return false;
+    }
+    if (isBotUser(e.user_id, e)) {
+      return false;
+    }
+
+    const text = parseDirectVoiceCommand(e.msg);
+    if (!text) {
+      await e.reply('请输入要合成的语音内容，例如：#合成语音你好。', true);
+      return true;
+    }
+
+    await this.handleDirectVoiceCommand(e, text, config?.coreConfig || {});
+    return true;
   }
 
   async showHelp(e) {
