@@ -13,7 +13,7 @@ export default class CrystelfVoiceModel extends plugin {
       name: 'crystelf-voice-model',
       dsc: '群内语音模型切换',
       event: 'message.group',
-      priority: 4800,
+      priority: -114520,
       rule: [
         { reg: '^[#＃/]?灵晶\\s*语音模型\\s*$', fnc: 'showCurrentModel' },
         { reg: '^[#＃/]?灵晶\\s*切换语音模型\\s*$', fnc: 'showModelList' },
