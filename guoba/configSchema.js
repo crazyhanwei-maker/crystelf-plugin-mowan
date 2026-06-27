@@ -1583,6 +1583,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'ai.userAgent',
+    label: '请求 User-Agent',
+    component: 'Input',
+    bottomHelpMessage: 'LLM 请求头使用的 User-Agent，方便中转、CDN 或上游日志识别来源；留空使用插件默认 UA，最多 200 个字符，不能包含换行',
+    componentProps: {
+      maxlength: 200,
+      placeholder: '留空使用插件默认 UA',
+    },
+  },
+  {
     field: 'ai.modelType',
     label: '文本模型',
     component: 'Input',

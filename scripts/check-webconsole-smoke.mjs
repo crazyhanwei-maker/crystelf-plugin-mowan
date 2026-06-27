@@ -17,7 +17,7 @@ const protectedPages = [
   { path: '/plugin-settings.html', text: '插件设置中心' },
   { path: '/bot-plugins.html', text: '机器人插件管理' },
   { path: '/group-management.html', text: '群管理' },
-  { path: '/qq-simulator.html', text: 'QQ 与机器人通信模拟器' },
+  { path: '/qq-simulator.html', text: '模拟调试' },
 ];
 
 const apiChecks = [

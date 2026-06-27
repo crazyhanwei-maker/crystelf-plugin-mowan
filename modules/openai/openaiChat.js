@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { logAiUsage } from '../../lib/ai/usageLogger.js';
 import { withRetry } from '../../lib/ai/retry.js';
+import { buildAiUserAgentHeaders, resolveAiUserAgent } from '../../lib/ai/userAgent.js';
 
 const ALLOWED_MESSAGE_ROLES = new Set(['system', 'user', 'assistant', 'tool']);
 
@@ -38,6 +39,7 @@ class OpenaiChat {
     this.openai = null;
     this.timeout = 60000;
     this.retryCount = 0;
+    this.userAgent = '';
   }
 
   /**
@@ -46,13 +48,15 @@ class OpenaiChat {
    * @param timeout 超时时间(毫秒)
    * @param retryCount 接口失败重试次数，0 表示不重试
    */
-  init(apiKey, baseUrl, timeout = 60000, retryCount = 0) {
+  init(apiKey, baseUrl, timeout = 60000, retryCount = 0, options = {}) {
     this.timeout = Number(timeout) > 0 ? Number(timeout) : 60000;
     this.retryCount = Number(retryCount) > 0 ? Number(retryCount) : 0;
+    this.userAgent = resolveAiUserAgent(options);
     this.openai = new OpenAI({
       apiKey: apiKey,
       baseURL: baseUrl,
       timeout: this.timeout,
+      defaultHeaders: buildAiUserAgentHeaders(options),
     });
   }
 

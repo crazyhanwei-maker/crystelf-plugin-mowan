@@ -1,11 +1,14 @@
 import plugin from '../../../lib/plugins/plugin.js';
 import { getDependencyConsole } from '../lib/webConsole/server.js';
+import ConfigControl from '../lib/config/configControl.js';
+import AiCaller from '../lib/ai/aiCaller.js';
 
 const REPAIR_LIMIT = 80;
 const WATCH_INTERVAL_MS = 5000;
 const WATCH_TIMEOUT_MS = 10 * 60 * 1000;
 const CONFIRM_TIMEOUT_MS = 3 * 60 * 1000;
 const RESTART_DELAY_MS = 3000;
+const AI_DIAGNOSIS_MAX_FAILED_ITEMS = 3;
 
 let repairRunning = false;
 let restartScheduled = false;
@@ -136,7 +139,7 @@ function formatSkippedResultLine(item = {}) {
   return `- ${formatDependencyLabel(item)}：${reason}`;
 }
 
-function buildRepairCompletionMessage(tasks = [], skipped = [], restart = false) {
+function buildRepairCompletionMessage(tasks = [], skipped = [], restart = false, aiDiagnosis = '') {
   const normalizedTasks = Array.isArray(tasks) ? tasks : [];
   const normalizedSkipped = Array.isArray(skipped) ? skipped : [];
   const successTasks = normalizedTasks.filter(task => task.status === 'success');
@@ -166,10 +169,103 @@ function buildRepairCompletionMessage(tasks = [], skipped = [], restart = false)
     lines.push('- 无');
   }
 
+  const diagnosisText = String(aiDiagnosis || '').trim();
+  if (diagnosisText) {
+    lines.push('', 'AI 中文诊断：', diagnosisText);
+  }
+
   if (restart) {
     lines.push('', '开始重启。');
   }
   return lines.join('\n');
+}
+
+function truncateText(text = '', maxLength = 1200) {
+  const value = String(text || '').trim();
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength)}...`;
+}
+
+function isAiConfigAvailable(aiConfig = {}) {
+  return Boolean(
+    String(aiConfig.baseApi || '').trim()
+    && String(aiConfig.apiKey || '').trim()
+    && (aiConfig.workingModel || aiConfig.modelType || aiConfig.model)
+  );
+}
+
+function buildDependencyFailureDiagnosisPrompt(tasks = [], skipped = []) {
+  const errorTasks = (Array.isArray(tasks) ? tasks : [])
+    .filter(task => task.status === 'error')
+    .slice(0, AI_DIAGNOSIS_MAX_FAILED_ITEMS)
+    .map(task => ({
+      dependency: task.name || '',
+      declaredVersion: task.declaredVersion || '',
+      plugin: task.scope === 'plugin' ? task.pluginId : 'crystelf-plugin',
+      dependencyType: task.dependencyType || '',
+      packageManager: task.packageManager || '',
+      command: Array.isArray(task.command) ? task.command.join(' ') : '',
+      targetDir: task.targetDir || '',
+      failedStage: task.failedStage || task.currentStage || '',
+      timedOut: task.timedOut === true,
+      error: truncateText(task.error || '', 1200),
+      stderrTail: truncateText(task.stderrTail || '', 1600),
+      stdoutTail: truncateText(task.stdoutTail || '', 1000),
+    }));
+  const skippedItems = (Array.isArray(skipped) ? skipped : [])
+    .slice(0, Math.max(0, AI_DIAGNOSIS_MAX_FAILED_ITEMS - errorTasks.length))
+    .map(item => ({
+      dependency: item.name || '',
+      declaredVersion: item.declaredVersion || '',
+      plugin: item.scope === 'plugin' ? item.pluginId : 'crystelf-plugin',
+      dependencyType: item.dependencyType || '',
+      error: truncateText(item.error || '', 1200),
+      code: item.code || '',
+    }));
+
+  return [
+    '请把下面的 Node.js/Yunzai 插件依赖安装失败日志翻译成中文，并告诉用户怎么修复。',
+    '要求：',
+    '1. 只用中文回答。',
+    '2. 先用一句话说明最可能原因。',
+    '3. 给出 2-4 条可执行修复建议。',
+    '4. 不要建议删除整个 node_modules，除非日志明确指向依赖树严重损坏。',
+    '5. 不要输出 Markdown 表格，不要输出代码块。',
+    '6. 如果是网络、权限、版本不存在、pnpm included deps conflict、peer 依赖冲突、锁文件问题，要明确点名。',
+    '',
+    '失败数据：',
+    JSON.stringify({ failedTasks: errorTasks, skippedItems }, null, 2),
+  ].join('\n');
+}
+
+async function diagnoseDependencyFailuresWithAi(tasks = [], skipped = [], e = null) {
+  const hasFailures = hasRepairFailure(tasks, skipped);
+  if (!hasFailures) return '';
+  try {
+    const mainConfig = await ConfigControl.get('config');
+    const aiConfig = await ConfigControl.get('ai');
+    if (mainConfig?.ai === false || !isAiConfigAvailable(aiConfig)) {
+      return '';
+    }
+    const prompt = buildDependencyFailureDiagnosisPrompt(tasks, skipped);
+    const result = await AiCaller.callAiDirect(prompt, [], [], null, [], {
+      systemPrompt: '你是 Node.js 依赖安装错误排查助手。你只能用中文给出简洁、可执行的原因和修复建议。',
+      model: aiConfig.workingModel || aiConfig.modelType || aiConfig.model,
+      temperature: 0.2,
+      max_tokens: 520,
+      scene: 'dependency_repair_diagnosis',
+      sessionId: e?.group_id ? `group:${e.group_id}:dependency-repair` : 'dependency-repair',
+      groupId: e?.group_id,
+      userId: e?.user_id,
+    });
+    if (!result?.success || !String(result.response || '').trim()) {
+      return '';
+    }
+    return truncateText(result.response, 900);
+  } catch (error) {
+    logger.warn(`[crystelf-plugin] 依赖修复 AI 中文诊断失败: ${error.message}`);
+    return '';
+  }
 }
 
 function scheduleBotRestart(reason = 'dependency repair') {
@@ -289,8 +385,11 @@ async function runRepairTasks(e, options = {}) {
     const watched = await waitForRepairTasks(dependencyConsole, taskIds);
     const failed = hasRepairFailure(watched.tasks, result.skipped);
     const shouldRestart = options.restartAfterSuccess === true && watched.done;
+    const aiDiagnosis = watched.done && failed
+      ? await diagnoseDependencyFailuresWithAi(watched.tasks, result.skipped, e)
+      : '';
     const message = watched.done
-      ? buildRepairCompletionMessage(watched.tasks, result.skipped, shouldRestart)
+      ? buildRepairCompletionMessage(watched.tasks, result.skipped, shouldRestart, aiDiagnosis)
       : [
           '灵晶依赖修复任务仍在执行或等待中。',
           buildTaskSummary(watched.tasks, result.skipped),

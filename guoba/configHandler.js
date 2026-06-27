@@ -136,6 +136,14 @@ function formatMusicUrlsValue(value) {
   return normalizeMusicUrlsValue(value).join('\n');
 }
 
+function normalizeAiUserAgentValue(value = '') {
+  return String(value || '')
+    .replace(/[\r\n\t\0-\x1F\x7F]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, 200);
+}
+
 export async function getConfigData() {
   const allConfigs = ConfigControl.get();
   const result = {};
@@ -315,6 +323,16 @@ function validateConfig(configType, config = null) {
       if (!config.mode) errors.push('对话模式不能为空');
       if (!config.apiKey) errors.push('AI API Key 不能为空');
       if (!config.modelType) errors.push('文本模型不能为空');
+      if (config.userAgent !== undefined) {
+        const rawUserAgent = String(config.userAgent || '');
+        if (/[\r\n]/.test(rawUserAgent)) {
+          errors.push('LLM 请求 User-Agent 不能包含换行');
+        }
+        if (rawUserAgent.length > 200) {
+          errors.push('LLM 请求 User-Agent 不能超过 200 个字符');
+        }
+        config.userAgent = normalizeAiUserAgentValue(rawUserAgent);
+      }
       if (config.multimodalEnabled && !String(config.multimodalModel || '').trim()) {
         errors.push('启用多模态时，多模态模型不能为空');
       }

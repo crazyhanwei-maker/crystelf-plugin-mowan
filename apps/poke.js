@@ -5,6 +5,7 @@ import configControl from '../lib/config/configControl.js';
 import ConfigControl from '../lib/config/configControl.js';
 import AiCaller from '../lib/ai/aiCaller.js';
 import { logAiUsage, shouldCircuitBreakSync } from '../lib/ai/usageLogger.js';
+import { buildAiUserAgentHeaders } from '../lib/ai/userAgent.js';
 import Group from '../lib/yunzai/group.js';
 import Message from '../lib/yunzai/message.js';
 import Meme from '../lib/core/meme.js';
@@ -69,7 +70,7 @@ async function summarizePokeImage(imageUrl, e) {
     return '';
   }
   try {
-    const client = new OpenAI({ apiKey, baseURL, timeout });
+    const client = new OpenAI({ apiKey, baseURL, timeout, defaultHeaders: buildAiUserAgentHeaders(aiConfig) });
     const completion = await client.chat.completions.create({
       model,
       temperature: 0.2,

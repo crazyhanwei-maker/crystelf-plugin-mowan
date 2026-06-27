@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import ConfigControl from '../lib/config/configControl.js';
 import { logAiUsage } from '../lib/ai/usageLogger.js';
 import { buildImageMonitorFallbackConfig, hasImageMonitorApiConfig } from '../lib/ai/apiFallback.js';
+import { buildAiUserAgentHeaders } from '../lib/ai/userAgent.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 import Path from '../constants/path.js';
@@ -286,7 +287,18 @@ function saveReviewImage(buffer, hash, e, sourceUrl, cfg = {}) {
 
 async function analyzeImageWithVisionModel(cfg, imageUrl) {
   const timeout = Number(cfg.analysisTimeoutMs) > 0 ? Number(cfg.analysisTimeoutMs) : 30000;
-  const client = new OpenAI({ apiKey: cfg.apiKey, baseURL: cfg.apiBase, timeout });
+  const aiConfig = ConfigControl.get('ai') || {};
+  const requestConfig = {
+    ...aiConfig,
+    ...cfg,
+    userAgent: cfg.userAgent || aiConfig.userAgent || '',
+  };
+  const client = new OpenAI({
+    apiKey: cfg.apiKey,
+    baseURL: cfg.apiBase,
+    timeout,
+    defaultHeaders: buildAiUserAgentHeaders(requestConfig),
+  });
   const startedAt = Date.now();
   const completion = await client.chat.completions.create({
     model: cfg.model,

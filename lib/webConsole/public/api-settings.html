@@ -99,6 +99,11 @@
                   <div class="setting-help">填写服务商提供的密钥；页面会隐藏已保存的密钥内容。</div>
                 </div>
                 <div class="setting-item">
+                  <div class="kv-label">自定义 User-Agent</div>
+                  <input type="text" id="ai-userAgent" maxlength="200" placeholder="留空使用插件默认 UA" />
+                  <div class="setting-help" id="ai-userAgent-help">用于 LLM 请求头，方便中转、CDN 或日志区分来源；留空使用插件默认 UA。</div>
+                </div>
+                <div class="setting-item">
                   <div class="kv-label">文本模型 <span class="required">*</span></div>
                   <input type="text" id="ai-modelType" placeholder="gpt-4" />
                   <div class="setting-help">机器人日常聊天主回复优先使用这个模型。</div>
