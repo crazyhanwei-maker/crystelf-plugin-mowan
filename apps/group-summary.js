@@ -1,5 +1,6 @@
 import ConfigControl from '../lib/config/configControl.js';
 import AiCaller from '../lib/ai/aiCaller.js';
+import { shouldHideAiFailureReason } from '../lib/ai/userFacingError.js';
 import { appendGroupManagementLog } from '../lib/groupManagement/groupManagementLog.js';
 import {
   appendDailyGroupSummaryResult,
@@ -471,7 +472,10 @@ export class dailyGroupSummary extends plugin {
           dateKey,
         },
       });
-      return e.reply(`群总结生成失败：${error.message}`, true);
+      const userMessage = shouldHideAiFailureReason(error.message)
+        ? '群总结暂时没有生成有效内容，请稍后重试。'
+        : `群总结生成失败：${error.message}`;
+      return e.reply(userMessage, true);
     } finally {
       this.processingGroups.delete(processingKey);
     }

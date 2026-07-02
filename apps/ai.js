@@ -18,6 +18,7 @@ import { resolvePreferredMemeCharacter } from '../lib/ai/personaIdentity.js';
 import affinityManager from '../lib/ai/affinityManager.js';
 import { clearSessionDebugSnapshot, setSessionDebugSnapshot } from '../lib/ai/runtimeDebugStore.js';
 import { processPokeFollowUpMessage } from './poke.js';
+import { shouldHideAiFailureReason } from '../lib/ai/userFacingError.js';
 import { segment } from 'oicq';
 import tools from '../components/tool.js';
 import {
@@ -394,8 +395,18 @@ function buildChatFallbackMessage({ knowledgeEnabled = false, knowledgeMatched =
   const customSearchFallbackReply = pickFallbackReply(aiConfig?.fallbackSearchReply);
   const customTimeoutFallbackReply = pickFallbackReply(aiConfig?.fallbackTimeoutReply);
   const customGenericFallbackReply = pickFallbackReply(aiConfig?.fallbackGenericReply);
+  const hiddenFailureReason = shouldHideAiFailureReason(failureReason);
 
   if (failureReason) {
+    if (hiddenFailureReason) {
+      if (customGenericFallbackReply) {
+        return customGenericFallbackReply;
+      }
+      if (customFallbackReply) {
+        return customFallbackReply;
+      }
+      return '本次未生成有效回复。请换个更直接的问法后重试。';
+    }
     if (/搜索|网页|markdown|search_web|fetch_web_markdown/i.test(failureReason)) {
       if (customSearchFallbackReply) {
         return customSearchFallbackReply;
