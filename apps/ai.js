@@ -188,6 +188,15 @@ function hasImageGenerationIntent(text = '') {
   ].some(pattern => pattern.test(content));
 }
 
+function getPrivateAiCapabilities(config = {}) {
+  return {
+    image: config.privateAiImage !== false,
+    voice: config.privateAiVoice !== false,
+    meme: config.privateAiMeme !== false,
+    skills: config.privateAiSkills !== false,
+  };
+}
+
 function isImageGenerationRequest(text) {
   const content = String(text || '').trim();
   if (!content) return false;
@@ -621,7 +630,7 @@ function parseFeatureToggleCommand(text = '') {
       type: 'batch',
       enabled: allMatch[1] === '开启',
       label: '全部功能',
-      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'privateAi', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle'],
+      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'privateAi', 'privateAiImage', 'privateAiVoice', 'privateAiMeme', 'privateAiSkills', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle'],
     };
   }
 
@@ -632,7 +641,7 @@ function parseFeatureToggleCommand(text = '') {
     const categoryMap = {
       '全部AI相关功能': {
         label: '全部AI相关功能',
-        keys: ['ai', 'privateAi', 'help', 'imageMonitor', 'faceReply', 'voiceModel'],
+        keys: ['ai', 'privateAi', 'privateAiImage', 'privateAiVoice', 'privateAiMeme', 'privateAiSkills', 'help', 'imageMonitor', 'faceReply', 'voiceModel'],
       },
       '全部群管相关功能': {
         label: '全部群管相关功能',
@@ -644,7 +653,7 @@ function parseFeatureToggleCommand(text = '') {
       },
       '全部互动功能': {
         label: '全部互动功能',
-        keys: ['poke', 'welcome', 'ai', 'privateAi', 'zwa'],
+        keys: ['poke', 'welcome', 'ai', 'privateAi', 'privateAiImage', 'privateAiVoice', 'privateAiMeme', 'privateAiSkills', 'zwa'],
       },
     };
     const target = categoryMap[category];
@@ -668,7 +677,7 @@ function parseFeatureToggleCommand(text = '') {
     };
   }
 
-  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|私聊AI|音乐|语音模型|订阅|表情回复|60s|早晚安|自动更新)$/i);
+  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|私聊AI|私聊生图|私聊语音|私聊表情包|私聊工具|私聊联网|音乐|语音模型|订阅|表情回复|60s|早晚安|自动更新)$/i);
   if (!match) return null;
 
   const action = match[1] === '开启';
@@ -684,6 +693,11 @@ function parseFeatureToggleCommand(text = '') {
     '群头衔': { key: 'groupTitle', label: '群头衔' },
     'AI': { key: 'ai', label: 'AI' },
     '私聊AI': { key: 'privateAi', label: '私聊AI' },
+    '私聊生图': { key: 'privateAiImage', label: '私聊生图' },
+    '私聊语音': { key: 'privateAiVoice', label: '私聊语音' },
+    '私聊表情包': { key: 'privateAiMeme', label: '私聊表情包' },
+    '私聊工具': { key: 'privateAiSkills', label: '私聊工具' },
+    '私聊联网': { key: 'privateAiSkills', label: '私聊联网' },
     '音乐': { key: 'music', label: '音乐' },
     '语音模型': { key: 'voiceModel', label: '语音模型' },
     '订阅': { key: 'rss', label: '订阅' },
@@ -719,6 +733,10 @@ function buildFeatureToggleStatus(config = {}) {
     `- 群头衔：${config.groupTitle === false ? '关闭' : '开启'}`,
     `- AI：${config.ai === false ? '关闭' : '开启'}`,
     `- 私聊AI：${config.privateAi === false ? '关闭' : '开启'}`,
+    `- 私聊生图：${config.privateAiImage === false ? '关闭' : '开启'}`,
+    `- 私聊语音：${config.privateAiVoice === false ? '关闭' : '开启'}`,
+    `- 私聊表情包：${config.privateAiMeme === false ? '关闭' : '开启'}`,
+    `- 私聊联网与 Skills：${config.privateAiSkills === false ? '关闭' : '开启'}`,
     `- 私聊安全：${config.privateAiSafety?.enabled === false ? '关闭' : '开启'}`,
     `- 音乐：${config.music === false ? '关闭' : '开启'}`,
     `- 语音模型：${config.voiceModel === false ? '关闭' : '开启'}`,
@@ -741,6 +759,10 @@ function buildFeatureToggleCommandHelp() {
     '- #开启戳一戳 / #关闭戳一戳',
     '- #开启AI / #关闭AI',
     '- #开启私聊AI / #关闭私聊AI',
+    '- #开启私聊生图 / #关闭私聊生图',
+    '- #开启私聊语音 / #关闭私聊语音',
+    '- #开启私聊表情包 / #关闭私聊表情包',
+    '- #开启私聊联网 / #关闭私聊联网',
     '- #开启语音模型 / #关闭语音模型',
     '- #开启欢迎 / #关闭欢迎',
     '- #开启群管理 / #关闭群管理',
@@ -790,6 +812,11 @@ function prunePrivateVoiceModelPendingSelections() {
       privateVoiceModelPendingSelections.delete(key);
     }
   }
+}
+
+function hasPrivateVoiceModelPendingSelection(e = {}) {
+  prunePrivateVoiceModelPendingSelections();
+  return privateVoiceModelPendingSelections.has(getPrivateVoiceModelPendingKey(e));
 }
 
 function normalizeVoiceModelLookupText(value = '') {
@@ -884,6 +911,14 @@ function parsePrivateVoiceModelSwitchInput(e = {}) {
     .trim();
 }
 
+function isPrivateVoiceModelCommand(content = '', e = null) {
+  const text = String(content || '').trim();
+  if (/^[#＃/]?灵晶\s*(语音模型|切换语音模型|重置语音模型)(?:\s+[\s\S]+)?$/.test(text)) {
+    return true;
+  }
+  return Boolean(e) && /^\d{1,3}$/.test(text) && hasPrivateVoiceModelPendingSelection(e);
+}
+
 async function loadPrivateVoiceModelList() {
   const result = await listTtsModels();
   if (!result?.success) {
@@ -915,6 +950,10 @@ function buildDisabledFeatureStatus(config = {}) {
     ['群头衔', config.groupTitle !== false],
     ['AI', config.ai !== false],
     ['私聊AI', config.privateAi !== false],
+    ['私聊生图', config.privateAiImage !== false],
+    ['私聊语音', config.privateAiVoice !== false],
+    ['私聊表情包', config.privateAiMeme !== false],
+    ['私聊联网与 Skills', config.privateAiSkills !== false],
     ['私聊安全', config.privateAiSafety?.enabled !== false],
     ['音乐', config.music !== false],
     ['语音模型', config.voiceModel !== false],
@@ -972,6 +1011,10 @@ function buildDefaultFeatureConfig() {
     imageMonitor: defaults.imageMonitor === true,
     ai: defaults.ai !== false,
     privateAi: defaults.privateAi !== false,
+    privateAiImage: defaults.privateAiImage !== false,
+    privateAiVoice: defaults.privateAiVoice !== false,
+    privateAiMeme: defaults.privateAiMeme !== false,
+    privateAiSkills: defaults.privateAiSkills !== false,
     music: defaults.music !== false,
     voiceModel: defaults.voiceModel !== false,
     auth: defaults.auth !== false,
@@ -982,7 +1025,7 @@ function buildDefaultFeatureConfig() {
 }
 
 function getManagedFeatureKeys() {
-  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'privateAi', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
+  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'privateAi', 'privateAiImage', 'privateAiVoice', 'privateAiMeme', 'privateAiSkills', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
 }
 
 function mergeSessionControlState(base = {}, patch = {}) {
@@ -1989,8 +2032,10 @@ export class crystelfAI extends plugin {
 
       const config = await ConfigControl.get();
       const aiConfig = config?.ai;
+      const featureConfig = config?.config || {};
+      const privateCapabilities = getPrivateAiCapabilities(featureConfig);
       const usageControl = config?.coreConfig?.usageControl || {};
-      if (!aiConfig || config?.config?.ai === false || config?.config?.privateAi === false) return false;
+      if (!aiConfig || featureConfig.ai === false || featureConfig.privateAi === false) return false;
       if (isBotUser(e.user_id, e)) return false;
 
       const content = extractPlainTextFromEvent(e);
@@ -2007,7 +2052,15 @@ export class crystelfAI extends plugin {
         return true;
       }
       if (directVoiceText) {
+        if (!privateCapabilities.voice) {
+          await e.reply?.('私聊语音功能当前已关闭。', true).catch(() => {});
+          return true;
+        }
         await this.handlePrivateDirectVoiceCommand(e, directVoiceText);
+        return true;
+      }
+      if (!privateCapabilities.voice && isPrivateVoiceModelCommand(content, e)) {
+        await e.reply?.('私聊语音功能当前已关闭。', true).catch(() => {});
         return true;
       }
       const privateVoiceModelHandled = await this.handlePrivateVoiceModelCommand(e, content);
@@ -2083,8 +2136,23 @@ export class crystelfAI extends plugin {
       const history = this.db.getMessages(sessionId, aiConfig.chatHistory || 30);
       const botNickname = nickname || 'Bot';
       const sessionControl = this.sessionControlState?.get(sessionId) || {};
+      const featureConfig = await ConfigControl.get('config') || {};
+      const privateCapabilities = getPrivateAiCapabilities(featureConfig);
+      const effectiveSessionControl = privateCapabilities.skills
+        ? sessionControl
+        : { ...sessionControl, disableSearch: true };
 
       if (isImageGenerationRequest(messageData.text)) {
+        if (!privateCapabilities.image) {
+          await this.sendPrivateResponse(e, [{
+            type: 'message',
+            data: '私聊生图功能当前已关闭。',
+            at: -1,
+            quote: -1,
+            recall: false,
+          }], aiConfig);
+          return true;
+        }
         const imagePrompt = normalizeImagePromptText(messageData.text, e);
         logger.info(`[crystelf-ai] 检测到私聊绘图请求: ${imagePrompt}`);
         await this.handleImageMessage(e, {
@@ -2118,18 +2186,20 @@ export class crystelfAI extends plugin {
           ? `参考了知识库：${knowledgeMatches.map(item => item.title).slice(0, 3).join('、')}`
           : '这次没有命中知识库，主要按通用理解回答');
       }
-      if (sessionControl.disableSearch) {
+      if (effectiveSessionControl.disableSearch) {
         statusHints.push('当前会话已禁用联网搜索');
       }
-      if (sessionControl.knowledgeOnly) {
+      if (effectiveSessionControl.knowledgeOnly) {
         statusHints.push('当前会话只使用本地知识库模式');
       }
 
       const coreConfig = await ConfigControl.get('coreConfig');
-      await loadAutoSessionSkills(this.skillManager, sessionId);
+      if (privateCapabilities.skills) {
+        await loadAutoSessionSkills(this.skillManager, sessionId);
+      }
       const ttsConfig = {
         ...(coreConfig?.tools?.tts || {}),
-        allowAiTrigger: false,
+        allowAiTrigger: coreConfig?.tools?.tts?.allowAiTrigger === true && privateCapabilities.voice,
       };
       const pendingImageUrls = this.extractImageUrls(messageData.originalMessages);
       const promptSummary = {
@@ -2139,7 +2209,7 @@ export class crystelfAI extends plugin {
         topicUsed: Boolean(topicContext),
         expressionUsed: Boolean(expressionContext),
         userProfileUsed: false,
-        sessionControl: buildSessionControlPrompt(sessionControl),
+        sessionControl: buildSessionControlPrompt(effectiveSessionControl),
       };
       const buildDecisionSnapshot = result => buildDecisionExplanation({
         e,
@@ -2149,7 +2219,7 @@ export class crystelfAI extends plugin {
           decisionSource: options.decisionSource || 'direct',
         },
         history,
-        sessionControl,
+        sessionControl: effectiveSessionControl,
         knowledgeMatches,
         memoryContext,
         affinityContext: '',
@@ -2180,6 +2250,9 @@ export class crystelfAI extends plugin {
         defaultVoiceModel: getPrivateVoiceModel(userId),
         config: {
           ...aiConfig,
+          searchToolsEnabled: privateCapabilities.skills,
+          skillToolsEnabled: privateCapabilities.skills,
+          voiceToolsEnabled: privateCapabilities.voice,
           tools: {
             tts: ttsConfig,
           },
@@ -2199,7 +2272,7 @@ export class crystelfAI extends plugin {
         },
         targetMessage,
         onToolStatus(status) {
-          if (aiConfig?.toolStatusHints && status && !sessionControl.disableSearch) {
+          if (aiConfig?.toolStatusHints && status && !effectiveSessionControl.disableSearch) {
             statusHints.push(status);
           }
         },
@@ -2216,8 +2289,8 @@ export class crystelfAI extends plugin {
         topicContext,
         expressionContext,
         userProfileContext: '',
-        sessionControlContext: buildSessionControlPrompt(sessionControl),
-        skillContext: this.skillManager.getActiveSkillsInfo(sessionId),
+        sessionControlContext: buildSessionControlPrompt(effectiveSessionControl),
+        skillContext: privateCapabilities.skills ? this.skillManager.getActiveSkillsInfo(sessionId) : '',
         replyContext: null,
       };
 
@@ -2274,8 +2347,8 @@ export class crystelfAI extends plugin {
       const effectiveAssistantText = outputMessages.length > 0
         ? applyEmojiSuppression(rawAssistantText, aiConfig)
         : '';
-      const hasVoiceMessages = Array.isArray(chatResult.voiceMessages) && chatResult.voiceMessages.length > 0;
-      const hasEmojiReply = Boolean(chatResult.emojiPath);
+      const hasVoiceMessages = privateCapabilities.voice && Array.isArray(chatResult.voiceMessages) && chatResult.voiceMessages.length > 0;
+      const hasEmojiReply = privateCapabilities.meme && Boolean(chatResult.emojiPath);
       const emojiMeta = chatResult.emojiMeta || null;
       let parsedMessages = [];
 
@@ -3115,10 +3188,11 @@ export class crystelfAI extends plugin {
 
   async sendPrivateResponse(e, messages, aiConfig, sendOptions = {}) {
     try {
+      const privateCapabilities = getPrivateAiCapabilities(await ConfigControl.get('config') || {});
       const normalizedMessages = [];
       for (const message of messages) {
         const expandedMessages = normalizeOutgoingMessageForSend(message, {
-          includeInlineMemes: sendOptions.includeInlineMemes !== false,
+          includeInlineMemes: privateCapabilities.meme && sendOptions.includeInlineMemes !== false,
         });
         if (expandedMessages.length > 0) {
           normalizedMessages.push(...expandedMessages);
@@ -3142,15 +3216,24 @@ export class crystelfAI extends plugin {
             await this.handleMarkdownMessage(e, message);
             break;
           case 'meme':
+            if (!privateCapabilities.meme) {
+              break;
+            }
             await this.handleMemeMessage(e, message, aiConfig);
             break;
           case 'memory':
             await ResponseHandler.handleMemoryMessage(e, message, this.getSessionIdForEvent(e), e.user_id);
             break;
           case 'image':
+            if (!privateCapabilities.image) {
+              break;
+            }
             await this.handleImageMessage(e, message);
             break;
           case 'voice':
+            if (!privateCapabilities.voice) {
+              break;
+            }
             await this.handlePrivateVoiceMessage(e, message);
             break;
           case 'at':

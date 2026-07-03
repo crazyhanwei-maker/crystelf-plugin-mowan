@@ -47,6 +47,7 @@
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-console-panel">控制台设置</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-skills-panel">Skills 设置</button>
+            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-private-safety-panel">私聊安全</button>
           </div>
         </div>
         <div id="plugin-settings-config-nav" class="plugin-settings-side-section">
@@ -95,6 +96,15 @@
           </div>
           <div id="plugin-settings-skills-box" class="settings-grid">加载中...</div>
         </section>
+
+        <section id="plugin-settings-private-safety-panel" class="panel hidden">
+          <div class="plugin-settings-content-head">
+            <h2>私聊安全</h2>
+            <div class="setting-status">查看私聊安全黑名单、警告记录和 LLM 复审缓存状态；这里不会展示用户私聊原文。</div>
+            <div id="plugin-settings-private-safety-meta" class="plugin-settings-panel-meta"></div>
+          </div>
+          <div id="plugin-settings-private-safety-box" class="settings-grid">加载中...</div>
+        </section>
       </div>
     </div>
   </div>
@@ -109,6 +119,7 @@
 <script src="/plugin-settings-console-render.js"></script>
 <script src="/plugin-settings-skills-panel.js"></script>
 <script src="/plugin-settings-skills-render.js"></script>
+<script src="/plugin-settings-private-safety.js"></script>
 <script src="/plugin-settings.js"></script>
 <script src="/plugin-settings-events.js"></script>
   <script src="/theme.js"></script>

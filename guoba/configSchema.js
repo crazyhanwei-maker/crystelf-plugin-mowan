@@ -83,6 +83,46 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.privateAiImage',
+    label: '私聊生图',
+    component: 'Switch',
+    bottomHelpMessage: '是否允许私聊 AI 触发生图/改图能力；关闭后群聊生图不受影响。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiVoice',
+    label: '私聊语音',
+    component: 'Switch',
+    bottomHelpMessage: '是否允许私聊 #合成语音、语音模型切换，以及 AI 主动返回语音。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiMeme',
+    label: '私聊表情包',
+    component: 'Switch',
+    bottomHelpMessage: '是否允许私聊 AI 发送表情包；关闭后仍可正常文本聊天。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSkills',
+    label: '私聊联网与 Skills',
+    component: 'Switch',
+    bottomHelpMessage: '是否允许私聊 AI 使用联网搜索、网页读取和 Skills 工具；关闭后只进行普通对话。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     label: '私聊 AI 安全',
     component: 'SOFT_GROUP_BEGIN',
   },
@@ -124,6 +164,28 @@ const guobaSchema = [
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.reviewCacheEnabled',
+    label: 'LLM 复审缓存',
+    component: 'Switch',
+    bottomHelpMessage: '开启后，相同私聊内容的安全复审结果会按哈希缓存，不保存原文，减少重复调用。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.reviewCacheTtlHours',
+    label: '复审缓存小时',
+    component: 'InputNumber',
+    bottomHelpMessage: 'LLM 安全复审缓存的有效期，超过后会自动重新复审。',
+    componentProps: {
+      min: 1,
+      max: 720,
+      step: 1,
+      placeholder: '请输入缓存有效期',
     },
   },
   {
