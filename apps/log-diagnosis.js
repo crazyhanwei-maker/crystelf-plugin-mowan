@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import Path from '../constants/path.js';
 import ConfigControl from '../lib/config/configControl.js';
-import { shouldHideAiFailureReason } from '../lib/ai/userFacingError.js';
+import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 import { createLogDiagnosisConsole } from '../lib/webConsole/logDiagnosisConsole.js';
 import { buildWebConsoleConfig } from '../lib/webConsole/webConsoleConfig.js';
 import { renderLogDiagnosisImage } from '../lib/system/logDiagnosisImageRenderer.js';
@@ -101,10 +101,12 @@ export default class CrystelfLogDiagnosis extends plugin {
       return e.reply(lines.join('\n'), true);
     } catch (error) {
       logger.error('[crystelf-plugin] QQ 日志排查失败:', error);
-      const reason = error?.message || error;
-      const userMessage = shouldHideAiFailureReason(reason)
-        ? '日志排查暂时没有生成有效内容，请稍后重试。'
-        : `日志排查失败：${reason}`;
+      const userMessage = buildUserFacingErrorReply(e, {
+        groupMessage: '日志排查暂时没有生成有效内容，请稍后重试。',
+        prefix: '日志排查失败',
+        error,
+        fallbackMessage: '日志排查暂时没有生成有效内容，请稍后重试。',
+      });
       return e.reply(userMessage, true);
     } finally {
       diagnosisRunning = false;

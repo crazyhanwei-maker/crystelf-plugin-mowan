@@ -174,6 +174,8 @@ function getFeatureEntries() {
   const cfg = ConfigControl.get('config') || {};
   return [
     ['AI', cfg.ai !== false],
+    ['私聊AI', cfg.privateAi !== false],
+    ['私聊安全', cfg.privateAiSafety?.enabled !== false],
     ['点歌', cfg.music !== false],
     ['RSS', cfg.rss !== false],
     ['戳一戳', cfg.poke !== false],

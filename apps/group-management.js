@@ -8,6 +8,7 @@ import {
   getGroupModerationState,
   saveGroupModerationState,
 } from '../lib/groupManagement/memberModerationStore.js';
+import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 
 const logger = globalThis.logger || {
   warn: (...args) => console.warn(...args),
@@ -134,7 +135,11 @@ export class groupManagementRuntime extends plugin {
         sections: ['moderation'],
       });
       logger.warn(`[group-management] 命令切换群管理失败: ${error.message}`);
-      await e.reply?.(`群管理设置失败：${error.message}`, true);
+      await e.reply?.(buildUserFacingErrorReply(e, {
+        groupMessage: '群管理设置失败，请稍后重试或去控制台检查。',
+        prefix: '群管理设置失败',
+        error,
+      }), true);
     }
     return true;
   }

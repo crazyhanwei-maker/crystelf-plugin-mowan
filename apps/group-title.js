@@ -8,6 +8,7 @@ import {
   pruneExpiredTitleApplications,
   updateTitleApplicationStatus,
 } from '../lib/groupTitle/titleApplicationStore.js';
+import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 
 const logger = globalThis.logger || {
   warn: (...args) => console.warn(...args),
@@ -516,7 +517,11 @@ export class groupTitleApplication extends plugin {
           title: validated.title,
         },
       });
-      return e.reply(`设置群头衔失败：${error.message}`, true);
+      return e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: '设置群头衔失败，请稍后重试或检查 Bot 群主权限。',
+        prefix: '设置群头衔失败',
+        error,
+      }), true);
     }
   }
 
@@ -591,7 +596,11 @@ export class groupTitleApplication extends plugin {
             title: record.title,
           },
         });
-        return e.reply(`头衔申请已自动通过，但设置群头衔失败：${error.message}`, true);
+        return e.reply(buildUserFacingErrorReply(e, {
+          groupMessage: '头衔申请已通过，但发放头衔失败，请稍后重试或检查 Bot 群主权限。',
+          prefix: '头衔申请已自动通过，但设置群头衔失败',
+          error,
+        }), true);
       }
     }
 
@@ -688,7 +697,11 @@ export class groupTitleApplication extends plugin {
               title: record.title,
             },
           });
-          return e.reply(`AI审核通过，但设置群头衔失败：${error.message}`, true);
+          return e.reply(buildUserFacingErrorReply(e, {
+            groupMessage: 'AI 审核已通过，但发放头衔失败，请稍后重试或检查 Bot 群主权限。',
+            prefix: 'AI审核通过，但设置群头衔失败',
+            error,
+          }), true);
         }
       }
 
@@ -831,7 +844,11 @@ export class groupTitleApplication extends plugin {
           title: record.title,
         },
       });
-      return e.reply(`设置群头衔失败：${error.message}`, true);
+      return e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: '设置群头衔失败，请稍后重试或检查 Bot 群主权限。',
+        prefix: '设置群头衔失败',
+        error,
+      }), true);
     }
   }
 

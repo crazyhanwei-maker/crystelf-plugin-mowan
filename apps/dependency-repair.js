@@ -2,6 +2,7 @@ import plugin from '../../../lib/plugins/plugin.js';
 import { getDependencyConsole } from '../lib/webConsole/server.js';
 import ConfigControl from '../lib/config/configControl.js';
 import AiCaller from '../lib/ai/aiCaller.js';
+import { buildUserFacingErrorReply, isGroupContext } from '../lib/ai/userFacingError.js';
 
 const REPAIR_LIMIT = 80;
 const WATCH_INTERVAL_MS = 5000;
@@ -88,9 +89,10 @@ function buildDependencyNameList(items = [], limit = 15) {
   return lines.join('\n');
 }
 
-function buildTaskSummary(tasks = [], skipped = []) {
+function buildTaskSummary(tasks = [], skipped = [], options = {}) {
   const normalizedTasks = Array.isArray(tasks) ? tasks : [];
   const normalizedSkipped = Array.isArray(skipped) ? skipped : [];
+  const includeReason = options.includeReason !== false;
   const successCount = normalizedTasks.filter(task => task.status === 'success').length;
   const errorTasks = normalizedTasks.filter(task => task.status === 'error');
   const activeTasks = normalizedTasks.filter(task => !['success', 'error'].includes(String(task.status || '')));
@@ -105,14 +107,18 @@ function buildTaskSummary(tasks = [], skipped = []) {
   if (errorTasks.length > 0) {
     lines.push('', '失败项：');
     for (const task of errorTasks.slice(0, 5)) {
-      lines.push(`- ${taskLabel(task)}：${String(task.error || '未知错误').slice(0, 120)}`);
+      lines.push(includeReason
+        ? `- ${taskLabel(task)}：${String(task.error || '未知错误').slice(0, 120)}`
+        : `- ${taskLabel(task)}`);
     }
   }
 
   if (normalizedSkipped.length > 0) {
     lines.push('', '跳过项：');
     for (const item of normalizedSkipped.slice(0, 5)) {
-      lines.push(`- ${item.name || '-'}：${String(item.error || '未知原因').slice(0, 120)}`);
+      lines.push(includeReason
+        ? `- ${item.name || '-'}：${String(item.error || '未知原因').slice(0, 120)}`
+        : `- ${item.name || '-'}`);
     }
   }
 
@@ -129,17 +135,23 @@ function formatTaskResultLine(item = {}) {
   return `- ${taskLabel(item)}`;
 }
 
-function formatFailedTaskResultLine(item = {}) {
+function formatFailedTaskResultLine(item = {}, options = {}) {
+  if (options.includeReason === false) {
+    return `- ${taskLabel(item)}`;
+  }
   const reason = String(item.error || '未知错误').slice(0, 120);
   return `- ${taskLabel(item)}：${reason}`;
 }
 
-function formatSkippedResultLine(item = {}) {
+function formatSkippedResultLine(item = {}, options = {}) {
+  if (options.includeReason === false) {
+    return `- ${formatDependencyLabel(item)}`;
+  }
   const reason = String(item.error || '未知原因').slice(0, 120);
   return `- ${formatDependencyLabel(item)}：${reason}`;
 }
 
-function buildRepairCompletionMessage(tasks = [], skipped = [], restart = false, aiDiagnosis = '') {
+function buildRepairCompletionMessage(tasks = [], skipped = [], restart = false, aiDiagnosis = '', options = {}) {
   const normalizedTasks = Array.isArray(tasks) ? tasks : [];
   const normalizedSkipped = Array.isArray(skipped) ? skipped : [];
   const successTasks = normalizedTasks.filter(task => task.status === 'success');
@@ -158,8 +170,8 @@ function buildRepairCompletionMessage(tasks = [], skipped = [], restart = false,
   lines.push('', `修复失败 ${failedCount} 个：`);
   if (failedCount > 0) {
     const failedLines = [
-      ...errorTasks.slice(0, 8).map(formatFailedTaskResultLine),
-      ...normalizedSkipped.slice(0, Math.max(0, 8 - errorTasks.length)).map(formatSkippedResultLine),
+      ...errorTasks.slice(0, 8).map(item => formatFailedTaskResultLine(item, options)),
+      ...normalizedSkipped.slice(0, Math.max(0, 8 - errorTasks.length)).map(item => formatSkippedResultLine(item, options)),
     ];
     lines.push(failedLines.join('\n'));
     if (failedCount > failedLines.length) {
@@ -357,7 +369,9 @@ async function runRepairTasks(e, options = {}) {
       const failed = (precheck.results || [])
         .filter(item => item.ok !== true)
         .slice(0, 5)
-        .map(item => `- ${formatDependencyLabel(item)}：${item.error || '预检失败'}`)
+        .map(item => isGroupContext(e)
+          ? `- ${formatDependencyLabel(item)}`
+          : `- ${formatDependencyLabel(item)}：${item.error || '预检失败'}`)
         .join('\n');
       return e.reply(`依赖修复预检未通过，没有创建安装任务。\n${failed}`, true);
     }
@@ -388,11 +402,16 @@ async function runRepairTasks(e, options = {}) {
     const aiDiagnosis = watched.done && failed
       ? await diagnoseDependencyFailuresWithAi(watched.tasks, result.skipped, e)
       : '';
+    const includeFailureReason = !isGroupContext(e);
     const message = watched.done
-      ? buildRepairCompletionMessage(watched.tasks, result.skipped, shouldRestart, aiDiagnosis)
+      ? buildRepairCompletionMessage(watched.tasks, result.skipped, shouldRestart, aiDiagnosis, {
+        includeReason: includeFailureReason,
+      })
       : [
           '灵晶依赖修复任务仍在执行或等待中。',
-          buildTaskSummary(watched.tasks, result.skipped),
+          buildTaskSummary(watched.tasks, result.skipped, {
+            includeReason: includeFailureReason,
+          }),
           `可稍后发送 ${options.statusCommand || '#灵晶修复依赖状态'} 查看最新结果。`,
         ].filter(Boolean).join('\n');
     await e.reply(message, true);
@@ -402,7 +421,11 @@ async function runRepairTasks(e, options = {}) {
     return true;
   } catch (error) {
     logger.error('[crystelf-plugin] QQ 依赖修复失败:', error);
-    return e.reply(`灵晶依赖修复失败：${error.message}`, true);
+    return e.reply(buildUserFacingErrorReply(e, {
+      groupMessage: '灵晶依赖修复失败，请稍后重试或去控制台查看依赖检查。',
+      prefix: '灵晶依赖修复失败',
+      error,
+    }), true);
   } finally {
     repairRunning = false;
   }
@@ -463,7 +486,9 @@ export default class CrystelfDependencyRepair extends plugin {
         const failed = (precheck.results || [])
           .filter(item => item.ok !== true)
           .slice(0, 5)
-          .map(item => `- ${formatDependencyLabel(item)}：${item.error || '预检失败'}`)
+          .map(item => isGroupContext(e)
+            ? `- ${formatDependencyLabel(item)}`
+            : `- ${formatDependencyLabel(item)}：${item.error || '预检失败'}`)
           .join('\n');
         pendingRepairs.delete(getConfirmKey(e));
         return e.reply(`依赖修复预检未通过，没有创建确认任务。\n${failed}`, true);
@@ -479,7 +504,11 @@ export default class CrystelfDependencyRepair extends plugin {
       return e.reply(buildPrecheckConfirmMessage(precheck), true);
     } catch (error) {
       logger.error('[crystelf-plugin] QQ 管理员依赖修复预检失败:', error);
-      return e.reply(`依赖检查失败：${error.message}`, true);
+      return e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: '依赖检查失败，请稍后重试或去控制台查看依赖检查。',
+        prefix: '依赖检查失败',
+        error,
+      }), true);
     }
   }
 
@@ -528,7 +557,8 @@ export default class CrystelfDependencyRepair extends plugin {
 
     const lines = ['最近依赖修复任务', '━━━━━━━━━━━━'];
     for (const task of tasks.slice(0, 8)) {
-      lines.push(`- ${taskLabel(task)}：${formatTaskStatus(task.status)}${task.error ? `，${String(task.error).slice(0, 80)}` : ''}`);
+      const errorText = task.error && !isGroupContext(e) ? `，${String(task.error).slice(0, 80)}` : '';
+      lines.push(`- ${taskLabel(task)}：${formatTaskStatus(task.status)}${errorText}`);
     }
     return e.reply(lines.join('\n'), true);
   }

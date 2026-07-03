@@ -19,6 +19,13 @@ import affinityManager from '../lib/ai/affinityManager.js';
 import { clearSessionDebugSnapshot, setSessionDebugSnapshot } from '../lib/ai/runtimeDebugStore.js';
 import { processPokeFollowUpMessage } from './poke.js';
 import { shouldHideAiFailureReason } from '../lib/ai/userFacingError.js';
+import {
+  clearPrivateAiSafetyRecords,
+  evaluatePrivateAiSafety,
+  formatPrivateAiSafetyBlacklist,
+  formatPrivateAiSafetyStatus,
+  unblockPrivateAiSafetyUser,
+} from '../lib/ai/privateAiSafety.js';
 import { segment } from 'oicq';
 import tools from '../components/tool.js';
 import {
@@ -370,6 +377,7 @@ function buildChatHelpMessage(aiConfig = {}) {
     '- #开启戳一戳 / #关闭戳一戳',
     '- #开启全部功能 / #关闭全部功能',
     '- #开启全部AI相关功能 / #关闭全部AI相关功能',
+    '- #开启私聊AI / #关闭私聊AI',
     '- #开启全部群管相关功能 / #关闭全部群管相关功能',
     '- #开启全部内容功能 / #关闭全部内容功能',
     '- #开启全部互动功能 / #关闭全部互动功能',
@@ -389,16 +397,35 @@ function buildChatHelpMessage(aiConfig = {}) {
   return lines.join('\n');
 }
 
-function buildChatFallbackMessage({ knowledgeEnabled = false, knowledgeMatched = 0, failureReason = '', toolHints = [] } = {}) {
+function buildChatFallbackMessage({ knowledgeEnabled = false, knowledgeMatched = 0, failureReason = '', toolHints = [], hideFailureReason = false } = {}) {
   const aiConfig = ConfigControl.get('ai') || {};
   const customFallbackReply = pickFallbackReply(aiConfig?.fallbackReply);
   const customSearchFallbackReply = pickFallbackReply(aiConfig?.fallbackSearchReply);
   const customTimeoutFallbackReply = pickFallbackReply(aiConfig?.fallbackTimeoutReply);
   const customGenericFallbackReply = pickFallbackReply(aiConfig?.fallbackGenericReply);
   const hiddenFailureReason = shouldHideAiFailureReason(failureReason);
+  const shouldUseGenericFailure = hideFailureReason || hiddenFailureReason;
 
   if (failureReason) {
-    if (hiddenFailureReason) {
+    if (shouldUseGenericFailure) {
+      if (/搜索|网页|markdown|search_web|fetch_web_markdown/i.test(failureReason)) {
+        if (customSearchFallbackReply) {
+          return customSearchFallbackReply;
+        }
+        if (customFallbackReply) {
+          return customFallbackReply;
+        }
+        return '外部检索未完成。你可以稍后再试，或改用更短、更明确的问法。';
+      }
+      if (/超时|timeout|timed out/i.test(failureReason)) {
+        if (customTimeoutFallbackReply) {
+          return customTimeoutFallbackReply;
+        }
+        if (customFallbackReply) {
+          return customFallbackReply;
+        }
+        return '本次处理超时。你可以把问题拆短后重新发送。';
+      }
       if (customGenericFallbackReply) {
         return customGenericFallbackReply;
       }
@@ -440,6 +467,15 @@ function buildChatFallbackMessage({ knowledgeEnabled = false, knowledgeMatched =
     return '本次未命中本地知识库，将按通用理解回答。你可以补充更贴近知识库的关键词。';
   }
   if (toolHints.length > 0) {
+    if (hideFailureReason) {
+      if (customGenericFallbackReply) {
+        return customGenericFallbackReply;
+      }
+      if (customFallbackReply) {
+        return customFallbackReply;
+      }
+      return '本次处理未得到稳定结果，请稍后重试。';
+    }
     if (customGenericFallbackReply) {
       return customGenericFallbackReply;
     }
@@ -555,7 +591,7 @@ function parseFeatureToggleCommand(text = '') {
     const commandMap = {
       '只开启AI': {
         label: '只开启AI',
-        enableKeys: ['ai'],
+        enableKeys: ['ai', 'privateAi'],
       },
       '只保留群管功能': {
         label: '只保留群管功能',
@@ -578,7 +614,7 @@ function parseFeatureToggleCommand(text = '') {
       type: 'batch',
       enabled: allMatch[1] === '开启',
       label: '全部功能',
-      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle'],
+      keys: ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'privateAi', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle'],
     };
   }
 
@@ -589,7 +625,7 @@ function parseFeatureToggleCommand(text = '') {
     const categoryMap = {
       '全部AI相关功能': {
         label: '全部AI相关功能',
-        keys: ['ai', 'help', 'imageMonitor', 'faceReply', 'voiceModel'],
+        keys: ['ai', 'privateAi', 'help', 'imageMonitor', 'faceReply', 'voiceModel'],
       },
       '全部群管相关功能': {
         label: '全部群管相关功能',
@@ -601,7 +637,7 @@ function parseFeatureToggleCommand(text = '') {
       },
       '全部互动功能': {
         label: '全部互动功能',
-        keys: ['poke', 'welcome', 'ai', 'zwa'],
+        keys: ['poke', 'welcome', 'ai', 'privateAi', 'zwa'],
       },
     };
     const target = categoryMap[category];
@@ -625,7 +661,7 @@ function parseFeatureToggleCommand(text = '') {
     };
   }
 
-  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|音乐|语音模型|订阅|表情回复|60s|早晚安|自动更新)$/i);
+  const match = normalized.match(/^(开启|关闭)(戳一戳|帮助|欢迎|图片监控|验证|群管理|头衔|群头衔|AI|私聊AI|音乐|语音模型|订阅|表情回复|60s|早晚安|自动更新)$/i);
   if (!match) return null;
 
   const action = match[1] === '开启';
@@ -640,6 +676,7 @@ function parseFeatureToggleCommand(text = '') {
     '头衔': { key: 'groupTitle', label: '头衔' },
     '群头衔': { key: 'groupTitle', label: '群头衔' },
     'AI': { key: 'ai', label: 'AI' },
+    '私聊AI': { key: 'privateAi', label: '私聊AI' },
     '音乐': { key: 'music', label: '音乐' },
     '语音模型': { key: 'voiceModel', label: '语音模型' },
     '订阅': { key: 'rss', label: '订阅' },
@@ -674,6 +711,8 @@ function buildFeatureToggleStatus(config = {}) {
     `- 群管理：${config.groupManagement === false ? '关闭' : '开启'}`,
     `- 群头衔：${config.groupTitle === false ? '关闭' : '开启'}`,
     `- AI：${config.ai === false ? '关闭' : '开启'}`,
+    `- 私聊AI：${config.privateAi === false ? '关闭' : '开启'}`,
+    `- 私聊安全：${config.privateAiSafety?.enabled === false ? '关闭' : '开启'}`,
     `- 音乐：${config.music === false ? '关闭' : '开启'}`,
     `- 语音模型：${config.voiceModel === false ? '关闭' : '开启'}`,
     `- 表情回复：${config.faceReply === false ? '关闭' : '开启'}`,
@@ -694,6 +733,7 @@ function buildFeatureToggleCommandHelp() {
     '## 单项开关',
     '- #开启戳一戳 / #关闭戳一戳',
     '- #开启AI / #关闭AI',
+    '- #开启私聊AI / #关闭私聊AI',
     '- #开启语音模型 / #关闭语音模型',
     '- #开启欢迎 / #关闭欢迎',
     '- #开启群管理 / #关闭群管理',
@@ -710,6 +750,12 @@ function buildFeatureToggleCommandHelp() {
     '## 快捷模式',
     '- #只开启AI',
     '- #只保留群管功能',
+    '',
+    '## 私聊安全',
+    '- #灵晶私聊安全状态',
+    '- #灵晶私聊黑名单',
+    '- #灵晶解除私聊黑名单 QQ号',
+    '- #灵晶清空私聊安全记录',
     '',
     '## 备份管理',
     '- #备份功能开关 / #恢复功能开关',
@@ -736,6 +782,8 @@ function buildDisabledFeatureStatus(config = {}) {
     ['群管理', config.groupManagement !== false],
     ['群头衔', config.groupTitle !== false],
     ['AI', config.ai !== false],
+    ['私聊AI', config.privateAi !== false],
+    ['私聊安全', config.privateAiSafety?.enabled !== false],
     ['音乐', config.music !== false],
     ['语音模型', config.voiceModel !== false],
     ['表情回复', config.faceReply !== false],
@@ -791,6 +839,7 @@ function buildDefaultFeatureConfig() {
     faceReply: defaults.faceReply !== false,
     imageMonitor: defaults.imageMonitor === true,
     ai: defaults.ai !== false,
+    privateAi: defaults.privateAi !== false,
     music: defaults.music !== false,
     voiceModel: defaults.voiceModel !== false,
     auth: defaults.auth !== false,
@@ -801,7 +850,7 @@ function buildDefaultFeatureConfig() {
 }
 
 function getManagedFeatureKeys() {
-  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
+  return ['poke', '60s', 'zwa', 'rss', 'help', 'welcome', 'faceReply', 'imageMonitor', 'ai', 'privateAi', 'music', 'voiceModel', 'auth', 'groupManagement', 'groupTitle', 'autoUpdate'];
 }
 
 function mergeSessionControlState(base = {}, patch = {}) {
@@ -1800,6 +1849,437 @@ export class crystelfAI extends plugin {
     }
   }
 
+  async handlePrivateMessage(e) {
+    try {
+      if (!this.isInitialized) {
+        await this.init();
+      }
+
+      const config = await ConfigControl.get();
+      const aiConfig = config?.ai;
+      const usageControl = config?.coreConfig?.usageControl || {};
+      if (!aiConfig || config?.config?.ai === false || config?.config?.privateAi === false) return false;
+      if (isBotUser(e.user_id, e)) return false;
+
+      const content = extractPlainTextFromEvent(e);
+      if (!content && !Array.isArray(e.message)) return false;
+      const safetyDecision = await evaluatePrivateAiSafety(e, content, config?.config?.privateAiSafety || {}, {
+        aiConfig,
+        masterIds: Array.isArray(cfg?.masterQQ) ? cfg.masterQQ : [],
+      });
+      if (!safetyDecision.allow) {
+        if (safetyDecision.replyText) {
+          await e.reply?.(safetyDecision.replyText, true).catch(() => {});
+        }
+        return true;
+      }
+      if (isCommandPrefixedMessage(content)) {
+        const allowedCommand = parseSessionControlCommand(content)
+          || isChatHelpRequest(content)
+          || /^(#|\/)?重置(对话|会话)$/.test(content)
+          || /^(#|\/)?(查看)?会话状态([\s\S]*)?$/.test(content);
+        if (!allowedCommand) return false;
+      }
+
+      const breaker = shouldCircuitBreakSync(usageControl, 'chat');
+      if (breaker.blocked) {
+        logger.warn(`[crystelf-ai] 私聊AI已熔断: ${breaker.reason}`);
+        return true;
+      }
+
+      if (!this.rateLimiter.canProcess(e.user_id, 'private', e.msg)) {
+        return true;
+      }
+      this.rateLimiter.record(e.user_id, 'private', e.msg);
+      await this.processPrivateChat(e, aiConfig);
+      return true;
+    } catch (error) {
+      logger.error(`[crystelf-ai] 处理私聊消息失败: ${error.message}`);
+      await e.reply?.('本次处理失败，请稍后重试。', true).catch(() => {});
+      return true;
+    }
+  }
+
+  async processPrivateChat(e, aiConfig, options = {}) {
+    const userId = e.user_id;
+    const sessionId = this.getSessionIdForEvent(e);
+    this.currentAiConfig = aiConfig;
+
+    try {
+      this.sessionManager.getOrCreate(sessionId, 'private', userId);
+
+      const messageData = await this.extractPrivateUserMessage(e, aiConfig);
+      if (!messageData || !messageData.text || messageData.text.length === 0) {
+        return false;
+      }
+
+      if (isChatHelpRequest(messageData.text)) {
+        await this.sendPrivateResponse(e, [{
+          type: 'markdown',
+          data: buildChatHelpMessage(aiConfig),
+          at: -1,
+          quote: -1,
+          recall: false,
+        }], aiConfig);
+        return true;
+      }
+
+      const controlCommand = parseSessionControlCommand(messageData.text);
+      if (controlCommand) {
+        const currentState = this.sessionControlState?.get(sessionId) || {};
+        const nextState = mergeSessionControlState(currentState, controlCommand.patch);
+        this.sessionControlState?.set(sessionId, nextState);
+        await this.sendPrivateResponse(e, [{
+          type: 'message',
+          data: controlCommand.reply,
+          at: -1,
+          quote: -1,
+          recall: false,
+        }], aiConfig);
+        return true;
+      }
+
+      const history = this.db.getMessages(sessionId, aiConfig.chatHistory || 30);
+      const botNickname = nickname || 'Bot';
+      const sessionControl = this.sessionControlState?.get(sessionId) || {};
+
+      if (isImageGenerationRequest(messageData.text)) {
+        const imagePrompt = normalizeImagePromptText(messageData.text, e);
+        logger.info(`[crystelf-ai] 检测到私聊绘图请求: ${imagePrompt}`);
+        await this.handleImageMessage(e, {
+          type: 'image',
+          data: imagePrompt,
+          at: -1,
+          quote: -1,
+          recall: false,
+        });
+        return true;
+      }
+
+      const memoryContext = await this.humanize.memoryRetrieval.retrieve(
+        sessionId,
+        messageData.text,
+        e.sender?.nickname || '用户',
+        history
+      );
+      const topicContext = this.humanize.topicTracker.getTopicContext(sessionId);
+      const expressionContext = this.humanize.expressionLearner.getExpressionContext(sessionId);
+      const knowledgeItems = aiConfig?.knowledgeBaseEnabled ? parseRuntimeKnowledgeBase(aiConfig?.knowledgeBase || '') : [];
+      const knowledgeMatches = aiConfig?.knowledgeBaseEnabled
+        ? retrieveRuntimeKnowledge(messageData.text, knowledgeItems, Number(aiConfig?.knowledgeTopK || 3))
+        : [];
+      const knowledgeContext = buildRuntimeKnowledgeContext(knowledgeMatches);
+      this.sessionLastKnowledgeMatches?.set(sessionId, knowledgeMatches);
+
+      const statusHints = [];
+      if (aiConfig?.knowledgeDebugHints) {
+        statusHints.push(knowledgeMatches.length > 0
+          ? `参考了知识库：${knowledgeMatches.map(item => item.title).slice(0, 3).join('、')}`
+          : '这次没有命中知识库，主要按通用理解回答');
+      }
+      if (sessionControl.disableSearch) {
+        statusHints.push('当前会话已禁用联网搜索');
+      }
+      if (sessionControl.knowledgeOnly) {
+        statusHints.push('当前会话只使用本地知识库模式');
+      }
+
+      const coreConfig = await ConfigControl.get('coreConfig');
+      await loadAutoSessionSkills(this.skillManager, sessionId);
+      const ttsConfig = {
+        ...(coreConfig?.tools?.tts || {}),
+        allowAiTrigger: false,
+      };
+      const pendingImageUrls = this.extractImageUrls(messageData.originalMessages);
+      const promptSummary = {
+        userMessage: messageData.text,
+        knowledgeUsed: knowledgeMatches.map(item => item.title),
+        memoryUsed: Boolean(memoryContext),
+        topicUsed: Boolean(topicContext),
+        expressionUsed: Boolean(expressionContext),
+        userProfileUsed: false,
+        sessionControl: buildSessionControlPrompt(sessionControl),
+      };
+      const buildDecisionSnapshot = result => buildDecisionExplanation({
+        e,
+        aiConfig,
+        options: {
+          ...options,
+          decisionSource: options.decisionSource || 'direct',
+        },
+        history,
+        sessionControl,
+        knowledgeMatches,
+        memoryContext,
+        affinityContext: '',
+        topicContext,
+        expressionContext,
+        userProfileContext: '',
+        pendingImageUrls,
+        ttsConfig,
+        groupLastBotTime: 0,
+        messageCountAfterBot: 0,
+        result,
+      });
+
+      const targetMessage = {
+        userName: e.sender?.nickname || '用户',
+        userId,
+        userRole: 'private',
+        userTitle: '',
+        content: messageData.text,
+        messageId: e.message_id,
+        timestamp: Date.now(),
+      };
+
+      const toolCtx = {
+        sessionId,
+        groupId: null,
+        userId,
+        defaultVoiceModel: undefined,
+        config: {
+          ...aiConfig,
+          tools: {
+            tts: ttsConfig,
+          },
+        },
+        db: this.db,
+        pendingImageUrls,
+        skillManager: this.skillManager,
+        event: e,
+        promptCtx: {
+          replyContext: {
+            type: 'private',
+            targetUser: targetMessage.userName,
+            targetUserId: targetMessage.userId,
+            targetMessageId: targetMessage.messageId,
+            targetMessage: targetMessage.content,
+          },
+        },
+        targetMessage,
+        onToolStatus(status) {
+          if (aiConfig?.toolStatusHints && status && !sessionControl.disableSearch) {
+            statusHints.push(status);
+          }
+        },
+      };
+
+      const promptCtx = {
+        config: aiConfig,
+        botNickname,
+        botRole: 'private',
+        isGroup: false,
+        memoryContext,
+        knowledgeContext,
+        affinityContext: '',
+        topicContext,
+        expressionContext,
+        userProfileContext: '',
+        sessionControlContext: buildSessionControlPrompt(sessionControl),
+        skillContext: this.skillManager.getActiveSkillsInfo(sessionId),
+        replyContext: null,
+      };
+
+      const chatResult = await runChat(
+        humanizeAiAdapter,
+        toolCtx,
+        history,
+        targetMessage,
+        promptCtx,
+        this.humanize
+      );
+
+      if (!chatResult || !Array.isArray(chatResult.messages)) {
+        setSessionDebugSnapshot(sessionId, {
+          knowledgeMatches,
+          toolCalls: [],
+          statusHints,
+          failureReason: '聊天引擎没有返回有效结果',
+          promptSummary,
+          decisionExplanation: buildDecisionSnapshot({
+            status: 'invalid',
+            hasTextOutput: false,
+            hasVoiceOutput: false,
+            hasEmojiOutput: false,
+            toolCallCount: 0,
+            toolNames: [],
+            failureReason: '聊天引擎没有返回有效结果',
+            fallbackUsed: true,
+            invalidChatResult: true,
+          }),
+        });
+        logger.error('[crystelf-ai] private chatEngine 返回无效结果');
+        await this.sendPrivateResponse(e, [{
+          type: 'message',
+          data: buildChatFallbackMessage({
+            knowledgeEnabled: !!aiConfig?.knowledgeBaseEnabled,
+            knowledgeMatched: knowledgeMatches.length,
+            failureReason: '聊天引擎没有返回有效结果',
+            toolHints: statusHints,
+            hideFailureReason: false,
+          }),
+          at: -1,
+          quote: -1,
+          recall: false,
+        }], aiConfig);
+        return true;
+      }
+
+      this.sessionLastToolCalls?.set(sessionId, Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls : []);
+      const outputMessages = chatResult.messages
+        .map(msg => this.humanize.typoGenerator.apply(msg))
+        .filter(Boolean);
+      const rawAssistantText = outputMessages.join('\n');
+      const effectiveAssistantText = outputMessages.length > 0
+        ? applyEmojiSuppression(rawAssistantText, aiConfig)
+        : '';
+      const hasVoiceMessages = Array.isArray(chatResult.voiceMessages) && chatResult.voiceMessages.length > 0;
+      const hasEmojiReply = Boolean(chatResult.emojiPath);
+      const emojiMeta = chatResult.emojiMeta || null;
+      let parsedMessages = [];
+
+      if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply) {
+        setSessionDebugSnapshot(sessionId, {
+          knowledgeMatches,
+          toolCalls: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls : [],
+          statusHints,
+          failureReason: chatResult.failureReason || '模型没有产出可发送内容',
+          promptSummary,
+          decisionExplanation: buildDecisionSnapshot({
+            status: 'fallback',
+            hasTextOutput: false,
+            hasVoiceOutput: false,
+            hasEmojiOutput: false,
+            toolCallCount: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.length : 0,
+            toolNames: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.map(item => item?.name).filter(Boolean) : [],
+            failureReason: chatResult.failureReason || '模型没有产出可发送内容',
+            fallbackUsed: true,
+            invalidChatResult: false,
+          }),
+        });
+        await this.sendPrivateResponse(e, [{
+          type: 'message',
+          data: buildChatFallbackMessage({
+            knowledgeEnabled: !!aiConfig?.knowledgeBaseEnabled,
+            knowledgeMatched: knowledgeMatches.length,
+            failureReason: chatResult.failureReason,
+            toolHints: statusHints,
+            hideFailureReason: false,
+          }),
+          at: -1,
+          quote: -1,
+          recall: false,
+        }], aiConfig);
+        return true;
+      }
+
+      if (outputMessages.length > 0) {
+        parsedMessages = await ResponseHandler.processResponse(
+          effectiveAssistantText,
+          messageData.text,
+          null,
+          userId
+        );
+
+        if (hasEmojiReply) {
+          parsedMessages = parsedMessages.filter(message => message?.type !== 'meme');
+        }
+
+        if (parsedMessages.length > 0) {
+          await this.sendPrivateResponse(e, parsedMessages, aiConfig, {
+            includeInlineMemes: !hasEmojiReply,
+          });
+        }
+      }
+
+      let hasSentEmojiReply = false;
+      if (hasEmojiReply) {
+        hasSentEmojiReply = await this.replyMemeImageWithFallback(e, chatResult.emojiPath, {
+          character: emojiMeta?.character || '',
+          emotion: emojiMeta?.emotion || emojiMeta?.requestedEmotion || '',
+          fallbackStatuses: [emojiMeta?.requestedEmotion, emojiMeta?.emotion, 'default'].filter(Boolean),
+          logLabel: '私聊聊天引擎表情包'
+        });
+        if (hasSentEmojiReply) {
+          this.recordMemeTiming(e, sessionId);
+        }
+      }
+
+      if (hasVoiceMessages) {
+        await this.sendPrivateResponse(e, chatResult.voiceMessages, aiConfig);
+      }
+
+      const hasTextReply = parsedMessages.length > 0;
+      setSessionDebugSnapshot(sessionId, {
+        knowledgeMatches,
+        toolCalls: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls : [],
+        statusHints,
+        failureReason: chatResult.failureReason || '',
+        promptSummary,
+        decisionExplanation: buildDecisionSnapshot({
+          status: 'success',
+          hasTextOutput: hasTextReply,
+          hasVoiceOutput: hasVoiceMessages,
+          hasEmojiOutput: hasSentEmojiReply,
+          toolCallCount: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.length : 0,
+          toolNames: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls.map(item => item?.name).filter(Boolean) : [],
+          failureReason: chatResult.failureReason || '',
+          fallbackUsed: Boolean(chatResult.usedFallbackPrompt),
+          invalidChatResult: false,
+        }),
+      });
+
+      this.db.saveMessage({
+        sessionId,
+        role: 'user',
+        content: messageData.text,
+        userId,
+        userName: e.sender?.nickname,
+        userRole: 'private',
+        groupId: null,
+        timestamp: Date.now(),
+        messageId: e.message_id,
+      });
+
+      const assistantHistoryContent = sanitizeAssistantHistoryContent(effectiveAssistantText);
+      if (assistantHistoryContent) {
+        this.db.saveMessage({
+          sessionId,
+          role: 'assistant',
+          content: assistantHistoryContent,
+          groupId: null,
+          timestamp: Date.now(),
+        });
+      }
+
+      this.humanize.topicTracker.onMessage(sessionId).catch(() => {});
+      this.humanize.expressionLearner.onMessage(sessionId, {
+        role: 'user',
+        content: messageData.text,
+        userId,
+        userName: e.sender?.nickname,
+        timestamp: Date.now(),
+      }).catch(() => {});
+      return true;
+    } catch (error) {
+      logger.error(`[crystelf-ai] 私聊AI调用失败: ${error.message}`);
+      await this.sendPrivateResponse(e, [{
+        type: 'message',
+        data: buildChatFallbackMessage({
+          knowledgeEnabled: !!aiConfig?.knowledgeBaseEnabled,
+          knowledgeMatched: 0,
+          failureReason: error.message,
+          toolHints: [],
+          hideFailureReason: false,
+        }),
+        at: -1,
+        quote: -1,
+        recall: false,
+      }], aiConfig).catch(() => {});
+      return true;
+    }
+  }
+
   async processChat(e, aiConfig, options = {}) {
     const groupId = e.group_id;
     const userId = e.user_id;
@@ -2050,6 +2530,7 @@ export class crystelfAI extends plugin {
             knowledgeMatched: knowledgeMatches.length,
             failureReason: '聊天引擎没有返回有效结果',
             toolHints: statusHints,
+            hideFailureReason: Boolean(e?.group_id || e?.isGroup),
           }),
           at: -1,
           quote: -1,
@@ -2119,6 +2600,7 @@ export class crystelfAI extends plugin {
             knowledgeMatched: knowledgeMatches.length,
             failureReason: chatResult.failureReason,
             toolHints: statusHints,
+            hideFailureReason: Boolean(e?.group_id || e?.isGroup),
           }),
           at: -1,
           quote: -1,
@@ -2243,6 +2725,7 @@ export class crystelfAI extends plugin {
           knowledgeMatched: 0,
           failureReason: error.message,
           toolHints: [],
+          hideFailureReason: Boolean(e?.group_id || e?.isGroup),
         }),
         at: -1,
         quote: -1,
@@ -2376,6 +2859,58 @@ export class crystelfAI extends plugin {
     return { text: [], originalMessages: [] };
   }
 
+  async extractPrivateUserMessage(e, aiConfig) {
+    const maxMessageLength = aiConfig?.maxMessageLength || 100;
+    const senderName = e.sender?.nickname || e.nickname || '用户';
+    const originalMessages = [];
+    const textParts = [];
+    const messages = Array.isArray(e.message) ? e.message : [];
+
+    for (const message of messages) {
+      if (message?.type === 'text' && message.text) {
+        let displayText = String(message.text || '');
+        if (displayText.length > maxMessageLength) {
+          const omittedChars = displayText.length - maxMessageLength;
+          displayText = `${displayText.substring(0, maxMessageLength)}…（省略 ${omittedChars} 字）`;
+        }
+        textParts.push(displayText);
+      } else if (message?.type === 'image' && message.url) {
+        originalMessages.push({
+          type: 'image_url',
+          image_url: { url: message.url },
+        });
+      }
+    }
+
+    if (textParts.length === 0 && e.msg) {
+      let displayText = String(e.msg || '');
+      if (displayText.length > maxMessageLength) {
+        const omittedChars = displayText.length - maxMessageLength;
+        displayText = `${displayText.substring(0, maxMessageLength)}…（省略 ${omittedChars} 字）`;
+      }
+      textParts.push(displayText);
+    }
+
+    let returnMessage = '';
+    if (textParts.length > 0) {
+      const text = textParts.join('\n').trim();
+      returnMessage += `[${senderName},id:${e.user_id},seq:${e.message_id}]私聊说:${text}\n`;
+      originalMessages.push({
+        type: 'text',
+        content: returnMessage,
+      });
+    }
+
+    if (originalMessages.some(item => item.type === 'image_url')) {
+      returnMessage += `[${senderName},id:${e.user_id},seq:${e.message_id}]私聊发送了一张图片\n`;
+    }
+
+    return {
+      text: returnMessage.trim(),
+      originalMessages,
+    };
+  }
+
   async sendResponse(e, messages, aiConfig, sendOptions = {}) {
     try {
       const adapter = await YunzaiUtils.getAdapter(e);
@@ -2435,6 +2970,78 @@ export class crystelfAI extends plugin {
       }
       logger.error(`[crystelf-ai] 发送回复失败: ${error}`);
     }
+  }
+
+  async sendPrivateResponse(e, messages, aiConfig, sendOptions = {}) {
+    try {
+      const normalizedMessages = [];
+      for (const message of messages) {
+        const expandedMessages = normalizeOutgoingMessageForSend(message, {
+          includeInlineMemes: sendOptions.includeInlineMemes !== false,
+        });
+        if (expandedMessages.length > 0) {
+          normalizedMessages.push(...expandedMessages);
+        }
+      }
+
+      for (const message of normalizedMessages) {
+        switch (message.type) {
+          case 'message': {
+            const messageContent = Message.cleanOutgoingText(applyEmojiSuppression(message.data, aiConfig));
+            if (!messageContent) {
+              break;
+            }
+            await e.reply(messageContent, true);
+            break;
+          }
+          case 'code':
+            await this.handleCodeMessage(e, message);
+            break;
+          case 'markdown':
+            await this.handleMarkdownMessage(e, message);
+            break;
+          case 'meme':
+            await this.handleMemeMessage(e, message, aiConfig);
+            break;
+          case 'memory':
+            await ResponseHandler.handleMemoryMessage(e, message, this.getSessionIdForEvent(e), e.user_id);
+            break;
+          case 'image':
+            await this.handleImageMessage(e, message);
+            break;
+          case 'voice':
+            await this.handlePrivateVoiceMessage(e, message);
+            break;
+          case 'at':
+          case 'poke':
+            break;
+          default:
+            logger.warn(`[crystelf-ai] 私聊不支持的消息类型: ${message.type}`);
+        }
+        await tools.sleep(40);
+      }
+    } catch (error) {
+      logger.error(`[crystelf-ai] 发送私聊回复失败: ${error.message}`);
+    }
+  }
+
+  async handlePrivateVoiceMessage(e, message) {
+    try {
+      if (message?.audioUrl && typeof segment?.record === 'function') {
+        await e.reply(segment.record(message.audioUrl));
+        return true;
+      }
+      if (message?.text) {
+        await e.reply(message.text, true);
+        return true;
+      }
+    } catch (error) {
+      logger.warn(`[crystelf-ai] 私聊语音发送失败: ${error.message}`);
+      if (message?.text) {
+        await e.reply(message.text, true).catch(() => {});
+      }
+    }
+    return false;
   }
 
   extractImageUrls(originalMessages = []) {
@@ -2609,7 +3216,8 @@ export class crystelfAI extends plugin {
 
       let sourceImageArr = null;
       const imageMessages = [];
-      e.message.forEach((message) => {
+      const eventMessages = Array.isArray(e.message) ? e.message : [];
+      eventMessages.forEach((message) => {
         if (message.type === 'image') {
           if (message.url) {
             imageMessages.push(message.url);
@@ -2620,7 +3228,7 @@ export class crystelfAI extends plugin {
       if (e.source || e.reply_id) {
         let reply;
         if (e.getReply) reply = await e.getReply();
-        else if (e.source?.seq) {
+        else if (e.source?.seq && e.group?.getChatHistory) {
           const history = await e.group.getChatHistory(e.source.seq, 1);
           reply = history?.pop();
         }
@@ -2991,6 +3599,126 @@ export class crystelfAI extends plugin {
     } catch (err) {
       logger.error(`[crystelf-ai] 发送群消息失败: ${err}`);
     }
+  }
+}
+
+export class crystelfAIPrivate extends plugin {
+  constructor() {
+    super({
+      name: 'crystelfAI-private',
+      dsc: '晶灵私聊智能',
+      event: 'message',
+      priority: -1111,
+      rule: [
+        {
+          reg: '^(#|/)?灵晶私聊安全状态$',
+          fnc: 'showPrivateAiSafetyStatus',
+        },
+        {
+          reg: '^(#|/)?灵晶私聊黑名单$',
+          fnc: 'showPrivateAiSafetyBlacklist',
+        },
+        {
+          reg: '^(#|/)?灵晶解除私聊黑名单\\s*([1-9]\\d{4,12})$',
+          fnc: 'unblockPrivateAiSafety',
+        },
+        {
+          reg: '^(#|/)?灵晶清空私聊安全记录$',
+          fnc: 'clearPrivateAiSafetyRecords',
+        },
+        {
+          reg: '^(#|/)?重置(私聊)?(对话|会话)$',
+          fnc: 'clearPrivateChatHistory',
+        },
+        {
+          reg: '^(#|/)?(查看)?会话状态([\\s\\S]*)?$',
+          fnc: 'showPrivateSessionStatus',
+        },
+        {
+          reg: '^[\\s\\S]*$',
+          fnc: 'privateChat',
+        },
+      ],
+    });
+  }
+
+  getRuntime() {
+    return global.crystelfAiSingleton || new crystelfAI();
+  }
+
+  async privateChat(e) {
+    if (e?.group_id) return false;
+    const runtime = this.getRuntime();
+    return runtime.handlePrivateMessage(e);
+  }
+
+  async showPrivateAiSafetyStatus(e) {
+    if (e?.group_id) return false;
+    if (!isMasterUser(e)) {
+      return e.reply('该私聊安全命令仅限主人使用。', true);
+    }
+    const config = await ConfigControl.get();
+    return e.reply(formatPrivateAiSafetyStatus(config?.config?.privateAiSafety || {}), true);
+  }
+
+  async showPrivateAiSafetyBlacklist(e) {
+    if (e?.group_id) return false;
+    if (!isMasterUser(e)) {
+      return e.reply('该私聊安全命令仅限主人使用。', true);
+    }
+    return e.reply(formatPrivateAiSafetyBlacklist(30), true);
+  }
+
+  async unblockPrivateAiSafety(e) {
+    if (e?.group_id) return false;
+    if (!isMasterUser(e)) {
+      return e.reply('该私聊安全命令仅限主人使用。', true);
+    }
+    const match = String(e.msg || '').match(/灵晶解除私聊黑名单\s*([1-9]\d{4,12})/);
+    const userId = match?.[1] || '';
+    const existed = unblockPrivateAiSafetyUser(userId);
+    return e.reply(existed ? `已解除 ${userId} 的私聊 AI 安全黑名单。` : `${userId || '该用户'} 不在私聊 AI 安全黑名单中。`, true);
+  }
+
+  async clearPrivateAiSafetyRecords(e) {
+    if (e?.group_id) return false;
+    if (!isMasterUser(e)) {
+      return e.reply('该私聊安全命令仅限主人使用。', true);
+    }
+    clearPrivateAiSafetyRecords();
+    return e.reply('已清空私聊 AI 安全警告与记录，现有黑名单保留。', true);
+  }
+
+  async clearPrivateChatHistory(e) {
+    if (e?.group_id) return false;
+    const runtime = this.getRuntime();
+    if (!runtime.isInitialized) {
+      await runtime.init();
+    }
+    const sessionId = runtime.getSessionIdForEvent(e);
+    runtime.sessionManager.clearSession(sessionId);
+    runtime.sessionControlState?.delete(sessionId);
+    runtime.sessionLastKnowledgeMatches?.delete(sessionId);
+    runtime.sessionLastToolCalls?.delete(sessionId);
+    clearSessionDebugSnapshot(sessionId);
+    return e.reply('私聊会话已重置。', true);
+  }
+
+  async showPrivateSessionStatus(e) {
+    if (e?.group_id) return false;
+    const runtime = this.getRuntime();
+    if (!runtime.isInitialized) {
+      await runtime.init();
+    }
+    const sessionId = runtime.getSessionIdForEvent(e);
+    const state = runtime.sessionControlState?.get(sessionId) || {};
+    const lines = [
+      '当前私聊会话状态：',
+      `- 联网搜索：${state.disableSearch ? '已禁用' : '已允许'}`,
+      `- 知识库模式：${state.knowledgeOnly ? '只用知识库' : '正常模式'}`,
+      `- 回复风格：${state.responseStyle === 'concise' ? '简洁' : state.responseStyle === 'detailed' ? '详细' : '默认'}`,
+    ];
+    return e.reply(lines.join('\n'), true);
   }
 }
 

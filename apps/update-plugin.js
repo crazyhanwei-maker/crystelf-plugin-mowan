@@ -1,5 +1,6 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import updater from '../lib/system/updater.js'
+import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js'
 
 let isUpdating = false
 const FORCE_CONFIRM_TIMEOUT_MS = 3 * 60 * 1000
@@ -65,7 +66,11 @@ export default class CrystelfUpdatePlugin extends plugin {
       return e.reply('灵晶插件更新完成。为确保新代码完全生效，建议重启 Yunzai。', true)
     } catch (err) {
       logger.error('[crystelf-plugin] 手动更新失败:', err)
-      return e.reply(`灵晶插件更新失败：${err.message}`, true)
+      return e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: '灵晶插件更新失败，请稍后重试或查看日志。',
+        prefix: '灵晶插件更新失败',
+        error: err,
+      }), true)
     } finally {
       isUpdating = false
     }
@@ -104,7 +109,11 @@ export default class CrystelfUpdatePlugin extends plugin {
       ].join('\n'), true)
     } catch (err) {
       logger.error('[crystelf-plugin] 强制更新预检失败:', err)
-      return e.reply(`灵晶强制更新预检失败：${err.message}`, true)
+      return e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: '灵晶强制更新预检失败，请稍后重试或查看日志。',
+        prefix: '灵晶强制更新预检失败',
+        error: err,
+      }), true)
     }
   }
 
@@ -136,7 +145,11 @@ export default class CrystelfUpdatePlugin extends plugin {
       ].join('\n'), true)
     } catch (err) {
       logger.error('[crystelf-plugin] 强制更新失败:', err)
-      return e.reply(`灵晶强制更新失败：${err.message}`, true)
+      return e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: '灵晶强制更新失败，请稍后重试或查看日志。',
+        prefix: '灵晶强制更新失败',
+        error: err,
+      }), true)
     } finally {
       isUpdating = false
     }

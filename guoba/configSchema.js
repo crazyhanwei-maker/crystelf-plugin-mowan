@@ -66,10 +66,200 @@ const guobaSchema = [
     field: 'config.ai',
     label: '晶灵智能',
     component: 'Switch',
-    bottomHelpMessage: '是否启用AI功能',
+    bottomHelpMessage: '是否启用群聊 AI 主功能',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAi',
+    label: '私聊 AI',
+    component: 'Switch',
+    bottomHelpMessage: '是否启用私聊 AI 对话；关闭后不影响群聊 AI',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    label: '私聊 AI 安全',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'config.privateAiSafety.enabled',
+    label: '私聊安全检查',
+    component: 'Switch',
+    bottomHelpMessage: '开启后，私聊消息会先经过安全门禁，再进入主 AI 对话。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.contentGuard',
+    label: '内容安全拦截',
+    component: 'Switch',
+    bottomHelpMessage: '拦截诱导 AI 输出受限内容、违法违规内容或绕过安全规则的私聊请求。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.llmReview',
+    label: 'LLM 复审',
+    component: 'Switch',
+    bottomHelpMessage: '本地规则不确定时调用 AI 做安全分类。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.llmReviewAll',
+    label: '全量 LLM 复审',
+    component: 'Switch',
+    bottomHelpMessage: '开启后每条私聊都会先做一次安全分类；默认关键词为空时建议开启。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.warnBeforeBlacklist',
+    label: '先警告再拉黑',
+    component: 'Switch',
+    bottomHelpMessage: '开启后，普通风险先警告；达到阈值后再加入私聊黑名单。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.directBlacklistHighRisk',
+    label: '高风险直接拉黑',
+    component: 'Switch',
+    bottomHelpMessage: '命中高风险本地规则时直接加入私聊黑名单；高风险词由用户自行填写。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.ownerNotify',
+    label: '拉黑通知主人',
+    component: 'Switch',
+    bottomHelpMessage: '私聊用户被安全策略拉黑时，尝试私聊通知机器人主人。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.privateAiSafety.riskKeywords',
+    label: '风险关键词',
+    component: 'InputTextArea',
+    bottomHelpMessage: '每行一个。默认不内置任何词，请按自己的合规标准填写。',
+    componentProps: {
+      rows: 4,
+      placeholder: '每行一个关键词，默认留空',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.highRiskKeywords',
+    label: '高风险关键词',
+    component: 'InputTextArea',
+    bottomHelpMessage: '每行一个。命中后可按配置直接拉黑，请谨慎填写。',
+    componentProps: {
+      rows: 4,
+      placeholder: '每行一个关键词，默认留空',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.bypassKeywords',
+    label: '绕过规则关键词',
+    component: 'InputTextArea',
+    bottomHelpMessage: '每行一个。用于识别尝试绕过规则或要求忽略限制的表达。',
+    componentProps: {
+      rows: 4,
+      placeholder: '每行一个关键词，默认留空',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.intentKeywords',
+    label: '生成意图关键词',
+    component: 'InputTextArea',
+    bottomHelpMessage: '每行一个。用于和风险关键词组合判断是否在要求生成内容。',
+    componentProps: {
+      rows: 4,
+      placeholder: '每行一个关键词，默认留空',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.safeContextKeywords',
+    label: '安全讨论放行词',
+    component: 'InputTextArea',
+    bottomHelpMessage: '每行一个。用于减少合规讨论、风险说明、规则设置等正常内容的误伤。',
+    componentProps: {
+      rows: 4,
+      placeholder: '每行一个关键词，默认留空',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.maxWarnings',
+    label: '拉黑阈值',
+    component: 'InputNumber',
+    bottomHelpMessage: '同一用户在警告窗口内累计多少次后加入私聊黑名单。',
+    componentProps: {
+      min: 1,
+      max: 10,
+      step: 1,
+      placeholder: '请输入拉黑阈值',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.windowHours',
+    label: '警告窗口小时',
+    component: 'InputNumber',
+    bottomHelpMessage: '只统计该时间窗口内的私聊安全警告次数。',
+    componentProps: {
+      min: 1,
+      max: 720,
+      step: 1,
+      placeholder: '请输入警告窗口小时',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.blacklistDurationHours',
+    label: '拉黑时长小时',
+    component: 'InputNumber',
+    bottomHelpMessage: '加入私聊黑名单后的持续时间；填 0 表示永久。',
+    componentProps: {
+      min: 0,
+      max: 87600,
+      step: 1,
+      placeholder: '请输入拉黑时长',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.warningReply',
+    label: '警告回复',
+    component: 'InputTextArea',
+    bottomHelpMessage: '用户首次或未达到阈值时收到的合规提醒。',
+    componentProps: {
+      rows: 3,
+      placeholder: '请输入私聊安全警告回复',
+    },
+  },
+  {
+    field: 'config.privateAiSafety.blacklistReply',
+    label: '拉黑回复',
+    component: 'InputTextArea',
+    bottomHelpMessage: '黑名单用户再次触发私聊 AI 时收到的固定回复。',
+    componentProps: {
+      rows: 3,
+      placeholder: '请输入私聊黑名单回复',
     },
   },
   {

@@ -6,6 +6,7 @@ import fs from 'fs';
 import rssCache from '../lib/rss/rssCache.js';
 import schedule from 'node-schedule';
 import tools from '../components/tool.js';
+import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 
 export default class RssPlugin extends plugin {
   constructor() {
@@ -152,7 +153,11 @@ export default class RssPlugin extends plugin {
       latest = await rssTools.fetchFeed(url);
     } catch (err) {
       logger.error(`[crystelf-rss] 手动拉取失败: ${err.message}`);
-      return await e.reply(`拉取失败：${err.message}`, true);
+      return await e.reply(buildUserFacingErrorReply(e, {
+        groupMessage: 'RSS 拉取失败，请稍后重试或检查订阅地址。',
+        prefix: '拉取失败',
+        error: err,
+      }), true);
     }
 
     if (!latest || !latest.length) {
