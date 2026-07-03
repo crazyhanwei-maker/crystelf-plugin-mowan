@@ -34,7 +34,14 @@ import {
   parseDirectVoiceCommand,
   sendVoiceMessage,
 } from '../lib/ai/ttsSynthesisCommand.js';
+import { getTtsTools, listTtsModels } from '../lib/ai/ttsRegistry.js';
 import { getGroupVoiceModel } from '../lib/ai/ttsGroupModelStore.js';
+import {
+  clearPrivateVoiceModel,
+  getPrivateVoiceModel,
+  getPrivateVoiceModelRecord,
+  setPrivateVoiceModel,
+} from '../lib/ai/ttsPrivateModelStore.js';
 import {
   resetVoiceModel,
   selectPendingVoiceModel,
@@ -766,6 +773,131 @@ function buildFeatureToggleCommandHelp() {
     '- 上面这些命令仅主人可用',
     '- 想先保存当前状态，建议先执行一次 #备份功能开关',
   ].join('\n');
+}
+
+const PRIVATE_VOICE_MODEL_PENDING_TTL_MS = 3 * 60 * 1000;
+const PRIVATE_VOICE_MODEL_LIST_LIMIT = 40;
+const privateVoiceModelPendingSelections = new Map();
+
+function getPrivateVoiceModelPendingKey(e = {}) {
+  return String(e?.user_id || '').trim();
+}
+
+function prunePrivateVoiceModelPendingSelections() {
+  const now = Date.now();
+  for (const [key, pending] of privateVoiceModelPendingSelections.entries()) {
+    if (!pending || Number(pending.expiresAt || 0) <= now) {
+      privateVoiceModelPendingSelections.delete(key);
+    }
+  }
+}
+
+function normalizeVoiceModelLookupText(value = '') {
+  return String(value || '')
+    .trim()
+    .replace(/[「」『』【】《》〈〉()（）\[\]_\-\s]/g, '')
+    .toLowerCase();
+}
+
+function describePrivateVoiceModel(item = {}) {
+  const languages = Array.isArray(item.languages) ? item.languages : [];
+  if (languages.length === 0) {
+    return item.model || '-';
+  }
+
+  const first = languages[0] || {};
+  const emotionText = Array.isArray(first.emotions) && first.emotions.length > 0
+    ? first.emotions.slice(0, 4).join('、')
+    : '默认';
+  const extraLanguageCount = Math.max(0, languages.length - 1);
+  const suffix = extraLanguageCount > 0 ? `，另 ${extraLanguageCount} 种语言` : '';
+  return `${item.model}（${first.language || '未知'}：${emotionText}${suffix}）`;
+}
+
+function formatPrivateVoiceModelList(result = {}, currentModel = '') {
+  const models = Array.isArray(result.models) ? result.models : [];
+  const lines = [
+    '请选择你的私聊默认语音模型：',
+    currentModel ? `当前私聊：${currentModel}` : `当前私聊：使用全局默认${result.defaultModel ? `（${result.defaultModel}）` : ''}`,
+    '',
+    ...models.slice(0, PRIVATE_VOICE_MODEL_LIST_LIMIT).map((item, index) => `${index + 1}. ${describePrivateVoiceModel(item)}`),
+  ];
+
+  if (models.length > PRIVATE_VOICE_MODEL_LIST_LIMIT) {
+    lines.push(`... 还有 ${models.length - PRIVATE_VOICE_MODEL_LIST_LIMIT} 个模型未展示，可用完整模型名直接切换。`);
+  }
+
+  lines.push('', '回复编号即可切换，也可以发送：#灵晶切换语音模型 模型名');
+  lines.push('发送 #灵晶重置语音模型 可回到全局默认。');
+  return lines.join('\n');
+}
+
+function resolvePrivateVoiceModelInput(input = '', models = []) {
+  const value = String(input || '').trim();
+  if (!value) {
+    return { ok: false, error: '请输入模型编号或模型名。' };
+  }
+
+  if (/^\d{1,3}$/.test(value)) {
+    const index = Number(value);
+    if (index < 1 || index > Math.min(models.length, PRIVATE_VOICE_MODEL_LIST_LIMIT)) {
+      return { ok: false, error: `编号超出范围，请输入 1-${Math.min(models.length, PRIVATE_VOICE_MODEL_LIST_LIMIT)}。` };
+    }
+    return { ok: true, model: models[index - 1]?.model || '' };
+  }
+
+  const exact = models.find(item => String(item.model || '').trim() === value);
+  if (exact) {
+    return { ok: true, model: exact.model };
+  }
+
+  const lowerValue = value.toLowerCase();
+  const caseInsensitive = models.find(item => String(item.model || '').trim().toLowerCase() === lowerValue);
+  if (caseInsensitive) {
+    return { ok: true, model: caseInsensitive.model };
+  }
+
+  const normalizedValue = normalizeVoiceModelLookupText(value);
+  const normalizedMatches = models.filter(item => {
+    const model = normalizeVoiceModelLookupText(item.model);
+    return model && normalizedValue && model.includes(normalizedValue);
+  });
+  if (normalizedMatches.length === 1) {
+    return { ok: true, model: normalizedMatches[0].model };
+  }
+  if (normalizedMatches.length > 1) {
+    return {
+      ok: false,
+      error: [
+        '匹配到多个模型，请输入更完整的模型名：',
+        ...normalizedMatches.slice(0, 8).map((item, index) => `${index + 1}. ${item.model}`),
+      ].join('\n'),
+    };
+  }
+
+  return { ok: false, error: '没有找到这个语音模型，请先发送 #灵晶切换语音模型 查看列表。' };
+}
+
+function parsePrivateVoiceModelSwitchInput(e = {}) {
+  return String(e.msg || '')
+    .replace(/^[#＃/]?灵晶\s*切换语音模型\s*/u, '')
+    .trim();
+}
+
+async function loadPrivateVoiceModelList() {
+  const result = await listTtsModels();
+  if (!result?.success) {
+    return {
+      success: false,
+      error: result?.error || '读取语音模型列表失败',
+    };
+  }
+
+  return {
+    success: true,
+    defaultModel: result.defaultModel || '',
+    models: Array.isArray(result.models) ? result.models : [],
+  };
 }
 
 function buildDisabledFeatureStatus(config = {}) {
@@ -1862,6 +1994,7 @@ export class crystelfAI extends plugin {
       if (isBotUser(e.user_id, e)) return false;
 
       const content = extractPlainTextFromEvent(e);
+      const directVoiceText = parseDirectVoiceCommand(content);
       if (!content && !Array.isArray(e.message)) return false;
       const safetyDecision = await evaluatePrivateAiSafety(e, content, config?.config?.privateAiSafety || {}, {
         aiConfig,
@@ -1871,6 +2004,14 @@ export class crystelfAI extends plugin {
         if (safetyDecision.replyText) {
           await e.reply?.(safetyDecision.replyText, true).catch(() => {});
         }
+        return true;
+      }
+      if (directVoiceText) {
+        await this.handlePrivateDirectVoiceCommand(e, directVoiceText);
+        return true;
+      }
+      const privateVoiceModelHandled = await this.handlePrivateVoiceModelCommand(e, content);
+      if (privateVoiceModelHandled) {
         return true;
       }
       if (isCommandPrefixedMessage(content)) {
@@ -2036,7 +2177,7 @@ export class crystelfAI extends plugin {
         sessionId,
         groupId: null,
         userId,
-        defaultVoiceModel: undefined,
+        defaultVoiceModel: getPrivateVoiceModel(userId),
         config: {
           ...aiConfig,
           tools: {
@@ -3042,6 +3183,141 @@ export class crystelfAI extends plugin {
       }
     }
     return false;
+  }
+
+  async handlePrivateDirectVoiceCommand(e, text) {
+    try {
+      const ttsTool = getTtsTools().find(tool => tool.name === 'speak_text');
+      if (!ttsTool) {
+        await e.reply('语音工具暂时不可用。', true);
+        return true;
+      }
+
+      const toolCtx = {
+        event: e,
+        groupId: null,
+        userId: e.user_id,
+        defaultVoiceModel: getPrivateVoiceModel(e.user_id),
+        targetMessage: { content: e.msg },
+        promptCtx: { replyContext: { type: 'private' } },
+      };
+
+      const result = await ttsTool.handler({ text, force: true }, toolCtx);
+      if (result?.voiceMessage) {
+        await this.handlePrivateVoiceMessage(e, result.voiceMessage);
+        return true;
+      }
+
+      await e.reply(result?.error || '语音生成失败。', true);
+      return true;
+    } catch (error) {
+      logger.error(`[crystelf-ai] 私聊显式语音命令失败: ${error.message}`);
+      await e.reply('语音生成失败，稍后再试。', true);
+      return true;
+    }
+  }
+
+  async handlePrivateVoiceModelCommand(e, content = '') {
+    const text = String(content || '').trim();
+    if (!text) return false;
+
+    const config = await ConfigControl.get('config') || {};
+    if (config.voiceModel === false) {
+      return false;
+    }
+
+    if (/^[#＃/]?灵晶\s*语音模型\s*$/.test(text)) {
+      return this.showPrivateVoiceModel(e);
+    }
+    if (/^[#＃/]?灵晶\s*切换语音模型\s*$/.test(text)) {
+      return this.showPrivateVoiceModelList(e);
+    }
+    if (/^[#＃/]?灵晶\s*切换语音模型\s+([\s\S]+)$/.test(text)) {
+      return this.switchPrivateVoiceModelDirectly(e);
+    }
+    if (/^[#＃/]?灵晶\s*重置语音模型\s*$/.test(text)) {
+      return this.resetPrivateVoiceModel(e);
+    }
+    if (/^\d{1,3}$/.test(text)) {
+      return this.selectPrivateVoiceModel(e);
+    }
+
+    return false;
+  }
+
+  async showPrivateVoiceModel(e) {
+    const record = getPrivateVoiceModelRecord(e.user_id);
+    const coreConfig = ConfigControl.get('coreConfig') || {};
+    const defaultModel = String(coreConfig?.tools?.tts?.defaultModel || '').trim();
+    if (!record) {
+      await e.reply(`私聊未单独设置语音模型，当前使用全局默认${defaultModel ? `：${defaultModel}` : '。'}`, true);
+      return true;
+    }
+
+    await e.reply([
+      `私聊语音模型：${record.model}`,
+      record.updatedAt ? `设置时间：${record.updatedAt.replace('T', ' ').slice(0, 19)}` : '',
+      '发送 #灵晶切换语音模型 可重新选择。',
+    ].filter(Boolean).join('\n'), true);
+    return true;
+  }
+
+  async showPrivateVoiceModelList(e) {
+    const result = await loadPrivateVoiceModelList();
+    if (!result.success) {
+      await e.reply(`语音模型列表读取失败：${result.error}`, true);
+      return true;
+    }
+
+    const currentModel = getPrivateVoiceModelRecord(e.user_id)?.model || '';
+    privateVoiceModelPendingSelections.set(getPrivateVoiceModelPendingKey(e), {
+      userId: String(e.user_id || ''),
+      models: result.models,
+      expiresAt: Date.now() + PRIVATE_VOICE_MODEL_PENDING_TTL_MS,
+    });
+
+    await e.reply(formatPrivateVoiceModelList(result, currentModel), true);
+    return true;
+  }
+
+  async switchPrivateVoiceModelDirectly(e) {
+    const result = await loadPrivateVoiceModelList();
+    if (!result.success) {
+      await e.reply(`语音模型列表读取失败：${result.error}`, true);
+      return true;
+    }
+
+    return this.applyPrivateVoiceModelSelection(e, parsePrivateVoiceModelSwitchInput(e), result.models);
+  }
+
+  async selectPrivateVoiceModel(e) {
+    prunePrivateVoiceModelPendingSelections();
+    const key = getPrivateVoiceModelPendingKey(e);
+    const pending = privateVoiceModelPendingSelections.get(key);
+    if (!pending) {
+      return false;
+    }
+    return this.applyPrivateVoiceModelSelection(e, e.msg, pending.models);
+  }
+
+  async resetPrivateVoiceModel(e) {
+    clearPrivateVoiceModel(e.user_id);
+    privateVoiceModelPendingSelections.delete(getPrivateVoiceModelPendingKey(e));
+    await e.reply('已重置私聊语音模型，之后将使用全局默认语音模型。', true);
+    return true;
+  }
+
+  async applyPrivateVoiceModelSelection(e, input, models) {
+    const resolved = resolvePrivateVoiceModelInput(input, models);
+    if (!resolved.ok || !resolved.model) {
+      await e.reply(resolved.error || '语音模型选择失败。', true);
+      return true;
+    }
+
+    setPrivateVoiceModel(e.user_id, resolved.model, { operator: e.user_id });
+    privateVoiceModelPendingSelections.delete(getPrivateVoiceModelPendingKey(e));
+    await e.reply(`已切换你的私聊默认语音模型：${resolved.model}`, true);
+    return true;
   }
 
   extractImageUrls(originalMessages = []) {
