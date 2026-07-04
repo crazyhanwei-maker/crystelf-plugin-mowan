@@ -123,6 +123,22 @@ const guobaSchema = [
     },
   },
   {
+    label: '私聊 AI 用户范围',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'config.privateAiWhitelist',
+    label: '私聊 AI 用户白名单',
+    component: 'InputArray',
+    bottomHelpMessage: '每行一个 QQ。留空表示不限制私聊用户；填写后只有名单内用户可使用私聊 AI。黑名单优先，主人默认不受名单限制。',
+  },
+  {
+    field: 'config.privateAiBlacklist',
+    label: '私聊 AI 用户黑名单',
+    component: 'InputArray',
+    bottomHelpMessage: '每行一个 QQ。命中后不进入私聊 AI 主流程；这和“私聊安全黑名单”分开，用于手动限制使用权限。',
+  },
+  {
     label: '私聊 AI 安全',
     component: 'SOFT_GROUP_BEGIN',
   },

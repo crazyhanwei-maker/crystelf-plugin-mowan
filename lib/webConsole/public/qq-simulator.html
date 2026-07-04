@@ -44,6 +44,14 @@
           </span>
           <time>刚刚</time>
         </button>
+        <button class="qq-simulator-session-item" data-preset="private_message" data-sim-event="private_message">
+          <span class="qq-simulator-session-avatar">私</span>
+          <span class="qq-simulator-session-main">
+            <strong>私聊消息</strong>
+            <small>模拟用户私聊机器人</small>
+          </span>
+          <time>私聊</time>
+        </button>
         <button class="qq-simulator-session-item" data-preset="join_request" data-sim-event="join_request">
           <span class="qq-simulator-session-avatar request">申</span>
           <span class="qq-simulator-session-main">
@@ -110,19 +118,19 @@
       <aside class="qq-simulator-profile-pane">
         <section class="qq-simulator-side-card qq-simulator-notice-card">
           <div class="qq-simulator-side-title">
-            <h3>群公告</h3>
+            <h3>会话信息</h3>
             <span>›</span>
           </div>
           <h2 id="qq-simulator-dock-group-name">群 10001</h2>
           <p id="qq-simulator-dock-group-meta">当前群聊模拟环境</p>
-          <p>用于检查机器人在群聊中的回复、图片、语音、戳一戳和群管理事件表现。</p>
+          <p>用于检查机器人在群聊、私聊中的回复、图片、语音、戳一戳和群管理事件表现。</p>
         </section>
 
         <section class="qq-simulator-side-card">
           <div class="qq-simulator-side-title">
-            <h3>群成员 <span>(3/149)</span></h3>
+            <h3>参与者 <span>(3)</span></h3>
           </div>
-          <div class="qq-simulator-member-search">搜索群成员</div>
+          <div class="qq-simulator-member-search">搜索参与者</div>
           <div id="qq-simulator-member-list" class="qq-simulator-member-list"></div>
         </section>
 
@@ -156,6 +164,7 @@
             <div class="sandbox-group-body">
               <div class="toolbar">
                 <button data-preset="message">普通群聊</button>
+                <button data-preset="private_message">私聊消息</button>
                 <button data-preset="join_request">加群申请</button>
                 <button data-preset="group_increase">新成员入群</button>
                 <button data-preset="poke">戳一戳</button>
@@ -173,6 +182,7 @@
                 <select id="qq-simulator-scenario-filter" aria-label="场景筛选">
                   <option value="all">全部标签</option>
                   <option value="message">消息</option>
+                  <option value="private_message">私聊消息</option>
                   <option value="join_request">加群申请</option>
                   <option value="group_increase">新成员入群</option>
                   <option value="poke">戳一戳</option>
@@ -203,6 +213,7 @@
               <div class="toolbar">
                 <select id="qq-simulator-event-type" aria-label="事件类型">
                   <option value="message">message 消息</option>
+                  <option value="private_message">private_message 私聊消息</option>
                   <option value="join_request">join_request 加群申请</option>
                   <option value="group_increase">group_increase 新成员入群</option>
                   <option value="poke">poke 戳一戳</option>

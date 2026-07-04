@@ -140,6 +140,22 @@ function getWebConsoleText() {
   return '已启用，未检测到运行端口';
 }
 
+function normalizePrivateAiAccessList(value = []) {
+  const items = Array.isArray(value)
+    ? value
+    : String(value || '').split(/\r?\n|[,，;；\s]+/);
+  return Array.from(new Set(items
+    .map(item => String(item || '').trim())
+    .filter(item => /^[1-9]\d{4,12}$/.test(item))));
+}
+
+function getPrivateAiAccessText(cfg = {}) {
+  const whitelistCount = normalizePrivateAiAccessList(cfg.privateAiWhitelist).length;
+  const blacklistCount = normalizePrivateAiAccessList(cfg.privateAiBlacklist).length;
+  if (whitelistCount <= 0 && blacklistCount <= 0) return '不限';
+  return `白${whitelistCount || '不限'} / 黑${blacklistCount}`;
+}
+
 function getConsoleWallpaperDataUrl() {
   const cacheFile = path.join(Path.root, 'temp', 'web-console-background', 'current-image.bin');
   const metaFile = path.join(Path.root, 'temp', 'web-console-background', 'current-image.json');
@@ -175,6 +191,7 @@ function getFeatureEntries() {
   return [
     ['AI', cfg.ai !== false],
     ['私聊AI', cfg.privateAi !== false],
+    [`私聊名单 ${getPrivateAiAccessText(cfg)}`, cfg.privateAi !== false],
     ['私聊安全', cfg.privateAiSafety?.enabled !== false],
     ['点歌', cfg.music !== false],
     ['RSS', cfg.rss !== false],

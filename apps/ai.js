@@ -197,6 +197,46 @@ function getPrivateAiCapabilities(config = {}) {
   };
 }
 
+function normalizePrivateAiAccessList(value = []) {
+  const items = Array.isArray(value)
+    ? value
+    : String(value || '').split(/\r?\n|[,，;；\s]+/);
+  return Array.from(new Set(items
+    .map(item => String(item || '').trim())
+    .filter(item => /^[1-9]\d{4,12}$/.test(item))));
+}
+
+function getPrivateAiAccessDecision(config = {}, e = {}) {
+  const userId = String(e?.user_id || '').trim();
+  if (!userId) {
+    return { allow: false, reason: '缺少用户 ID', replyText: '私聊 AI 暂不可用。' };
+  }
+  if (isMasterUser(e)) {
+    return { allow: true, reason: '主人绕过私聊名单限制' };
+  }
+  const blacklist = normalizePrivateAiAccessList(config.privateAiBlacklist);
+  if (blacklist.includes(userId)) {
+    return { allow: false, reason: '命中私聊 AI 手动黑名单', replyText: '你暂时没有使用私聊 AI 的权限。' };
+  }
+  const whitelist = normalizePrivateAiAccessList(config.privateAiWhitelist);
+  if (whitelist.length > 0 && !whitelist.includes(userId)) {
+    return { allow: false, reason: '不在私聊 AI 白名单', replyText: '你暂时没有使用私聊 AI 的权限。' };
+  }
+  return { allow: true, reason: whitelist.length > 0 ? '命中私聊 AI 白名单' : '私聊 AI 未限制用户范围' };
+}
+
+function isPrivateAiRoutableMessage(content = '', e = {}, directVoiceText = '') {
+  if (!isCommandPrefixedMessage(content)) return true;
+  return Boolean(
+    directVoiceText
+    || isPrivateVoiceModelCommand(content, e)
+    || parseSessionControlCommand(content)
+    || isChatHelpRequest(content)
+    || /^(#|\/)?重置(对话|会话)$/.test(content)
+    || /^(#|\/)?(查看)?会话状态([\s\S]*)?$/.test(content)
+  );
+}
+
 function isImageGenerationRequest(text) {
   const content = String(text || '').trim();
   if (!content) return false;
@@ -737,6 +777,7 @@ function buildFeatureToggleStatus(config = {}) {
     `- 私聊语音：${config.privateAiVoice === false ? '关闭' : '开启'}`,
     `- 私聊表情包：${config.privateAiMeme === false ? '关闭' : '开启'}`,
     `- 私聊联网与 Skills：${config.privateAiSkills === false ? '关闭' : '开启'}`,
+    `- 私聊名单：白名单 ${normalizePrivateAiAccessList(config.privateAiWhitelist).length || '不限'} / 黑名单 ${normalizePrivateAiAccessList(config.privateAiBlacklist).length}`,
     `- 私聊安全：${config.privateAiSafety?.enabled === false ? '关闭' : '开启'}`,
     `- 音乐：${config.music === false ? '关闭' : '开启'}`,
     `- 语音模型：${config.voiceModel === false ? '关闭' : '开启'}`,
@@ -2041,6 +2082,17 @@ export class crystelfAI extends plugin {
       const content = extractPlainTextFromEvent(e);
       const directVoiceText = parseDirectVoiceCommand(content);
       if (!content && !Array.isArray(e.message)) return false;
+      if (!isPrivateAiRoutableMessage(content, e, directVoiceText)) {
+        return false;
+      }
+      const accessDecision = getPrivateAiAccessDecision(featureConfig, e);
+      if (!accessDecision.allow) {
+        logger.info(`[crystelf-ai] 私聊AI访问被拒绝 user=${e.user_id}: ${accessDecision.reason}`);
+        if (accessDecision.replyText) {
+          await e.reply?.(accessDecision.replyText, true).catch(() => {});
+        }
+        return true;
+      }
       const safetyDecision = await evaluatePrivateAiSafety(e, content, config?.config?.privateAiSafety || {}, {
         aiConfig,
         masterIds: Array.isArray(cfg?.masterQQ) ? cfg.masterQQ : [],
@@ -2066,13 +2118,6 @@ export class crystelfAI extends plugin {
       const privateVoiceModelHandled = await this.handlePrivateVoiceModelCommand(e, content);
       if (privateVoiceModelHandled) {
         return true;
-      }
-      if (isCommandPrefixedMessage(content)) {
-        const allowedCommand = parseSessionControlCommand(content)
-          || isChatHelpRequest(content)
-          || /^(#|\/)?重置(对话|会话)$/.test(content)
-          || /^(#|\/)?(查看)?会话状态([\s\S]*)?$/.test(content);
-        if (!allowedCommand) return false;
       }
 
       const breaker = shouldCircuitBreakSync(usageControl, 'chat');

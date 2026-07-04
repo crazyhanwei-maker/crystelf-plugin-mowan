@@ -214,6 +214,10 @@
   min-width: 620px;
 }
 
+.performance-failure-table {
+  min-width: 920px;
+}
+
 .performance-table th,
 .performance-table td {
   padding: 11px 12px;

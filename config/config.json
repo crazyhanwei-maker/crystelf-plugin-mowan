@@ -25,6 +25,10 @@
   "privateAiMeme": true,
   "?privateAiSkills": "是否允许私聊 AI 使用联网搜索和 Skills 工具",
   "privateAiSkills": true,
+  "?privateAiWhitelist": "私聊 AI 用户白名单；留空表示不限制，黑名单优先，主人默认不受名单限制",
+  "privateAiWhitelist": [],
+  "?privateAiBlacklist": "私聊 AI 用户黑名单；命中后不进入私聊 AI 主流程",
+  "privateAiBlacklist": [],
   "?privateAiSafety": "私聊 AI 安全检查；默认不内置关键词，关键词请在控制台自行填写",
   "privateAiSafety": {
     "enabled": true,
