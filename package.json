@@ -7,9 +7,13 @@
   "scripts": {
     "check:encoding": "node ./scripts/check-encoding.mjs",
     "check:structure": "node ./scripts/check-structure.mjs",
+    "check:config": "node ./scripts/check-config-consistency.mjs",
     "check:js": "node ./scripts/check-webconsole-js.mjs",
+    "check:functional": "node ./scripts/check-functional-smoke.mjs",
+    "check:render": "node ./scripts/check-render-smoke.mjs",
     "check:webconsole": "node ./scripts/check-webconsole-smoke.mjs",
-    "check": "npm run check:encoding && npm run check:structure && npm run check:js"
+    "check:webconsole:visual": "node ./scripts/check-webconsole-visual.mjs",
+    "check": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js"
   },
   "repository": {
     "type": "git",

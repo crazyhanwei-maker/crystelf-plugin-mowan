@@ -114,6 +114,11 @@
   background: var(--soft-bg);
 }
 
+.performance-resource-card.tone-error {
+  border-color: var(--error-border);
+  background: var(--error-bg);
+}
+
 .performance-resource-head {
   display: flex;
   justify-content: space-between;

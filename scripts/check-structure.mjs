@@ -172,6 +172,25 @@ async function findForbiddenRuntimeReferences() {
   return hits;
 }
 
+async function findDirectPuppeteerRendererReferences() {
+  const files = await listTextFiles(root);
+  const hits = [];
+  const allowed = new Set(['lib/system/puppeteerRenderer.js']);
+
+  for (const file of files) {
+    const relativePath = path.relative(root, file).replace(/\\/g, '/');
+    if (allowed.has(relativePath)) {
+      continue;
+    }
+    const text = await fs.readFile(file, 'utf8');
+    if (/import\s+puppeteer\s+from\s+['"]puppeteer['"]/.test(text) || /\bpuppeteer\.launch\s*\(/.test(text)) {
+      hits.push(relativePath);
+    }
+  }
+
+  return hits;
+}
+
 async function main() {
   const pkg = JSON.parse(await readText('package.json'));
   addCheck('package name', pkg.name === 'crystelf-plugin', `name=${pkg.name}`);
@@ -1112,6 +1131,15 @@ async function main() {
     'EventSource',
     'addGroupManagementEventItems',
   ]));
+
+  const directPuppeteerRefs = await findDirectPuppeteerRendererReferences();
+  const sharedPuppeteerRenderer = await readText('lib/system/puppeteerRenderer.js');
+  addCheck('shared puppeteer renderer', directPuppeteerRefs.length === 0 && includesAll(sharedPuppeteerRenderer, [
+    'withPuppeteerPage',
+    'renderHtmlToImage',
+    'closeSharedPuppeteerBrowser',
+    'DEFAULT_MAX_CONCURRENT_PAGES',
+  ]), directPuppeteerRefs.join(', '));
 
   const failed = checks.filter(item => !item.ok);
   console.log(JSON.stringify({ ok: failed.length === 0, checks }, null, 2));
