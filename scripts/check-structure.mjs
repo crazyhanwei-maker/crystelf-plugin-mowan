@@ -519,6 +519,27 @@ async function main() {
     'buildGroupManagementPermissionState',
     'getGroupManagementConfigState',
   ]));
+  const groupManagementRuleDebugger = await readText('lib/webConsole/groupManagementRuleDebugger.js');
+  const groupManagementRuleDebugJs = await readText('lib/webConsole/public/group-management-rule-debug.js');
+  const groupManagementHtml = await readText('lib/webConsole/public/group-management.html');
+  addCheck('group management rule debugger', includesAll(webConsoleSurface, [
+    'createGroupManagementRuleDebugger',
+    'buildGroupManagementRuleDebugPayload',
+  ]) && includesAll(groupManagementRoutes, [
+    '/api/group-management/rule-debug',
+    'buildGroupManagementRuleDebugPayload',
+  ]) && includesAll(groupManagementRuleDebugger, [
+    'createGroupManagementRuleDebugger',
+    'evaluateMessageRules',
+    'evaluateJoinRules',
+    'evaluateTitleRules',
+  ]) && includesAll(groupManagementHtml, [
+    'group-management-rule-debug.js',
+  ]) && includesAll(groupManagementRuleDebugJs, [
+    'renderRuleDebuggerPanel',
+    'buildRuleDebugDraftPayload',
+    '/api/group-management/rule-debug',
+  ]));
   const imageMonitorConsole = await readText('lib/webConsole/imageMonitorConsole.js');
   addCheck('image monitor console module', includesAll(webConsoleSurface, [
     'createImageMonitorConsole',
@@ -607,8 +628,8 @@ async function main() {
     'buildAuditHealthCard',
   ]) && includesAll(dashboardAppJs, [
     '/api/logs/audit?pageSize=1',
-    'renderConsoleHealthOverview(overview, health, null, auditLogs)',
-    'renderConsoleHealthOverview(overview, health, result, auditLogs)',
+    'renderConsoleHealthOverview(overview, health, null, auditLogs, performance)',
+    'renderConsoleHealthOverview(overview, health, result, auditLogs, performance)',
   ]) && includesAll(dashboardCss, [
     'console-health-overview-grid',
     'console-health-card',
@@ -717,6 +738,8 @@ async function main() {
     'WEB_CONSOLE_REQUEST_BODY_MAX_BYTES',
     'WEB_CONSOLE_AUDIT_LOG_FILE',
     'FILE_BROWSER_TEXT_EXTENSIONS',
+    'SEARCH_DEBUG_LOG_FILE',
+    'API_QUALITY_LOG_FILE',
     'PUBLIC_DIR',
     'QQ_SIMULATOR_ADAPTER_FORMATS',
   ]) && includesAll(webConsoleConstants, [
@@ -724,6 +747,85 @@ async function main() {
     'IMAGE_MONITOR_REVIEW_LOG',
     'GROUP_WELCOME_IMAGE_CONTENT_TYPES',
     'FILE_BROWSER_TEXT_EXTENSIONS',
+  ]));
+  const apiQualityLogger = await readText('lib/ai/apiQualityLogger.js');
+  const apiCircuitBreaker = await readText('lib/ai/apiCircuitBreaker.js');
+  const aiCaller = await readText('lib/ai/aiCaller.js');
+  const memeCore = await readText('lib/core/meme.js');
+  const ttsRegistry = await readText('lib/ai/ttsRegistry.js');
+  addCheck('external api quality logger', includesAll(apiQualityLogger, [
+    'logExternalApiUsage',
+    'getApiQualityLogRetentionStatus',
+    'API_QUALITY_MAX_BYTES',
+    'rotateApiQualityLogIfNeeded',
+    'api_type',
+    'api_role',
+    'elapsed_ms',
+  ]) && includesAll(webConsoleConstants, [
+    'API_QUALITY_LOG_FILE',
+    'api-quality.log',
+  ]) && includesAll(memeCore, [
+    'logExternalApiUsage',
+    'meme_random',
+    'meme_characters',
+  ]) && includesAll(ttsRegistry, [
+    'logExternalApiUsage',
+    'tts_synthesis',
+    'tts_models',
+  ]));
+  addCheck('api fallback circuit breaker', includesAll(apiCircuitBreaker, [
+    'shouldPreferFallbackApi',
+    'recordPrimaryApiFailure',
+    'recordFallbackApiSuccess',
+    'getApiCircuitBreakerSnapshot',
+    'failureThreshold',
+    'cooldownMs',
+  ]) && includesAll(aiCaller, [
+    'shouldPreferFallbackApi',
+    'recordPrimaryApiFailure',
+    'recordFallbackApiSuccess',
+    '主接口处于冷却期',
+  ]));
+  const performanceConsole = await readText('lib/webConsole/performanceConsole.js');
+  const performancePageHtml = await readText('lib/webConsole/public/performance.html');
+  const performancePageJs = await readText('lib/webConsole/public/performance.js');
+  addCheck('performance api fallback quality panel', includesAll(performanceConsole, [
+    'searchDebugLogFile',
+    'apiQualityLogFile',
+    'buildApiQualityStats',
+    'buildApiQualityAlerts',
+    'buildDailyApiQualityTrend',
+    'buildApiFailureDiagnosis',
+    'getApiCircuitBreakerSnapshot',
+    'getApiQualityLogRetentionStatus',
+    'apiQuality',
+    'normalizeSearchEntries',
+    'normalizeApiQualityEntries',
+    'URL 安全检查 API',
+    '语音合成 API',
+  ]) && includesAll(performancePageHtml, [
+    'API 主备质量',
+    'performance-api-quality-alerts',
+    'performance-api-quality-summary',
+    'performance-api-quality-retention',
+    'performance-api-quality-trend',
+    'performance-api-failure-diagnosis',
+    'performance-api-circuit-breaker',
+    'performance-api-fallback-events',
+  ]) && includesAll(performancePageJs, [
+    'renderApiQuality',
+    'formatApiQualityAlertStatus',
+    'formatCircuitStatus',
+    'performance-api-quality-table',
+    'performance-api-role',
+  ]) && includesAll(dashboardHealthJs, [
+    'buildApiQualityHealthCard',
+    '主备切换',
+    'API 质量',
+    '/performance.html',
+  ]) && includesAll(dashboardAppJs, [
+    "fetchJsonSafe('/api/performance?slowThresholdMs=10000'",
+    'renderConsoleHealthOverview(overview, health, null, auditLogs, performance)',
   ]));
   const webConsoleRuntime = await readText('lib/webConsole/webConsoleRuntime.js');
   addCheck('web console runtime module', includesAll(webConsoleSurface, [

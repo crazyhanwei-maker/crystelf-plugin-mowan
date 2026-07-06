@@ -559,6 +559,87 @@ button.group-management-group-item.active {
   background: var(--soft-bg);
 }
 
+.group-management-rule-debug-block {
+  grid-column: 1 / -1;
+}
+
+.group-management-rule-debug-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  align-items: start;
+}
+
+.group-management-rule-debug-wide {
+  grid-column: span 2;
+}
+
+.group-management-rule-debug-switch {
+  margin-top: 0;
+}
+
+.group-management-rule-debug-actions {
+  margin-top: 12px;
+}
+
+.group-management-rule-debug-result {
+  margin-top: 12px;
+}
+
+.group-management-rule-debug-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-rule-debug-card.tone-success {
+  border-left-color: #22c55e;
+}
+
+.group-management-rule-debug-card.tone-warning {
+  border-left-color: #f59e0b;
+}
+
+.group-management-rule-debug-card.tone-error {
+  border-left-color: #ef4444;
+}
+
+.group-management-rule-debug-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.group-management-rule-debug-head strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.group-management-rule-debug-section {
+  display: grid;
+  gap: 6px;
+}
+
+.group-management-rule-debug-section h5 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.group-management-rule-debug-section ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--soft-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .group-management-switch {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -855,5 +936,15 @@ button.group-management-group-item.active {
   .group-management-backup-item {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .group-management-rule-debug-form,
+  .group-management-rule-debug-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .group-management-rule-debug-wide {
+    grid-column: auto;
   }
 }
