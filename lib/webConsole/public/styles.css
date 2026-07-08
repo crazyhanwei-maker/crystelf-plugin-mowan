@@ -65,6 +65,12 @@ body {
   color: var(--text);
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body.is-resizing-file-browser {
   cursor: col-resize;
   user-select: none;
@@ -5754,14 +5760,63 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
 @media (max-width: 900px) {
   .console-app-shell {
     display: block;
-    padding: 12px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(18px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .page {
+    width: 100%;
+    max-width: none;
+    padding: 18px 12px 30px;
+  }
+
+  .panel,
+  .card,
+  .detail-box,
+  .chart-box,
+  pre {
+    max-width: 100%;
+  }
+
+  .section-head,
+  .dashboard-entry-card,
+  .console-auth-row,
+  .kv-head,
+  .preview-head {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .section-head .actions,
+  .dashboard-entry-card .actions,
+  .console-auth-row .actions,
+  .toolbar,
+  .actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: stretch;
+  }
+
+  .toolbar > *,
+  .actions > *,
+  .section-head .actions > *,
+  .dashboard-entry-card .actions > * {
+    flex: 1 1 180px;
+    min-width: min(100%, 180px);
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
   }
 
   .console-sidebar {
     position: fixed;
     left: 12px;
-    top: 84px;
-    bottom: 12px;
+    top: calc(76px + env(safe-area-inset-top, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
     z-index: 80;
     width: min(320px, calc(100vw - 24px));
     height: auto;
@@ -5823,8 +5878,12 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   }
 
   .console-topbar {
-    top: 12px;
+    top: max(10px, env(safe-area-inset-top, 0px));
     margin-bottom: 14px;
+    min-height: 54px;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 16px;
   }
 
   .console-app-shell .hero:not(:has(.hero-action-group-data)) {
@@ -5857,9 +5916,10 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
 
   .console-app-shell .plugin-catalog-layout #plugin-catalog-list,
   .plugin-catalog-layout #plugin-catalog-list {
-    max-height: none;
-    overflow: visible;
+    max-height: 55vh;
+    overflow: auto;
     padding-right: 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   .plugin-catalog-list-search {
@@ -5871,15 +5931,65 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     flex: 1 1 auto;
     width: 100%;
   }
+
+  .console-app-shell .panel {
+    padding: 16px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+
+  .console-app-shell .hero,
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+    line-height: 1.15;
+  }
+
+  .hero-actions-shell,
+  .hero-actions-grid {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-actions-grid > button,
+  .hero-actions-grid > .link-btn {
+    width: 100%;
+    min-height: 42px;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
 }
 
 @media (max-width: 560px) {
   .console-app-shell {
-    padding: 8px;
+    padding: max(8px, env(safe-area-inset-top, 0px)) 8px max(14px, env(safe-area-inset-bottom, 0px));
   }
 
   .console-topbar {
     grid-template-columns: auto minmax(0, 1fr) auto;
+    min-height: 50px;
+    margin-bottom: 10px;
+  }
+
+  .console-topbar-title strong {
+    font-size: 14px;
+  }
+
+  .console-topbar-eyebrow {
+    font-size: 10px;
   }
 
   .console-topbar-status {
@@ -5892,6 +6002,64 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
 
   .console-app-shell .hero {
     border-radius: 18px;
+    padding: 15px;
+  }
+
+  .hero h1 {
+    font-size: 25px;
+  }
+
+  .hero p,
+  .setting-help,
+  .setting-status {
+    line-height: 1.55;
+  }
+
+  .panel,
+  .card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .hero-actions-grid,
+  .toolbar,
+  .actions,
+  .section-head .actions,
+  .dashboard-entry-card .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar > *,
+  .actions > *,
+  .section-head .actions > *,
+  .dashboard-entry-card .actions > * {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  button,
+  .link-btn,
+  .mini-btn,
+  .console-app-shell button,
+  .console-app-shell .link-btn {
+    min-height: 42px;
+    width: 100%;
+    padding: 10px 12px;
+  }
+
+  .console-sidebar {
+    left: 8px;
+    width: calc(100vw - 16px);
+  }
+
+  .modal-mask {
+    padding: 10px;
+  }
+
+  .modal-card {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    overflow: auto;
   }
 
   .console-theme-segmented {

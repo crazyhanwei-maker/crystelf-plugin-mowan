@@ -887,3 +887,75 @@
     border-radius: 16px;
   }
 }
+
+@media (max-width: 760px) {
+  .api-settings-container {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .api-settings-nav {
+    position: sticky;
+    top: 66px;
+    z-index: 12;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin: 0 -2px;
+    padding: 6px 2px 8px;
+    overflow-x: auto;
+    background: var(--bg);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .api-settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .api-settings-nav-btn {
+    flex: 0 0 auto;
+    min-width: 128px;
+    min-height: 40px;
+    padding: 9px 11px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .api-settings-section {
+    scroll-margin-top: 126px;
+  }
+
+  .api-settings-subgroup-head,
+  .api-settings-unsaved,
+  .api-target-test-result-row,
+  .api-target-test-result-rows {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .api-settings-subgroup .settings-grid,
+  .fallback-api-grid,
+  .api-settings-group-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .api-settings-page .hero > .actions > button,
+  .api-settings-page .hero > .actions > .link-btn,
+  .api-settings-page .actions > button,
+  .api-settings-page .actions > .link-btn {
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 420px) {
+  .api-settings-nav-btn {
+    min-width: 116px;
+    font-size: 12px;
+  }
+
+  .api-settings-section .section-header h2,
+  .api-settings-subgroup-head h3 {
+    font-size: 15px;
+  }
+}

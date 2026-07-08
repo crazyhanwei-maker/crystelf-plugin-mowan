@@ -829,3 +829,43 @@
     display: grid;
   }
 }
+
+@media (max-width: 560px) {
+  .performance-toolbar,
+  .performance-actions,
+  .performance-threshold-control,
+  .performance-api-diagnosis-actions,
+  .performance-api-circuit-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .performance-toolbar > *,
+  .performance-actions > *,
+  .performance-api-diagnosis-actions > *,
+  .performance-api-circuit-actions > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .performance-api-trend-row,
+  .performance-trend-row,
+  .performance-api-circuit-card,
+  .performance-slow-row {
+    grid-template-columns: 1fr;
+  }
+
+  .performance-api-trend-row > small,
+  .performance-trend-row > small {
+    grid-column: auto;
+  }
+
+  .performance-kpi-card,
+  .performance-api-quality-card,
+  .performance-api-circuit-card,
+  .performance-slow-row {
+    padding: 12px;
+    border-radius: 14px;
+  }
+}

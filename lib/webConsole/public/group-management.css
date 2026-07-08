@@ -119,6 +119,35 @@
   margin-bottom: 18px;
 }
 
+.group-management-collapse-head {
+  align-items: flex-start;
+}
+
+.group-management-fold-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.group-management-collapse-toggle {
+  flex: 0 0 auto;
+  min-width: 64px;
+}
+
+.group-management-collapsible.is-collapsed > :not(.section-head):not(.group-management-fold-head):not(.group-management-block-head):not(.group-management-members-head) {
+  display: none !important;
+}
+
+.group-management-collapsible-block.is-collapsed {
+  padding-bottom: 12px;
+}
+
+.group-management-collapsible.is-collapsed {
+  overflow: hidden;
+}
+
 .group-management-health {
   display: grid;
   gap: 14px;
@@ -946,5 +975,76 @@ button.group-management-group-item.active {
 
   .group-management-rule-debug-wide {
     grid-column: auto;
+  }
+
+  .group-management-fold-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .group-management-page .dashboard-strip,
+  .group-management-dashboard-strip,
+  .group-management-detail-grid,
+  .group-management-settings-grid,
+  .group-management-defaults-grid,
+  .group-management-url-safety-grid,
+  .group-management-rule-debug-result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-management-list {
+    max-height: min(48vh, 430px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .group-management-group-main,
+  .group-management-detail-head,
+  .group-management-block-head,
+  .group-management-event-line,
+  .group-management-join-request-main,
+  .group-management-log-head,
+  .group-management-members-head,
+  .group-management-member-item,
+  .group-management-title-request-row,
+  .group-management-warning-row {
+    grid-template-columns: 1fr;
+  }
+
+  .group-management-detail-actions,
+  .group-management-block-actions,
+  .group-management-template-actions,
+  .group-management-bulk-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .group-management-detail-actions > *,
+  .group-management-block-actions > *,
+  .group-management-template-actions > *,
+  .group-management-bulk-actions > * {
+    width: 100%;
+  }
+
+  .group-management-collapse-toggle {
+    width: auto;
+    min-height: 34px;
+    justify-self: end;
+  }
+}
+
+@media (max-width: 520px) {
+  .group-management-group-item,
+  .group-management-content-block,
+  .group-management-effective-block,
+  .group-management-moderation-block,
+  .group-management-event-line,
+  .group-management-join-request-item,
+  .group-management-member-item {
+    padding: 12px;
+    border-radius: 14px;
   }
 }

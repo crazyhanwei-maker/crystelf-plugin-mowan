@@ -1825,6 +1825,91 @@
   }
 }
 
+@media (max-width: 760px) {
+  .dashboard-page .console-health-overview-grid,
+  .dashboard-page #overview-cards.dashboard-cards,
+  .dashboard-page .dashboard-health-summary,
+  .dashboard-page .panel-two,
+  .request-timing-row,
+  .frontend-error-row,
+  .page-load-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .hero-copy {
+    min-height: 0;
+  }
+
+  .dashboard-page .hero-actions-shell,
+  .dashboard-page .hero-action-group,
+  .dashboard-page .hero-actions-grid {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dashboard-page .overview-card {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .dashboard-page .overview-card-span-3,
+  .dashboard-page .overview-card-span-4,
+  .dashboard-page .overview-card-span-12 {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-page .overview-card .value {
+    font-size: 32px;
+  }
+
+  .dashboard-page .overview-card-value-text {
+    font-size: 23px;
+  }
+
+  .operation-task-output-line,
+  .operation-task-timeline-row {
+    grid-template-columns: 1fr;
+  }
+
+  .operation-task-output-line span {
+    justify-content: flex-start;
+    width: fit-content;
+  }
+
+  .console-page-check-summary,
+  .console-page-check-row {
+    grid-template-columns: 1fr;
+  }
+
+  .console-page-check-summary-stats,
+  .console-page-check-row-side,
+  .request-timing-row-side,
+  .frontend-error-row-side {
+    justify-items: start;
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-page .hero h1 {
+    font-size: 24px;
+  }
+
+  .dashboard-page .dashboard-strip-value,
+  .operation-task-summary-item strong,
+  .public-security-stat strong {
+    font-size: 20px;
+  }
+
+  .operation-task-item,
+  .public-security-detail,
+  .console-health-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+}
+
 /* Mobile UX polish */
 .dashboard-page #plugin-meta > span:first-child {
   min-width: 0;

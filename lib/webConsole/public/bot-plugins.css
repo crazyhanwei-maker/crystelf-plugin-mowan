@@ -537,3 +537,78 @@
   margin: 0;
   font-size: 15px;
 }
+
+@media (max-width: 900px) {
+  .bot-plugins-toolbar-card,
+  .plugin-catalog-toolbar-card,
+  .bot-plugins-layout,
+  .plugin-catalog-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bot-plugins-toolbar,
+  .plugin-catalog-toolbar,
+  .plugin-catalog-list-search {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .bot-plugins-toolbar input,
+  .bot-plugins-toolbar select,
+  .plugin-catalog-toolbar input,
+  .plugin-catalog-toolbar select,
+  .plugin-catalog-list-search input {
+    width: 100%;
+    min-width: 0;
+    flex-basis: auto;
+  }
+
+  .plugin-catalog-layout #plugin-catalog-list,
+  .plugin-catalog-layout .plugin-catalog-detail-panel {
+    max-height: min(58vh, 520px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bot-plugin-card-head,
+  .plugin-catalog-item-head,
+  .plugin-catalog-detail-head,
+  .plugin-catalog-install-head,
+  .plugin-catalog-task-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .bot-plugin-detail-actions,
+  .plugin-catalog-install-actions,
+  .plugin-catalog-task-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .bot-plugin-detail-actions > *,
+  .plugin-catalog-install-actions > *,
+  .plugin-catalog-task-actions > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .bot-plugin-summary-card,
+  .bot-plugin-card,
+  .plugin-catalog-item,
+  .plugin-catalog-detail-panel,
+  .bot-plugins-detail-panel {
+    padding: 13px;
+    border-radius: 14px;
+  }
+
+  .bot-plugin-card-meta,
+  .plugin-catalog-item-meta,
+  .plugin-catalog-detail-meta {
+    gap: 6px;
+  }
+}
