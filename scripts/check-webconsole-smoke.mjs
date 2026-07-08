@@ -1,20 +1,19 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 
 const root = process.cwd();
 const defaultConfigPath = path.join(root, 'config', 'config.json');
-const runtimeConfigPath = path.join(
-  process.env.CRYSTELF_DATA_DIR ? path.resolve(process.env.CRYSTELF_DATA_DIR) : path.resolve(root, '..', '..', 'data', 'crystelf'),
-  'config.json',
-);
 const requestTimeoutMs = Math.max(1000, Number(process.env.WEB_CONSOLE_SMOKE_TIMEOUT_MS || 8000) || 8000);
 const cookieJar = new Map();
+let csrfToken = '';
 
 const protectedPages = [
   { path: '/index.html', text: '魔丸控制台' },
   { path: '/dependency-check.html', text: '依赖健康面板' },
   { path: '/file-browser.html', text: '文件浏览编辑器' },
   { path: '/plugin-settings.html', text: '插件设置中心' },
+  { path: '/config-diagnostics.html', text: '配置来源诊断' },
   { path: '/bot-plugins.html', text: '机器人插件管理' },
   { path: '/group-management.html', text: '群管理' },
   { path: '/qq-simulator.html', text: '模拟调试' },
@@ -41,6 +40,34 @@ const apiChecks = [
     label: '任务中心',
     validate: data => data?.success === true && Array.isArray(data?.tasks),
   },
+  {
+    path: '/api/config/diagnostics',
+    label: '配置来源诊断',
+    validate: data => data?.success === true
+      && data?.data?.summary
+      && Array.isArray(data?.data?.allFiles)
+      && Array.isArray(data?.data?.effectiveFields),
+  },
+  {
+    path: '/api/api-settings/test-target',
+    label: 'API 单项草稿测试',
+    method: 'POST',
+    body: {
+      target: 'ai-main',
+      role: 'fallback',
+      payload: {
+        ai: {
+          fallbackApi: {
+            enabled: false,
+          },
+        },
+      },
+    },
+    validate: data => data?.target === 'ai-main'
+      && data?.role === 'fallback'
+      && data?.configSource === 'draft'
+      && typeof data?.error === 'string',
+  },
 ];
 
 function logPass(message) {
@@ -63,10 +90,17 @@ async function readJsonFile(filePath) {
   }
 }
 
+function getRuntimeConfigPath() {
+  return path.join(
+    process.env.CRYSTELF_DATA_DIR ? path.resolve(process.env.CRYSTELF_DATA_DIR) : path.resolve(root, '..', '..', 'data', 'crystelf'),
+    'config.json',
+  );
+}
+
 async function readLocalConfig() {
   return {
     ...((await readJsonFile(defaultConfigPath)) || {}),
-    ...((await readJsonFile(runtimeConfigPath)) || {}),
+    ...((await readJsonFile(getRuntimeConfigPath())) || {}),
   };
 }
 
@@ -146,6 +180,9 @@ async function request(baseUrl, pathname, options = {}) {
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
     headers.Origin = baseUrl.origin;
     headers.Referer = new URL('/login.html', baseUrl).href;
+    if (csrfToken) {
+      headers['X-Crystelf-CSRF'] = csrfToken;
+    }
   }
 
   const response = await fetch(url, {
@@ -209,16 +246,85 @@ async function login(baseUrl, token) {
   if (data?.authorized !== true) {
     fail('/api/auth/login 没有返回已登录状态');
   }
+  csrfToken = String(data.csrfToken || '').trim();
   logPass('控制台登录成功');
 }
 
 async function checkApi(baseUrl, check) {
-  const response = await request(baseUrl, check.path, { accept: 'application/json' });
+  const requestOptions = { accept: 'application/json' };
+  if (check.method) {
+    requestOptions.method = check.method;
+  }
+  if (check.body !== undefined) {
+    requestOptions.headers = { 'Content-Type': 'application/json; charset=utf-8' };
+    requestOptions.body = JSON.stringify(check.body);
+  }
+  const response = await request(baseUrl, check.path, requestOptions);
   const data = await readJsonResponse(response, check.path);
   if (!check.validate(data)) {
     fail(`${check.path} 返回结构不符合预期`);
   }
   logPass(`${check.label}接口正常`);
+}
+
+function getIsolatedSmokeToken() {
+  return String(process.env.WEB_CONSOLE_SMOKE_TOKEN || 'crystelf-smoke-token').trim();
+}
+
+async function startIsolatedWebConsole() {
+  const dataDir = await fs.mkdtemp(path.join(os.tmpdir(), 'crystelf-webconsole-smoke-'));
+  const token = getIsolatedSmokeToken();
+  const preferredPort = Math.min(65535, Math.max(1, Number(process.env.WEB_CONSOLE_SMOKE_PORT || 27991) || 27991));
+  await fs.writeFile(path.join(dataDir, 'config.json'), `${JSON.stringify({
+    webConsole: true,
+    webConsoleToken: token,
+    webConsoleReadOnly: false,
+    webConsoleHost: '127.0.0.1',
+    webConsolePort: preferredPort,
+    webConsolePortAutoIncrement: true,
+  }, null, 2)}\n`, 'utf8');
+
+  process.env.CRYSTELF_DATA_DIR = dataDir;
+  globalThis.logger = {
+    info: (...args) => console.log('[info]', ...args),
+    warn: (...args) => console.log('[warn]', ...args),
+    error: (...args) => console.error('[error]', ...args),
+    mark: (...args) => console.log('[mark]', ...args),
+  };
+
+  const ConfigControl = (await import('../lib/config/configControl.js')).default;
+  const { startWebConsole, stopWebConsole } = await import('../lib/webConsole/server.js');
+  await ConfigControl.init();
+  const info = await startWebConsole();
+  if (!info?.url) {
+    throw new Error('隔离控制台启动失败，没有返回访问地址');
+  }
+  return {
+    baseUrl: normalizeBaseUrl(info.url),
+    token,
+    dataDir,
+    ConfigControl,
+    stopWebConsole,
+  };
+}
+
+async function cleanupIsolatedWebConsole(isolated) {
+  if (!isolated) return;
+  try {
+    await isolated.stopWebConsole?.();
+  } catch (error) {
+    logSkip(`隔离控制台关闭失败：${error.message}`);
+  }
+  try {
+    isolated.ConfigControl?.closeWatchers?.();
+  } catch (error) {
+    logSkip(`配置 watcher 关闭失败：${error.message}`);
+  }
+  try {
+    await fs.rm(isolated.dataDir, { recursive: true, force: true });
+  } catch (error) {
+    logSkip(`临时目录清理失败：${error.message}`);
+  }
 }
 
 async function checkProtectedPages(baseUrl) {
@@ -241,12 +347,7 @@ async function checkProtectedPages(baseUrl) {
   logPass(`静态资源可访问：${resources.size} 个`);
 }
 
-async function main() {
-  const config = await readLocalConfig();
-  const configuredPort = Math.min(65535, Math.max(1, Number(config.webConsolePort || 27891) || 27891));
-  const defaultBase = `http://${formatHostForUrl(config.webConsoleHost || '127.0.0.1')}:${configuredPort}/`;
-  const baseUrl = normalizeBaseUrl(process.env.WEB_CONSOLE_SMOKE_URL || process.env.WEB_CONSOLE_URL || defaultBase);
-  const token = getSmokeToken(config);
+async function runSmokeChecks(baseUrl, token) {
 
   console.log(`控制台 smoke test：${baseUrl.origin}`);
 
@@ -260,6 +361,7 @@ async function main() {
 
     const response = await request(baseUrl, '/api/auth/status', { accept: 'application/json' });
     authStatus = await readJsonResponse(response, '/api/auth/status');
+    csrfToken = String(authStatus?.csrfToken || '').trim();
     logPass('登录状态接口可访问');
   } catch (error) {
     fail(`控制台连接失败：${error.message}。请确认控制台已启动，或通过 WEB_CONSOLE_SMOKE_URL 指定地址。`);
@@ -289,7 +391,27 @@ async function main() {
   console.log('控制台 smoke test 通过');
 }
 
-main().catch(error => {
-  console.error(error?.message || error);
-  process.exit(1);
-});
+async function main() {
+  const externalUrl = process.env.WEB_CONSOLE_SMOKE_URL || process.env.WEB_CONSOLE_URL || '';
+  let isolated = null;
+  try {
+    if (externalUrl) {
+      const config = await readLocalConfig();
+      const baseUrl = normalizeBaseUrl(externalUrl);
+      await runSmokeChecks(baseUrl, getSmokeToken(config));
+      return;
+    }
+
+    isolated = await startIsolatedWebConsole();
+    await runSmokeChecks(isolated.baseUrl, isolated.token);
+  } finally {
+    await cleanupIsolatedWebConsole(isolated);
+  }
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch(error => {
+    console.error(error?.message || error);
+    process.exit(1);
+  });

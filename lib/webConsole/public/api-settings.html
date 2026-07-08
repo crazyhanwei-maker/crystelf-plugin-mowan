@@ -19,6 +19,7 @@
         <button id="api-settings-save-btn">保存 API 配置</button>
         <button id="api-settings-test-btn">测试主 API</button>
         <button id="api-settings-batch-test-btn">批量测试全部</button>
+        <a class="link-btn" href="/config-diagnostics.html">配置诊断</a>
         <a class="link-btn" href="/">返回首页</a>
       </div>
     </header>
@@ -35,6 +36,7 @@
       <div class="api-settings-content">
         <div id="api-settings-risk" class="risk-box hidden"></div>
         <div id="api-settings-success" class="success-box hidden"></div>
+        <div id="api-settings-unsaved" class="api-settings-unsaved hidden"></div>
 
         <section id="api-settings-overview" class="panel api-settings-overview-panel">
           <div class="section-header">
@@ -58,7 +60,7 @@
           <div class="batch-test-head">
             <div>
               <h3>批量测试结果</h3>
-              <p id="batch-test-meta" class="section-desc">尚未开始批量测试。</p>
+              <p id="batch-test-meta" class="section-desc">尚未开始批量测试；测试会使用当前页面草稿，不会自动保存配置。</p>
             </div>
             <div class="batch-test-actions">
               <button id="api-settings-export-batch-report-btn" class="mini-btn" disabled>导出测试报告</button>
@@ -69,6 +71,26 @@
           </div>
           <div id="batch-test-list"></div>
         </div>
+
+        <section class="panel api-target-test-panel">
+          <div class="section-header">
+            <h3>单项连通性测试</h3>
+            <p class="section-desc">可分别测试主接口和备用接口，测试会使用当前页面草稿，适合保存前确认哪条线路可用。</p>
+          </div>
+          <div class="api-target-test-grid">
+            <button class="mini-btn" data-api-test-target="ai-main" data-api-test-role="primary">AI 主对话 · 主接口</button>
+            <button class="mini-btn" data-api-test-target="ai-main" data-api-test-role="fallback">AI 主对话 · 备用接口</button>
+            <button class="mini-btn" data-api-test-target="ai-image" data-api-test-role="primary">图像生成 · 主接口</button>
+            <button class="mini-btn" data-api-test-target="ai-image" data-api-test-role="fallback">图像生成 · 备用接口</button>
+            <button class="mini-btn" data-api-test-target="image-monitor" data-api-test-role="primary">图片监控 · 主接口</button>
+            <button class="mini-btn" data-api-test-target="image-monitor" data-api-test-role="fallback">图片监控 · 备用接口</button>
+            <button class="mini-btn" data-api-test-target="search" data-api-test-role="primary">搜索工具 · 主接口</button>
+            <button class="mini-btn" data-api-test-target="search" data-api-test-role="fallback">搜索工具 · 备用接口</button>
+            <button class="mini-btn" data-api-test-target="meme" data-api-test-role="primary">表情包 · 主接口</button>
+            <button class="mini-btn" data-api-test-target="meme" data-api-test-role="fallback">表情包 · 备用接口</button>
+          </div>
+          <div id="api-target-test-results" class="api-target-test-results">尚未执行单项测试。</div>
+        </section>
 
         <!-- AI 主对话 -->
         <section id="section-ai-main" class="api-settings-section">
@@ -177,6 +199,21 @@
                   <div class="kv-label">备用多模态模型</div>
                   <input type="text" id="ai-fallback-multimodalModel" placeholder="gpt-4o-mini" />
                   <div class="setting-help">备用图片理解模型。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">自动主备切换</div>
+                  <button class="plugin-settings-switch" id="ai-fallback-autoSwitchEnabled">已开启</button>
+                  <div class="setting-help">主接口连续失败后，短时间优先使用备用 API；冷却结束后自动试探主接口。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">连续失败次数</div>
+                  <input type="number" id="ai-fallback-failureThreshold" min="1" max="10" step="1" placeholder="2" />
+                  <div class="setting-help">主接口连续失败达到该次数后进入备用优先。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">冷却时间（毫秒）</div>
+                  <input type="number" id="ai-fallback-cooldownMs" min="30000" max="1800000" step="30000" placeholder="300000" />
+                  <div class="setting-help">进入备用优先后持续多久；默认 5 分钟。</div>
                 </div>
               </div>
             </section>
@@ -349,6 +386,21 @@
                   </form>
                   <div class="setting-help">备用生图服务密钥；留空会保持已保存密钥。</div>
                 </div>
+                <div class="setting-item">
+                  <div class="kv-label">自动主备切换</div>
+                  <button class="plugin-settings-switch" id="image-fallback-autoSwitchEnabled">已开启</button>
+                  <div class="setting-help">生图主接口连续失败后优先走备用生图服务。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">连续失败次数</div>
+                  <input type="number" id="image-fallback-failureThreshold" min="1" max="10" step="1" placeholder="2" />
+                  <div class="setting-help">失败达到该次数后触发备用优先。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">冷却时间（毫秒）</div>
+                  <input type="number" id="image-fallback-cooldownMs" min="30000" max="1800000" step="30000" placeholder="300000" />
+                  <div class="setting-help">冷却结束后会重新尝试主生图接口。</div>
+                </div>
               </div>
             </section>
           </div>
@@ -451,6 +503,21 @@
                   <div class="kv-label">备用审核模型</div>
                   <input type="text" id="imageMonitor-fallback-model" placeholder="gpt-4o-mini" />
                   <div class="setting-help">备用图片识别模型名称。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">自动主备切换</div>
+                  <button class="plugin-settings-switch" id="imageMonitor-fallback-autoSwitchEnabled">已开启</button>
+                  <div class="setting-help">图片识别主接口连续失败后优先走备用识别接口。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">连续失败次数</div>
+                  <input type="number" id="imageMonitor-fallback-failureThreshold" min="1" max="10" step="1" placeholder="2" />
+                  <div class="setting-help">失败达到该次数后触发备用优先。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">冷却时间（毫秒）</div>
+                  <input type="number" id="imageMonitor-fallback-cooldownMs" min="30000" max="1800000" step="30000" placeholder="300000" />
+                  <div class="setting-help">冷却结束后会重新尝试主识别接口。</div>
                 </div>
               </div>
             </section>
@@ -651,6 +718,21 @@
                   <input type="text" id="search-fallback-markdownStatusUrl" placeholder="https://backup.example.com/tomarkdown/async" />
                   <div class="setting-help">备用网页读取状态查询地址。</div>
                 </div>
+                <div class="setting-item">
+                  <div class="kv-label">自动主备切换</div>
+                  <button class="plugin-settings-switch" id="search-fallback-autoSwitchEnabled">已开启</button>
+                  <div class="setting-help">搜索或网页读取主接口连续失败后优先走备用接口。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">连续失败次数</div>
+                  <input type="number" id="search-fallback-failureThreshold" min="1" max="10" step="1" placeholder="2" />
+                  <div class="setting-help">失败达到该次数后触发备用优先。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">冷却时间（毫秒）</div>
+                  <input type="number" id="search-fallback-cooldownMs" min="30000" max="1800000" step="30000" placeholder="300000" />
+                  <div class="setting-help">冷却结束后会重新尝试主搜索/网页读取接口。</div>
+                </div>
               </div>
             </section>
           </div>
@@ -685,6 +767,21 @@
                   <div class="kv-label">备用表情包 API 地址</div>
                   <input type="text" id="meme-fallback-apiBase" placeholder="http://backup.example.com:5555" />
                   <div class="setting-help">备用远程表情包服务地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">自动主备切换</div>
+                  <button class="plugin-settings-switch" id="meme-fallback-autoSwitchEnabled">已开启</button>
+                  <div class="setting-help">远程主表情服务连续失败后优先探测备用地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">连续失败次数</div>
+                  <input type="number" id="meme-fallback-failureThreshold" min="1" max="10" step="1" placeholder="2" />
+                  <div class="setting-help">失败达到该次数后触发备用优先。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">冷却时间（毫秒）</div>
+                  <input type="number" id="meme-fallback-cooldownMs" min="30000" max="1800000" step="30000" placeholder="300000" />
+                  <div class="setting-help">冷却结束后会重新尝试主表情服务。</div>
                 </div>
               </div>
               <div class="settings-grid">

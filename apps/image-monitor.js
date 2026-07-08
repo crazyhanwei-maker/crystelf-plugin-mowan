@@ -6,6 +6,14 @@ import OpenAI from 'openai';
 import ConfigControl from '../lib/config/configControl.js';
 import { logAiUsage } from '../lib/ai/usageLogger.js';
 import { buildImageMonitorFallbackConfig, hasImageMonitorApiConfig } from '../lib/ai/apiFallback.js';
+import {
+  buildVirtualApiCircuitConfig,
+  recordFallbackApiFailure,
+  recordFallbackApiSuccess,
+  recordPrimaryApiFailure,
+  recordPrimaryApiSuccess,
+  shouldPreferFallbackApi,
+} from '../lib/ai/apiCircuitBreaker.js';
 import { buildAiUserAgentHeaders } from '../lib/ai/userAgent.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
@@ -331,15 +339,37 @@ async function analyzeImageWithVisionModel(cfg, imageUrl) {
 }
 
 async function analyzeImageWithVisionFallback(cfg, imageUrl) {
+  const scene = 'image_monitor_review';
+  const fallbackConfig = buildImageMonitorFallbackConfig(cfg);
+  const circuitConfig = buildVirtualApiCircuitConfig(cfg, fallbackConfig, 'image_monitor');
+  const preferFallback = shouldPreferFallbackApi(circuitConfig, scene);
+
+  if (preferFallback.preferFallback && fallbackConfig) {
+    try {
+      const analysis = await analyzeImageWithVisionModel(fallbackConfig, imageUrl);
+      recordFallbackApiSuccess(circuitConfig, scene);
+      return {
+        ...analysis,
+        usedFallback: true,
+        usedConfig: fallbackConfig,
+        primarySkipped: true,
+      };
+    } catch (fallbackError) {
+      recordFallbackApiFailure(circuitConfig, scene, fallbackError.message);
+      throw fallbackError;
+    }
+  }
+
   try {
     const analysis = await analyzeImageWithVisionModel(cfg, imageUrl);
+    recordPrimaryApiSuccess(circuitConfig, scene);
     return {
       ...analysis,
       usedFallback: false,
       usedConfig: cfg,
     };
   } catch (error) {
-    const fallbackConfig = buildImageMonitorFallbackConfig(cfg);
+    recordPrimaryApiFailure(circuitConfig, scene, error.message);
     if (!fallbackConfig) {
       throw error;
     }
@@ -347,6 +377,7 @@ async function analyzeImageWithVisionFallback(cfg, imageUrl) {
     logger.warn(`[image-monitor] 图片识别主接口失败，尝试备用API: ${error.message}`);
     try {
       const analysis = await analyzeImageWithVisionModel(fallbackConfig, imageUrl);
+      recordFallbackApiSuccess(circuitConfig, scene);
       return {
         ...analysis,
         usedFallback: true,
@@ -354,6 +385,7 @@ async function analyzeImageWithVisionFallback(cfg, imageUrl) {
         primaryError: error.message,
       };
     } catch (fallbackError) {
+      recordFallbackApiFailure(circuitConfig, scene, fallbackError.message);
       fallbackError.message = `主接口失败: ${error.message}; 备用接口失败: ${fallbackError.message}`;
       throw fallbackError;
     }

@@ -394,6 +394,45 @@ button.danger:hover {
   line-height: 1.5;
 }
 
+.dependency-task-progress {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.dependency-task-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dependency-task-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted-bg);
+}
+
+.dependency-task-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+}
+
+.dependency-task-progress-meta {
+  color: var(--muted-text);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .dependency-task-advice {
   display: grid;
   gap: 8px;
@@ -457,6 +496,45 @@ button.danger:hover {
 .dependency-task-event span {
   color: var(--muted-text);
   font-size: 11px;
+}
+
+.dependency-task-output-stream {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dependency-task-output-title {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dependency-task-output-item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+.dependency-task-output-item.tone-error {
+  border-color: rgba(239, 68, 68, 0.34);
+}
+
+.dependency-task-output-item pre {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .dependency-task-log {

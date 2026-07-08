@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 配置来源诊断</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/config-diagnostics.css" />
+</head>
+<body class="config-diagnostics-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">只读诊断</div>
+        <h1>配置来源诊断</h1>
+        <p id="config-diagnostics-meta">正在读取默认模板、运行配置和当前内存缓存...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">诊断操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="config-diagnostics-refresh-btn" type="button">刷新诊断</button>
+            <a class="link-btn" href="/api-settings.html">返回 API 接口</a>
+            <a class="link-btn" href="/plugin-settings.html">插件设置</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel config-diagnostics-note">
+      <div>
+        <h2>生效规则</h2>
+        <div id="config-diagnostics-rule" class="setting-help">运行配置优先于默认模板；此页面只读，不会修改任何文件。</div>
+      </div>
+      <span class="config-diagnostics-readonly">只读</span>
+    </section>
+
+    <section id="config-diagnostics-summary" class="config-diagnostics-kpi-grid">加载中...</section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>排查建议</h2>
+          <div class="setting-help">根据配置文件状态、字段差异和内存缓存自动生成。</div>
+        </div>
+      </div>
+      <div id="config-diagnostics-recommendations" class="config-diagnostics-recommendations">加载中...</div>
+    </section>
+
+    <section class="panel panel-two config-diagnostics-directories">
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>配置目录</h2>
+            <div class="setting-help">运行目录是插件实际保存配置的位置；默认模板目录只用于初始化和补齐字段。</div>
+          </div>
+        </div>
+        <div id="config-diagnostics-directories">加载中...</div>
+      </div>
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>最近迁移</h2>
+            <div class="setting-help">插件初始化时自动补齐或修正旧配置会记录在这里。</div>
+          </div>
+        </div>
+        <div id="config-diagnostics-migration">加载中...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>关键生效字段</h2>
+          <div class="setting-help">这些字段最容易造成“控制台填了但 Bot 没生效”的错觉，优先看这里。</div>
+        </div>
+      </div>
+      <div id="config-diagnostics-effective-fields" class="config-diagnostics-table-wrap">加载中...</div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head config-diagnostics-filter-head">
+        <div>
+          <h2>配置文件明细</h2>
+          <div class="setting-help">按文件查看运行配置、默认模板、内存缓存之间的差异。</div>
+        </div>
+        <div class="config-diagnostics-filters">
+          <input id="config-diagnostics-search" type="search" placeholder="搜索文件、字段或路径" />
+          <select id="config-diagnostics-status">
+            <option value="all">全部状态</option>
+            <option value="error">格式错误</option>
+            <option value="warning">需要检查</option>
+            <option value="changed">已覆盖默认</option>
+            <option value="ok">正常</option>
+          </select>
+        </div>
+      </div>
+      <div id="config-diagnostics-files" class="config-diagnostics-file-list">加载中...</div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/config-diagnostics.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

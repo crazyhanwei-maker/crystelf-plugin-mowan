@@ -1299,6 +1299,77 @@ const guobaSchema = [
     },
   },
   {
+    field: 'coreConfig.tools.tts.fallbackApi.enabled',
+    label: '启用语音备用API',
+    component: 'Switch',
+    bottomHelpMessage: '主语音接口不可用时，是否允许切换到备用语音服务',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.tts.fallbackApi.apiUrl',
+    label: '备用语音接口地址',
+    component: 'Input',
+    bottomHelpMessage: '备用文本转语音接口地址，例如 http://127.0.0.1:8001/infer_single',
+    componentProps: {
+      placeholder: '请输入备用语音合成接口地址',
+    },
+  },
+  {
+    field: 'coreConfig.tools.tts.fallbackApi.dlUrl',
+    label: '备用语音服务基础地址',
+    component: 'Input',
+    bottomHelpMessage: '备用服务的 dl_url 根地址，通常填备用语音服务根地址',
+    componentProps: {
+      placeholder: '请输入备用语音服务基础地址',
+    },
+  },
+  {
+    field: 'coreConfig.tools.tts.fallbackApi.modelsUrl',
+    label: '备用模型列表地址',
+    component: 'Input',
+    bottomHelpMessage: '备用模型列表接口地址，例如 http://127.0.0.1:8001/models/v4',
+    componentProps: {
+      placeholder: '请输入备用模型列表接口地址',
+    },
+  },
+  {
+    field: 'coreConfig.tools.tts.fallbackApi.autoSwitchEnabled',
+    label: '语音自动主备切换',
+    component: 'Switch',
+    bottomHelpMessage: '主语音接口连续失败后，短时间优先使用备用语音服务',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.tts.fallbackApi.failureThreshold',
+    label: '语音切换失败次数',
+    component: 'InputNumber',
+    bottomHelpMessage: '主语音接口连续失败达到该次数后进入备用优先',
+    componentProps: {
+      min: 1,
+      max: 10,
+      step: 1,
+      placeholder: '请输入失败次数',
+    },
+  },
+  {
+    field: 'coreConfig.tools.tts.fallbackApi.cooldownMs',
+    label: '语音切换冷却时间',
+    component: 'InputNumber',
+    bottomHelpMessage: '进入备用优先后持续多久，单位毫秒；默认 300000 表示 5 分钟',
+    componentProps: {
+      min: 30000,
+      max: 1800000,
+      step: 30000,
+      placeholder: '请输入冷却时间',
+    },
+  },
+  {
     field: 'coreConfig.tools.tts.defaultModel',
     label: '默认语音模型',
     component: 'Select',

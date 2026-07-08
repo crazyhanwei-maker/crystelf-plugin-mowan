@@ -41,7 +41,26 @@
       "?markdownMaxLength": "网页正文返回的最大字符数",
       "markdownMaxLength": 12000,
       "?timeoutMs": "搜索超时时间(毫秒)",
-      "timeoutMs": 60000
+      "timeoutMs": 60000,
+      "?fallbackApi": "搜索工具备用API配置，默认关闭",
+      "fallbackApi": {
+        "?enabled": "是否启用搜索备用API",
+        "enabled": false,
+        "?apiUrl": "备用搜索API地址",
+        "apiUrl": "",
+        "?markdownApiUrl": "备用网页转Markdown任务提交地址",
+        "markdownApiUrl": "",
+        "?markdownStatusUrl": "备用网页转Markdown任务查询地址",
+        "markdownStatusUrl": "",
+        "?apiKey": "备用搜索API密钥",
+        "apiKey": "",
+        "?autoSwitchEnabled": "是否启用自动主备切换",
+        "autoSwitchEnabled": true,
+        "?failureThreshold": "主搜索或网页读取接口连续失败多少次后进入备用优先",
+        "failureThreshold": 2,
+        "?cooldownMs": "备用优先持续时间",
+        "cooldownMs": 300000
+      }
     },
     "?tts": "内置语音合成工具配置",
     "tts": {
@@ -100,7 +119,24 @@
       "?repetitionPenalty": "重复惩罚",
       "repetitionPenalty": 1.35,
       "?textSplitMethod": "文本切分方式",
-      "textSplitMethod": "按标点符号切"
+      "textSplitMethod": "按标点符号切",
+      "?fallbackApi": "语音合成备用API配置，默认关闭",
+      "fallbackApi": {
+        "?enabled": "是否启用语音备用API",
+        "enabled": false,
+        "?apiUrl": "备用语音合成接口地址",
+        "apiUrl": "",
+        "?dlUrl": "备用语音服务基础地址",
+        "dlUrl": "",
+        "?modelsUrl": "备用模型列表接口地址",
+        "modelsUrl": "",
+        "?autoSwitchEnabled": "是否启用自动主备切换",
+        "autoSwitchEnabled": true,
+        "?failureThreshold": "主语音接口连续失败多少次后进入备用优先",
+        "failureThreshold": 2,
+        "?cooldownMs": "备用优先持续时间",
+        "cooldownMs": 300000
+      }
     }
   }
 }

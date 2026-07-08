@@ -45,6 +45,25 @@
   min-width: 0;
 }
 
+.api-settings-unsaved {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.api-settings-unsaved strong {
+  color: #78350f;
+}
+
 .api-settings-section {
   margin-bottom: 18px;
   min-width: 0;
@@ -705,6 +724,104 @@
 #api-settings-export-batch-report-btn:disabled {
   cursor: not-allowed;
   opacity: 0.62;
+}
+
+.api-target-test-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.api-target-test-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 8px;
+}
+
+.api-target-test-grid .mini-btn {
+  justify-content: center;
+  min-width: 0;
+  white-space: normal;
+}
+
+.api-target-test-grid .mini-btn:disabled {
+  cursor: wait;
+  opacity: 0.64;
+}
+
+.api-target-test-results {
+  display: grid;
+  gap: 10px;
+  min-height: 54px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: var(--soft-bg);
+  color: var(--muted-text);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.api-target-test-results.tone-success {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+}
+
+.api-target-test-results.tone-failed {
+  border-color: var(--error-border);
+  background: var(--error-bg);
+}
+
+.api-target-test-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.api-target-test-result-head strong {
+  color: var(--text);
+}
+
+.api-target-test-result-head span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--panel-bg);
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.api-target-test-result-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 8px;
+}
+
+.api-target-test-result-rows div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+
+.api-target-test-result-rows span {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.api-target-test-result-rows strong {
+  color: var(--text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 900px) {

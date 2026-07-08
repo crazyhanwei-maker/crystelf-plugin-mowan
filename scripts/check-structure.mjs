@@ -196,6 +196,8 @@ async function main() {
   addCheck('package name', pkg.name === 'crystelf-plugin', `name=${pkg.name}`);
   addCheck('encoding script exists', Boolean(pkg.scripts?.['check:encoding']));
   addCheck('structure script exists', Boolean(pkg.scripts?.['check:structure']));
+  addCheck('web console e2e script exists', Boolean(pkg.scripts?.['check:webconsole:e2e']));
+  addCheck('web console mobile e2e script exists', Boolean(pkg.scripts?.['check:webconsole:mobile']));
   const forbiddenRuntimeRefs = await findForbiddenRuntimeReferences();
   addCheck('no removed legacy runtime endpoints', forbiddenRuntimeRefs.length === 0, forbiddenRuntimeRefs.join('; '));
   const missingPublicHtmlResources = await findMissingPublicHtmlResources();
@@ -281,6 +283,7 @@ async function main() {
     'createSandboxRoutes',
     'createConfigBackupRoutes',
     'createMediaRoutes',
+    '/api/config/diagnostics',
   ]) && includesAll(fileBrowserRoutes, [
     'createFileBrowserRoutes',
     '/api/file-browser/tree',
@@ -308,6 +311,7 @@ async function main() {
     '/api/sessions/reset',
   ]) && includesAll(logRoutes, [
     'createLogRoutes',
+    '/api/performance/api-circuit/reset',
     '/api/logs/audit',
     '/api/logs/image-monitor',
     '/api/trend/usage',
@@ -319,6 +323,7 @@ async function main() {
     'createSettingsRoutes',
     '/api/api-settings/precheck',
     '/api/api-settings/save',
+    '/api/api-settings/test-target',
     '/api/plugin-settings/precheck',
     '/api/plugin-settings/skills-config/save',
   ]) && includesAll(helpDiyRoutes, [
@@ -346,6 +351,7 @@ async function main() {
   ]) && includesAll(webConsoleHandlerContext, [
     'createWebConsoleHandlerContext',
     'buildBotPluginManagementPayload',
+    'buildConfigDiagnosticsPayload',
     'buildGroupManagementPayload',
     'serveGroupManagementEventStream',
     'runSandboxChat',
@@ -648,6 +654,10 @@ async function main() {
     'renderOperationTaskCenter',
     'renderOperationTaskSummary',
     'renderOperationTaskItem',
+    'refreshOperationTaskCenterOnly',
+    'scheduleOperationTaskAutoRefresh',
+    'renderOperationTaskOutput',
+    'renderOperationTaskTimeline',
   ]) && includesAll(dashboardAppJs, [
     "fetchJsonSafe('/api/tasks'",
     'renderOperationTaskCenter(tasks)',
@@ -655,6 +665,9 @@ async function main() {
     'operation-task-center-panel',
     'operation-task-summary',
     'operation-task-item',
+    'operation-task-progress',
+    'operation-task-output',
+    'operation-task-timeline',
   ]));
   addCheck('dashboard public security panel UI', includesAll(overviewConsole, [
     'riskItems',
@@ -751,8 +764,18 @@ async function main() {
   const apiQualityLogger = await readText('lib/ai/apiQualityLogger.js');
   const apiCircuitBreaker = await readText('lib/ai/apiCircuitBreaker.js');
   const aiCaller = await readText('lib/ai/aiCaller.js');
+  const imageProcessor = await readText('lib/ai/imageProcessor.js');
+  const toolRegistry = await readText('lib/ai/toolRegistry.js');
+  const imageMonitorApp = await readText('apps/image-monitor.js');
   const memeCore = await readText('lib/core/meme.js');
   const ttsRegistry = await readText('lib/ai/ttsRegistry.js');
+  const apiSettingsConsoleSource = await readText('lib/webConsole/apiSettingsConsole.js');
+  const apiSettingsHtml = await readText('lib/webConsole/public/api-settings.html');
+  const apiSettingsFormJs = await readText('lib/webConsole/public/api-settings-form.js');
+  const configSourceDiagnostics = await readText('lib/webConsole/apiConfigSourceDiagnostics.js');
+  const configDiagnosticsHtml = await readText('lib/webConsole/public/config-diagnostics.html');
+  const configDiagnosticsJs = await readText('lib/webConsole/public/config-diagnostics.js');
+  const configDiagnosticsCss = await readText('lib/webConsole/public/config-diagnostics.css');
   addCheck('external api quality logger', includesAll(apiQualityLogger, [
     'logExternalApiUsage',
     'getApiQualityLogRetentionStatus',
@@ -778,13 +801,73 @@ async function main() {
     'recordPrimaryApiFailure',
     'recordFallbackApiSuccess',
     'getApiCircuitBreakerSnapshot',
+    'resetApiCircuitBreakerState',
     'failureThreshold',
     'cooldownMs',
+    'buildVirtualApiCircuitConfig',
   ]) && includesAll(aiCaller, [
     'shouldPreferFallbackApi',
     'recordPrimaryApiFailure',
     'recordFallbackApiSuccess',
     '主接口处于冷却期',
+  ]) && includesAll(imageProcessor, [
+    'buildVirtualApiCircuitConfig',
+    'image_generate',
+    'recordFallbackApiSuccess',
+  ]) && includesAll(imageMonitorApp, [
+    'buildVirtualApiCircuitConfig',
+    'image_monitor_review',
+    'recordFallbackApiFailure',
+  ]) && includesAll(toolRegistry, [
+    'buildVirtualApiCircuitConfig',
+    'search_web',
+    'fetch_web_markdown',
+  ]) && includesAll(memeCore, [
+    'buildMemeCircuitConfig',
+    'sortMemeApiBasesForCircuit',
+    'recordMemeCircuitResult',
+  ]) && includesAll(ttsRegistry, [
+    'buildTtsFallbackConfig',
+    'tts_synthesis',
+    'tts_models',
+  ]) && includesAll(apiSettingsConsoleSource, [
+    'normalizeFallbackAutoSwitch',
+    'autoSwitchEnabled',
+    'failureThreshold',
+    'cooldownMs',
+  ]) && includesAll(apiSettingsHtml, [
+    'ai-fallback-autoSwitchEnabled',
+    'image-fallback-failureThreshold',
+    'imageMonitor-fallback-cooldownMs',
+    'search-fallback-autoSwitchEnabled',
+    'meme-fallback-failureThreshold',
+    'data-api-test-target',
+  ]) && includesAll(apiSettingsFormJs, [
+    'normalizeFallbackFailureThreshold',
+    'ai.fallbackApi.autoSwitchEnabled',
+    'search.fallbackApi.cooldownMs',
+  ]));
+  addCheck('config source diagnostics page', includesAll(webConsoleSurface, [
+    '/api/config/diagnostics',
+    'buildConfigDiagnosticsPayload',
+  ]) && includesAll(configSourceDiagnostics, [
+    'createApiConfigSourceDiagnostics',
+    'allFiles',
+    'effectiveFields',
+    'recommendations',
+    'runtime-over-default',
+  ]) && includesAll(configDiagnosticsHtml, [
+    '配置来源诊断',
+    'config-diagnostics.js',
+    'config-diagnostics.css',
+    'auth-guarded-page',
+  ]) && includesAll(configDiagnosticsJs, [
+    '/api/config/diagnostics',
+    'renderEffectiveFields',
+    'renderFiles',
+  ]) && includesAll(configDiagnosticsCss, [
+    'config-diagnostics-kpi-grid',
+    'config-diagnostics-file-card',
   ]));
   const performanceConsole = await readText('lib/webConsole/performanceConsole.js');
   const performancePageHtml = await readText('lib/webConsole/public/performance.html');
@@ -797,6 +880,8 @@ async function main() {
     'buildDailyApiQualityTrend',
     'buildApiFailureDiagnosis',
     'getApiCircuitBreakerSnapshot',
+    'resetApiCircuitBreakerState',
+    'configuredCircuitTargets',
     'getApiQualityLogRetentionStatus',
     'apiQuality',
     'normalizeSearchEntries',
@@ -816,6 +901,8 @@ async function main() {
     'renderApiQuality',
     'formatApiQualityAlertStatus',
     'formatCircuitStatus',
+    'mergeCircuitBreakerItems',
+    '/api/performance/api-circuit/reset',
     'performance-api-quality-table',
     'performance-api-role',
   ]) && includesAll(dashboardHealthJs, [
@@ -891,12 +978,15 @@ async function main() {
     'configPayloadConsole',
     'featureConfigConsole',
     'imageMonitorConsole',
+    'buildConfigDiagnosticsPayload',
   ]) && includesAll(configFeatureConsoleSuite, [
     'createConfigFeatureConsoleSuite',
+    'createApiConfigSourceDiagnostics',
     'createConfigBackupConsole',
     'createConfigPayloadConsole',
     'createFeatureConfigConsole',
     'createImageMonitorConsole',
+    'buildConfigDiagnosticsPayload',
   ]));
   addCheck('sandbox simulator console suite module', includesAll(webConsoleSurface, [
     'createSandboxSimulatorConsoleSuite',
@@ -1096,6 +1186,9 @@ async function main() {
     'resetSessionRecord',
   ]));
   const dependencyConsole = await readText('lib/webConsole/dependencyConsole.js');
+  const dependencyCheckJs = await readText('lib/webConsole/public/dependency-check.js');
+  const dependencyCheckRenderJs = await readText('lib/webConsole/public/dependency-check-render.js');
+  const dependencyCheckCss = await readText('lib/webConsole/public/dependency-check.css');
   addCheck('dependency console module', includesAll(webConsoleSurface, [
     'createDependencyConsole',
     'buildDependencyReport',
@@ -1111,10 +1204,27 @@ async function main() {
     'precheckDependencyInstallTarget',
     'resolveDependencyInstallRequest',
     'runDependencyInstallTargetExclusive',
+    'pushDependencyInstallTaskOutputEvent',
+    'progressPercent',
+    'outputEvents',
+  ]) && includesAll(dependencyCheckJs, [
+    'formatDurationMs',
+    'progressPercent',
+    'outputEvents',
+    'latestOutputAt',
+  ]) && includesAll(dependencyCheckRenderJs, [
+    'renderInstallTaskProgress',
+    'renderInstallTaskOutputEvents',
+    'dependency-task-output-stream',
+  ]) && includesAll(dependencyCheckCss, [
+    'dependency-task-progress',
+    'dependency-task-output-stream',
   ]));
   const botPluginConsole = await readText('lib/webConsole/botPluginConsole.js');
   const botPluginsHtml = await readText('lib/webConsole/public/bot-plugins.html');
   const botPluginsJs = await readText('lib/webConsole/public/bot-plugins.js');
+  const pluginCatalogJs = await readText('lib/webConsole/public/plugin-catalog.js');
+  const botPluginsCss = await readText('lib/webConsole/public/bot-plugins.css');
   const pluginCatalogAliasHtml = await readText('lib/webConsole/public/plugin-catalog.html');
   addCheck('bot plugin management console module', includesAll(webConsoleSurface, [
     'createBotPluginConsole',
@@ -1138,6 +1248,15 @@ async function main() {
     'buildFileBrowserUrl',
     'switchTopTab',
     'getInitialTab',
+  ]) && includesAll(pluginCatalogJs, [
+    'renderTaskProgress',
+    'renderTaskOutputEvents',
+    'progressPercent',
+    'outputEvents',
+    'install-status',
+  ]) && includesAll(botPluginsCss, [
+    'plugin-catalog-task-progress',
+    'plugin-catalog-task-output',
   ]) && includesAll(pluginCatalogAliasHtml, [
     '/bot-plugins.html?tab=catalog',
     'window.location.replace',
@@ -1161,10 +1280,12 @@ async function main() {
     'precheckApiSettings',
     'saveApiSettings',
     'testImageApiConnection',
+    'testApiTargetConnection',
   ]) && includesAll(apiSettingsConsole, [
     'createApiSettingsConsole',
     'resolveSecretSaveValue',
     'precheckApiSettings',
+    'testApiTargetConnection',
     'testImageMonitorApiConnection',
     'testSearchApiConnection',
   ]));

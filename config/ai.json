@@ -51,7 +51,20 @@
     "?preferLocal": "是否优先使用本地表情包,关闭时仅在远程失败后回退本地",
     "preferLocal": false,
     "?localBaseDir": "本地表情包目录,支持绝对路径或相对机器人运行目录的路径",
-    "localBaseDir": "data/chat/meme"
+    "localBaseDir": "data/chat/meme",
+    "?fallbackApi": "表情包备用API配置，默认关闭",
+    "fallbackApi": {
+      "?enabled": "是否启用表情包备用API",
+      "enabled": false,
+      "?apiBase": "备用表情包API基础地址",
+      "apiBase": "",
+      "?autoSwitchEnabled": "是否启用自动主备切换",
+      "autoSwitchEnabled": true,
+      "?failureThreshold": "主表情服务连续失败多少次后进入备用优先",
+      "failureThreshold": 2,
+      "?cooldownMs": "备用优先持续时间",
+      "cooldownMs": 300000
+    }
   },
   "?botPersona": "机器人人设描述",
   "botPersona": "你是一个名为芙宁娜的智能助手,性格温和友善,喜欢帮助用户解决问题.知识渊博,回答问题时会给出详细解释,偶尔会使用一些可爱的表情.",
@@ -69,6 +82,27 @@
   "timeout": 60000,
   "?retryCount": "AI接口调用失败时的重试次数，0表示不重试(默认)，仅对网络错误/超时/429/5xx生效，重试耗尽后仍会尝试备用API",
   "retryCount": 0,
+  "?fallbackApi": "AI主对话备用API配置，默认关闭；开启后主接口连续失败会自动短时间优先使用备用接口",
+  "fallbackApi": {
+    "?enabled": "是否启用AI主对话备用API",
+    "enabled": false,
+    "?baseApi": "备用AI API基础地址，通常填写到 /v1",
+    "baseApi": "",
+    "?apiKey": "备用AI API密钥",
+    "apiKey": "",
+    "?modelType": "备用文本模型",
+    "modelType": "",
+    "?workingModel": "备用工作模型，留空时复用备用文本模型",
+    "workingModel": "",
+    "?multimodalModel": "备用多模态模型，留空时复用备用文本模型",
+    "multimodalModel": "",
+    "?autoSwitchEnabled": "是否启用自动主备切换",
+    "autoSwitchEnabled": true,
+    "?failureThreshold": "主接口连续失败多少次后进入备用优先",
+    "failureThreshold": 2,
+    "?cooldownMs": "备用优先持续时间，结束后自动重新尝试主接口",
+    "cooldownMs": 300000
+  },
   "?emojiSuppression": "是否抑制 AI 文本回复中的 Unicode emoji 字符，不影响 [meme:角色:情绪] 这类表情包指令",
   "emojiSuppression": false,
   "?fallbackReply": "模型故障、超时或没有产出内容时发送的兜底回复，留空则按内置策略生成",
@@ -324,6 +358,27 @@
     "?responseFormat": "响应格式(url/b64_json)，gpt-image-2建议b64_json",
     "responseFormat": "b64_json",
     "?modalities": "模态类型",
-    "modalities": ["text", "image"]
+    "modalities": ["text", "image"],
+    "?fallbackApi": "图像生成备用API配置，默认关闭",
+    "fallbackApi": {
+      "?enabled": "是否启用图像生成备用API",
+      "enabled": false,
+      "?imageMode": "备用图像生成模式: openai/chat/jimeng",
+      "imageMode": "openai",
+      "?model": "备用图像生成模型",
+      "model": "",
+      "?baseApi": "备用图像生成API基础地址",
+      "baseApi": "",
+      "?jimengApiUrl": "备用即梦接口地址",
+      "jimengApiUrl": "",
+      "?apiKey": "备用图像生成API密钥",
+      "apiKey": "",
+      "?autoSwitchEnabled": "是否启用自动主备切换",
+      "autoSwitchEnabled": true,
+      "?failureThreshold": "主生图接口连续失败多少次后进入备用优先",
+      "failureThreshold": 2,
+      "?cooldownMs": "备用优先持续时间",
+      "cooldownMs": 300000
+    }
   }
 }

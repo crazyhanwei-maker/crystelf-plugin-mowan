@@ -240,6 +240,45 @@
   font-size: 13px;
 }
 
+.plugin-catalog-task-progress {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.plugin-catalog-task-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plugin-catalog-task-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted-bg);
+}
+
+.plugin-catalog-task-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+}
+
+.plugin-catalog-task-progress-meta {
+  color: var(--muted-text);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .plugin-catalog-task-command {
   padding: 10px 12px;
   border: 1px solid var(--border);
@@ -331,6 +370,77 @@
   border-radius: 8px;
   background: var(--panel-bg);
   overflow-wrap: anywhere;
+}
+
+.plugin-catalog-task-events,
+.plugin-catalog-task-output {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+
+.plugin-catalog-task-events summary,
+.plugin-catalog-task-output summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plugin-catalog-task-event-list,
+.plugin-catalog-task-output-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.plugin-catalog-task-event {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.plugin-catalog-task-event.tone-error {
+  border-color: var(--error-border);
+  background: var(--error-bg);
+}
+
+.plugin-catalog-task-event strong {
+  color: var(--text);
+}
+
+.plugin-catalog-task-output-item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+.plugin-catalog-task-output-item.tone-error {
+  border-color: rgba(239, 68, 68, 0.34);
+}
+
+.plugin-catalog-task-output-item pre {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .plugin-catalog-task-log {
