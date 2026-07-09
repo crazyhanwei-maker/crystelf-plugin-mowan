@@ -5,6 +5,7 @@ import { appendGroupManagementLog } from '../lib/groupManagement/groupManagement
 import {
   appendDailyGroupSummaryResult,
   cleanupDailyGroupSummaryFiles,
+  acquireDailyGroupSummaryRunLock,
   getDailyGroupSummaryTargetGroupIds,
   getDailySummaryDateKey,
   hasDailyGroupSummarySent,
@@ -14,6 +15,7 @@ import {
   normalizeDailyGroupSummaryConfig,
   readDailyGroupSummaryMessages,
   recordDailyGroupSummaryMessage,
+  releaseDailyGroupSummaryRunLock,
 } from '../lib/groupSummary/dailyGroupSummaryStore.js';
 import { renderDailyGroupSummaryImage } from '../lib/groupSummary/dailyGroupSummaryImageRenderer.js';
 
@@ -23,6 +25,8 @@ const logger = globalThis.logger || {
   error: (...args) => console.error(...args),
   mark: (...args) => console.log(...args),
 };
+
+const SCHEDULE_RUN_STALE_MS = 2 * 60 * 60 * 1000;
 
 function getBotRoot() {
   return typeof globalThis !== 'undefined' ? globalThis.Bot : null;
@@ -496,19 +500,38 @@ export class dailyGroupSummary extends plugin {
     // 同一分钟内可能被多个 tick/bot 并发触发，用「年月日时分」键去重，保证每分钟最多跑一次。
     const runKey = `${getDailySummaryDateKey(now)}:${now.getHours()}:${now.getMinutes()}`;
     if (this.lastScheduleRunKey === runKey) return;
-    this.lastScheduleRunKey = runKey;
 
     const dateKey = getDailySummaryDateKey(now);
-    if (this.lastCleanupDate !== dateKey) {
-      cleanupDailyGroupSummaryFiles(cfg.retentionDays);
-      this.lastCleanupDate = dateKey;
+    const running = global.__crystelfDailyGroupSummaryScheduleRun;
+    const runningStartedAt = new Date(running?.startedAt || 0).getTime();
+    if (running?.runKey && Number.isFinite(runningStartedAt) && Date.now() - runningStartedAt < SCHEDULE_RUN_STALE_MS) {
+      logger.info(`[daily-group-summary] 上一轮自动总结仍在执行，跳过 ${runKey} 的定时检查`);
+      return;
     }
 
-    const targetGroupIds = getDailyGroupSummaryTargetGroupIds(dateKey, cfg)
-      .filter(groupId => isGroupDailySummaryEnabled(groupId, mainConfig, aiConfig));
+    this.lastScheduleRunKey = runKey;
+    global.__crystelfDailyGroupSummaryScheduleRun = {
+      runKey,
+      dateKey,
+      startedAt: new Date().toISOString(),
+    };
 
-    for (const groupId of targetGroupIds) {
-      await this.runGroupSummary(groupId, dateKey, cfg, aiConfig);
+    try {
+      if (this.lastCleanupDate !== dateKey) {
+        cleanupDailyGroupSummaryFiles(cfg.retentionDays);
+        this.lastCleanupDate = dateKey;
+      }
+
+      const targetGroupIds = getDailyGroupSummaryTargetGroupIds(dateKey, cfg)
+        .filter(groupId => isGroupDailySummaryEnabled(groupId, mainConfig, aiConfig));
+
+      for (const groupId of targetGroupIds) {
+        await this.runGroupSummary(groupId, dateKey, cfg, aiConfig);
+      }
+    } finally {
+      if (global.__crystelfDailyGroupSummaryScheduleRun?.runKey === runKey) {
+        global.__crystelfDailyGroupSummaryScheduleRun = null;
+      }
     }
   }
 
@@ -525,7 +548,15 @@ export class dailyGroupSummary extends plugin {
     if (this.processingGroups.has(processingKey)) return;
     this.processingGroups.add(processingKey);
 
+    let runLock = null;
     try {
+      runLock = acquireDailyGroupSummaryRunLock(dateKey, normalizedGroupId);
+      if (!runLock.acquired) {
+        logger.info(`[daily-group-summary] 群 ${normalizedGroupId} 的 ${dateKey} 总结已有实例处理中，跳过本次检查`);
+        return;
+      }
+      if (this.sentGroups?.has(sentKey) || hasDailyGroupSummarySent(dateKey, normalizedGroupId)) return;
+
       const messages = readDailyGroupSummaryMessages(dateKey, normalizedGroupId, cfg);
       const groupName = [...messages].reverse().find(item => item.groupName)?.groupName || '';
       if (messages.length < cfg.minMessages) {
@@ -624,6 +655,7 @@ export class dailyGroupSummary extends plugin {
       });
       logger.warn(`[daily-group-summary] 群 ${normalizedGroupId} 每日总结失败: ${error.message}`);
     } finally {
+      releaseDailyGroupSummaryRunLock(runLock);
       this.processingGroups.delete(processingKey);
     }
   }

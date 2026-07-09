@@ -215,6 +215,10 @@ async function main() {
   const mediaApiConsoleSuite = await readText('lib/webConsole/mediaApiConsoleSuite.js');
   const pluginSettingsConsoleSuite = await readText('lib/webConsole/pluginSettingsConsoleSuite.js');
   const sandboxSimulatorConsoleSuite = await readText('lib/webConsole/sandboxSimulatorConsoleSuite.js');
+  const commandCenterConsole = await readText('lib/webConsole/commandCenterConsole.js');
+  const globalSearchConsole = await readText('lib/webConsole/globalSearchConsole.js');
+  const consoleShellJs = await readText('lib/webConsole/public/console-shell.js');
+  const publicStyles = await readText('lib/webConsole/public/styles.css');
   const webConsoleRoutes = await readText('lib/webConsole/webConsoleRoutes.js');
   const webConsoleHandlerContext = await readText('lib/webConsole/webConsoleHandlerContext.js');
   const fileBrowserRoutes = await readText('lib/webConsole/fileBrowserRoutes.js');
@@ -236,10 +240,12 @@ async function main() {
     configFeatureConsoleSuite,
     coreWebConsoleSuite,
     dataLogConsoleSuite,
+    globalSearchConsole,
     groupManagementConsoleSuite,
     mediaApiConsoleSuite,
     pluginSettingsConsoleSuite,
     sandboxSimulatorConsoleSuite,
+    commandCenterConsole,
     webConsoleRoutes,
     fileBrowserRoutes,
     botPluginRoutes,
@@ -271,7 +277,11 @@ async function main() {
     'createBotPluginRoutes',
     '/api/version/check',
     '/api/tasks',
+    '/api/command-center',
+    '/api/global-search',
+    'buildGlobalSearchPayload',
     'buildVersionCheckPayload',
+    'buildCommandCenterPayload',
     'createPluginCatalogRoutes',
     'createDependencyRoutes',
     'createUserDataRoutes',
@@ -352,6 +362,7 @@ async function main() {
     'createWebConsoleHandlerContext',
     'buildBotPluginManagementPayload',
     'buildConfigDiagnosticsPayload',
+    'buildCommandCenterPayload',
     'buildGroupManagementPayload',
     'serveGroupManagementEventStream',
     'runSandboxChat',
@@ -776,6 +787,9 @@ async function main() {
   const configDiagnosticsHtml = await readText('lib/webConsole/public/config-diagnostics.html');
   const configDiagnosticsJs = await readText('lib/webConsole/public/config-diagnostics.js');
   const configDiagnosticsCss = await readText('lib/webConsole/public/config-diagnostics.css');
+  const frontendDiagnosticsHtml = await readText('lib/webConsole/public/frontend-diagnostics.html');
+  const frontendDiagnosticsJs = await readText('lib/webConsole/public/frontend-diagnostics.js');
+  const frontendDiagnosticsCss = await readText('lib/webConsole/public/frontend-diagnostics.css');
   addCheck('external api quality logger', includesAll(apiQualityLogger, [
     'logExternalApiUsage',
     'getApiQualityLogRetentionStatus',
@@ -868,6 +882,86 @@ async function main() {
   ]) && includesAll(configDiagnosticsCss, [
     'config-diagnostics-kpi-grid',
     'config-diagnostics-file-card',
+  ]));
+  const commandCenterHtml = await readText('lib/webConsole/public/command-center.html');
+  const commandCenterJs = await readText('lib/webConsole/public/command-center.js');
+  const commandCenterCss = await readText('lib/webConsole/public/command-center.css');
+  addCheck('command center page and api', includesAll(webConsoleSurface, [
+    'createCommandCenterConsole',
+    'commandCenterConsole',
+    '/api/command-center',
+    'buildCommandCenterPayload',
+  ]) && includesAll(commandCenterConsole, [
+    'createCommandCenterConsole',
+    'parseCommandRulesFromSource',
+    'buildRisks',
+    'static',
+  ]) && includesAll(commandCenterHtml, [
+    '命令中心',
+    'command-center.js',
+    'command-center.css',
+    'auth-guarded-page',
+  ]) && includesAll(commandCenterJs, [
+    '/api/command-center',
+    'renderCommandList',
+    'renderRisks',
+    'filterCommands',
+  ]) && includesAll(commandCenterCss, [
+    'command-center-kpi-grid',
+    'command-center-risk-card',
+    'command-center-table-wrap',
+  ]));
+  addCheck('global console search', includesAll(webConsoleSurface, [
+    'createGlobalSearchConsole',
+    'globalSearchConsole',
+    '/api/global-search',
+    'buildGlobalSearchPayload',
+  ]) && includesAll(globalSearchConsole, [
+    'createGlobalSearchConsole',
+    'PAGE_ENTRIES',
+    'buildCommandItems',
+    'buildSettingItems',
+    'buildInstalledPluginItems',
+    'buildCatalogPluginItems',
+  ]) && includesAll(consoleShellJs, [
+    'console-global-search',
+    '/api/global-search',
+    'bindGlobalSearch',
+    'ArrowDown',
+    'aria-activedescendant',
+  ]) && includesAll(publicStyles, [
+    'console-global-search-panel',
+    'console-global-search-item',
+    'grid-column: 1 / -1',
+  ]));
+  addCheck('frontend diagnostics page', includesAll(publicAuthJs, [
+    'FRONTEND_ERROR_STORAGE_KEY',
+    'persistFrontendErrorState',
+    'restoreFrontendErrorsFromStorage',
+    'CrystelfFrontendErrors',
+    'CrystelfPageLoadDiagnostics',
+  ]) && includesAll(consoleShellJs, [
+    '/frontend-diagnostics.html',
+    '前端诊断',
+  ]) && includesAll(globalSearchConsole, [
+    'page:frontend-diagnostics',
+    '/frontend-diagnostics.html',
+    '前端错误诊断',
+  ]) && includesAll(frontendDiagnosticsHtml, [
+    '前端错误诊断',
+    'frontend-diagnostics.js',
+    'frontend-diagnostics.css',
+    'auth-guarded-page',
+  ]) && includesAll(frontendDiagnosticsJs, [
+    'CrystelfFrontendErrors',
+    'CrystelfRequest',
+    'CrystelfPageLoadDiagnostics',
+    'renderRecommendations',
+    'clearLocalDiagnostics',
+  ]) && includesAll(frontendDiagnosticsCss, [
+    'frontend-diagnostics-kpi-grid',
+    'frontend-diagnostics-error-card',
+    'frontend-diagnostics-resource-card',
   ]));
   const performanceConsole = await readText('lib/webConsole/performanceConsole.js');
   const performancePageHtml = await readText('lib/webConsole/public/performance.html');

@@ -16,9 +16,11 @@ const pages = [
   { path: '/plugin-settings.html', label: '插件设置', text: '插件设置中心' },
   { path: '/api-settings.html', label: 'API 接口', text: 'API' },
   { path: '/config-diagnostics.html', label: '配置诊断', text: '配置来源诊断' },
+  { path: '/frontend-diagnostics.html', label: '前端诊断', text: '前端错误诊断' },
   { path: '/performance.html', label: '性能监测', text: '性能监测' },
   { path: '/group-management.html', label: '群管理', text: '群管理' },
   { path: '/qq-simulator.html', label: '模拟调试', text: '请求摘要', mobileText: '事件参数、附件与排查' },
+  { path: '/command-center.html', label: '命令中心', text: '命令中心' },
   { path: '/file-browser.html', label: '文件编辑', text: '文件管理' },
   { path: '/bot-plugins.html', label: '插件管理', text: '机器人插件管理' },
   { path: '/dependency-check.html', label: '依赖健康', text: '依赖健康面板' },
@@ -724,10 +726,43 @@ async function runDependencyInteraction(page) {
   }
 }
 
+async function runGlobalSearchInteraction(page) {
+  await page.waitForSelector('#console-global-search-input', { timeout: pageTimeoutMs });
+  await setInputValue(page, '#console-global-search-input', '命令');
+  await page.waitForSelector('#console-global-search-panel:not(.hidden) .console-global-search-item', { timeout: pageTimeoutMs });
+  const state = await page.evaluate(() => {
+    const input = document.querySelector('#console-global-search-input');
+    const panel = document.querySelector('#console-global-search-panel');
+    const items = Array.from(panel?.querySelectorAll('.console-global-search-item') || []);
+    return {
+      value: input?.value || '',
+      open: Boolean(panel) && !panel.classList.contains('hidden'),
+      count: items.length,
+      text: items.map(item => item.textContent || '').join('\n'),
+      firstSelected: items[0]?.classList.contains('is-selected') === true,
+    };
+  });
+  if (state.value !== '命令' || !state.open || state.count <= 0) {
+    throw new Error('全局搜索没有按关键词渲染结果');
+  }
+  if (!state.text.includes('命令') && !state.text.includes('指令')) {
+    throw new Error('全局搜索结果没有包含命令相关内容');
+  }
+  if (!state.firstSelected) {
+    throw new Error('全局搜索没有默认选中第一条结果');
+  }
+  await page.keyboard.press('Escape');
+  const closed = await page.evaluate(() => document.querySelector('#console-global-search-panel')?.classList.contains('hidden') === true);
+  if (!closed) {
+    throw new Error('全局搜索按 Escape 后没有关闭');
+  }
+}
+
 async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
   const checks = [
     { label: 'API 设置草稿', path: '/api-settings.html', run: runApiSettingsInteraction },
     { label: '文件浏览打开与预览', path: '/file-browser.html', run: runFileBrowserInteraction },
+    { label: '控制台全局搜索', path: '/index.html', run: runGlobalSearchInteraction },
     { label: '模拟调试安全发送', path: '/qq-simulator.html', run: runQqSimulatorInteraction },
     { label: '模拟调试深度预览', path: '/qq-simulator.html', run: runQqSimulatorDeepPreviewInteraction },
     { label: '依赖面板刷新与搜索', path: '/dependency-check.html', run: runDependencyInteraction },

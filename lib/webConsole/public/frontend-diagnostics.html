@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 前端错误诊断</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/frontend-diagnostics.css" />
+</head>
+<body class="frontend-diagnostics-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">只读诊断</div>
+        <h1>前端错误诊断</h1>
+        <p id="frontend-diagnostics-meta">正在读取本机页面异常、接口失败和资源加载状态...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">诊断操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="frontend-diagnostics-refresh-btn" type="button">刷新诊断</button>
+            <button id="frontend-diagnostics-copy-btn" type="button">复制摘要</button>
+            <button id="frontend-diagnostics-clear-btn" type="button" class="danger">清空本机记录</button>
+            <a class="link-btn" href="/index.html">返回总览</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel frontend-diagnostics-note">
+      <div>
+        <h2>记录范围</h2>
+        <div class="setting-help">本页只读取当前浏览器保存的诊断记录，不上传、不写服务器文件；URL 只保留路径和参数名，避免保存敏感参数值。</div>
+      </div>
+      <span class="frontend-diagnostics-pill tone-info">本机只读</span>
+    </section>
+
+    <section id="frontend-diagnostics-summary" class="frontend-diagnostics-kpi-grid">加载中...</section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>排查建议</h2>
+          <div class="setting-help">根据最近异常、接口失败、慢请求和资源加载状态生成。</div>
+        </div>
+      </div>
+      <div id="frontend-diagnostics-recommendations" class="frontend-diagnostics-recommendations">加载中...</div>
+    </section>
+
+    <section class="panel frontend-diagnostics-filter-panel">
+      <div class="section-head frontend-diagnostics-filter-head">
+        <div>
+          <h2>异常记录</h2>
+          <div id="frontend-diagnostics-error-meta" class="setting-help">等待读取异常记录。</div>
+        </div>
+        <div class="frontend-diagnostics-filters">
+          <input id="frontend-diagnostics-search" type="search" placeholder="搜索页面 / 接口 / 错误信息" />
+          <select id="frontend-diagnostics-kind">
+            <option value="all">全部类型</option>
+            <option value="request">接口请求</option>
+            <option value="runtime">页面脚本</option>
+            <option value="promise">异步任务</option>
+            <option value="resource">静态资源</option>
+          </select>
+        </div>
+      </div>
+      <div id="frontend-diagnostics-errors" class="frontend-diagnostics-error-list">加载中...</div>
+    </section>
+
+    <section class="panel panel-two frontend-diagnostics-bottom-grid">
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>接口请求状态</h2>
+            <div id="frontend-diagnostics-request-meta" class="setting-help">展示当前页面会话内的请求耗时和失败情况。</div>
+          </div>
+        </div>
+        <div id="frontend-diagnostics-requests" class="frontend-diagnostics-request-list">加载中...</div>
+      </div>
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>页面资源状态</h2>
+            <div id="frontend-diagnostics-resource-meta" class="setting-help">检查脚本、样式版本和资源加载失败。</div>
+          </div>
+        </div>
+        <div id="frontend-diagnostics-resources" class="frontend-diagnostics-resource-list">加载中...</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/frontend-diagnostics.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

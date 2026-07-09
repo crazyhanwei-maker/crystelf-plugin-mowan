@@ -14,9 +14,11 @@ const protectedPages = [
   { path: '/file-browser.html', text: '文件浏览编辑器' },
   { path: '/plugin-settings.html', text: '插件设置中心' },
   { path: '/config-diagnostics.html', text: '配置来源诊断' },
+  { path: '/frontend-diagnostics.html', text: '前端错误诊断' },
   { path: '/bot-plugins.html', text: '机器人插件管理' },
   { path: '/group-management.html', text: '群管理' },
   { path: '/qq-simulator.html', text: '模拟调试' },
+  { path: '/command-center.html', text: '命令中心' },
 ];
 
 const apiChecks = [
@@ -39,6 +41,22 @@ const apiChecks = [
     path: '/api/tasks',
     label: '任务中心',
     validate: data => data?.success === true && Array.isArray(data?.tasks),
+  },
+  {
+    path: '/api/command-center',
+    label: '命令中心',
+    validate: data => data?.success === true
+      && Array.isArray(data?.data?.commands)
+      && data?.data?.summary
+      && Array.isArray(data?.data?.risks),
+  },
+  {
+    path: '/api/global-search?q=命令&limit=8',
+    label: '全局搜索',
+    validate: data => data?.success === true
+      && Array.isArray(data?.data?.items)
+      && data?.data?.summary
+      && data?.data?.sourceSummary,
   },
   {
     path: '/api/config/diagnostics',

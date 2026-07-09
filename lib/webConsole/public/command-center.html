@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 命令中心</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/command-center.css" />
+</head>
+<body class="command-center-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">只读排查</div>
+        <h1>命令中心</h1>
+        <p id="command-center-meta">正在扫描插件命令...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="command-center-refresh-btn" type="button">刷新命令</button>
+            <button id="command-center-reset-btn" type="button">清空筛选</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" type="button" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel command-center-readonly-panel">
+      <div class="section-head">
+        <div>
+          <h2>命令扫描说明</h2>
+          <div id="command-center-status" class="setting-help">页面只读取 apps 目录里的命令声明，不会执行插件代码，也不会修改配置。</div>
+        </div>
+      </div>
+      <div id="command-center-source" class="command-center-source">等待扫描结果。</div>
+    </section>
+
+    <section id="command-center-kpis" class="command-center-kpi-grid"></section>
+
+    <section class="panel command-center-filter-panel">
+      <div class="section-head">
+        <div>
+          <h2>筛选命令</h2>
+          <div class="setting-help">可搜索命令、处理函数、模块文件、说明文字；也可以按事件、权限和开关状态筛选。</div>
+        </div>
+      </div>
+      <div class="command-center-filters">
+        <input id="command-center-search" placeholder="搜索命令 / 模块 / 函数 / 说明" />
+        <select id="command-center-category">
+          <option value="">全部分类</option>
+        </select>
+        <select id="command-center-module">
+          <option value="">全部模块</option>
+        </select>
+        <select id="command-center-event">
+          <option value="">全部事件</option>
+        </select>
+        <select id="command-center-permission">
+          <option value="">全部权限</option>
+        </select>
+        <select id="command-center-status-filter">
+          <option value="all">全部状态</option>
+          <option value="enabled">仅看可用</option>
+          <option value="disabled">主开关关闭</option>
+          <option value="broad">兜底/宽泛监听</option>
+          <option value="high">高优先级命令</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel command-center-risk-panel">
+      <div class="section-head">
+        <div>
+          <h2>风险提示</h2>
+          <div class="setting-help">用于排查命令被抢、宽泛监听或重复命令。这里只提示风险，不代表一定有故障。</div>
+        </div>
+      </div>
+      <div id="command-center-risks" class="command-center-risks">加载中...</div>
+    </section>
+
+    <section class="panel command-center-list-panel">
+      <div class="section-head">
+        <div>
+          <h2>命令列表</h2>
+          <div id="command-center-list-meta" class="setting-help">等待命令数据。</div>
+        </div>
+      </div>
+      <div id="command-center-list" class="command-center-list">加载中...</div>
+    </section>
+
+    <section class="panel command-center-error-panel hidden" id="command-center-scan-error-panel">
+      <div class="section-head">
+        <div>
+          <h2>扫描异常</h2>
+          <div class="setting-help">这些文件没有成功读取或解析，通常是文件编码、权限或语法结构异常。</div>
+        </div>
+      </div>
+      <div id="command-center-scan-errors" class="command-center-scan-errors"></div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/command-center.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>
