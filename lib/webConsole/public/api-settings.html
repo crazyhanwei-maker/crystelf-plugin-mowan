@@ -231,7 +231,7 @@
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>基础接入</h3>
-                  <p>先决定走 OpenAI、对话式生图还是即梦，再填写模型、地址和密钥。</p>
+                  <p>选择接口模式后，只填写当前模式需要的地址和凭据。</p>
                 </div>
               </div>
               <div class="settings-grid">
@@ -242,19 +242,19 @@
                     <option value="chat">对话式生图模型</option>
                     <option value="jimeng">即梦接口</option>
                   </select>
-                  <div class="setting-help">按你实际使用的生图服务选择；选错会导致测试失败。</div>
+                  <div class="setting-help">按实际生图服务选择，页面会自动隐藏无关配置。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai chat">
                   <div class="kv-label">图像模型</div>
                   <input type="text" id="image-model" placeholder="gpt-image-2" />
                   <div class="setting-help">生图服务要求的模型名称。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai chat">
                   <div class="kv-label">API 基础地址</div>
                   <input type="text" id="image-baseApi" placeholder="https://api.openai.com" />
                   <div class="setting-help">OpenAI 风格或对话式生图服务的地址。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="jimeng">
                   <div class="kv-label">即梦接口地址</div>
                   <input type="text" id="image-jimengApiUrl" placeholder="http://your-jimeng-server:985" />
                   <div class="setting-help">只有选择即梦模式时才需要填写。</div>
@@ -267,7 +267,7 @@
                   </form>
                   <div class="setting-help">生图服务提供的密钥；如果服务不需要密钥可留空。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai">
                   <div class="kv-label">图像尺寸</div>
                   <select id="image-size">
                     <option value="auto">自动/不传</option>
@@ -283,7 +283,7 @@
                   </select>
                   <div class="setting-help">不确定时选自动；需要固定比例时再选择具体尺寸。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai">
                   <div class="kv-label">图像质量</div>
                   <select id="image-quality">
                     <option value="high">High (gpt-image-2 推荐)</option>
@@ -294,7 +294,7 @@
                   </select>
                   <div class="setting-help">不同服务支持的质量选项不一样；测试失败时可先改回推荐值。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai">
                   <div class="kv-label">响应格式</div>
                   <select id="image-responseFormat">
                     <option value="b64_json">图片数据 (gpt-image-2 推荐)</option>
@@ -302,7 +302,7 @@
                   </select>
                   <div class="setting-help">推荐使用图片数据模式，插件会自动转换成可发送的图片。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai">
                   <div class="kv-label">背景模式</div>
                   <select id="image-background">
                     <option value="">不传</option>
@@ -345,7 +345,7 @@
               <div class="api-settings-subgroup-head">
                 <div>
                   <h3>备用 API</h3>
-                  <p>生图主服务失败时可使用备用生图服务，模式、地址、密钥和模型都独立配置。</p>
+                  <p>生图主服务失败时可切换备用服务，页面只显示备用模式需要的字段。</p>
                 </div>
               </div>
               <div class="settings-grid">
@@ -363,17 +363,17 @@
                   </select>
                   <div class="setting-help">可与主生图模式不同。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="openai chat">
                   <div class="kv-label">备用图像模型</div>
                   <input type="text" id="image-fallback-model" placeholder="gpt-image-2" />
                   <div class="setting-help">备用生图服务要求的模型名称。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="openai chat">
                   <div class="kv-label">备用 API 基础地址</div>
                   <input type="text" id="image-fallback-baseApi" placeholder="https://backup.example.com" />
                   <div class="setting-help">OpenAI 风格或对话式生图备用地址。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="jimeng">
                   <div class="kv-label">备用即梦接口地址</div>
                   <input type="text" id="image-fallback-jimengApiUrl" placeholder="http://backup-jimeng:985" />
                   <div class="setting-help">只有备用模式选择即梦时才需要填写。</div>

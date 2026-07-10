@@ -55,7 +55,7 @@ async function renderAllImages() {
     avatarText: '魔',
     generatedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
     rows: [
-      { label: '插件版本', value: 'crystelf-plugin v2.0.3' },
+      { label: '插件版本', value: 'crystelf-plugin v2.1.0' },
       { label: 'Bot', value: '10000' },
       { label: '运行时长', value: '3分' },
       { label: 'Node', value: process.version },

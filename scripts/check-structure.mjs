@@ -800,6 +800,15 @@ async function main() {
   const groupSummaryDiagnosticsHtml = await readText('lib/webConsole/public/group-summary-diagnostics.html');
   const groupSummaryDiagnosticsJs = await readText('lib/webConsole/public/group-summary-diagnostics.js');
   const groupSummaryDiagnosticsCss = await readText('lib/webConsole/public/group-summary-diagnostics.css');
+  addCheck('image api mode conditional fields', includesAll(apiSettingsHtml, [
+    'data-image-mode-scope="primary"',
+    'data-image-mode-scope="fallback"',
+    'data-image-modes="openai chat"',
+    'data-image-modes="jimeng"',
+  ]) && includesAll(apiSettingsFormJs, [
+    'syncImageModeFieldVisibility',
+    "document.querySelectorAll('[data-image-mode-scope][data-image-modes]')",
+  ]));
   addCheck('external api quality logger', includesAll(apiQualityLogger, [
     'logExternalApiUsage',
     'getApiQualityLogRetentionStatus',

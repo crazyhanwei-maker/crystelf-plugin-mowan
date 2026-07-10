@@ -364,6 +364,49 @@ async function runInteractionCheck(page, baseUrl, runtimeErrors, item = {}) {
 async function runApiSettingsInteraction(page) {
   await page.waitForSelector('#api-settings-overview-list', { timeout: pageTimeoutMs });
   await waitForText(page, '#api-settings-preview', 'ai');
+  await clickAndWait(page, '.api-settings-nav-btn[data-section="ai-image"]', 150);
+  await page.waitForSelector('#section-ai-image:not(.hidden)', { timeout: pageTimeoutMs });
+  const originalImageModes = await page.evaluate(() => ({
+    primary: document.querySelector('#image-imageMode')?.value || 'openai',
+    fallback: document.querySelector('#image-fallback-imageMode')?.value || 'openai',
+  }));
+  const readImageModeVisibility = () => page.evaluate(() => {
+    const visible = selector => {
+      const element = document.querySelector(selector);
+      const field = element?.closest('.setting-item');
+      return Boolean(element) && Boolean(field) && !field.classList.contains('hidden');
+    };
+    return {
+      primaryModel: visible('#image-model'),
+      primaryBaseApi: visible('#image-baseApi'),
+      primaryJimeng: visible('#image-jimengApiUrl'),
+      primarySize: visible('#image-size'),
+      fallbackModel: visible('#image-fallback-model'),
+      fallbackBaseApi: visible('#image-fallback-baseApi'),
+      fallbackJimeng: visible('#image-fallback-jimengApiUrl'),
+    };
+  });
+  await setInputValue(page, '#image-imageMode', 'jimeng');
+  await setInputValue(page, '#image-fallback-imageMode', 'jimeng');
+  const jimengVisibility = await readImageModeVisibility();
+  if (!jimengVisibility.primaryJimeng || jimengVisibility.primaryModel || jimengVisibility.primaryBaseApi || jimengVisibility.primarySize
+    || !jimengVisibility.fallbackJimeng || jimengVisibility.fallbackModel || jimengVisibility.fallbackBaseApi) {
+    throw new Error('即梦模式没有正确隐藏 OpenAI 图像字段');
+  }
+  await setInputValue(page, '#image-imageMode', 'chat');
+  const chatVisibility = await readImageModeVisibility();
+  if (!chatVisibility.primaryModel || !chatVisibility.primaryBaseApi || chatVisibility.primaryJimeng || chatVisibility.primarySize) {
+    throw new Error('对话式生图模式字段显示不正确');
+  }
+  await setInputValue(page, '#image-imageMode', 'openai');
+  await setInputValue(page, '#image-fallback-imageMode', 'openai');
+  const openAiVisibility = await readImageModeVisibility();
+  if (!openAiVisibility.primaryModel || !openAiVisibility.primaryBaseApi || openAiVisibility.primaryJimeng || !openAiVisibility.primarySize
+    || !openAiVisibility.fallbackModel || !openAiVisibility.fallbackBaseApi || openAiVisibility.fallbackJimeng) {
+    throw new Error('OpenAI 生图模式没有正确隐藏即梦字段');
+  }
+  await setInputValue(page, '#image-imageMode', originalImageModes.primary);
+  await setInputValue(page, '#image-fallback-imageMode', originalImageModes.fallback);
   await clickAndWait(page, '.api-settings-nav-btn[data-section="image-monitor"]', 250);
   await page.waitForSelector('#section-image-monitor:not(.hidden)', { timeout: pageTimeoutMs });
   const before = await page.evaluate(() => document.querySelector('#imageMonitor-saveMemeImages')?.textContent || '');
