@@ -216,9 +216,12 @@ async function main() {
   const pluginSettingsConsoleSuite = await readText('lib/webConsole/pluginSettingsConsoleSuite.js');
   const sandboxSimulatorConsoleSuite = await readText('lib/webConsole/sandboxSimulatorConsoleSuite.js');
   const commandCenterConsole = await readText('lib/webConsole/commandCenterConsole.js');
+  const groupSummaryDiagnosticsConsole = await readText('lib/webConsole/groupSummaryDiagnosticsConsole.js');
   const globalSearchConsole = await readText('lib/webConsole/globalSearchConsole.js');
   const consoleShellJs = await readText('lib/webConsole/public/console-shell.js');
   const publicStyles = await readText('lib/webConsole/public/styles.css');
+  const consoleModernStyles = await readText('lib/webConsole/public/console-modern.css');
+  const themeJs = await readText('lib/webConsole/public/theme.js');
   const webConsoleRoutes = await readText('lib/webConsole/webConsoleRoutes.js');
   const webConsoleHandlerContext = await readText('lib/webConsole/webConsoleHandlerContext.js');
   const fileBrowserRoutes = await readText('lib/webConsole/fileBrowserRoutes.js');
@@ -247,6 +250,7 @@ async function main() {
     sandboxSimulatorConsoleSuite,
     commandCenterConsole,
     webConsoleRoutes,
+    groupSummaryDiagnosticsConsole,
     fileBrowserRoutes,
     botPluginRoutes,
     pluginCatalogRoutes,
@@ -280,6 +284,8 @@ async function main() {
     '/api/command-center',
     '/api/global-search',
     'buildGlobalSearchPayload',
+    '/api/group-summary/diagnostics',
+    'buildGroupSummaryDiagnosticsPayload',
     'buildVersionCheckPayload',
     'buildCommandCenterPayload',
     'createPluginCatalogRoutes',
@@ -362,6 +368,7 @@ async function main() {
     'createWebConsoleHandlerContext',
     'buildBotPluginManagementPayload',
     'buildConfigDiagnosticsPayload',
+    'buildGroupSummaryDiagnosticsPayload',
     'buildCommandCenterPayload',
     'buildGroupManagementPayload',
     'serveGroupManagementEventStream',
@@ -790,6 +797,9 @@ async function main() {
   const frontendDiagnosticsHtml = await readText('lib/webConsole/public/frontend-diagnostics.html');
   const frontendDiagnosticsJs = await readText('lib/webConsole/public/frontend-diagnostics.js');
   const frontendDiagnosticsCss = await readText('lib/webConsole/public/frontend-diagnostics.css');
+  const groupSummaryDiagnosticsHtml = await readText('lib/webConsole/public/group-summary-diagnostics.html');
+  const groupSummaryDiagnosticsJs = await readText('lib/webConsole/public/group-summary-diagnostics.js');
+  const groupSummaryDiagnosticsCss = await readText('lib/webConsole/public/group-summary-diagnostics.css');
   addCheck('external api quality logger', includesAll(apiQualityLogger, [
     'logExternalApiUsage',
     'getApiQualityLogRetentionStatus',
@@ -933,6 +943,57 @@ async function main() {
     'console-global-search-panel',
     'console-global-search-item',
     'grid-column: 1 / -1',
+  ]));
+  addCheck('task oriented console shell', includesAll(consoleShellJs, [
+    '工作台',
+    '群聊运营',
+    'AI 能力',
+    '插件与系统',
+    '诊断与调试',
+    '魔丸控制台',
+    'activeNavigationItem.group',
+  ]) && includesAll(themeJs, [
+    'console-modern.css',
+    'data-console-modern-style',
+    'console-shell.js',
+  ]) && includesAll(consoleModernStyles, [
+    'Console 3.0',
+    'console-app-shell',
+    'console-nav-section',
+    'console-global-search',
+    'task-oriented',
+  ]));
+  addCheck('group summary diagnostics page', includesAll(webConsoleSurface, [
+    'createGroupSummaryDiagnosticsConsole',
+    'groupSummaryDiagnosticsConsole',
+    '/api/group-summary/diagnostics',
+    'buildGroupSummaryDiagnosticsPayload',
+  ]) && includesAll(groupSummaryDiagnosticsConsole, [
+    'createGroupSummaryDiagnosticsConsole',
+    'readDailyGroupSummaryResults',
+    'listDailyGroupSummaryLocks',
+    'buildRecommendations',
+  ]) && includesAll(consoleShellJs, [
+    '/group-summary-diagnostics.html',
+    '群总结诊断',
+  ]) && includesAll(globalSearchConsole, [
+    'page:group-summary-diagnostics',
+    '/group-summary-diagnostics.html',
+    '重复发送',
+  ]) && includesAll(groupSummaryDiagnosticsHtml, [
+    '群总结诊断',
+    'group-summary-diagnostics.js',
+    'group-summary-diagnostics.css',
+    'auth-guarded-page',
+  ]) && includesAll(groupSummaryDiagnosticsJs, [
+    '/api/group-summary/diagnostics',
+    'renderRecommendations',
+    'renderGroups',
+    'copySummary',
+  ]) && includesAll(groupSummaryDiagnosticsCss, [
+    'group-summary-kpi-grid',
+    'group-summary-group-card',
+    'group-summary-lock-card',
   ]));
   addCheck('frontend diagnostics page', includesAll(publicAuthJs, [
     'FRONTEND_ERROR_STORAGE_KEY',

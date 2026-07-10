@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 群总结诊断</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/group-summary-diagnostics.css" />
+</head>
+<body class="group-summary-diagnostics-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">只读诊断</div>
+        <h1>群总结诊断</h1>
+        <p id="group-summary-diagnostics-meta">正在读取每日群聊总结状态...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">诊断操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="group-summary-refresh-btn" type="button">刷新诊断</button>
+            <button id="group-summary-today-btn" type="button">查看今天</button>
+            <button id="group-summary-copy-btn" type="button">复制摘要</button>
+            <a class="link-btn" href="/group-management.html">群管理</a>
+            <a class="link-btn" href="/index.html">返回总览</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel group-summary-diagnostics-control-panel">
+      <div class="section-head">
+        <div>
+          <h2>诊断范围</h2>
+          <div class="setting-help">本页只读取群总结本地记录、状态文件和运行锁，不会触发 AI 总结，也不会修改配置。</div>
+        </div>
+      </div>
+      <div class="group-summary-diagnostics-controls">
+        <label>
+          日期
+          <input id="group-summary-date" type="date" />
+        </label>
+        <label>
+          搜索群
+          <input id="group-summary-search" type="search" placeholder="群号 / 群名 / 失败原因" />
+        </label>
+        <label>
+          状态
+          <select id="group-summary-status-filter">
+            <option value="all">全部状态</option>
+            <option value="sent">今日已发</option>
+            <option value="failed">失败</option>
+            <option value="duplicate">重复发送</option>
+            <option value="running">生成中</option>
+            <option value="due">待执行</option>
+            <option value="insufficient">消息不足</option>
+            <option value="disabled">未启用/已禁用</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section id="group-summary-kpis" class="group-summary-kpi-grid">加载中...</section>
+
+    <section class="panel group-summary-diagnostics-recommendation-panel">
+      <div class="section-head">
+        <div>
+          <h2>排查建议</h2>
+          <div class="setting-help">根据配置、今日状态、失败记录、重复发送和锁状态生成。</div>
+        </div>
+      </div>
+      <div id="group-summary-recommendations" class="group-summary-recommendations">加载中...</div>
+    </section>
+
+    <section class="panel group-summary-diagnostics-list-panel">
+      <div class="section-head">
+        <div>
+          <h2>群任务状态</h2>
+          <div id="group-summary-list-meta" class="setting-help">等待诊断数据。</div>
+        </div>
+      </div>
+      <div id="group-summary-group-list" class="group-summary-group-list">加载中...</div>
+    </section>
+
+    <section class="panel panel-two group-summary-diagnostics-bottom-grid">
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>最近结果</h2>
+            <div class="setting-help">展示所选日期最近写入的总结结果，包括成功、失败和手动生成。</div>
+          </div>
+        </div>
+        <div id="group-summary-recent-results" class="group-summary-result-list">加载中...</div>
+      </div>
+      <div>
+        <div class="section-head">
+          <div>
+            <h2>运行锁</h2>
+            <div class="setting-help">生成中的群会出现运行锁；过期锁通常来自异常退出。</div>
+          </div>
+        </div>
+        <div id="group-summary-locks" class="group-summary-lock-list">加载中...</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/group-summary-diagnostics.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

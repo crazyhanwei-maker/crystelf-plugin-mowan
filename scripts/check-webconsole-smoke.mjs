@@ -15,6 +15,7 @@ const protectedPages = [
   { path: '/plugin-settings.html', text: '插件设置中心' },
   { path: '/config-diagnostics.html', text: '配置来源诊断' },
   { path: '/frontend-diagnostics.html', text: '前端错误诊断' },
+  { path: '/group-summary-diagnostics.html', text: '群总结诊断' },
   { path: '/bot-plugins.html', text: '机器人插件管理' },
   { path: '/group-management.html', text: '群管理' },
   { path: '/qq-simulator.html', text: '模拟调试' },
@@ -57,6 +58,14 @@ const apiChecks = [
       && Array.isArray(data?.data?.items)
       && data?.data?.summary
       && data?.data?.sourceSummary,
+  },
+  {
+    path: '/api/group-summary/diagnostics',
+    label: '群总结诊断',
+    validate: data => data?.success === true
+      && data?.data?.summary
+      && Array.isArray(data?.data?.groups)
+      && Array.isArray(data?.data?.recommendations),
   },
   {
     path: '/api/config/diagnostics',

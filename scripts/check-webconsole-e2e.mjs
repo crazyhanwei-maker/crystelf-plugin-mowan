@@ -17,6 +17,7 @@ const pages = [
   { path: '/api-settings.html', label: 'API 接口', text: 'API' },
   { path: '/config-diagnostics.html', label: '配置诊断', text: '配置来源诊断' },
   { path: '/frontend-diagnostics.html', label: '前端诊断', text: '前端错误诊断' },
+  { path: '/group-summary-diagnostics.html', label: '群总结诊断', text: '群总结诊断' },
   { path: '/performance.html', label: '性能监测', text: '性能监测' },
   { path: '/group-management.html', label: '群管理', text: '群管理' },
   { path: '/qq-simulator.html', label: '模拟调试', text: '请求摘要', mobileText: '事件参数、附件与排查' },
