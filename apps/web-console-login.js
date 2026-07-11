@@ -2,34 +2,9 @@ import plugin from '../../../lib/plugins/plugin.js';
 import ConfigControl from '../lib/config/configControl.js';
 import { createWebConsoleLoginTicket } from '../lib/webConsole/loginTicketStore.js';
 import { getWebConsoleInfo } from '../lib/webConsole/server.js';
-import { buildWebConsoleConfig, getWebConsoleDisplayUrl } from '../lib/webConsole/webConsoleConfig.js';
+import { resolveWebConsoleLoginBaseUrl } from '../lib/webConsole/publicUrlResolver.js';
 
 const LOGIN_TICKET_TTL_MS = 5 * 60 * 1000;
-
-function normalizeBaseUrl(value = '') {
-  const text = String(value || '').trim();
-  if (!text) return '';
-  try {
-    const url = new URL(text);
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      return '';
-    }
-    url.hash = '';
-    return url.toString().replace(/\/+$/, '');
-  } catch {
-    return '';
-  }
-}
-
-function getConfiguredPublicUrl(config = {}) {
-  return normalizeBaseUrl(config.webConsolePublicUrl);
-}
-
-function getRuntimeFallbackUrl(config = {}) {
-  const runtimeUrl = normalizeBaseUrl(getWebConsoleInfo()?.url || '');
-  if (runtimeUrl) return runtimeUrl;
-  return normalizeBaseUrl(getWebConsoleDisplayUrl(buildWebConsoleConfig(config)));
-}
 
 function buildLoginUrl(baseUrl = '', ticket = '') {
   const url = new URL('/login.html', `${baseUrl.replace(/\/+$/, '')}/`);
@@ -129,8 +104,11 @@ export default class CrystelfWebConsoleLogin extends plugin {
       return e.reply('控制台功能当前已关闭，请先在配置里开启 webConsole。', true);
     }
 
-    const publicUrl = getConfiguredPublicUrl(config);
-    const baseUrl = publicUrl || getRuntimeFallbackUrl(config);
+    const resolvedBaseUrl = resolveWebConsoleLoginBaseUrl({
+      config,
+      runtimeInfo: getWebConsoleInfo() || {},
+    });
+    const baseUrl = resolvedBaseUrl.url;
     if (!baseUrl) {
       return e.reply('暂时无法生成控制台地址，请确认控制台已经启动。', true);
     }
@@ -152,8 +130,12 @@ export default class CrystelfWebConsoleLogin extends plugin {
       '有效期：5 分钟',
       '打开后自动失效，请不要转发给其他人。',
     ];
-    if (!publicUrl) {
-      lines.push('', '当前未配置 webConsolePublicUrl，如果这个地址不是公网可访问，请在控制台设置里填写公网访问地址。');
+    if (resolvedBaseUrl.source === 'auto-public') {
+      lines.push('', '当前地址由服务器网卡自动识别；如果使用了 CDN、NAT 或反向代理，请在控制台设置中填写 webConsolePublicUrl。');
+    } else if (resolvedBaseUrl.source === 'auto-private') {
+      lines.push('', '当前只检测到内网地址，外网可能无法访问；请填写 webConsolePublicUrl 或检查服务器公网网络。');
+    } else if (resolvedBaseUrl.source === 'local-fallback') {
+      lines.push('', '当前只能生成本机地址；请填写 webConsolePublicUrl，或确认服务器存在可用的公网网卡地址。');
     }
 
     try {

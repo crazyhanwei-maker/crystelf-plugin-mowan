@@ -3,9 +3,9 @@ import Version from '../lib/system/version.js';
 import Path from '../constants/path.js';
 import { getLatestUsageEntrySync, getUsageOverviewSync } from '../lib/ai/usageLogger.js';
 import { getDailyImageUsageSummarySync } from '../lib/ai/imageUsageLogger.js';
-import { getWebConsoleInfo } from '../lib/webConsole/server.js';
 import { getPricingConfig } from '../lib/webConsole/webConsoleConfig.js';
 import { renderStatusImage } from '../lib/system/statusImageRenderer.js';
+import { resolveBotIdentity } from '../lib/system/botIdentity.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -112,32 +112,13 @@ function getCpuPercent() {
   }
 }
 
-function getAvatarText(name = '') {
-  const text = String(name || '').trim();
-  if (!text) return '灵';
-  return Array.from(text).slice(0, 1).join('');
-}
-
-function getBotId(e = {}) {
-  return String(e.self_id ?? e.bot?.uin ?? e.bot_id ?? globalThis.Bot?.uin ?? '未知');
-}
-
 function getAdapterName(e = {}) {
   return String(e.adapter_name || e.bot?.version?.app_name || e.bot?.adapter?.name || '未知');
 }
 
-function getGroupText(e = {}) {
-  if (!e.isGroup && !e.group_id) return '私聊';
-  const name = e.group?.info?.group_name || e.group_name || '未知群';
-  return `${name}(${e.group_id || '未知'})`;
-}
-
 function getWebConsoleText() {
   const appConfig = ConfigControl.get('config') || {};
-  if (appConfig.webConsole === false) return '关闭';
-  const runtime = getWebConsoleInfo();
-  if (runtime?.url) return '运行中';
-  return '已启用，未检测到运行端口';
+  return appConfig.webConsole === false ? '已关闭' : '已启用';
 }
 
 function normalizePrivateAiAccessList(value = []) {
@@ -252,7 +233,7 @@ function buildHealthItems(allConfigs = {}) {
     },
     {
       label: '控制台',
-      tone: getWebConsoleText() === '运行中' ? 'success' : 'warn',
+      tone: getWebConsoleText() === '已启用' ? 'success' : 'warn',
       detail: getWebConsoleText(),
     },
   ];
@@ -297,6 +278,9 @@ function buildStatusData(e = {}) {
   const requestCount = Number(usage.request_count || 0);
   const totalTokens = Number(usage.total_tokens || 0);
   const profileName = String(allConfigs?.profile?.nickName || allConfigs?.profile?.nickname || '魔丸').trim();
+  const botIdentity = resolveBotIdentity(e, profileName);
+  const botId = botIdentity.botId || '未知';
+  const { botName } = botIdentity;
   const cpuPercent = getCpuPercent();
   const health = buildHealthItems(allConfigs);
   const imageLatest = imageUsage.latest;
@@ -377,10 +361,9 @@ function buildStatusData(e = {}) {
     health,
     rows: [
       ['插件版本', `${Version.name} v${Version.ver}`],
-      ['机器人昵称', profileName],
-      ['Bot', getBotId(e)],
+      ['机器人昵称', botName],
+      ['Bot', botId],
       ['适配器', getAdapterName(e)],
-      ['当前会话', getGroupText(e)],
       ['进程', `PID ${process.pid}`],
       ['运行时长', formatDuration(uptimeMs)],
       ['Node', process.version],
@@ -388,17 +371,17 @@ function buildStatusData(e = {}) {
       ['系统负载', loadAvg],
       ['控制台', getWebConsoleText()],
     ],
-    botName: profileName,
-    avatarText: getAvatarText(profileName),
+    botName,
+    avatarText: botIdentity.avatarText,
+    avatarUrl: botIdentity.avatarUrl,
     features: getFeatureEntries(),
   };
 
   data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health });
   data.summaryLines = [
     `插件：${Version.name} v${Version.ver}`,
-    `Bot：${getBotId(e)}`,
+    `Bot：${botId}`,
     `适配器：${getAdapterName(e)}`,
-    `当前会话：${getGroupText(e)}`,
     `进程：PID ${process.pid}`,
     `运行时长：${formatDuration(uptimeMs)}`,
     `Node：${process.version}`,

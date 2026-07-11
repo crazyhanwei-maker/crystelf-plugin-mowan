@@ -1,5 +1,6 @@
 import ConfigControl from '../lib/config/configControl.js';
 import { renderCommandListImage } from '../lib/system/commandListImageRenderer.js';
+import { resolveBotIdentity } from '../lib/system/botIdentity.js';
 
 // 命令分类：保持与插件实际注册命令一致，新增命令时同步更新此处
 function getCommandCategories() {
@@ -107,13 +108,6 @@ function getProfileName() {
   }
 }
 
-function getAvatarText(name = '魔丸') {
-  const text = String(name || '').trim();
-  if (!text) return '魔';
-  const chars = Array.from(text);
-  return chars.length > 1 ? chars.slice(0, 2).join('') : chars[0];
-}
-
 export class CrystelfCommandList extends plugin {
   constructor() {
     super({
@@ -132,9 +126,9 @@ export class CrystelfCommandList extends plugin {
 
   async showCommandList(e) {
     const profileName = getProfileName();
+    const identity = resolveBotIdentity(e, profileName);
     const data = {
-      botName: profileName,
-      avatarText: getAvatarText(profileName),
+      ...identity,
       generatedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
       categories: getCommandCategories(),
     };

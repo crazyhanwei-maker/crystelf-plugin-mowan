@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import { createQqSimulatorConsole } from '../lib/webConsole/qqSimulatorConsole.js';
 import { renderStatusImage } from '../lib/system/statusImageRenderer.js';
 import { closeSharedPuppeteerBrowser } from '../lib/system/puppeteerRenderer.js';
+import { resolveWebConsoleLoginBaseUrl } from '../lib/webConsole/publicUrlResolver.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -130,11 +131,53 @@ async function checkStatusImageRender() {
   logPass('状态图渲染正常');
 }
 
+function checkWebConsolePublicUrlResolution() {
+  const automatic = resolveWebConsoleLoginBaseUrl({
+    config: {
+      webConsoleHost: '0.0.0.0',
+      webConsolePort: 27891,
+      webConsolePublicUrl: '',
+    },
+    runtimeInfo: {
+      host: '0.0.0.0',
+      port: 27901,
+      url: 'http://127.0.0.1:27901/',
+    },
+    networkInterfaces: {
+      lo: [{ address: '127.0.0.1', family: 'IPv4', internal: true }],
+      eth0: [
+        { address: '192.168.10.5', family: 'IPv4', internal: false },
+        { address: '240e:39a:a78:4cc0:20c:29ff:fed2:c294', family: 'IPv6', internal: false },
+      ],
+    },
+  });
+  assert(automatic.source === 'auto-public', '没有优先选择自动检测到的公网地址');
+  assert(
+    automatic.url === 'http://[240e:39a:a78:4cc0:20c:29ff:fed2:c294]:27901',
+    `公网 IPv6 登录基础地址格式错误：${automatic.url}`,
+  );
+  assert(!automatic.url.includes('0.0.0.0'), '登录地址不应包含监听通配地址 0.0.0.0');
+  assert(!automatic.url.includes('127.0.0.1'), '存在公网地址时不应回退 127.0.0.1');
+
+  const configured = resolveWebConsoleLoginBaseUrl({
+    config: {
+      webConsolePublicUrl: 'https://console.example.com/',
+      webConsolePort: 27891,
+    },
+    runtimeInfo: { host: '0.0.0.0', port: 27901 },
+    networkInterfaces: {},
+  });
+  assert(configured.source === 'configured', '手动公网地址没有获得最高优先级');
+  assert(configured.url === 'https://console.example.com', '手动公网地址规范化错误');
+  logPass('控制台一次性登录公网地址解析正常');
+}
+
 async function main() {
   try {
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
     await checkStatusImageRender();
+    checkWebConsolePublicUrlResolution();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});

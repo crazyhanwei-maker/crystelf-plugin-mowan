@@ -18,6 +18,7 @@ import {
   releaseDailyGroupSummaryRunLock,
 } from '../lib/groupSummary/dailyGroupSummaryStore.js';
 import { renderDailyGroupSummaryImage } from '../lib/groupSummary/dailyGroupSummaryImageRenderer.js';
+import { resolveBotIdentity } from '../lib/system/botIdentity.js';
 
 const logger = globalThis.logger || {
   info: (...args) => console.log(...args),
@@ -275,6 +276,7 @@ function getSegment() {
 }
 
 function buildSummaryImagePayload({
+  event = {},
   groupId = '',
   groupName = '',
   dateKey = '',
@@ -283,7 +285,9 @@ function buildSummaryImagePayload({
   cfg = {},
   sourceLabel = '群聊总结',
 } = {}) {
+  const profile = ConfigControl.get('profile') || {};
   return {
+    ...resolveBotIdentity(event, profile.nickName || profile.nickname || '魔丸'),
     title: cfg.title || '今日群聊总结',
     groupId,
     groupName,
@@ -424,6 +428,7 @@ export class dailyGroupSummary extends plugin {
         || '';
       const summary = await generateGroupSummaryText(groupId, groupName, dateKey, messages, cfg, aiConfig);
       const imagePayload = buildSummaryImagePayload({
+        event: e,
         groupId,
         groupName,
         dateKey,

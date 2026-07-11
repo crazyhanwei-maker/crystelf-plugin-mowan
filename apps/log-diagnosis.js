@@ -7,6 +7,7 @@ import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 import { createLogDiagnosisConsole } from '../lib/webConsole/logDiagnosisConsole.js';
 import { buildWebConsoleConfig } from '../lib/webConsole/webConsoleConfig.js';
 import { renderLogDiagnosisImage } from '../lib/system/logDiagnosisImageRenderer.js';
+import { resolveBotIdentity } from '../lib/system/botIdentity.js';
 
 let diagnosisRunning = false;
 
@@ -81,7 +82,11 @@ export default class CrystelfLogDiagnosis extends plugin {
         maxTokens: 1200,
       });
       try {
-        const imagePath = await renderLogDiagnosisImage(result);
+        const profile = ConfigControl.get('profile') || {};
+        const imagePath = await renderLogDiagnosisImage({
+          ...result,
+          ...resolveBotIdentity(e, profile.nickName || profile.nickname || '魔丸'),
+        });
         if (imagePath) {
           return e.reply(segment.image(imagePath), true);
         }
