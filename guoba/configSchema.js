@@ -2643,8 +2643,8 @@ const guobaSchema = [
     componentProps: {
       options: [
         { label: '自动/不传', value: 'auto' },
-        { label: '1K (Agent Plan)', value: '1K' },
         { label: '2K (Agent Plan)', value: '2K' },
+        { label: '3K (Agent Plan)', value: '3K' },
         { label: '4K (Agent Plan)', value: '4K' },
         { label: '1024x1024', value: '1024x1024' },
         { label: '1536x1024', value: '1536x1024' },

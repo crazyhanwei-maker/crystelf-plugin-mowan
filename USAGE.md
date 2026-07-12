@@ -136,16 +136,36 @@ AI 可以在回复中使用表情包标记：
 | 配置 | 说明 |
 | --- | --- |
 | `enabled` | 是否启用生图 |
-| `imageMode` | `openai`、`chat`、`jimeng` |
+| `imageMode` | `openai`、`ark-agent-plan`、`chat`、`jimeng` |
 | `baseApi` | 图像接口基地址 |
 | `apiKey` | 图像接口密钥 |
-| `model` | 例如 `gpt-image-2` |
-| `size` | 例如 `1024x1024` |
+| `model` | 例如 `gpt-image-2` 或 `doubao-seedream-5.0-lite` |
+| `size` | OpenAI 可用 `1024x1024`；Agent Plan 可用 `2K`、`3K`、`4K` |
 | `quality` | `gpt-image-2` 推荐 `low`、`medium`、`high` |
 | `timeout` | 慢接口可设置 `120000` 或 `360000` |
-| `responseFormat` | `gpt-image-2` 推荐 `b64_json` |
+| `responseFormat` | `url` 或 `b64_json`；`gpt-image-2` 通常推荐 `b64_json` |
+| `outputFormat` | Agent Plan 图片格式：`png` 或 `jpeg` |
+| `watermark` | Agent Plan 是否添加水印 |
 
 `openai` 模式会调用 `/v1/images/generations`。如果 `baseApi` 填了 `https://example.com/v1`，插件会自动处理最终路径。
+
+### 火山方舟 Agent Plan
+
+在控制台“API 设置 -> 图像生成 API”选择“火山 Agent Plan”后，页面只显示这一模式需要的字段。推荐配置：
+
+| 配置 | 推荐值 |
+| --- | --- |
+| `imageMode` | `ark-agent-plan` |
+| `baseApi` | `https://ark.cn-beijing.volces.com/api/plan/v3` |
+| `model` | `doubao-seedream-5.0-lite` |
+| `size` | `2K` |
+| `responseFormat` | `url` |
+| `outputFormat` | `png` |
+| `watermark` | `false` |
+
+Agent Plan 支持文生图、单图生图和多图融合。发送一张或多张原图并附上修改要求时，插件会通过请求体的 `image` 字段提交参考图；支持可公开访问的 URL 和 Base64 数据 URL。Seedream 5.0 Lite 单次最多接收 14 张参考图。
+
+官方接口文档：[火山方舟图片生成 API](https://console.volcengine.com/ark/region:cn-beijing/docs/82379/1541523?lang=zh)。
 
 ## 6. HTTP Skills
 
@@ -547,4 +567,10 @@ config/config.json -> webConsoleToken
 npm run check
 ```
 
-如果更新后控制台页面或群内命令异常，可以先运行这条命令确认插件文件结构和编码是否正常。更新了控制台页面后，建议重启 Bot 再打开相关页面实测。
+完整检查包含编码、结构、配置、前端脚本、核心功能、图片渲染和控制台接口。如果只想快速检查静态文件，可以运行：
+
+```bash
+npm run check:quick
+```
+
+如果更新后控制台页面或群内命令异常，可以先运行完整检查。更新了控制台页面后，建议重启 Bot 再打开相关页面实测。

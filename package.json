@@ -15,7 +15,8 @@
     "check:webconsole:visual": "node ./scripts/check-webconsole-visual.mjs",
     "check:webconsole:e2e": "node ./scripts/check-webconsole-e2e.mjs",
     "check:webconsole:mobile": "node ./scripts/check-webconsole-e2e.mjs --mobile-only",
-    "check": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js"
+    "check:quick": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js",
+    "check": "npm run check:quick && npm run check:functional && npm run check:render && npm run check:webconsole"
   },
   "repository": {
     "type": "git",

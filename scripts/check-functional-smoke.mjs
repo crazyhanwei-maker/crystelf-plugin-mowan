@@ -7,10 +7,12 @@ import {
   buildArkAgentPlanImageRequest,
   buildArkAgentPlanImageUrl,
   normalizeImageSizeValue,
+  supportsImageOperation,
 } from '../lib/ai/imageApi.js';
 import axios from 'axios';
 import { ImageProcessor } from '../lib/ai/imageProcessor.js';
 import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
+import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -194,22 +196,130 @@ function checkArkAgentPlanImageRequest() {
     watermark: false,
     quality: 'high',
     n: 1,
-  });
+  }, ['https://example.com/reference.png']);
   assert(body.size === '2K', 'Agent Plan 2K 分辨率大小写没有保留');
   assert(body.output_format === 'png', 'Agent Plan output_format 未写入');
   assert(body.response_format === 'url', 'Agent Plan response_format 未写入');
   assert(body.watermark === false, 'Agent Plan watermark=false 未写入');
+  assert(body.image === 'https://example.com/reference.png', 'Agent Plan 单张参考图未写入 image');
   assert(!Object.prototype.hasOwnProperty.call(body, 'quality'), 'Agent Plan 不应携带 quality');
   assert(!Object.prototype.hasOwnProperty.call(body, 'n'), 'Agent Plan 不应携带 n');
   assert(normalizeImageSizeValue('2048x2048') === '2048x2048', '标准宽高分辨率被错误修改');
+  assert(normalizeImageSizeValue('3k') === '3K', 'Agent Plan 3K 分辨率大小写没有保留');
+  assert(supportsImageOperation('ark-agent-plan', 'generate') === true, 'Agent Plan 应支持文生图');
+  assert(supportsImageOperation('ark-agent-plan', 'edit') === true, 'Agent Plan 应支持单图和多图生图');
+  const multiImageBody = buildArkAgentPlanImageRequest('多图测试', {}, [
+    'https://example.com/reference-1.png',
+    'data:image/png;base64,dGVzdA==',
+  ]);
+  assert(Array.isArray(multiImageBody.image) && multiImageBody.image.length === 2, 'Agent Plan 多张参考图未按数组写入 image');
   logPass('火山 Agent Plan 图像请求构造正常');
+}
+
+async function checkImageCapabilityRouting() {
+  const primaryProcessor = new ImageProcessor();
+  const primaryCalls = [];
+  primaryProcessor.editImage = async (prompt, sourceImages, config) => {
+    primaryCalls.push(config.imageMode);
+    return { success: true, imageUrl: 'https://example.com/edited.png', model: config.model };
+  };
+  const primaryResult = await primaryProcessor.generateOrEditImage('改图测试', ['data:image/png;base64,dGVzdA=='], {
+    imageConfig: {
+      enabled: true,
+      imageMode: 'ark-agent-plan',
+      model: 'doubao-seedream-5.0-lite',
+      baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+      apiKey: 'primary-key',
+      fallbackApi: {
+        enabled: true,
+        imageMode: 'openai',
+        model: 'gpt-image-2',
+        baseApi: 'https://example.com/v1',
+        apiKey: 'fallback-key',
+      },
+    },
+  });
+  assert(primaryResult.success === true, 'Agent Plan 主接口未处理图生图请求');
+  assert(primaryCalls.join(',') === 'ark-agent-plan', `Agent Plan 图生图被错误路由：${primaryCalls.join(',')}`);
+
+  const fallbackProcessor = new ImageProcessor();
+  const fallbackCalls = [];
+  fallbackProcessor.editImage = async (prompt, sourceImages, config) => {
+    fallbackCalls.push(config.imageMode);
+    if (config.imageMode === 'ark-agent-plan') {
+      return { success: true, imageUrl: 'https://example.com/agent-edited.png', model: config.model };
+    }
+    return { success: false, error: '主改图接口测试失败' };
+  };
+  const fallbackResult = await fallbackProcessor.generateOrEditImage('改图备用测试', ['data:image/png;base64,dGVzdA=='], {
+    imageConfig: {
+      enabled: true,
+      imageMode: 'openai',
+      model: 'gpt-image-2',
+      baseApi: 'https://example.com/v1',
+      apiKey: 'primary-key',
+      fallbackApi: {
+        enabled: true,
+        imageMode: 'ark-agent-plan',
+        model: 'doubao-seedream-5.0-lite',
+        baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+        apiKey: 'fallback-key',
+      },
+    },
+  });
+  assert(fallbackResult.success === true, 'Agent Plan 备用接口未接管图生图请求');
+  assert(fallbackCalls.join(',') === 'openai,ark-agent-plan', `图生图主备调用顺序错误：${fallbackCalls.join(',')}`);
+  logPass('生图主备接口能力路由正常');
+}
+
+function checkArkAgentPlanFallbackPrecheck() {
+  const apiSettingsConsole = createApiSettingsConsole({
+    getAllConfigs: () => ({ ai: {}, imageMonitor: {}, coreConfig: {} }),
+  });
+  const result = apiSettingsConsole.precheckApiSettings({
+    ai: {
+      baseApi: 'https://example.com/v1',
+      apiKey: 'main-key',
+      modelType: 'test-model',
+      workingModel: 'test-model',
+      multimodalModel: 'test-model',
+      imageConfig: {
+        enabled: true,
+        imageMode: 'openai',
+        model: 'gpt-image-2',
+        baseApi: 'https://example.com/v1',
+        apiKey: 'image-key',
+        size: '1024x1024',
+        responseFormat: 'b64_json',
+        outputFormat: 'png',
+        fallbackApi: {
+          enabled: true,
+          imageMode: 'ark-agent-plan',
+          model: 'doubao-seedream-5.0-lite',
+          baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+          apiKey: 'fallback-key',
+          size: '1K',
+          responseFormat: 'xml',
+          outputFormat: 'webp',
+        },
+      },
+      memeConfig: {},
+    },
+    imageMonitor: { enabled: false },
+    coreConfig: { tools: { search: { enabled: false } } },
+  });
+  const errorText = result.errors.join('\n');
+  assert(errorText.includes('备用火山 Agent Plan 图像尺寸'), '备用 Agent Plan 非法尺寸未被预检拦截');
+  assert(errorText.includes('备用火山 Agent Plan 输出格式'), '备用 Agent Plan 非法输出格式未被预检拦截');
+  assert(errorText.includes('备用火山 Agent Plan 响应格式'), '备用 Agent Plan 非法响应格式未被预检拦截');
+  logPass('火山 Agent Plan 备用配置预检正常');
 }
 
 async function checkArkAgentPlanImageRuntime() {
   const originalPost = axios.post;
-  let captured = null;
+  const captured = [];
   axios.post = async (url, body, options) => {
-    captured = { url, body, options };
+    captured.push({ url, body, options });
     return { data: { data: [{ url: 'https://example.com/generated.png' }] } };
   };
   try {
@@ -227,10 +337,29 @@ async function checkArkAgentPlanImageRuntime() {
     });
     assert(result.success === true, 'Agent Plan 运行时没有解析成功响应');
     assert(result.imageUrl === 'https://example.com/generated.png', 'Agent Plan 返回 URL 解析错误');
-    assert(captured?.url === 'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations', 'Agent Plan 运行时请求路径错误');
-    assert(captured?.body?.size === '2K', 'Agent Plan 运行时未发送 2K');
-    assert(captured?.body?.watermark === false, 'Agent Plan 运行时未发送 watermark=false');
-    assert(captured?.options?.headers?.Authorization === 'Bearer test-agent-key', 'Agent Plan 运行时授权头错误');
+    const generationRequest = captured.at(-1);
+    assert(generationRequest?.url === 'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations', 'Agent Plan 运行时请求路径错误');
+    assert(generationRequest?.body?.size === '2K', 'Agent Plan 运行时未发送 2K');
+    assert(generationRequest?.body?.watermark === false, 'Agent Plan 运行时未发送 watermark=false');
+    assert(generationRequest?.options?.headers?.Authorization === 'Bearer test-agent-key', 'Agent Plan 运行时授权头错误');
+
+    const editResult = await processor.editImage('多图融合测试', [
+      'https://example.com/reference-1.png',
+      'data:image/png;base64,dGVzdA==',
+    ], {
+      imageMode: 'ark-agent-plan',
+      baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+      apiKey: 'test-agent-key',
+      model: 'doubao-seedream-5.0-lite',
+      size: '3K',
+      outputFormat: 'jpeg',
+      responseFormat: 'url',
+      watermark: false,
+    });
+    const editRequest = captured.at(-1);
+    assert(editResult.success === true, 'Agent Plan 图生图运行时没有解析成功响应');
+    assert(Array.isArray(editRequest?.body?.image) && editRequest.body.image.length === 2, 'Agent Plan 多图运行时未发送 image 数组');
+    assert(editRequest?.body?.size === '3K', 'Agent Plan 图生图运行时未发送 3K');
 
     const fallback = buildImageFallbackConfig({
       imageMode: 'openai',
@@ -283,6 +412,8 @@ async function main() {
     checkWebConsolePublicUrlResolution();
     checkArkAgentPlanImageRequest();
     await checkArkAgentPlanImageRuntime();
+    await checkImageCapabilityRouting();
+    checkArkAgentPlanFallbackPrecheck();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});

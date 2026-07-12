@@ -377,7 +377,7 @@
       "jimengApiUrl": "",
       "?apiKey": "备用图像生成API密钥",
       "apiKey": "",
-      "?size": "备用图像尺寸；Agent Plan 可用1K/2K/4K",
+      "?size": "备用图像尺寸；Agent Plan 可用2K/3K/4K",
       "size": "",
       "?responseFormat": "备用图像响应格式(url/b64_json)",
       "responseFormat": "",
