@@ -381,9 +381,15 @@ async function runApiSettingsInteraction(page) {
       primaryBaseApi: visible('#image-baseApi'),
       primaryJimeng: visible('#image-jimengApiUrl'),
       primarySize: visible('#image-size'),
+      primaryQuality: visible('#image-quality'),
+      primaryResponseFormat: visible('#image-responseFormat'),
+      primaryOutputFormat: visible('#image-outputFormat'),
+      primaryWatermark: visible('#image-watermark'),
       fallbackModel: visible('#image-fallback-model'),
       fallbackBaseApi: visible('#image-fallback-baseApi'),
       fallbackJimeng: visible('#image-fallback-jimengApiUrl'),
+      fallbackSize: visible('#image-fallback-size'),
+      fallbackOutputFormat: visible('#image-fallback-outputFormat'),
     };
   });
   await setInputValue(page, '#image-imageMode', 'jimeng');
@@ -404,6 +410,16 @@ async function runApiSettingsInteraction(page) {
   if (!openAiVisibility.primaryModel || !openAiVisibility.primaryBaseApi || openAiVisibility.primaryJimeng || !openAiVisibility.primarySize
     || !openAiVisibility.fallbackModel || !openAiVisibility.fallbackBaseApi || openAiVisibility.fallbackJimeng) {
     throw new Error('OpenAI 生图模式没有正确隐藏即梦字段');
+  }
+  await setInputValue(page, '#image-imageMode', 'ark-agent-plan');
+  await setInputValue(page, '#image-fallback-imageMode', 'ark-agent-plan');
+  const agentPlanVisibility = await readImageModeVisibility();
+  if (!agentPlanVisibility.primaryModel || !agentPlanVisibility.primaryBaseApi || agentPlanVisibility.primaryJimeng
+    || !agentPlanVisibility.primarySize || agentPlanVisibility.primaryQuality || !agentPlanVisibility.primaryResponseFormat
+    || !agentPlanVisibility.primaryOutputFormat || !agentPlanVisibility.primaryWatermark
+    || !agentPlanVisibility.fallbackModel || !agentPlanVisibility.fallbackBaseApi || agentPlanVisibility.fallbackJimeng
+    || !agentPlanVisibility.fallbackSize || !agentPlanVisibility.fallbackOutputFormat) {
+    throw new Error('火山 Agent Plan 模式字段显示不正确');
   }
   await setInputValue(page, '#image-imageMode', originalImageModes.primary);
   await setInputValue(page, '#image-fallback-imageMode', originalImageModes.fallback);

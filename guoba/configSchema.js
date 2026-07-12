@@ -2509,10 +2509,11 @@ const guobaSchema = [
     label: '图像生成模式',
     component: 'Select',
     bottomHelpMessage:
-      'openai使用/v1/images/generations接口(如gpt-image-2、Qwen-Image), chat使用对话式生图模型(如gemini-3-pro-image-preview), jimeng使用即梦接口',
+      'openai使用/v1/images/generations接口，ark-agent-plan使用火山方舟Agent Plan，chat使用对话式生图模型，jimeng使用旧即梦接口',
     componentProps: {
       options: [
         { label: 'OpenAI接口', value: 'openai' },
+        { label: '火山 Agent Plan', value: 'ark-agent-plan' },
         { label: '对话式生成', value: 'chat' },
         { label: '即梦接口', value: 'jimeng' },
       ],
@@ -2642,6 +2643,9 @@ const guobaSchema = [
     componentProps: {
       options: [
         { label: '自动/不传', value: 'auto' },
+        { label: '1K (Agent Plan)', value: '1K' },
+        { label: '2K (Agent Plan)', value: '2K' },
+        { label: '4K (Agent Plan)', value: '4K' },
         { label: '1024x1024', value: '1024x1024' },
         { label: '1536x1024', value: '1536x1024' },
         { label: '1024x1536', value: '1024x1536' },
@@ -2666,6 +2670,28 @@ const guobaSchema = [
         { label: 'Base64', value: 'b64_json' },
       ],
       placeholder: '请选择响应格式',
+    },
+  },
+  {
+    field: 'ai.imageConfig.outputFormat',
+    label: 'Agent Plan 输出格式',
+    component: 'Select',
+    bottomHelpMessage: '火山 Agent Plan 返回的图片文件格式；其他模式会忽略',
+    componentProps: {
+      options: [
+        { label: 'PNG', value: 'png' },
+        { label: 'JPEG', value: 'jpeg' },
+      ],
+    },
+  },
+  {
+    field: 'ai.imageConfig.watermark',
+    label: 'Agent Plan 水印',
+    component: 'Switch',
+    bottomHelpMessage: '是否让火山 Agent Plan 在生成图片中添加水印',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
     },
   },
   {

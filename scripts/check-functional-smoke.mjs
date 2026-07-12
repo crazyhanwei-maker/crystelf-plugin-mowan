@@ -3,6 +3,14 @@ import { createQqSimulatorConsole } from '../lib/webConsole/qqSimulatorConsole.j
 import { renderStatusImage } from '../lib/system/statusImageRenderer.js';
 import { closeSharedPuppeteerBrowser } from '../lib/system/puppeteerRenderer.js';
 import { resolveWebConsoleLoginBaseUrl } from '../lib/webConsole/publicUrlResolver.js';
+import {
+  buildArkAgentPlanImageRequest,
+  buildArkAgentPlanImageUrl,
+  normalizeImageSizeValue,
+} from '../lib/ai/imageApi.js';
+import axios from 'axios';
+import { ImageProcessor } from '../lib/ai/imageProcessor.js';
+import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -172,12 +180,109 @@ function checkWebConsolePublicUrlResolution() {
   logPass('控制台一次性登录公网地址解析正常');
 }
 
+function checkArkAgentPlanImageRequest() {
+  const endpoint = buildArkAgentPlanImageUrl('https://ark.cn-beijing.volces.com/api/plan/v3/');
+  assert(
+    endpoint === 'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations',
+    `Agent Plan 请求地址错误：${endpoint}`,
+  );
+  const body = buildArkAgentPlanImageRequest('测试图片', {
+    model: 'doubao-seedream-5.0-lite',
+    size: '2k',
+    outputFormat: 'png',
+    responseFormat: 'url',
+    watermark: false,
+    quality: 'high',
+    n: 1,
+  });
+  assert(body.size === '2K', 'Agent Plan 2K 分辨率大小写没有保留');
+  assert(body.output_format === 'png', 'Agent Plan output_format 未写入');
+  assert(body.response_format === 'url', 'Agent Plan response_format 未写入');
+  assert(body.watermark === false, 'Agent Plan watermark=false 未写入');
+  assert(!Object.prototype.hasOwnProperty.call(body, 'quality'), 'Agent Plan 不应携带 quality');
+  assert(!Object.prototype.hasOwnProperty.call(body, 'n'), 'Agent Plan 不应携带 n');
+  assert(normalizeImageSizeValue('2048x2048') === '2048x2048', '标准宽高分辨率被错误修改');
+  logPass('火山 Agent Plan 图像请求构造正常');
+}
+
+async function checkArkAgentPlanImageRuntime() {
+  const originalPost = axios.post;
+  let captured = null;
+  axios.post = async (url, body, options) => {
+    captured = { url, body, options };
+    return { data: { data: [{ url: 'https://example.com/generated.png' }] } };
+  };
+  try {
+    const processor = new ImageProcessor();
+    const result = await processor.generateImageByArkAgentPlan('运行时测试', {
+      imageMode: 'ark-agent-plan',
+      baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+      apiKey: 'test-agent-key',
+      model: 'doubao-seedream-5.0-lite',
+      size: '2K',
+      outputFormat: 'png',
+      responseFormat: 'url',
+      watermark: false,
+      retryCount: 0,
+    });
+    assert(result.success === true, 'Agent Plan 运行时没有解析成功响应');
+    assert(result.imageUrl === 'https://example.com/generated.png', 'Agent Plan 返回 URL 解析错误');
+    assert(captured?.url === 'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations', 'Agent Plan 运行时请求路径错误');
+    assert(captured?.body?.size === '2K', 'Agent Plan 运行时未发送 2K');
+    assert(captured?.body?.watermark === false, 'Agent Plan 运行时未发送 watermark=false');
+    assert(captured?.options?.headers?.Authorization === 'Bearer test-agent-key', 'Agent Plan 运行时授权头错误');
+
+    const fallback = buildImageFallbackConfig({
+      imageMode: 'openai',
+      size: '1024x1024',
+      responseFormat: 'b64_json',
+      outputFormat: 'png',
+      watermark: true,
+      fallbackApi: {
+        enabled: true,
+        imageMode: 'ark-agent-plan',
+        model: 'doubao-seedream-5.0-lite',
+        baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+        apiKey: 'fallback-key',
+        size: '4K',
+        responseFormat: 'url',
+        outputFormat: 'jpeg',
+        watermark: false,
+      },
+    });
+    assert(fallback?.imageMode === 'ark-agent-plan', '备用 Agent Plan 模式未保留');
+    assert(fallback?.size === '4K' && fallback?.outputFormat === 'jpeg', '备用 Agent Plan 独立参数未生效');
+    assert(fallback?.watermark === false, '备用 Agent Plan 水印开关未生效');
+
+    const openAiFallback = buildImageFallbackConfig({
+      imageMode: 'openai',
+      size: '1024x1024',
+      responseFormat: 'b64_json',
+      outputFormat: 'png',
+      fallbackApi: {
+        enabled: true,
+        imageMode: 'openai',
+        model: 'gpt-image-2',
+        baseApi: 'https://example.com/v1',
+        apiKey: 'test-key',
+      },
+    });
+    assert(openAiFallback?.size === '1024x1024', 'OpenAI 备用尺寸被 Agent Plan 默认值污染');
+    assert(openAiFallback?.responseFormat === 'b64_json', 'OpenAI 备用响应格式被 Agent Plan 默认值污染');
+    logPass('火山 Agent Plan 图像运行时与备用配置正常');
+  } finally {
+    axios.post = originalPost;
+  }
+}
+
 async function main() {
   try {
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
     await checkStatusImageRender();
     checkWebConsolePublicUrlResolution();
+    checkArkAgentPlanImageRequest();
+    await checkArkAgentPlanImageRuntime();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});

@@ -803,7 +803,8 @@ async function main() {
   addCheck('image api mode conditional fields', includesAll(apiSettingsHtml, [
     'data-image-mode-scope="primary"',
     'data-image-mode-scope="fallback"',
-    'data-image-modes="openai chat"',
+    'data-image-modes="openai ark-agent-plan chat"',
+    'data-image-modes="ark-agent-plan"',
     'data-image-modes="jimeng"',
   ]) && includesAll(apiSettingsFormJs, [
     'syncImageModeFieldVisibility',
