@@ -13,6 +13,7 @@ import axios from 'axios';
 import { ImageProcessor } from '../lib/ai/imageProcessor.js';
 import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
+import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -28,6 +29,78 @@ function assert(condition, message) {
 
 function logPass(message) {
   console.log(`✓ ${message}`);
+}
+
+function checkPersistentImageMonitorMd5Store() {
+  let content = '';
+  const fakeFs = {
+    existsSync: () => Boolean(content),
+    readFileSync: () => content,
+    mkdirSync: () => {},
+    appendFileSync: (filePath, value) => {
+      content += String(value || '');
+    },
+  };
+  const fakePath = { dirname: () => '/memory' };
+  const firstStore = createPersistentMd5Store({
+    filePath: '/memory/md5-index.jsonl',
+    fs: fakeFs,
+    path: fakePath,
+    logger: { warn: () => {} },
+  });
+  const md5 = '098f6bcd4621d373cade4e832627b4f6';
+  assert(firstStore.has(md5) === false, '空 MD5 索引错误命中');
+  assert(firstStore.add(md5) === true, '首次 MD5 没有写入索引');
+  assert(firstStore.add(md5) === false, '重复 MD5 被重复写入索引');
+  assert(firstStore.size() === 1, 'MD5 索引数量错误');
+
+  const reloadedStore = createPersistentMd5Store({
+    filePath: '/memory/md5-index.jsonl',
+    fs: fakeFs,
+    path: fakePath,
+    logger: { warn: () => {} },
+  });
+  assert(reloadedStore.has(md5) === true, 'Bot 重启后没有重新加载持久化 MD5');
+  assert(reloadedStore.size() === 1, '重新加载后的 MD5 索引数量错误');
+  logPass('图片监控持久化 MD5 去重正常');
+}
+
+async function checkImageMonitorStorageConfigSave() {
+  let savedImageMonitor = null;
+  const apiSettingsConsole = createApiSettingsConsole({
+    getAllConfigs: () => ({
+      ai: {},
+      coreConfig: {},
+      imageMonitor: {
+        enabled: true,
+        storageEnabled: true,
+        saveReviewImages: true,
+        saveMemeImages: true,
+        apiBase: 'https://example.com',
+        apiKey: 'saved-key',
+        model: 'vision-model',
+      },
+    }),
+    setConfig: async (name, value) => {
+      if (name === 'imageMonitor') savedImageMonitor = value;
+    },
+  });
+  await apiSettingsConsole.saveApiSettings({
+    imageMonitor: {
+      enabled: true,
+      storageEnabled: false,
+      saveReviewImages: true,
+      saveMemeImages: true,
+      apiBase: 'https://example.com',
+      preserveApiKey: true,
+      model: 'vision-model',
+      analysisTimeoutMs: 30000,
+    },
+  });
+  assert(savedImageMonitor?.storageEnabled === false, '控制台没有保存图片本地入库总开关');
+  assert(savedImageMonitor?.saveReviewImages === true, '关闭总开关时错误清除了审核图细分开关');
+  assert(savedImageMonitor?.saveMemeImages === true, '关闭总开关时错误清除了表情包细分开关');
+  logPass('图片监控入库总开关保存正常');
 }
 
 function createSimulator(configPatch = {}) {
@@ -398,6 +471,92 @@ async function checkArkAgentPlanImageRuntime() {
     });
     assert(openAiFallback?.size === '1024x1024', 'OpenAI 备用尺寸被 Agent Plan 默认值污染');
     assert(openAiFallback?.responseFormat === 'b64_json', 'OpenAI 备用响应格式被 Agent Plan 默认值污染');
+
+    const apiSettingsConsole = createApiSettingsConsole({
+      getAllConfigs: () => ({
+        ai: {
+          userAgent: 'crystelf-functional-smoke',
+          imageConfig: {
+            enabled: true,
+            imageMode: 'ark-agent-plan',
+            model: 'doubao-seedream-5.0-lite',
+            baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+            apiKey: 'primary-image-key',
+            size: '2K',
+            responseFormat: 'url',
+            outputFormat: 'png',
+            watermark: false,
+            timeout: 60000,
+            fallbackApi: {
+              enabled: true,
+              imageMode: 'ark-agent-plan',
+              model: 'doubao-seedream-5.0-lite',
+              baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+              apiKey: 'fallback-image-key',
+              size: '3K',
+              responseFormat: 'url',
+              outputFormat: 'jpeg',
+              watermark: false,
+            },
+          },
+        },
+      }),
+    });
+    const generationTest = await apiSettingsConsole.testImageGenerationRuntime({
+      role: 'primary',
+      operation: 'generate',
+      prompt: '控制台文生图测试',
+    });
+    assert(generationTest.success === true, '控制台真实文生图测试未成功');
+    assert(generationTest.previewUrl.startsWith('/api/image-proxy?url='), '控制台文生图结果未使用安全图片代理');
+    const generationConsoleRequest = captured.at(-1);
+    assert(generationConsoleRequest?.options?.headers?.Authorization === 'Bearer primary-image-key', '控制台文生图没有使用主接口密钥');
+
+    const editTest = await apiSettingsConsole.testImageGenerationRuntime({
+      role: 'fallback',
+      operation: 'edit',
+      prompt: '控制台图生图测试',
+      imageDataUrl: 'data:image/png;base64,dGVzdA==',
+    });
+    assert(editTest.success === true, '控制台真实图生图测试未成功');
+    const editConsoleRequest = captured.at(-1);
+    assert(editConsoleRequest?.body?.image === 'data:image/png;base64,dGVzdA==', '控制台图生图没有发送参考图');
+    assert(editConsoleRequest?.options?.headers?.Authorization === 'Bearer fallback-image-key', '控制台图生图没有使用备用接口密钥');
+
+    const fallbackWithoutKeyConsole = createApiSettingsConsole({
+      getAllConfigs: () => ({
+        ai: {
+          apiKey: 'main-chat-key-must-not-leak',
+          baseApi: 'https://main-chat.example.com/v1',
+          imageConfig: {
+            imageMode: 'ark-agent-plan',
+            model: 'doubao-seedream-5.0-lite',
+            baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+            apiKey: 'primary-image-key',
+            size: '2K',
+            fallbackApi: {
+              enabled: true,
+              imageMode: 'ark-agent-plan',
+              model: 'doubao-seedream-5.0-lite',
+              baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+              apiKey: '',
+              size: '2K',
+            },
+          },
+        },
+      }),
+    });
+    let missingFallbackKeyRejected = false;
+    try {
+      await fallbackWithoutKeyConsole.testImageGenerationRuntime({
+        role: 'fallback',
+        operation: 'generate',
+        prompt: '备用密钥隔离测试',
+      });
+    } catch (error) {
+      missingFallbackKeyRejected = /API密钥不能为空/.test(String(error?.message || ''));
+    }
+    assert(missingFallbackKeyRejected, '备用生图真实测试错误继承了主对话 API 密钥');
     logPass('火山 Agent Plan 图像运行时与备用配置正常');
   } finally {
     axios.post = originalPost;
@@ -408,6 +567,8 @@ async function main() {
   try {
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
+    checkPersistentImageMonitorMd5Store();
+    await checkImageMonitorStorageConfigSave();
     await checkStatusImageRender();
     checkWebConsolePublicUrlResolution();
     checkArkAgentPlanImageRequest();

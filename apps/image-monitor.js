@@ -18,6 +18,7 @@ import { buildAiUserAgentHeaders } from '../lib/ai/userAgent.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 import Path from '../constants/path.js';
+import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
 
 const imageMonitorRuntime = {
   recentHashes: new Map(),
@@ -28,6 +29,11 @@ const IMAGE_MONITOR_MEME_DIR = path.join(IMAGE_MONITOR_DIR, 'memes');
 const IMAGE_MONITOR_REVIEW_IMAGE_DIR = path.join(IMAGE_MONITOR_DIR, 'reviews');
 const IMAGE_MONITOR_INDEX = path.join(IMAGE_MONITOR_DIR, 'meme-index.jsonl');
 const IMAGE_MONITOR_LOG = path.join(IMAGE_MONITOR_DIR, 'review-log.jsonl');
+const IMAGE_MONITOR_MD5_INDEX = path.join(IMAGE_MONITOR_DIR, 'md5-index.jsonl');
+const persistentMd5Store = createPersistentMd5Store({
+  filePath: IMAGE_MONITOR_MD5_INDEX,
+  logger: globalThis.logger || console,
+});
 const IMAGE_MONITOR_OUTPUT_CONTRACT = [
   '重要：请严格只输出 JSON。',
   'JSON 字段必须包含 isMeme(boolean)、memeCharacter(string)、memeEmotion(string)、memeTags(string[])、riskLevel(low|medium|high|none)、riskCategories(string[])、summary(string)。',
@@ -165,6 +171,10 @@ function calcBufferHash(buffer) {
   return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
+function calcBufferMd5(buffer) {
+  return crypto.createHash('md5').update(buffer).digest('hex');
+}
+
 function sanitizeFolderName(name = '') {
   return String(name || '')
     .trim()
@@ -266,6 +276,9 @@ function shouldSkipHash(hash, windowMs) {
 }
 
 function saveReviewImage(buffer, hash, e, sourceUrl, cfg = {}) {
+  if (cfg.storageEnabled !== true) {
+    return { saved: false, reason: 'storage_disabled' };
+  }
   if (cfg.saveReviewImages === false) {
     return { saved: false, reason: 'save_disabled' };
   }
@@ -459,13 +472,20 @@ async function processImageMonitor(e) {
   let failureNotified = false;
   for (const imageUrl of imageUrls) {
     let hash = '';
+    let md5 = '';
     let reviewSaveResult = { saved: false, reason: 'not_downloaded' };
     try {
       const buffer = await downloadImageBuffer(imageUrl, Math.max(1000, Number(monitorConfig.analysisTimeoutMs || 30000)));
       hash = calcBufferHash(buffer);
+      md5 = calcBufferMd5(buffer);
+      const storageEnabled = monitorConfig.storageEnabled === true;
+      if (!storageEnabled && persistentMd5Store.has(md5)) {
+        continue;
+      }
       if (shouldSkipHash(hash, Math.max(0, Number(monitorConfig.duplicateWindowMs || 300000)))) {
         continue;
       }
+      if (!storageEnabled) persistentMd5Store.add(md5);
       reviewSaveResult = saveReviewImage(buffer, hash, e, imageUrl, monitorConfig);
       const fallbackOnlyConfig = buildImageMonitorFallbackConfig(monitorConfig);
       const analysis = hasImageMonitorApiConfig(monitorConfig)
@@ -498,7 +518,7 @@ async function processImageMonitor(e) {
         keywords: resolveMemeKeywords(analysis),
         reason: 'not_meme',
       };
-      if (analysis.isMeme && monitorConfig.saveMemeImages === true) {
+      if (analysis.isMeme && monitorConfig.storageEnabled === true && monitorConfig.saveMemeImages === true) {
         memeSaveResult = saveMemeImage(buffer, hash, analysis, e, imageUrl, monitorConfig);
       } else if (analysis.isMeme) {
         const disabledCharacter = resolveMemeCharacter(analysis);
@@ -507,7 +527,7 @@ async function processImageMonitor(e) {
           character: disabledCharacter,
           emotion: resolveMemeEmotion(analysis),
           keywords: resolveMemeKeywords(analysis, disabledCharacter),
-          reason: 'save_disabled',
+          reason: monitorConfig.storageEnabled === true ? 'save_disabled' : 'storage_disabled',
         };
       }
       if (riskReached(analysis.riskLevel, monitorConfig.riskThreshold || 'high')) {
@@ -522,6 +542,7 @@ async function processImageMonitor(e) {
       appendJsonLine(IMAGE_MONITOR_LOG, {
         reviewedAt: new Date().toISOString(),
         hash,
+        md5,
         groupId,
         userId: String(e.user_id || ''),
         messageId: String(e.message_id || ''),
@@ -529,6 +550,8 @@ async function processImageMonitor(e) {
         reviewFilePath: reviewSaveResult.filePath || '',
         reviewFileName: reviewSaveResult.fileName || '',
         reviewRelativePath: reviewSaveResult.relativePath || '',
+        reviewSaveReason: reviewSaveResult.reason || '',
+        storageEnabled: monitorConfig.storageEnabled === true,
         isMeme: analysis.isMeme,
         memeTags: analysis.memeTags,
         memeCharacter: memeSaveResult.character || '',
@@ -560,6 +583,7 @@ async function processImageMonitor(e) {
       appendJsonLine(IMAGE_MONITOR_LOG, {
         reviewedAt: new Date().toISOString(),
         hash,
+        md5,
         groupId,
         userId: String(e.user_id || ''),
         messageId: String(e.message_id || ''),
@@ -567,6 +591,8 @@ async function processImageMonitor(e) {
         reviewFilePath: reviewSaveResult.filePath || '',
         reviewFileName: reviewSaveResult.fileName || '',
         reviewRelativePath: reviewSaveResult.relativePath || '',
+        reviewSaveReason: reviewSaveResult.reason || '',
+        storageEnabled: monitorConfig.storageEnabled === true,
         error: error.message,
       });
       if (!failureNotified) {

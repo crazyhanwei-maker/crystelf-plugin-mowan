@@ -425,6 +425,17 @@ async function runApiSettingsInteraction(page) {
   await setInputValue(page, '#image-fallback-imageMode', originalImageModes.fallback);
   await clickAndWait(page, '.api-settings-nav-btn[data-section="image-monitor"]', 250);
   await page.waitForSelector('#section-image-monitor:not(.hidden)', { timeout: pageTimeoutMs });
+  const storageWasEnabled = await page.evaluate(() => !document.querySelector('#imageMonitor-storageEnabled')?.classList.contains('off'));
+  if (!storageWasEnabled) {
+    await clickAndWait(page, '#imageMonitor-storageEnabled', 250);
+  }
+  const storageState = await page.evaluate(() => ({
+    enabled: !document.querySelector('#imageMonitor-storageEnabled')?.classList.contains('off'),
+    memeDisabled: Boolean(document.querySelector('#imageMonitor-saveMemeImages')?.disabled),
+  }));
+  if (!storageState.enabled || storageState.memeDisabled) {
+    throw new Error('图片本地入库开关没有正确启用细分保存选项');
+  }
   const before = await page.evaluate(() => document.querySelector('#imageMonitor-saveMemeImages')?.textContent || '');
   await clickAndWait(page, '#imageMonitor-saveMemeImages', 250);
   const state = await page.evaluate(previousText => {
@@ -447,6 +458,9 @@ async function runApiSettingsInteraction(page) {
     throw new Error('API 设置草稿预览没有跟随刷新');
   }
   await clickAndWait(page, '#imageMonitor-saveMemeImages', 150);
+  if (!storageWasEnabled) {
+    await clickAndWait(page, '#imageMonitor-storageEnabled', 150);
+  }
 }
 
 async function runFileBrowserInteraction(page) {

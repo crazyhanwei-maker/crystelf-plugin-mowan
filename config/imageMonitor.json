@@ -2,6 +2,8 @@
   "//": "请不要修改以?开头的字段",
   "?enabled": "是否启用独立图片监控",
   "enabled": false,
+  "?storageEnabled": "是否启用图片本地入库；关闭时不保存任何图片，只持久记录MD5，相同MD5不再调用模型检测",
+  "storageEnabled": false,
   "?saveReviewImages": "是否为每条图片监控审核记录保存本地预览图，关闭后旧QQ图床链接可能过期无法预览",
   "saveReviewImages": true,
   "?saveMemeImages": "识别为表情包时是否保存到本地",

@@ -358,6 +358,49 @@
               </div>
             </section>
 
+            <section class="api-settings-subgroup is-wide image-runtime-test-panel">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>真实生图测试</h3>
+                  <p>直接使用当前页面草稿执行一次文生图或图生图。执行会消耗接口额度，并可能产生费用。</p>
+                </div>
+              </div>
+              <div class="settings-grid image-runtime-test-grid">
+                <div class="setting-item">
+                  <div class="kv-label">测试线路</div>
+                  <select id="image-runtime-test-role">
+                    <option value="primary">主接口</option>
+                    <option value="fallback">备用接口</option>
+                  </select>
+                  <div class="setting-help">备用接口必须先开启，但不需要提前保存当前草稿。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">测试类型</div>
+                  <select id="image-runtime-test-operation">
+                    <option value="generate">文生图</option>
+                    <option value="edit">图生图</option>
+                  </select>
+                  <div class="setting-help">图生图会把下方选择的图片作为参考图提交。</div>
+                </div>
+                <div class="setting-item is-wide-field">
+                  <div class="kv-label">测试提示词</div>
+                  <textarea id="image-runtime-test-prompt" rows="4" maxlength="2000">一颗通透的蓝色水晶放在干净的白色桌面上，柔和摄影灯光，高细节</textarea>
+                  <div class="setting-help">仅用于本次测试，不会写入插件配置。</div>
+                </div>
+                <div class="setting-item is-wide-field hidden" id="image-runtime-test-source-field">
+                  <div class="kv-label">参考图片</div>
+                  <input id="image-runtime-test-source" type="file" accept="image/png,image/jpeg,image/webp" />
+                  <div class="setting-help">支持 PNG、JPEG、WebP，文件不能超过 4MB。</div>
+                </div>
+              </div>
+              <div class="actions image-runtime-test-actions">
+                <button type="button" id="image-runtime-test-run-btn">执行真实测试</button>
+                <button type="button" class="secondary" id="image-runtime-test-clear-btn">清除结果</button>
+                <span id="image-runtime-test-status" class="setting-status">尚未执行</span>
+              </div>
+              <div id="image-runtime-test-result" class="image-runtime-test-result hidden" aria-live="polite"></div>
+            </section>
+
             <section class="api-settings-subgroup is-wide">
               <div class="api-settings-subgroup-head">
                 <div>
@@ -576,6 +619,11 @@
                 </div>
               </div>
               <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">图片本地入库</div>
+                  <button class="plugin-settings-switch off" id="imageMonitor-storageEnabled">已关闭</button>
+                  <div class="setting-help" id="imageMonitor-storage-status">关闭时不保存任何图片，只持久记录 MD5，相同 MD5 不再检测。</div>
+                </div>
                 <div class="setting-item">
                   <div class="kv-label">保存审核预览图</div>
                   <button class="plugin-settings-switch off" id="imageMonitor-saveReviewImages">已关闭</button>
@@ -923,6 +971,7 @@
 <script src="/api-settings-tests.js"></script>
 <script src="/api-settings-overview.js"></script>
 <script src="/api-settings.js"></script>
+<script src="/api-settings-image-runtime-test.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

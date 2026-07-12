@@ -229,6 +229,7 @@ function isPrivateAiRoutableMessage(content = '', e = {}, directVoiceText = '') 
   if (!isCommandPrefixedMessage(content)) return true;
   return Boolean(
     directVoiceText
+    || /^[#＃/]?灵晶\s*(改图|融合)(?:[：:，,\s]+)?([\s\S]*)$/i.test(String(content || '').trim())
     || isPrivateVoiceModelCommand(content, e)
     || parseSessionControlCommand(content)
     || isChatHelpRequest(content)
@@ -289,6 +290,44 @@ function normalizeImagePromptText(text = '', e = null) {
   }
 
   return content || raw;
+}
+
+function parseImageEditCommand(e = {}) {
+  const content = extractPlainTextFromEvent(e);
+  const match = content.match(/^[#＃\/]?灵晶\s*(改图|融合)(?:[：:，,\s]+)?([\s\S]*)$/i);
+  if (!match) return null;
+  return {
+    operation: match[1] === '融合' ? 'fusion' : 'edit',
+    prompt: String(match[2] || '').trim(),
+  };
+}
+
+function appendImageUrls(target = [], messageSegments = []) {
+  for (const segmentItem of Array.isArray(messageSegments) ? messageSegments : []) {
+    if (segmentItem?.type !== 'image') continue;
+    const imageUrl = String(segmentItem.url || '').trim();
+    if (imageUrl) target.push(imageUrl);
+  }
+}
+
+async function collectSourceImageUrls(e = {}) {
+  const imageUrls = [];
+  appendImageUrls(imageUrls, e.message);
+
+  if (e.source || e.reply_id) {
+    let reply = null;
+    if (typeof e.getReply === 'function') {
+      reply = await e.getReply();
+    } else if (e.source?.seq && typeof e.group?.getChatHistory === 'function') {
+      const history = await e.group.getChatHistory(e.source.seq, 1);
+      reply = Array.isArray(history) ? history.at(-1) : null;
+    }
+    if (reply) {
+      appendImageUrls(imageUrls, Array.isArray(reply) ? reply : reply.message);
+    }
+  }
+
+  return Array.from(new Set(imageUrls));
 }
 
 function isImageFollowUpRequest(text = '') {
@@ -1263,6 +1302,10 @@ export class crystelfAI extends plugin {
       priority: -1111,
       rule: [
         {
+          reg: '^[#＃/]?灵晶\\s*(改图|融合)(?:[：:，,\\s]+)?([\\s\\S]*)$',
+          fnc: 'imageEditCommand',
+        },
+        {
           reg: `^${nickname}([\\s\\S]*)?$`,
           fnc: 'in',
         },
@@ -1555,6 +1598,46 @@ export class crystelfAI extends plugin {
       await this.init();
     }
     return handleDirectVoiceEvent(e);
+  }
+
+  async imageEditCommand(e) {
+    if (!this.isInitialized) {
+      await this.init();
+    }
+    const command = parseImageEditCommand(e);
+    if (!command) return false;
+    if (!command.prompt) {
+      const example = command.operation === 'fusion'
+        ? '#灵晶融合 把两张图片融合成自然的合影'
+        : '#灵晶改图 把背景改成樱花海，保持人物不变';
+      await e.reply(`请写明图片处理要求。\n示例：${example}`, true);
+      return true;
+    }
+
+    const sourceImageArr = await collectSourceImageUrls(e);
+    const minimumImages = command.operation === 'fusion' ? 2 : 1;
+    if (sourceImageArr.length < minimumImages) {
+      const guidance = command.operation === 'fusion'
+        ? '请在同一条消息中发送至少两张图片，或回复一条包含多张图片的消息。'
+        : '请在消息中附带图片，或回复需要修改的图片。';
+      await e.reply(`${guidance}\n示例：${command.operation === 'fusion' ? '#灵晶融合 融合成一张自然合影' : '#灵晶改图 把背景改成樱花海'}`, true);
+      return true;
+    }
+    if (sourceImageArr.length > 14) {
+      await e.reply(`参考图共有 ${sourceImageArr.length} 张，当前最多支持 14 张，请减少图片后重试。`, true);
+      return true;
+    }
+
+    await this.handleImageMessage(e, {
+      type: 'image',
+      data: command.prompt,
+      sourceImageArr,
+      requireSourceImages: true,
+      at: -1,
+      quote: -1,
+      recall: false,
+    });
+    return true;
   }
 
   async showVoiceModelCommand(e) {
@@ -2102,6 +2185,14 @@ export class crystelfAI extends plugin {
           await e.reply?.(safetyDecision.replyText, true).catch(() => {});
         }
         return true;
+      }
+      const privateImageEditCommand = parseImageEditCommand(e);
+      if (privateImageEditCommand) {
+        if (!privateCapabilities.image) {
+          await e.reply?.('私聊图片功能当前已关闭。', true).catch(() => {});
+          return true;
+        }
+        return await this.imageEditCommand(e);
       }
       if (directVoiceText) {
         if (!privateCapabilities.voice) {
@@ -3615,39 +3706,24 @@ export class crystelfAI extends plugin {
 
       if (!imageConfig?.enabled) {
         logger.warn('[crystelf-ai] 图像生成功能未启用');
+        if (message?.requireSourceImages) {
+          await e.reply('图像生成功能当前未开启，请先在控制台启用图像生成 API。', true);
+        }
         return;
       }
 
-      let sourceImageArr = null;
-      const imageMessages = [];
-      const eventMessages = Array.isArray(e.message) ? e.message : [];
-      eventMessages.forEach((message) => {
-        if (message.type === 'image') {
-          if (message.url) {
-            imageMessages.push(message.url);
-          }
-        }
-      });
+      const providedImages = Array.isArray(message?.sourceImageArr)
+        ? message.sourceImageArr.map(item => String(item || '').trim()).filter(Boolean)
+        : null;
+      const imageMessages = providedImages || await collectSourceImageUrls(e);
+      const sourceImageArr = Array.from(new Set(imageMessages));
 
-      if (e.source || e.reply_id) {
-        let reply;
-        if (e.getReply) reply = await e.getReply();
-        else if (e.source?.seq && e.group?.getChatHistory) {
-          const history = await e.group.getChatHistory(e.source.seq, 1);
-          reply = history?.pop();
-        }
-        if (reply) {
-          const msgArr = Array.isArray(reply) ? reply : reply.message || [];
-          msgArr.forEach((msg) => {
-            if (msg.type === 'image') {
-              imageMessages.push(msg.url);
-            }
-          });
-        }
-      }
-
-      if (imageMessages.length > 0) {
-        sourceImageArr = imageMessages;
+      if (sourceImageArr.length > 0) {
+        logger.info(`[crystelf-ai] 已收集 ${sourceImageArr.length} 张参考图。`);
+      } else if (message?.requireSourceImages) {
+        logger.warn('[crystelf-ai] 改图命令未找到参考图片。');
+        await e.reply('没有找到参考图片，请附带图片或回复图片后重试。', true);
+        return;
       } else {
         logger.warn('[crystelf-ai] 未找到用户发送的图片，将使用生成模式。');
       }

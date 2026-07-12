@@ -13,6 +13,7 @@
     "check:render": "node ./scripts/check-render-smoke.mjs",
     "check:webconsole": "node ./scripts/check-webconsole-smoke.mjs",
     "check:webconsole:visual": "node ./scripts/check-webconsole-visual.mjs",
+    "check:webconsole:image": "node ./scripts/check-api-image-runtime-visual.mjs",
     "check:webconsole:e2e": "node ./scripts/check-webconsole-e2e.mjs",
     "check:webconsole:mobile": "node ./scripts/check-webconsole-e2e.mjs --mobile-only",
     "check:quick": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js",

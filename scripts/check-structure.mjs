@@ -340,6 +340,7 @@ async function main() {
     '/api/api-settings/precheck',
     '/api/api-settings/save',
     '/api/api-settings/test-target',
+    '/api/api-settings/test-image-runtime',
     '/api/plugin-settings/precheck',
     '/api/plugin-settings/skills-config/save',
   ]) && includesAll(helpDiyRoutes, [
@@ -565,6 +566,7 @@ async function main() {
     '/api/group-management/rule-debug',
   ]));
   const imageMonitorConsole = await readText('lib/webConsole/imageMonitorConsole.js');
+  const persistentMd5Store = await readText('lib/imageMonitor/persistentMd5Store.js');
   addCheck('image monitor console module', includesAll(webConsoleSurface, [
     'createImageMonitorConsole',
     'buildImageMonitorLogPayload',
@@ -575,6 +577,12 @@ async function main() {
     'cleanupNonMemePayload',
     'cleanupUnmatchedMemePayload',
     'serveLocalImage',
+  ]));
+  addCheck('image monitor persistent md5 dedup', includesAll(persistentMd5Store, [
+    'createPersistentMd5Store',
+    'firstSeenAt',
+    'appendFileSync',
+    'normalizeMd5',
   ]));
   const sandboxConsole = await readText('lib/webConsole/sandboxConsole.js');
   addCheck('sandbox console module', includesAll(webConsoleSurface, [
@@ -790,6 +798,8 @@ async function main() {
   const apiSettingsConsoleSource = await readText('lib/webConsole/apiSettingsConsole.js');
   const apiSettingsHtml = await readText('lib/webConsole/public/api-settings.html');
   const apiSettingsFormJs = await readText('lib/webConsole/public/api-settings-form.js');
+  const apiSettingsImageRuntimeTestJs = await readText('lib/webConsole/public/api-settings-image-runtime-test.js');
+  const aiAppSource = await readText('apps/ai.js');
   const configSourceDiagnostics = await readText('lib/webConsole/apiConfigSourceDiagnostics.js');
   const configDiagnosticsHtml = await readText('lib/webConsole/public/config-diagnostics.html');
   const configDiagnosticsJs = await readText('lib/webConsole/public/config-diagnostics.js');
@@ -809,6 +819,43 @@ async function main() {
   ]) && includesAll(apiSettingsFormJs, [
     'syncImageModeFieldVisibility',
     "document.querySelectorAll('[data-image-mode-scope][data-image-modes]')",
+  ]));
+  addCheck('image monitor storage master switch', includesAll(apiSettingsHtml, [
+    'imageMonitor-storageEnabled',
+    '只持久记录 MD5',
+  ]) && includesAll(apiSettingsFormJs, [
+    'imageMonitor.storageEnabled',
+    'syncImageMonitorStorageControls',
+  ]) && includesAll(apiSettingsConsoleSource, [
+    'storageEnabled: imageMonitorConfig.storageEnabled === true',
+    'storageEnabled: payload.imageMonitor.storageEnabled === true',
+  ]));
+  addCheck('explicit image edit commands', includesAll(aiAppSource, [
+    "fnc: 'imageEditCommand'",
+    'parseImageEditCommand',
+    'collectSourceImageUrls',
+    '#灵晶改图',
+    '#灵晶融合',
+    'requireSourceImages: true',
+    'privateImageEditCommand',
+    'privateCapabilities.image',
+    'evaluatePrivateAiSafety',
+  ]));
+  addCheck('image runtime test console', includesAll(settingsRoutes, [
+    '/api/api-settings/test-image-runtime',
+    'testImageGenerationRuntime',
+  ]) && includesAll(apiSettingsConsoleSource, [
+    'testImageGenerationRuntime',
+    'IMAGE_RUNTIME_TEST_MAX_SOURCE_BYTES',
+    'buildImageRuntimePreview',
+  ]) && includesAll(apiSettingsHtml, [
+    'image-runtime-test-run-btn',
+    'image-runtime-test-operation',
+    'api-settings-image-runtime-test.js',
+  ]) && includesAll(apiSettingsImageRuntimeTestJs, [
+    'runImageRuntimeTest',
+    '/api/api-settings/test-image-runtime',
+    'buildApiSettingsPayloadFromDraft',
   ]));
   addCheck('external api quality logger', includesAll(apiQualityLogger, [
     'logExternalApiUsage',
@@ -852,6 +899,10 @@ async function main() {
     'buildVirtualApiCircuitConfig',
     'image_monitor_review',
     'recordFallbackApiFailure',
+    'IMAGE_MONITOR_MD5_INDEX',
+    'persistentMd5Store.has(md5)',
+    'persistentMd5Store.add(md5)',
+    'monitorConfig.storageEnabled === true',
   ]) && includesAll(toolRegistry, [
     'buildVirtualApiCircuitConfig',
     'search_web',

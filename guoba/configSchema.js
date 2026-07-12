@@ -2723,10 +2723,20 @@ const guobaSchema = [
     },
   },
   {
+    field: 'imageMonitor.storageEnabled',
+    label: '图片本地入库',
+    component: 'Switch',
+    bottomHelpMessage: '关闭时不保存审核图或表情包原图，只持久记录 MD5；相同 MD5 图片以后不再调用模型检测。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'imageMonitor.saveMemeImages',
     label: '保存表情包图片',
     component: 'Switch',
-    bottomHelpMessage: '识别为表情包时是否保存原图与标签到本地',
+    bottomHelpMessage: '总入库开关开启后，识别为表情包时是否保存原图与标签到本地',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
@@ -2736,7 +2746,7 @@ const guobaSchema = [
     field: 'imageMonitor.saveReviewImages',
     label: '保存审核预览图',
     component: 'Switch',
-    bottomHelpMessage: '为每条图片监控审核记录保存本地预览图，避免 QQ 图床链接过期后页面无法查看。',
+    bottomHelpMessage: '总入库开关开启后，为每条审核记录保存本地预览图，避免 QQ 图床链接过期后页面无法查看。',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,

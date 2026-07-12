@@ -675,7 +675,7 @@ function validateConfig(configType, config = null) {
       break;
 
     case 'imageMonitor':
-      ['enabled', 'saveReviewImages', 'saveMemeImages', 'autoRecallViolation', 'monitorQuotedImages'].forEach((field) => {
+      ['enabled', 'storageEnabled', 'saveReviewImages', 'saveMemeImages', 'autoRecallViolation', 'monitorQuotedImages'].forEach((field) => {
         if (config[field] !== undefined && typeof config[field] !== 'boolean') {
           errors.push(`图片监控配置 ${field} 必须是布尔值`);
         }
