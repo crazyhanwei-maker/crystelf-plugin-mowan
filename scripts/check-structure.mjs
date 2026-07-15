@@ -385,12 +385,20 @@ async function main() {
   const groupHealth = await readText('lib/webConsole/groupManagementHealth.js');
   const groupHealthFix = await readText('lib/webConsole/groupManagementHealthFix.js');
   const groupManagementRuntime = await readText('apps/group-management.js');
-  addCheck('group management raw message moderation listener', includesAll(groupManagementRuntime, [
+  const contentModerationRuntime = await readText('lib/groupManagement/contentModerationRuntime.js');
+  addCheck('group management isolated spam listener', includesAll(groupManagementRuntime, [
     "bot.on('message.group'",
-    'handleGroupManagementMessageEvent',
-    'registerGroupManagementMessageListener',
-    "fnc: 'toggleGroupManagement'",
-  ]) && !groupManagementRuntime.includes("fnc: 'contentModeration'"));
+    'createGroupSpamEventSnapshot',
+    'handleGroupSpamMessageEvent',
+    'registerGroupSpamMessageListener',
+    'setImmediate',
+    "fnc: 'contentModeration'",
+  ]) && includesAll(contentModerationRuntime, [
+    'evaluateSpamMessageWindow',
+    'handleGroupSpamModeration',
+    'trackBurst: false',
+    'trackRepeat: false',
+  ]));
   addCheck('group management console suite module', includesAll(groupManagementConsoleSuite, [
     'createGroupManagementConsoleSuite',
     'createGroupManagementCommon',

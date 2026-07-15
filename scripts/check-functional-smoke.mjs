@@ -14,6 +14,7 @@ import { ImageProcessor } from '../lib/ai/imageProcessor.js';
 import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
+import { evaluateSpamMessageWindow } from '../lib/groupManagement/contentModerationRuntime.js';
 import { buildChatCompletionMessages } from '../lib/ai/chatEngine.js';
 import { MemoryRetrieval } from '../lib/humanize/memoryRetrieval.js';
 import {
@@ -241,7 +242,29 @@ async function checkMemoryRetrievalUserMessageCompatibility() {
   logPass('记忆检索 user 消息兼容保护正常');
 }
 
-async function checkGroupManagementRawMessageListener() {
+async function checkIsolatedGroupSpamListener() {
+  const spamConfig = {
+    detectSpamMessages: true,
+    burstLimit: 12,
+    burstWindowSeconds: 60,
+  };
+  const baseTime = Date.now();
+  const groupId = `70138${String(baseTime).slice(-4)}`;
+  const userId = `14203${String(baseTime + 1).slice(-5)}`;
+  for (let index = 0; index < 12; index += 1) {
+    const result = evaluateSpamMessageWindow(groupId, userId, spamConfig, baseTime + index);
+    assert(result.triggered === false, `刷屏检测在第 ${index + 1} 条消息提前触发`);
+  }
+  const threshold = evaluateSpamMessageWindow(groupId, userId, spamConfig, baseTime + 12);
+  assert(threshold.triggered === true && threshold.count === 13, '刷屏检测没有在超过 12 条时触发');
+  const duplicate = evaluateSpamMessageWindow(groupId, userId, spamConfig, baseTime + 13);
+  assert(duplicate.triggered === false, '同一刷屏窗口重复触发处罚');
+  const disabled = evaluateSpamMessageWindow('701380001', '142030001', {
+    ...spamConfig,
+    detectSpamMessages: false,
+  }, baseTime);
+  assert(disabled.triggered === false && disabled.count === 0, '刷屏检测关闭后仍记录或触发');
+
   const previousBot = globalThis.Bot;
   const previousPlugin = globalThis.plugin;
   const registrations = [];
@@ -256,40 +279,50 @@ async function checkGroupManagementRawMessageListener() {
   };
 
   try {
-    const module = await import(`../apps/group-management.js?functional-smoke=${Date.now()}`);
-    const messageListener = registrations.find(item => item.event === 'message.group');
-    assert(typeof messageListener?.handler === 'function', '群管理没有注册原始群消息监听器');
+    const module = await import(`../apps/group-management.js?spam-smoke=${Date.now()}`);
+    assert(registrations.some(item => item.event === 'message.group'), '群管理没有注册隔离刷屏监听器');
 
+    const tasks = [];
     const handled = [];
-    let rawMessageHandler = null;
-    const registered = module.registerGroupManagementMessageListener({
+    let rawHandler = null;
+    const bot = {
       on: (event, handler) => {
-        if (event === 'message.group') rawMessageHandler = handler;
+        if (event === 'message.group') rawHandler = handler;
       },
-    }, {
+    };
+    const dependencies = {
       getMainConfig: () => ({ groupManagement: true }),
-      handleContentModeration: async event => handled.push(event.message_id),
+      handleSpamModeration: async event => handled.push(event),
       logger: { warn: () => {} },
-    });
-    assert(registered === true && typeof rawMessageHandler === 'function', '群管理原始消息监听器无法独立注册');
-    await Promise.all(Array.from({ length: 13 }, (_, index) => rawMessageHandler({
+      schedule: task => tasks.push(task),
+    };
+    assert(module.registerGroupSpamMessageListener(bot, dependencies) === true, '隔离刷屏监听器注册失败');
+    assert(module.registerGroupSpamMessageListener(bot, dependencies) === false, '同一 Bot 重复注册刷屏监听器');
+
+    const originalMessage = Object.freeze([{ type: 'text', text: '高速消息' }]);
+    const originalEvent = {
       group_id: 701380759,
       user_id: 1420354365,
-      message_id: index + 1,
-      msg: String(index + 1),
-    })));
-    assert(handled.length === 13, `高速连续群消息只进入风控 ${handled.length}/13 条`);
-
-    await module.handleGroupManagementMessageEvent({ message_id: 14 }, {
-      getMainConfig: () => ({ groupManagement: false }),
-      handleContentModeration: async event => handled.push(event.message_id),
-      logger: { warn: () => {} },
-    });
-    assert(handled.length === 13, '群管理总开关关闭后仍执行消息风控');
+      self_id: 2292379750,
+      message_id: 987654321,
+      raw_message: '高速消息',
+      message: originalMessage,
+      sender: Object.freeze({ role: 'member', nickname: '测试用户' }),
+    };
+    const originalKeys = Object.keys(originalEvent);
+    rawHandler(originalEvent);
+    assert(handled.length === 0, '刷屏风控没有延迟到原消息调度之后');
+    assert(tasks.length === 1, '刷屏监听没有生成独立任务');
+    assert(JSON.stringify(Object.keys(originalEvent)) === JSON.stringify(originalKeys), '刷屏监听修改了原事件字段');
+    originalEvent.isMaster = true;
+    await tasks[0]();
+    assert(handled.length === 1, '独立刷屏任务没有执行');
+    assert(handled[0] !== originalEvent, '刷屏风控直接使用并可能修改原事件');
+    assert(handled[0].message !== originalMessage, '刷屏事件消息段没有隔离复制');
+    assert(handled[0].isMaster === true, '刷屏快照没有等待 TRSS 完成事件标准化');
 
     const runtime = new module.groupManagementRuntime();
-    assert(runtime.rule.length === 1, '群管理插件规则仍包含全消息处理入口');
-    assert(runtime.rule[0]?.fnc === 'toggleGroupManagement', '群管理插件命令规则被意外修改');
+    assert(runtime.rule.some(item => item.fnc === 'contentModeration'), '原有群消息风控规则被移除');
   } finally {
     if (previousBot === undefined) delete globalThis.Bot;
     else globalThis.Bot = previousBot;
@@ -297,7 +330,7 @@ async function checkGroupManagementRawMessageListener() {
     else globalThis.plugin = previousPlugin;
   }
 
-  logPass('群管理原始消息监听与高速刷屏计数入口正常');
+  logPass('隔离刷屏监听、高速计数与单窗口去重正常');
 }
 
 async function checkImageEditCommandSimulation() {
@@ -1072,7 +1105,7 @@ async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
     await checkMemoryRetrievalUserMessageCompatibility();
-    await checkGroupManagementRawMessageListener();
+    await checkIsolatedGroupSpamListener();
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
     await checkImageEditCommandSimulation();

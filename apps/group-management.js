@@ -1,5 +1,6 @@
 import {
   handleGroupContentModeration,
+  handleGroupSpamModeration,
   rememberGroupNewMember,
 } from '../lib/groupManagement/contentModerationRuntime.js';
 import ConfigControl from '../lib/config/configControl.js';
@@ -11,8 +12,10 @@ import {
 import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 
 const logger = globalThis.logger || {
+  info: (...args) => console.log(...args),
   warn: (...args) => console.warn(...args),
 };
+const GROUP_SPAM_LISTENER_MARK = '__crystelfGroupSpamListenerRegistered__';
 
 function normalizeGroupId(value = '') {
   const text = String(value ?? '').trim();
@@ -28,33 +31,71 @@ function getCommandOperator(e = {}) {
   return String(e.user_id ?? e.userId ?? e.sender?.user_id ?? 'groupCommand').trim() || 'groupCommand';
 }
 
-globalThis.Bot?.on?.('notice.group.increase', async (e) => {
+Bot.on?.('notice.group.increase', async (e) => {
   rememberGroupNewMember(e);
 });
 
-export async function handleGroupManagementMessageEvent(e, dependencies = {}) {
+export function createGroupSpamEventSnapshot(e = {}) {
+  const message = Array.isArray(e.message)
+    ? e.message.map(item => (
+      item && typeof item === 'object'
+        ? { ...item, ...(item.data && typeof item.data === 'object' ? { data: { ...item.data } } : {}) }
+        : item
+    ))
+    : e.message;
+  return {
+    group_id: e.group_id ?? e.groupId ?? e.gid,
+    user_id: e.user_id ?? e.userId ?? e.uid,
+    self_id: e.self_id,
+    bot_id: e.bot_id,
+    message_id: e.message_id,
+    raw_message: e.raw_message,
+    msg: e.msg,
+    message,
+    nickname: e.nickname,
+    isMaster: e.isMaster === true,
+    sender: e.sender && typeof e.sender === 'object' ? { ...e.sender } : e.sender,
+    member: e.member,
+    bot: e.bot,
+    group: e.group,
+    reply: e.reply,
+  };
+}
+
+export async function handleGroupSpamMessageEvent(e, dependencies = {}) {
   const getMainConfig = dependencies.getMainConfig || (() => ConfigControl.get('config') || {});
-  const moderate = dependencies.handleContentModeration || handleGroupContentModeration;
+  const moderateSpam = dependencies.handleSpamModeration || handleGroupSpamModeration;
   const runtimeLogger = dependencies.logger || logger;
   try {
     const mainConfig = getMainConfig() || {};
     if (mainConfig.groupManagement === false) return false;
-    await moderate(e);
+    await moderateSpam(e);
   } catch (error) {
-    runtimeLogger.warn(`[group-management] 群消息风控处理失败: ${error.message}`);
+    runtimeLogger.warn(`[group-management] 刷屏风控处理失败: ${error.message}`);
   }
   return false;
 }
 
-export function registerGroupManagementMessageListener(bot = globalThis.Bot, dependencies = {}) {
+export function registerGroupSpamMessageListener(bot = globalThis.Bot, dependencies = {}) {
   if (typeof bot?.on !== 'function') return false;
-  bot.on('message.group', async (e) => {
-    await handleGroupManagementMessageEvent(e, dependencies);
+  if (bot[GROUP_SPAM_LISTENER_MARK]) return false;
+  const schedule = dependencies.schedule || (task => setImmediate(task));
+  bot.on('message.group', (e) => {
+    schedule(() => handleGroupSpamMessageEvent(createGroupSpamEventSnapshot(e), dependencies));
   });
+  try {
+    Object.defineProperty(bot, GROUP_SPAM_LISTENER_MARK, {
+      value: true,
+      configurable: true,
+    });
+  } catch {
+    bot[GROUP_SPAM_LISTENER_MARK] = true;
+  }
   return true;
 }
 
-registerGroupManagementMessageListener();
+const groupSpamListenerRegistered = registerGroupSpamMessageListener();
+logger.info(`[group-management] 隔离刷屏监听${groupSpamListenerRegistered ? '已注册' : '未注册'}`);
 
 export class groupManagementRuntime extends plugin {
   constructor() {
@@ -65,6 +106,7 @@ export class groupManagementRuntime extends plugin {
       priority: -20,
       rule: [
         { reg: '^#灵晶\\s*(开启|关闭)群管理$', fnc: 'toggleGroupManagement' },
+        { reg: '^[\\s\\S]*$', fnc: 'contentModeration' },
       ],
     });
   }
@@ -167,4 +209,14 @@ export class groupManagementRuntime extends plugin {
     return true;
   }
 
+  async contentModeration(e) {
+    try {
+      const mainConfig = ConfigControl.get('config') || {};
+      if (mainConfig.groupManagement === false) return false;
+      await handleGroupContentModeration(e);
+    } catch (error) {
+      logger.warn(`[group-management] 群消息风控处理失败: ${error.message}`);
+    }
+    return false;
+  }
 }

@@ -1556,8 +1556,15 @@ export class crystelfAI extends plugin {
   }
 
   isGroupAllowed(groupId, config) {
-    if (config?.blockGroup?.includes(groupId)) return false;
-    if (config?.whiteGroup?.length > 0 && !config?.whiteGroup?.includes(groupId)) return false;
+    const normalizedGroupId = String(groupId ?? '').trim();
+    const blockGroups = Array.isArray(config?.blockGroup)
+      ? config.blockGroup.map(id => String(id ?? '').trim())
+      : [];
+    const whiteGroups = Array.isArray(config?.whiteGroup)
+      ? config.whiteGroup.map(id => String(id ?? '').trim())
+      : [];
+    if (blockGroups.includes(normalizedGroupId)) return false;
+    if (whiteGroups.length > 0 && !whiteGroups.includes(normalizedGroupId)) return false;
     return true;
   }
 
