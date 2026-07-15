@@ -241,6 +241,65 @@ async function checkMemoryRetrievalUserMessageCompatibility() {
   logPass('记忆检索 user 消息兼容保护正常');
 }
 
+async function checkGroupManagementRawMessageListener() {
+  const previousBot = globalThis.Bot;
+  const previousPlugin = globalThis.plugin;
+  const registrations = [];
+  globalThis.Bot = {
+    on: (event, handler) => registrations.push({ event, handler }),
+  };
+  globalThis.plugin = class {
+    constructor(config = {}) {
+      this.config = config;
+      this.rule = config.rule || [];
+    }
+  };
+
+  try {
+    const module = await import(`../apps/group-management.js?functional-smoke=${Date.now()}`);
+    const messageListener = registrations.find(item => item.event === 'message.group');
+    assert(typeof messageListener?.handler === 'function', '群管理没有注册原始群消息监听器');
+
+    const handled = [];
+    let rawMessageHandler = null;
+    const registered = module.registerGroupManagementMessageListener({
+      on: (event, handler) => {
+        if (event === 'message.group') rawMessageHandler = handler;
+      },
+    }, {
+      getMainConfig: () => ({ groupManagement: true }),
+      handleContentModeration: async event => handled.push(event.message_id),
+      logger: { warn: () => {} },
+    });
+    assert(registered === true && typeof rawMessageHandler === 'function', '群管理原始消息监听器无法独立注册');
+    await Promise.all(Array.from({ length: 13 }, (_, index) => rawMessageHandler({
+      group_id: 701380759,
+      user_id: 1420354365,
+      message_id: index + 1,
+      msg: String(index + 1),
+    })));
+    assert(handled.length === 13, `高速连续群消息只进入风控 ${handled.length}/13 条`);
+
+    await module.handleGroupManagementMessageEvent({ message_id: 14 }, {
+      getMainConfig: () => ({ groupManagement: false }),
+      handleContentModeration: async event => handled.push(event.message_id),
+      logger: { warn: () => {} },
+    });
+    assert(handled.length === 13, '群管理总开关关闭后仍执行消息风控');
+
+    const runtime = new module.groupManagementRuntime();
+    assert(runtime.rule.length === 1, '群管理插件规则仍包含全消息处理入口');
+    assert(runtime.rule[0]?.fnc === 'toggleGroupManagement', '群管理插件命令规则被意外修改');
+  } finally {
+    if (previousBot === undefined) delete globalThis.Bot;
+    else globalThis.Bot = previousBot;
+    if (previousPlugin === undefined) delete globalThis.plugin;
+    else globalThis.plugin = previousPlugin;
+  }
+
+  logPass('群管理原始消息监听与高速刷屏计数入口正常');
+}
+
 async function checkImageEditCommandSimulation() {
   const sdSimulator = createSimulator({}, {
     imageConfig: {
@@ -1013,6 +1072,7 @@ async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
     await checkMemoryRetrievalUserMessageCompatibility();
+    await checkGroupManagementRawMessageListener();
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
     await checkImageEditCommandSimulation();

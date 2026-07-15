@@ -28,9 +28,33 @@ function getCommandOperator(e = {}) {
   return String(e.user_id ?? e.userId ?? e.sender?.user_id ?? 'groupCommand').trim() || 'groupCommand';
 }
 
-Bot.on?.('notice.group.increase', async (e) => {
+globalThis.Bot?.on?.('notice.group.increase', async (e) => {
   rememberGroupNewMember(e);
 });
+
+export async function handleGroupManagementMessageEvent(e, dependencies = {}) {
+  const getMainConfig = dependencies.getMainConfig || (() => ConfigControl.get('config') || {});
+  const moderate = dependencies.handleContentModeration || handleGroupContentModeration;
+  const runtimeLogger = dependencies.logger || logger;
+  try {
+    const mainConfig = getMainConfig() || {};
+    if (mainConfig.groupManagement === false) return false;
+    await moderate(e);
+  } catch (error) {
+    runtimeLogger.warn(`[group-management] 群消息风控处理失败: ${error.message}`);
+  }
+  return false;
+}
+
+export function registerGroupManagementMessageListener(bot = globalThis.Bot, dependencies = {}) {
+  if (typeof bot?.on !== 'function') return false;
+  bot.on('message.group', async (e) => {
+    await handleGroupManagementMessageEvent(e, dependencies);
+  });
+  return true;
+}
+
+registerGroupManagementMessageListener();
 
 export class groupManagementRuntime extends plugin {
   constructor() {
@@ -41,7 +65,6 @@ export class groupManagementRuntime extends plugin {
       priority: -20,
       rule: [
         { reg: '^#灵晶\\s*(开启|关闭)群管理$', fnc: 'toggleGroupManagement' },
-        { reg: '^[\\s\\S]*$', fnc: 'contentModeration' },
       ],
     });
   }
@@ -144,14 +167,4 @@ export class groupManagementRuntime extends plugin {
     return true;
   }
 
-  async contentModeration(e) {
-    try {
-      const mainConfig = ConfigControl.get('config') || {};
-      if (mainConfig.groupManagement === false) return false;
-      await handleGroupContentModeration(e);
-    } catch (error) {
-      logger.warn(`[group-management] 群消息风控处理失败: ${error.message}`);
-    }
-    return false;
-  }
 }
