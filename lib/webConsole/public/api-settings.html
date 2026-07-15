@@ -240,6 +240,7 @@
                   <select id="image-imageMode">
                     <option value="openai">OpenAI 风格 (/v1/images/generations)</option>
                     <option value="ark-agent-plan">火山 Agent Plan</option>
+                    <option value="sd-webui">SD WebUI (A1111 / Forge)</option>
                     <option value="chat">对话式生图模型</option>
                     <option value="jimeng">即梦接口</option>
                   </select>
@@ -260,7 +261,7 @@
                   <input type="text" id="image-jimengApiUrl" placeholder="http://your-jimeng-server:985" />
                   <div class="setting-help">只有选择即梦模式时才需要填写。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai ark-agent-plan chat jimeng">
                   <div class="kv-label">API 密钥</div>
                   <form class="inline-field-form" onsubmit="return false;">
                     <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
@@ -268,6 +269,76 @@
                   </form>
                   <div class="setting-help">生图服务提供的密钥；如果服务不需要密钥可留空。</div>
                 </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">SD WebUI 地址</div>
+                  <input type="text" id="image-sdWebUi-baseApi" placeholder="http://127.0.0.1:7860" />
+                  <div class="setting-help">填写启用了 --api 的 AUTOMATIC1111 或 Forge 地址。</div>
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">模型检查点</div>
+                  <input type="text" id="image-sdWebUi-model" placeholder="留空使用 WebUI 当前模型" />
+                  <div class="setting-help">按单次请求临时覆盖模型，不会永久修改 WebUI 全局模型。</div>
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">认证用户名</div>
+                  <input type="text" id="image-sdWebUi-username" autocomplete="username" placeholder="未启用认证时留空" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">认证密码</div>
+                  <input type="password" id="image-sdWebUi-password" autocomplete="new-password" placeholder="未启用认证时留空" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">采样器</div>
+                  <input type="text" id="image-sdWebUi-samplerName" list="sd-webui-sampler-options" placeholder="DPM++ 2M" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">调度器</div>
+                  <select id="image-sdWebUi-scheduler">
+                    <option value="Karras">Karras</option>
+                    <option value="Automatic">Automatic</option>
+                    <option value="Exponential">Exponential</option>
+                    <option value="SGM Uniform">SGM Uniform</option>
+                    <option value="Simple">Simple</option>
+                    <option value="">不传</option>
+                  </select>
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">采样步数</div>
+                  <input type="number" id="image-sdWebUi-steps" min="1" max="150" step="1" placeholder="20" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">CFG</div>
+                  <input type="number" id="image-sdWebUi-cfgScale" min="1" max="30" step="0.5" placeholder="7" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">图片宽度</div>
+                  <input type="number" id="image-sdWebUi-width" min="64" max="4096" step="8" placeholder="1024" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">图片高度</div>
+                  <input type="number" id="image-sdWebUi-height" min="64" max="4096" step="8" placeholder="1024" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">随机种子</div>
+                  <input type="number" id="image-sdWebUi-seed" min="-1" max="2147483647" step="1" placeholder="-1" />
+                  <div class="setting-help">-1 表示每次随机。</div>
+                </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">图生图重绘强度</div>
+                  <input type="number" id="image-sdWebUi-denoisingStrength" min="0" max="1" step="0.05" placeholder="0.7" />
+                </div>
+                <div class="setting-item is-wide-field" data-image-mode-scope="primary" data-image-modes="sd-webui">
+                  <div class="kv-label">负面提示词</div>
+                  <textarea id="image-sdWebUi-negativePrompt" rows="3" placeholder="可留空"></textarea>
+                  <div class="setting-help">所有 SD WebUI 请求固定 batch_size=1、n_iter=1，只返回一张图片。</div>
+                </div>
+                <datalist id="sd-webui-sampler-options">
+                  <option value="DPM++ 2M"></option>
+                  <option value="DPM++ SDE"></option>
+                  <option value="DPM++ 2M SDE"></option>
+                  <option value="Euler a"></option>
+                  <option value="Euler"></option>
+                </datalist>
                 <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai ark-agent-plan">
                   <div class="kv-label">图像尺寸</div>
                   <select id="image-size">
@@ -419,6 +490,7 @@
                   <select id="image-fallback-imageMode">
                     <option value="openai">OpenAI 风格 (/v1/images/generations)</option>
                     <option value="ark-agent-plan">火山 Agent Plan</option>
+                    <option value="sd-webui">SD WebUI (A1111 / Forge)</option>
                     <option value="chat">对话式生图模型</option>
                     <option value="jimeng">即梦接口</option>
                   </select>
@@ -439,13 +511,73 @@
                   <input type="text" id="image-fallback-jimengApiUrl" placeholder="http://backup-jimeng:985" />
                   <div class="setting-help">只有备用模式选择即梦时才需要填写。</div>
                 </div>
-                <div class="setting-item">
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="openai ark-agent-plan chat jimeng">
                   <div class="kv-label">备用 API 密钥</div>
                   <form class="inline-field-form" onsubmit="return false;">
                     <input class="visually-hidden" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" />
                     <input type="password" id="image-fallback-apiKey" placeholder="备用生图 API Key" autocomplete="new-password" />
                   </form>
                   <div class="setting-help">备用生图服务密钥；留空会保持已保存密钥。</div>
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用 SD WebUI 地址</div>
+                  <input type="text" id="image-fallback-sdWebUi-baseApi" placeholder="http://127.0.0.1:7860" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用模型检查点</div>
+                  <input type="text" id="image-fallback-sdWebUi-model" placeholder="留空使用 WebUI 当前模型" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用认证用户名</div>
+                  <input type="text" id="image-fallback-sdWebUi-username" autocomplete="username" placeholder="未启用认证时留空" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用认证密码</div>
+                  <input type="password" id="image-fallback-sdWebUi-password" autocomplete="new-password" placeholder="未启用认证时留空" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用采样器</div>
+                  <input type="text" id="image-fallback-sdWebUi-samplerName" list="sd-webui-sampler-options" placeholder="DPM++ 2M" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用调度器</div>
+                  <select id="image-fallback-sdWebUi-scheduler">
+                    <option value="Karras">Karras</option>
+                    <option value="Automatic">Automatic</option>
+                    <option value="Exponential">Exponential</option>
+                    <option value="SGM Uniform">SGM Uniform</option>
+                    <option value="Simple">Simple</option>
+                    <option value="">不传</option>
+                  </select>
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用采样步数</div>
+                  <input type="number" id="image-fallback-sdWebUi-steps" min="1" max="150" step="1" placeholder="20" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用 CFG</div>
+                  <input type="number" id="image-fallback-sdWebUi-cfgScale" min="1" max="30" step="0.5" placeholder="7" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用图片宽度</div>
+                  <input type="number" id="image-fallback-sdWebUi-width" min="64" max="4096" step="8" placeholder="1024" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用图片高度</div>
+                  <input type="number" id="image-fallback-sdWebUi-height" min="64" max="4096" step="8" placeholder="1024" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用随机种子</div>
+                  <input type="number" id="image-fallback-sdWebUi-seed" min="-1" max="2147483647" step="1" placeholder="-1" />
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用重绘强度</div>
+                  <input type="number" id="image-fallback-sdWebUi-denoisingStrength" min="0" max="1" step="0.05" placeholder="0.7" />
+                </div>
+                <div class="setting-item is-wide-field" data-image-mode-scope="fallback" data-image-modes="sd-webui">
+                  <div class="kv-label">备用负面提示词</div>
+                  <textarea id="image-fallback-sdWebUi-negativePrompt" rows="3" placeholder="可留空"></textarea>
+                  <div class="setting-help">备用接口同样固定每次只生成一张图片。</div>
                 </div>
                 <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="ark-agent-plan">
                   <div class="kv-label">备用分辨率</div>

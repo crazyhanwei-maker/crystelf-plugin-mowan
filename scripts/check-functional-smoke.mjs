@@ -14,6 +14,12 @@ import { ImageProcessor } from '../lib/ai/imageProcessor.js';
 import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
+import { buildChatCompletionMessages } from '../lib/ai/chatEngine.js';
+import {
+  buildSdWebUiApiUrl,
+  buildSdWebUiRequest,
+  normalizeSdWebUiSettings,
+} from '../lib/ai/sdWebUiApi.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -103,7 +109,7 @@ async function checkImageMonitorStorageConfigSave() {
   logPass('图片监控入库总开关保存正常');
 }
 
-function createSimulator(configPatch = {}) {
+function createSimulator(configPatch = {}, aiConfigPatch = {}, simulatorOptions = {}) {
   const configs = {
     config: {
       ai: true,
@@ -113,7 +119,7 @@ function createSimulator(configPatch = {}) {
       privateAiSafety: { enabled: true },
       ...configPatch,
     },
-    ai: {},
+    ai: aiConfigPatch,
     profile: { nickName: '魔丸' },
   };
   return createQqSimulatorConsole({
@@ -124,7 +130,175 @@ function createSimulator(configPatch = {}) {
       elapsedMs: 1,
       sessionId: payload.sessionId || 'functional-smoke',
     }),
+    ...simulatorOptions,
   });
+}
+
+function checkChatEngineUserMessageCompatibility() {
+  const targetMessage = { content: '帮我查询今天的天气' };
+  const cases = [
+    buildChatCompletionMessages({ prompt: '系统提示', targetMessage }),
+    buildChatCompletionMessages({
+      prompt: '系统提示',
+      targetMessage,
+      imageUrls: ['https://example.com/source.png'],
+    }),
+    buildChatCompletionMessages({ prompt: '工具结果', targetMessage, phase: 'tool_followup' }),
+    buildChatCompletionMessages({ prompt: '保底提示', targetMessage, phase: 'fallback' }),
+    buildChatCompletionMessages({ prompt: '最终提示', targetMessage, phase: 'final' }),
+  ];
+
+  for (const messages of cases) {
+    const userMessage = messages.find(message => message.role === 'user');
+    assert(userMessage, '聊天引擎请求缺少 user 消息');
+    if (Array.isArray(userMessage.content)) {
+      assert(userMessage.content.some(item => item.type === 'text' && String(item.text || '').trim()), '聊天引擎多模态 user 消息缺少文本');
+    } else {
+      assert(String(userMessage.content || '').trim(), '聊天引擎 user 消息内容为空');
+    }
+  }
+
+  assert(cases[0][1].content === targetMessage.content, '聊天引擎文本首轮没有保留真实用户消息');
+  assert(cases[1][1].content.some(item => item.type === 'image_url'), '聊天引擎图片首轮没有保留图片消息段');
+  logPass('聊天引擎 user 消息兼容保护正常');
+}
+
+async function checkImageEditCommandSimulation() {
+  const sdSimulator = createSimulator({}, {
+    imageConfig: {
+      enabled: true,
+      imageMode: 'sd-webui',
+    },
+  });
+  const edit = await sdSimulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    nickname: '测试用户',
+    messageText: '#灵晶改图 把背景改成蓝色水晶宫殿',
+    images: ['https://example.com/source.png'],
+    includeAt: false,
+    dispatchMode: 'replay',
+  });
+  assert(edit.success === true, '改图命令模拟失败');
+  assert(edit.replies.some(item => item.includes('SD WebUI') && item.includes('固定返回 1 张图片')), '改图命令没有显示 SD WebUI 单图结果');
+  assert(edit.actions.some(item => item.type === 'would_edit_image' && item.singleImageOutput === true), '改图命令没有生成图片编辑动作');
+  assert(edit.timeline.some(item => item.stage === 'ai.imageEditCommand' && item.status === 'matched'), '改图命令没有写入链路时间线');
+
+  const fusion = await sdSimulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    nickname: '测试用户',
+    messageText: '#灵晶融合 合成自然合影',
+    images: ['https://example.com/1.png', 'https://example.com/2.png'],
+    includeAt: false,
+    dispatchMode: 'safe',
+  });
+  const fusionAction = fusion.actions.find(item => item.type === 'would_fuse_images');
+  assert(fusionAction?.sourceImageCount === 1, 'SD WebUI 融合模拟没有限制为第一张参考图');
+  assert(fusionAction?.ignoredImageCount === 1, 'SD WebUI 融合模拟没有记录忽略图片数量');
+  assert(fusion.replies.some(item => item.includes('只会使用第一张参考图')), 'SD WebUI 多图限制没有提示用户');
+
+  const missingSource = await sdSimulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    messageText: '#灵晶改图 修改背景',
+    images: [],
+    includeAt: false,
+  });
+  assert(missingSource.actions.some(item => item.type === 'would_reject_image_edit_missing_source'), '改图命令缺少图片时没有被拦截');
+  assert(missingSource.replies.some(item => item.includes('请在消息中附带图片')), '改图命令缺少图片时提示错误');
+
+  const missingFusionSource = await sdSimulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    messageText: '#灵晶融合 合成自然合影',
+    images: ['https://example.com/1.png'],
+    includeAt: false,
+  });
+  assert(missingFusionSource.actions.some(item => item.type === 'would_reject_image_edit_missing_source'), '融合命令只有一张图片时没有被拦截');
+  assert(missingFusionSource.replies.some(item => item.includes('至少两张图片')), '融合命令图片不足提示错误');
+
+  const disabledSimulator = createSimulator({}, { imageConfig: { enabled: false, imageMode: 'sd-webui' } });
+  const disabled = await disabledSimulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    messageText: '#灵晶改图 修改背景',
+    images: ['https://example.com/source.png'],
+    includeAt: false,
+  });
+  assert(disabled.actions.some(item => item.type === 'would_reject_image_edit_disabled'), '图像功能关闭时改图命令没有被拦截');
+  logPass('模拟调试改图与融合命令规则正常');
+}
+
+async function checkLiveImageCommandSimulation() {
+  const calls = [];
+  const simulator = createSimulator({}, {
+    imageConfig: {
+      enabled: true,
+      imageMode: 'sd-webui',
+      timeout: 300000,
+      sdWebUi: {
+        baseApi: 'http://192.168.0.109:8888',
+        samplerName: 'Euler a',
+        steps: 8,
+        cfgScale: 7,
+        width: 512,
+        height: 512,
+        denoisingStrength: 0.7,
+      },
+    },
+  }, {
+    createImageProcessor: async () => ({
+      mergeImageConfig: config => config.imageConfig,
+      validateImageConfig: () => ({ isValid: true, errors: [] }),
+      generateOrEditImage: async (prompt, images, config) => {
+        calls.push({ prompt, images, config });
+        return {
+          success: true,
+          imageUrl: 'data:image/png;base64,dGVzdA==',
+          model: 'test-sd-model',
+        };
+      },
+    }),
+  });
+  const result = await simulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    nickname: '测试用户',
+    messageText: '#灵晶改图 把背景改成蓝色水晶宫殿',
+    images: ['data:image/png;base64,dGVzdA=='],
+    includeAt: false,
+    dispatchMode: 'live-image',
+    confirmLiveImage: true,
+  });
+  assert(result.success === true, `真实生图模拟执行失败：${result.errors.join('；')}`);
+  assert(calls.length === 1, '真实生图模式没有调用图像处理器');
+  assert(calls[0].images.length === 1, '真实生图模式参考图数量错误');
+  assert(Array.isArray(result.replies[0]) && result.replies[0][0]?.type === 'image', '真实生图模式没有返回图片消息段');
+  assert(result.replies[0][0]?.url === 'data:image/png;base64,dGVzdA==', '真实生图模式返回图片地址错误');
+  assert(result.actions.some(item => item.type === 'executed_image_edit' && item.realImageExecution === true), '真实生图模式没有记录执行动作');
+  assert(result.timeline.some(item => item.stage === 'ai.imageEditCommand.live' && item.status === 'success'), '真实生图模式没有记录成功时间线');
+  assert(result.debug?.safeMode === false, '真实生图模式仍错误标记为完全安全模拟');
+
+  const rejected = await simulator.buildQqSimulatorSendPayload({
+    eventType: 'message',
+    groupId: '10001',
+    userId: '20001',
+    messageText: '#灵晶改图 修改背景',
+    images: ['data:image/png;base64,dGVzdA=='],
+    includeAt: false,
+    dispatchMode: 'live-image',
+  });
+  assert(rejected.success === false, '未确认的真实生图请求没有被拒绝');
+  assert(rejected.actions.some(item => item.type === 'rejected_live_image_without_confirmation'), '未确认真实生图没有记录拒绝动作');
+  assert(calls.length === 1, '未确认真实生图仍调用了图像处理器');
+  logPass('模拟调试真实生图执行链路正常');
 }
 
 async function checkPrivateSimulatorPreview() {
@@ -287,6 +461,200 @@ function checkArkAgentPlanImageRequest() {
   ]);
   assert(Array.isArray(multiImageBody.image) && multiImageBody.image.length === 2, 'Agent Plan 多张参考图未按数组写入 image');
   logPass('火山 Agent Plan 图像请求构造正常');
+}
+
+function checkSdWebUiImageRequest() {
+  const endpoint = buildSdWebUiApiUrl('http://192.168.0.109:8888/', '/sdapi/v1/txt2img');
+  assert(endpoint === 'http://192.168.0.109:8888/sdapi/v1/txt2img', `SD WebUI 请求地址错误：${endpoint}`);
+  const body = buildSdWebUiRequest('单图测试', {
+    sdWebUi: {
+      model: 'tamix_ninini.safetensors',
+      samplerName: 'DPM++ 2M',
+      scheduler: 'Karras',
+      steps: 24,
+      cfgScale: 6.5,
+      width: 768,
+      height: 1024,
+      negativePrompt: 'low quality',
+      seed: -1,
+      denoisingStrength: 0.65,
+      batchSize: 9,
+      nIter: 9,
+    },
+  }, 'data:image/png;base64,dGVzdA==');
+  assert(body.batch_size === 1, 'SD WebUI batch_size 没有锁定为 1');
+  assert(body.n_iter === 1, 'SD WebUI n_iter 没有锁定为 1');
+  assert(body.init_images?.length === 1 && body.init_images[0] === 'dGVzdA==', 'SD WebUI 图生图参考图构造错误');
+  assert(body.denoising_strength === 0.65, 'SD WebUI 重绘强度未写入');
+  assert(body.override_settings?.sd_model_checkpoint === 'tamix_ninini.safetensors', 'SD WebUI 单请求模型覆盖未写入');
+  assert(body.override_settings_restore_afterwards === true, 'SD WebUI 模型覆盖后未设置自动恢复');
+  const normalized = normalizeSdWebUiSettings({ sdWebUi: { width: 777, height: 1025, steps: 999 } });
+  assert(normalized.width === 776 && normalized.height === 1024, 'SD WebUI 宽高没有按 8 的倍数规范化');
+  assert(normalized.steps === 150, 'SD WebUI 采样步数没有限制上限');
+  assert(supportsImageOperation('sd-webui', 'generate') === true, 'SD WebUI 应支持文生图');
+  assert(supportsImageOperation('sd-webui', 'edit') === true, 'SD WebUI 应支持图生图');
+  logPass('SD WebUI 单图请求构造正常');
+}
+
+async function checkSdWebUiImageRuntime() {
+  const originalPost = axios.post;
+  const captured = [];
+  axios.post = async (url, body, options) => {
+    captured.push({ url, body, options });
+    return { data: { images: ['Zmlyc3Q=', 'c2Vjb25k'], info: '{}' } };
+  };
+  try {
+    const processor = new ImageProcessor();
+    const result = await processor.generateOrEditImageBySdWebUi('运行时单图测试', [], {
+      imageMode: 'sd-webui',
+      timeout: 60000,
+      sdWebUi: {
+        baseApi: 'http://192.168.0.109:8888',
+        model: 'tamix_ninini.safetensors',
+        samplerName: 'Euler a',
+        scheduler: 'Karras',
+        steps: 12,
+        cfgScale: 7,
+        width: 512,
+        height: 512,
+      },
+    });
+    const request = captured.at(-1);
+    assert(result.success === true, 'SD WebUI 运行时没有解析成功响应');
+    assert(result.imageUrl === 'data:image/png;base64,Zmlyc3Q=', 'SD WebUI 没有只读取第一张返回图');
+    assert(request?.url === 'http://192.168.0.109:8888/sdapi/v1/txt2img', 'SD WebUI 文生图路径错误');
+    assert(request?.body?.batch_size === 1 && request?.body?.n_iter === 1, 'SD WebUI 运行时未锁定单图参数');
+
+    const fallback = buildImageFallbackConfig({
+      imageMode: 'openai',
+      fallbackApi: {
+        enabled: true,
+        imageMode: 'sd-webui',
+        sdWebUi: {
+          baseApi: 'http://192.168.0.109:8888',
+          samplerName: 'DPM++ 2M',
+          steps: 18,
+          width: 768,
+          height: 768,
+        },
+      },
+    });
+    assert(fallback?.imageMode === 'sd-webui', '备用 SD WebUI 模式未保留');
+    assert(fallback?.sdWebUi?.baseApi === 'http://192.168.0.109:8888', '备用 SD WebUI 地址未生效');
+    assert(fallback?.sdWebUi?.steps === 18, '备用 SD WebUI 独立参数未生效');
+  } finally {
+    axios.post = originalPost;
+  }
+  logPass('SD WebUI 单图运行时与备用接口正常');
+}
+
+function checkSdWebUiPrecheck() {
+  const apiSettingsConsole = createApiSettingsConsole({
+    getAllConfigs: () => ({ ai: {}, imageMonitor: {}, coreConfig: {} }),
+  });
+  const basePayload = {
+    ai: {
+      baseApi: 'https://example.com',
+      apiKey: 'main-key',
+      modelType: 'test-model',
+      imageConfig: {
+        enabled: true,
+        imageMode: 'sd-webui',
+        sdWebUi: {
+          baseApi: 'http://192.168.0.109:8888',
+          samplerName: 'DPM++ 2M',
+          steps: 20,
+          cfgScale: 7,
+          width: 1024,
+          height: 1024,
+          seed: -1,
+          denoisingStrength: 0.7,
+        },
+        fallbackApi: { enabled: false },
+      },
+      memeConfig: {},
+    },
+    imageMonitor: { enabled: false },
+    coreConfig: { tools: { search: { enabled: false } } },
+  };
+  const valid = apiSettingsConsole.precheckApiSettings(basePayload);
+  assert(!valid.errors.some(item => item.includes('SD WebUI')), `合法 SD WebUI 配置被拦截：${valid.errors.join('；')}`);
+  assert(!valid.warnings.some(item => item.includes('图像生成未配置独立或主 API Key')), 'SD WebUI 被错误要求 OpenAI API Key');
+  const invalid = apiSettingsConsole.precheckApiSettings({
+    ...basePayload,
+    ai: {
+      ...basePayload.ai,
+      imageConfig: {
+        ...basePayload.ai.imageConfig,
+        sdWebUi: { ...basePayload.ai.imageConfig.sdWebUi, width: 777 },
+      },
+    },
+  });
+  assert(invalid.errors.some(item => item.includes('宽度必须是 64-4096 之间的 8 的倍数')), 'SD WebUI 非法宽度未被预检拦截');
+  logPass('SD WebUI 控制台预检正常');
+}
+
+async function checkSdWebUiConsoleSecretAndProbe() {
+  const configs = {
+    ai: {
+      baseApi: 'https://example.com',
+      apiKey: 'main-key',
+      modelType: 'test-model',
+      imageConfig: {
+        enabled: true,
+        imageMode: 'sd-webui',
+        timeout: 60000,
+        sdWebUi: {
+          baseApi: 'http://192.168.0.109:8888',
+          username: 'tester',
+          password: 'saved-secret',
+          samplerName: 'DPM++ 2M',
+          steps: 20,
+          cfgScale: 7,
+          width: 1024,
+          height: 1024,
+          denoisingStrength: 0.7,
+        },
+        fallbackApi: { enabled: false },
+      },
+    },
+    imageMonitor: {},
+    coreConfig: {},
+  };
+  const fetchCalls = [];
+  const apiSettingsConsole = createApiSettingsConsole({
+    getAllConfigs: () => configs,
+    setConfig: async (name, value) => {
+      configs[name] = value;
+    },
+    fetch: async (url, options) => {
+      fetchCalls.push({ url: String(url), options });
+      return { ok: true, status: 200 };
+    },
+  });
+  const savedPayload = await apiSettingsConsole.saveApiSettings({
+    ai: {
+      ...configs.ai,
+      imageConfig: {
+        ...configs.ai.imageConfig,
+        sdWebUi: {
+          ...configs.ai.imageConfig.sdWebUi,
+          password: '',
+          preservePassword: true,
+        },
+      },
+    },
+  });
+  assert(configs.ai.imageConfig.sdWebUi.password === 'saved-secret', 'SD WebUI 密码留空保存时没有保留旧值');
+  assert(savedPayload.ai.imageConfig.sdWebUi.password === '', 'SD WebUI 密码被控制台接口明文返回');
+  assert(savedPayload.ai.imageConfig.sdWebUi.passwordConfigured === true, 'SD WebUI 密码配置状态丢失');
+
+  const probe = await apiSettingsConsole.testApiTargetConnection('ai-image', 'primary');
+  assert(probe.success === true, `SD WebUI 连接探测失败：${probe.error || ''}`);
+  assert(fetchCalls.at(-1)?.url === 'http://192.168.0.109:8888/sdapi/v1/sd-models', 'SD WebUI 连接探测请求了错误端点');
+  const expectedAuth = `Basic ${Buffer.from('tester:saved-secret').toString('base64')}`;
+  assert(fetchCalls.at(-1)?.options?.headers?.Authorization === expectedAuth, 'SD WebUI 连接探测 Basic Auth 错误');
+  logPass('SD WebUI 控制台密码保护与连接探测正常');
 }
 
 async function checkImageCapabilityRouting() {
@@ -565,14 +933,21 @@ async function checkArkAgentPlanImageRuntime() {
 
 async function main() {
   try {
+    checkChatEngineUserMessageCompatibility();
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
+    await checkImageEditCommandSimulation();
+    await checkLiveImageCommandSimulation();
     checkPersistentImageMonitorMd5Store();
     await checkImageMonitorStorageConfigSave();
     await checkStatusImageRender();
     checkWebConsolePublicUrlResolution();
     checkArkAgentPlanImageRequest();
     await checkArkAgentPlanImageRuntime();
+    checkSdWebUiImageRequest();
+    await checkSdWebUiImageRuntime();
+    checkSdWebUiPrecheck();
+    await checkSdWebUiConsoleSecretAndProbe();
     await checkImageCapabilityRouting();
     checkArkAgentPlanFallbackPrecheck();
     console.log('功能 smoke test 通过');

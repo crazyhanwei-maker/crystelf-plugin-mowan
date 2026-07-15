@@ -607,6 +607,11 @@ async function main() {
     'createQqSimulatorScenarioStore',
     'buildQqSimulatorOnebotEvent',
     'simulateQqJoinRequest',
+    'simulateQqImageEditCommand',
+    'would_edit_image',
+    'would_fuse_images',
+    'executed_image_edit',
+    'confirmLiveImage',
   ]));
   const pluginSettingsConsole = await readText('lib/webConsole/pluginSettingsConsole.js');
   addCheck('plugin settings console module', includesAll(webConsoleSurface, [
@@ -791,6 +796,7 @@ async function main() {
   const apiCircuitBreaker = await readText('lib/ai/apiCircuitBreaker.js');
   const aiCaller = await readText('lib/ai/aiCaller.js');
   const imageProcessor = await readText('lib/ai/imageProcessor.js');
+  const sdWebUiApi = await readText('lib/ai/sdWebUiApi.js');
   const toolRegistry = await readText('lib/ai/toolRegistry.js');
   const imageMonitorApp = await readText('apps/image-monitor.js');
   const memeCore = await readText('lib/core/meme.js');
@@ -816,9 +822,25 @@ async function main() {
     'data-image-modes="openai ark-agent-plan chat"',
     'data-image-modes="ark-agent-plan"',
     'data-image-modes="jimeng"',
+    'data-image-modes="sd-webui"',
   ]) && includesAll(apiSettingsFormJs, [
     'syncImageModeFieldVisibility',
     "document.querySelectorAll('[data-image-mode-scope][data-image-modes]')",
+  ]));
+  addCheck('sd webui single image integration', includesAll(sdWebUiApi, [
+    "IMAGE_MODE_SD_WEBUI = 'sd-webui'",
+    'batch_size: 1',
+    'n_iter: 1',
+    'override_settings_restore_afterwards = true',
+  ]) && includesAll(imageProcessor, [
+    'generateOrEditImageBySdWebUi',
+    "'/sdapi/v1/img2img'",
+    "'/sdapi/v1/txt2img'",
+  ]) && includesAll(apiSettingsHtml, [
+    'image-sdWebUi-baseApi',
+    'image-sdWebUi-samplerName',
+    'image-fallback-sdWebUi-baseApi',
+    '固定 batch_size=1、n_iter=1',
   ]));
   addCheck('image monitor storage master switch', includesAll(apiSettingsHtml, [
     'imageMonitor-storageEnabled',

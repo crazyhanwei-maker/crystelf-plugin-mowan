@@ -61,6 +61,13 @@ async function capture(page, baseUrl, profile) {
   await page.click('.api-settings-nav-btn[data-section="ai-image"]');
   await page.waitForSelector('#section-ai-image:not(.hidden)');
   await page.waitForSelector('#image-runtime-test-run-btn');
+  await page.select('#image-imageMode', 'sd-webui');
+  await page.evaluate(() => {
+    const mode = document.querySelector('#image-imageMode');
+    mode?.dispatchEvent(new Event('input', { bubbles: true }));
+    mode?.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForSelector('#image-sdWebUi-baseApi:not([disabled])');
   await new Promise(resolve => setTimeout(resolve, 300));
   const layout = await page.evaluate(() => {
     const panel = document.querySelector('.image-runtime-test-panel');
@@ -68,14 +75,18 @@ async function capture(page, baseUrl, profile) {
     return {
       panelVisible: Boolean(panel && panel.getBoundingClientRect().width > 0 && panel.getBoundingClientRect().height > 0),
       buttonVisible: Boolean(button && button.getBoundingClientRect().width > 0 && button.getBoundingClientRect().height > 0),
+      sdFieldsVisible: Boolean(document.querySelector('#image-sdWebUi-baseApi')?.closest('.setting-item')
+        && !document.querySelector('#image-sdWebUi-baseApi').closest('.setting-item').classList.contains('hidden')),
+      openAiFieldsHidden: Boolean(document.querySelector('#image-baseApi')?.closest('.setting-item')?.classList.contains('hidden')),
       viewportWidth: document.documentElement.clientWidth,
       documentWidth: document.documentElement.scrollWidth,
     };
   });
   if (!layout.panelVisible || !layout.buttonVisible) throw new Error(`${profile.label}真实生图测试面板不可见`);
+  if (!layout.sdFieldsVisible || !layout.openAiFieldsHidden) throw new Error(`${profile.label} SD WebUI 模式字段显示不正确`);
   if (layout.documentWidth > layout.viewportWidth + 2) throw new Error(`${profile.label}页面存在横向溢出`);
   await fs.mkdir(outputDir, { recursive: true });
-  const screenshotPath = path.join(outputDir, `${profile.slug}.png`);
+  const screenshotPath = path.join(outputDir, `${profile.slug}-sd-webui.png`);
   await page.screenshot({ path: screenshotPath, fullPage: true, type: 'png' });
 
   await page.click('.api-settings-nav-btn[data-section="image-monitor"]');

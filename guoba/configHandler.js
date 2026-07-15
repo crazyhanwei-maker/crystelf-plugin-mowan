@@ -494,6 +494,20 @@ function validateConfig(configType, config = null) {
           errors.push(`图像配置 ${field} 必须是字符串`);
         }
       });
+      if (config.imageConfig?.sdWebUi !== undefined) {
+        if (!isPlainObject(config.imageConfig.sdWebUi)) {
+          errors.push('SD WebUI 配置必须是对象');
+        } else {
+          const sd = config.imageConfig.sdWebUi;
+          pushRangeError(errors, sd.steps, 1, 150, 'SD WebUI 采样步数必须在 1-150 之间');
+          pushRangeError(errors, sd.cfgScale, 1, 30, 'SD WebUI CFG 必须在 1-30 之间');
+          pushRangeError(errors, sd.width, 64, 4096, 'SD WebUI 宽度必须在 64-4096 之间');
+          pushRangeError(errors, sd.height, 64, 4096, 'SD WebUI 高度必须在 64-4096 之间');
+          pushRangeError(errors, sd.denoisingStrength, 0, 1, 'SD WebUI 重绘强度必须在 0-1 之间');
+          if (sd.width !== undefined && Number(sd.width) % 8 !== 0) errors.push('SD WebUI 宽度必须是 8 的倍数');
+          if (sd.height !== undefined && Number(sd.height) % 8 !== 0) errors.push('SD WebUI 高度必须是 8 的倍数');
+        }
+      }
       break;
 
     case '60s':

@@ -385,11 +385,15 @@ async function runApiSettingsInteraction(page) {
       primaryResponseFormat: visible('#image-responseFormat'),
       primaryOutputFormat: visible('#image-outputFormat'),
       primaryWatermark: visible('#image-watermark'),
+      primarySdBaseApi: visible('#image-sdWebUi-baseApi'),
+      primarySdSampler: visible('#image-sdWebUi-samplerName'),
       fallbackModel: visible('#image-fallback-model'),
       fallbackBaseApi: visible('#image-fallback-baseApi'),
       fallbackJimeng: visible('#image-fallback-jimengApiUrl'),
       fallbackSize: visible('#image-fallback-size'),
       fallbackOutputFormat: visible('#image-fallback-outputFormat'),
+      fallbackSdBaseApi: visible('#image-fallback-sdWebUi-baseApi'),
+      fallbackSdSampler: visible('#image-fallback-sdWebUi-samplerName'),
     };
   });
   await setInputValue(page, '#image-imageMode', 'jimeng');
@@ -420,6 +424,15 @@ async function runApiSettingsInteraction(page) {
     || !agentPlanVisibility.fallbackModel || !agentPlanVisibility.fallbackBaseApi || agentPlanVisibility.fallbackJimeng
     || !agentPlanVisibility.fallbackSize || !agentPlanVisibility.fallbackOutputFormat) {
     throw new Error('火山 Agent Plan 模式字段显示不正确');
+  }
+  await setInputValue(page, '#image-imageMode', 'sd-webui');
+  await setInputValue(page, '#image-fallback-imageMode', 'sd-webui');
+  const sdWebUiVisibility = await readImageModeVisibility();
+  if (!sdWebUiVisibility.primarySdBaseApi || !sdWebUiVisibility.primarySdSampler
+    || sdWebUiVisibility.primaryModel || sdWebUiVisibility.primaryBaseApi || sdWebUiVisibility.primaryJimeng
+    || !sdWebUiVisibility.fallbackSdBaseApi || !sdWebUiVisibility.fallbackSdSampler
+    || sdWebUiVisibility.fallbackModel || sdWebUiVisibility.fallbackBaseApi || sdWebUiVisibility.fallbackJimeng) {
+    throw new Error('SD WebUI 模式字段显示不正确');
   }
   await setInputValue(page, '#image-imageMode', originalImageModes.primary);
   await setInputValue(page, '#image-fallback-imageMode', originalImageModes.fallback);
@@ -543,6 +556,37 @@ async function runQqSimulatorInteraction(page) {
   });
   if (!cleared) {
     throw new Error('模拟调试清空按钮没有重置消息流状态');
+  }
+
+  const imageCommandState = await page.evaluate(async () => {
+    const response = await fetch('/api/qq-simulator/send', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        eventType: 'message',
+        groupId: '10001',
+        userId: '20001',
+        nickname: '测试用户',
+        messageText: '#灵晶改图 把背景改成蓝色水晶宫殿',
+        images: ['https://example.com/source.png'],
+        includeAt: false,
+        dispatchMode: 'replay',
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    return {
+      ok: response.ok && data?.success !== false,
+      replies: Array.isArray(data?.replies) ? data.replies : [],
+      actions: Array.isArray(data?.actions) ? data.actions : [],
+      timeline: Array.isArray(data?.timeline) ? data.timeline : [],
+    };
+  });
+  if (!imageCommandState.ok
+    || !imageCommandState.replies.some(item => String(item).includes('固定返回 1 张图片'))
+    || !imageCommandState.actions.some(item => item?.type === 'would_edit_image')
+    || !imageCommandState.timeline.some(item => item?.stage === 'ai.imageEditCommand' && item?.status === 'matched')) {
+    throw new Error('模拟调试没有正确处理 #灵晶改图 命令');
   }
 }
 
