@@ -15,6 +15,7 @@ import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
 import { buildChatCompletionMessages } from '../lib/ai/chatEngine.js';
+import { MemoryRetrieval } from '../lib/humanize/memoryRetrieval.js';
 import {
   buildSdWebUiApiUrl,
   buildSdWebUiRequest,
@@ -161,6 +162,83 @@ function checkChatEngineUserMessageCompatibility() {
   assert(cases[0][1].content === targetMessage.content, '聊天引擎文本首轮没有保留真实用户消息');
   assert(cases[1][1].content.some(item => item.type === 'image_url'), '聊天引擎图片首轮没有保留图片消息段');
   logPass('聊天引擎 user 消息兼容保护正常');
+}
+
+async function checkMemoryRetrievalUserMessageCompatibility() {
+  const requests = [];
+  let completionIndex = 0;
+  const ai = {
+    complete: async options => {
+      requests.push({
+        ...options,
+        messages: structuredClone(options.messages),
+      });
+      completionIndex += 1;
+      if (completionIndex === 1) {
+        return {
+          content: '',
+          toolCalls: [{
+            id: 'call-search',
+            name: 'search_chat_history',
+            arguments: JSON.stringify({ keyword: '测试记录' }),
+          }],
+          raw: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [{
+              id: 'call-search',
+              type: 'function',
+              function: {
+                name: 'search_chat_history',
+                arguments: JSON.stringify({ keyword: '测试记录' }),
+              },
+            }],
+          },
+        };
+      }
+      return {
+        content: '',
+        toolCalls: [{
+          id: 'call-finish',
+          name: 'found_answer',
+          arguments: JSON.stringify({ answer: '找到测试记录', found: true }),
+        }],
+        raw: {
+          role: 'assistant',
+          content: '',
+          tool_calls: [{
+            id: 'call-finish',
+            type: 'function',
+            function: {
+              name: 'found_answer',
+              arguments: JSON.stringify({ answer: '找到测试记录', found: true }),
+            },
+          }],
+        },
+      };
+    },
+  };
+  const db = {
+    searchMessages: () => [{
+      timestamp: Date.now(),
+      userName: '测试用户',
+      content: '这是需要找到的测试记录',
+    }],
+    getMessagesByUser: () => [],
+  };
+  const retrieval = new MemoryRetrieval(ai, {
+    modelType: 'test-model',
+    memory: { enabled: true, maxIterations: 3, timeoutMs: 5000 },
+  }, db);
+
+  const answer = await retrieval.reactSearch('group:10001', '之前的测试记录是什么？');
+  assert(answer === '找到测试记录', '记忆检索工具循环没有返回预期结果');
+  assert(requests.length === 2, '记忆检索工具循环请求次数错误');
+  assert(requests[0].messages.some(message => message.role === 'user' && String(message.content || '').includes('之前的测试记录')), '记忆检索首轮缺少有效 user 消息');
+  assert(requests[1].messages.some(message => message.role === 'assistant' && Array.isArray(message.tool_calls)), '记忆检索续轮缺少 assistant 工具调用消息');
+  assert(requests[1].messages.some(message => message.role === 'tool' && message.tool_call_id === 'call-search'), '记忆检索续轮缺少工具结果消息');
+  assert(!requests[1].messages.some(message => message.role === 'assistant' && !String(message.content || '').trim() && !message.tool_calls?.length), '记忆检索续轮包含无效空 assistant 消息');
+  logPass('记忆检索 user 消息兼容保护正常');
 }
 
 async function checkImageEditCommandSimulation() {
@@ -934,6 +1012,7 @@ async function checkArkAgentPlanImageRuntime() {
 async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
+    await checkMemoryRetrievalUserMessageCompatibility();
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();
     await checkImageEditCommandSimulation();
