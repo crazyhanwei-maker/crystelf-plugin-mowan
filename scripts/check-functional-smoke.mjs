@@ -11,6 +11,7 @@ import {
 } from '../lib/ai/imageApi.js';
 import axios from 'axios';
 import { ImageProcessor } from '../lib/ai/imageProcessor.js';
+import { getImageDimensions, getImagePixelCount } from '../lib/ai/imageDimensions.js';
 import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
@@ -636,6 +637,20 @@ function checkArkAgentPlanImageRequest() {
   logPass('火山 Agent Plan 图像请求构造正常');
 }
 
+function checkImageDimensionParser() {
+  const png = Buffer.alloc(24);
+  png[0] = 0x89;
+  png[1] = 0x50;
+  png[2] = 0x4e;
+  png[3] = 0x47;
+  png.writeUInt32BE(1920, 16);
+  png.writeUInt32BE(1920, 20);
+  const dimensions = getImageDimensions(png);
+  assert(dimensions?.width === 1920 && dimensions?.height === 1920, 'PNG 图片尺寸解析错误');
+  assert(getImagePixelCount(dimensions) === 3686400, '图片像素数计算错误');
+  logPass('图生图图片尺寸预检解析正常');
+}
+
 function checkSdWebUiImageRequest() {
   const endpoint = buildSdWebUiApiUrl('http://192.168.0.109:8888/', '/sdapi/v1/txt2img');
   assert(endpoint === 'http://192.168.0.109:8888/sdapi/v1/txt2img', `SD WebUI 请求地址错误：${endpoint}`);
@@ -977,6 +992,30 @@ async function checkArkAgentPlanImageRuntime() {
     assert(Array.isArray(editRequest?.body?.image) && editRequest.body.image.length === 2, 'Agent Plan 多图运行时未发送 image 数组');
     assert(editRequest?.body?.size === '3K', 'Agent Plan 图生图运行时未发送 3K');
 
+    const lowResolutionPng = Buffer.alloc(24);
+    lowResolutionPng[0] = 0x89;
+    lowResolutionPng[1] = 0x50;
+    lowResolutionPng[2] = 0x4e;
+    lowResolutionPng[3] = 0x47;
+    lowResolutionPng.writeUInt32BE(640, 16);
+    lowResolutionPng.writeUInt32BE(480, 20);
+    const requestCountBeforePrecheck = captured.length;
+    const lowResolutionResult = await processor.editImage('低分辨率预检', [
+      `data:image/png;base64,${lowResolutionPng.toString('base64')}`,
+    ], {
+      imageMode: 'ark-agent-plan',
+      baseApi: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+      apiKey: 'test-agent-key',
+      model: 'doubao-seedream-5.0-lite',
+      size: '2K',
+      outputFormat: 'png',
+      responseFormat: 'url',
+      watermark: false,
+    });
+    assert(lowResolutionResult.success === false, '低分辨率参考图没有被预检拦截');
+    assert(String(lowResolutionResult.error).includes('参考图像素不足'), '低分辨率预检提示不明确');
+    assert(captured.length === requestCountBeforePrecheck, '低分辨率预检后仍然请求了上游接口');
+
     const fallback = buildImageFallbackConfig({
       imageMode: 'openai',
       size: '1024x1024',
@@ -1122,6 +1161,7 @@ async function main() {
     await checkStatusImageRender();
     checkWebConsolePublicUrlResolution();
     checkArkAgentPlanImageRequest();
+    checkImageDimensionParser();
     await checkArkAgentPlanImageRuntime();
     checkSdWebUiImageRequest();
     await checkSdWebUiImageRuntime();
