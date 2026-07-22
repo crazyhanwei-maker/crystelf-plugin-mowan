@@ -355,6 +355,8 @@
     "outputFormat": "png",
     "?watermark": "Agent Plan 是否添加水印",
     "watermark": false,
+    "?webSearch": "Agent Plan 是否启用联网搜索，开启后发送tools.web_search",
+    "webSearch": false,
     "?sdWebUi": "SD WebUI 专属配置；插件固定 batch_size=1、n_iter=1，每次只生成一张图片",
     "sdWebUi": {
       "?baseApi": "AUTOMATIC1111 或 Forge 的服务地址，启动时必须启用 --api",
@@ -414,6 +416,8 @@
       "outputFormat": "",
       "?watermark": "备用Agent Plan是否添加水印",
       "watermark": false,
+      "?webSearch": "备用Agent Plan是否启用联网搜索",
+      "webSearch": false,
       "?sdWebUi": "备用 SD WebUI 专属配置，仍固定每次只生成一张图片",
       "sdWebUi": {
         "baseApi": "",

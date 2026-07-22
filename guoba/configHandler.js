@@ -489,6 +489,12 @@ function validateConfig(configType, config = null) {
       if (config.imageConfig?.modalities !== undefined && !Array.isArray(config.imageConfig.modalities)) {
         errors.push('图像输出模态必须是数组');
       }
+      if (config.imageConfig?.webSearch !== undefined && typeof config.imageConfig.webSearch !== 'boolean') {
+        errors.push('Agent Plan 联网搜索开关必须是布尔值');
+      }
+      if (config.imageConfig?.fallbackApi?.webSearch !== undefined && typeof config.imageConfig.fallbackApi.webSearch !== 'boolean') {
+        errors.push('备用 Agent Plan 联网搜索开关必须是布尔值');
+      }
       ['fallbackReply', 'fallbackTimeoutReply'].forEach((field) => {
         if (config.imageConfig?.[field] !== undefined && typeof config.imageConfig[field] !== 'string') {
           errors.push(`图像配置 ${field} 必须是字符串`);

@@ -2696,6 +2696,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'ai.imageConfig.webSearch',
+    label: 'Agent Plan 联网搜索',
+    component: 'Switch',
+    bottomHelpMessage: '开启后生图请求会使用火山联网搜索工具，适合实时新闻、赛事和天气题材；仅 Agent Plan 模式生效',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'ai.imageConfig.sdWebUi.baseApi',
     label: 'SD WebUI 地址',
     component: 'Input',

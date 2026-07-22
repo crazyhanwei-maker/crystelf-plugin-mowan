@@ -155,6 +155,7 @@ AI 可以在回复中使用表情包标记：
 | `responseFormat` | `url` 或 `b64_json`；`gpt-image-2` 通常推荐 `b64_json` |
 | `outputFormat` | Agent Plan 图片格式：`png` 或 `jpeg` |
 | `watermark` | Agent Plan 是否添加水印 |
+| `webSearch` | Agent Plan 联网搜索开关，默认关闭 |
 
 `openai` 模式会调用 `/v1/images/generations`。如果 `baseApi` 填了 `https://example.com/v1`，插件会自动处理最终路径。
 
@@ -171,8 +172,11 @@ AI 可以在回复中使用表情包标记：
 | `responseFormat` | `url` |
 | `outputFormat` | `png` |
 | `watermark` | `false` |
+| `webSearch` | `false`；实时新闻、赛事或天气题材需要时再开启 |
 
 Agent Plan 支持文生图、单图生图和多图融合。发送一张或多张原图并附上修改要求时，插件会通过请求体的 `image` 字段提交参考图；支持可公开访问的 URL 和 Base64 数据 URL。Seedream 5.0 Lite 单次最多接收 14 张参考图。
+
+开启 `webSearch` 后，插件会在 Agent Plan 请求中加入 `tools: [{ "type": "web_search" }]`。该能力依赖当前 Agent Plan 套餐和 API Key 权限，可能增加额度消耗；关闭时插件不会发送 `tools` 字段。主接口和备用接口的联网搜索开关彼此独立。
 
 控制台“API 设置 -> 图像生成 API -> 真实生图测试”可以直接使用当前页面草稿测试主接口或备用接口，并支持上传一张图片进行图生图测试。真实测试会调用上游服务，可能消耗额度或产生费用，因此页面会在执行前二次确认。
 

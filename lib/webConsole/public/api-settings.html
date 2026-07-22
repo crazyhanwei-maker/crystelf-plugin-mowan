@@ -390,6 +390,11 @@
                   <button class="plugin-settings-switch off" id="image-watermark">已关闭</button>
                   <div class="setting-help">关闭时发送 watermark=false。</div>
                 </div>
+                <div class="setting-item" data-image-mode-scope="primary" data-image-modes="ark-agent-plan">
+                  <div class="kv-label">联网搜索</div>
+                  <button class="plugin-settings-switch off" id="image-webSearch">已关闭</button>
+                  <div class="setting-help">开启后向 Agent Plan 发送 tools.web_search，适合实时新闻、赛事和天气题材，可能增加额度消耗。</div>
+                </div>
                 <div class="setting-item" data-image-mode-scope="primary" data-image-modes="openai">
                   <div class="kv-label">背景模式</div>
                   <select id="image-background">
@@ -606,6 +611,11 @@
                   <div class="kv-label">备用生成水印</div>
                   <button class="plugin-settings-switch off" id="image-fallback-watermark">已关闭</button>
                   <div class="setting-help">关闭时发送 watermark=false。</div>
+                </div>
+                <div class="setting-item" data-image-mode-scope="fallback" data-image-modes="ark-agent-plan">
+                  <div class="kv-label">备用联网搜索</div>
+                  <button class="plugin-settings-switch off" id="image-fallback-webSearch">已关闭</button>
+                  <div class="setting-help">仅备用线路实际使用 Agent Plan 时生效，设置与主线路相互独立。</div>
                 </div>
                 <div class="setting-item">
                   <div class="kv-label">自动主备切换</div>

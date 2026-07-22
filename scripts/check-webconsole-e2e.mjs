@@ -385,6 +385,7 @@ async function runApiSettingsInteraction(page) {
       primaryResponseFormat: visible('#image-responseFormat'),
       primaryOutputFormat: visible('#image-outputFormat'),
       primaryWatermark: visible('#image-watermark'),
+      primaryWebSearch: visible('#image-webSearch'),
       primarySdBaseApi: visible('#image-sdWebUi-baseApi'),
       primarySdSampler: visible('#image-sdWebUi-samplerName'),
       fallbackModel: visible('#image-fallback-model'),
@@ -392,6 +393,7 @@ async function runApiSettingsInteraction(page) {
       fallbackJimeng: visible('#image-fallback-jimengApiUrl'),
       fallbackSize: visible('#image-fallback-size'),
       fallbackOutputFormat: visible('#image-fallback-outputFormat'),
+      fallbackWebSearch: visible('#image-fallback-webSearch'),
       fallbackSdBaseApi: visible('#image-fallback-sdWebUi-baseApi'),
       fallbackSdSampler: visible('#image-fallback-sdWebUi-samplerName'),
     };
@@ -400,19 +402,22 @@ async function runApiSettingsInteraction(page) {
   await setInputValue(page, '#image-fallback-imageMode', 'jimeng');
   const jimengVisibility = await readImageModeVisibility();
   if (!jimengVisibility.primaryJimeng || jimengVisibility.primaryModel || jimengVisibility.primaryBaseApi || jimengVisibility.primarySize
-    || !jimengVisibility.fallbackJimeng || jimengVisibility.fallbackModel || jimengVisibility.fallbackBaseApi) {
+    || jimengVisibility.primaryWebSearch || !jimengVisibility.fallbackJimeng || jimengVisibility.fallbackModel
+    || jimengVisibility.fallbackBaseApi || jimengVisibility.fallbackWebSearch) {
     throw new Error('即梦模式没有正确隐藏 OpenAI 图像字段');
   }
   await setInputValue(page, '#image-imageMode', 'chat');
   const chatVisibility = await readImageModeVisibility();
-  if (!chatVisibility.primaryModel || !chatVisibility.primaryBaseApi || chatVisibility.primaryJimeng || chatVisibility.primarySize) {
+  if (!chatVisibility.primaryModel || !chatVisibility.primaryBaseApi || chatVisibility.primaryJimeng
+    || chatVisibility.primarySize || chatVisibility.primaryWebSearch) {
     throw new Error('对话式生图模式字段显示不正确');
   }
   await setInputValue(page, '#image-imageMode', 'openai');
   await setInputValue(page, '#image-fallback-imageMode', 'openai');
   const openAiVisibility = await readImageModeVisibility();
   if (!openAiVisibility.primaryModel || !openAiVisibility.primaryBaseApi || openAiVisibility.primaryJimeng || !openAiVisibility.primarySize
-    || !openAiVisibility.fallbackModel || !openAiVisibility.fallbackBaseApi || openAiVisibility.fallbackJimeng) {
+    || openAiVisibility.primaryWebSearch || !openAiVisibility.fallbackModel || !openAiVisibility.fallbackBaseApi
+    || openAiVisibility.fallbackJimeng || openAiVisibility.fallbackWebSearch) {
     throw new Error('OpenAI 生图模式没有正确隐藏即梦字段');
   }
   await setInputValue(page, '#image-imageMode', 'ark-agent-plan');
@@ -420,9 +425,9 @@ async function runApiSettingsInteraction(page) {
   const agentPlanVisibility = await readImageModeVisibility();
   if (!agentPlanVisibility.primaryModel || !agentPlanVisibility.primaryBaseApi || agentPlanVisibility.primaryJimeng
     || !agentPlanVisibility.primarySize || agentPlanVisibility.primaryQuality || !agentPlanVisibility.primaryResponseFormat
-    || !agentPlanVisibility.primaryOutputFormat || !agentPlanVisibility.primaryWatermark
+    || !agentPlanVisibility.primaryOutputFormat || !agentPlanVisibility.primaryWatermark || !agentPlanVisibility.primaryWebSearch
     || !agentPlanVisibility.fallbackModel || !agentPlanVisibility.fallbackBaseApi || agentPlanVisibility.fallbackJimeng
-    || !agentPlanVisibility.fallbackSize || !agentPlanVisibility.fallbackOutputFormat) {
+    || !agentPlanVisibility.fallbackSize || !agentPlanVisibility.fallbackOutputFormat || !agentPlanVisibility.fallbackWebSearch) {
     throw new Error('火山 Agent Plan 模式字段显示不正确');
   }
   await setInputValue(page, '#image-imageMode', 'sd-webui');
@@ -430,8 +435,10 @@ async function runApiSettingsInteraction(page) {
   const sdWebUiVisibility = await readImageModeVisibility();
   if (!sdWebUiVisibility.primarySdBaseApi || !sdWebUiVisibility.primarySdSampler
     || sdWebUiVisibility.primaryModel || sdWebUiVisibility.primaryBaseApi || sdWebUiVisibility.primaryJimeng
+    || sdWebUiVisibility.primaryWebSearch
     || !sdWebUiVisibility.fallbackSdBaseApi || !sdWebUiVisibility.fallbackSdSampler
-    || sdWebUiVisibility.fallbackModel || sdWebUiVisibility.fallbackBaseApi || sdWebUiVisibility.fallbackJimeng) {
+    || sdWebUiVisibility.fallbackModel || sdWebUiVisibility.fallbackBaseApi || sdWebUiVisibility.fallbackJimeng
+    || sdWebUiVisibility.fallbackWebSearch) {
     throw new Error('SD WebUI 模式字段显示不正确');
   }
   await setInputValue(page, '#image-imageMode', originalImageModes.primary);

@@ -611,6 +611,7 @@ function checkArkAgentPlanImageRequest() {
     outputFormat: 'png',
     responseFormat: 'url',
     watermark: false,
+    webSearch: true,
     quality: 'high',
     n: 1,
   }, ['https://example.com/reference.png']);
@@ -618,6 +619,7 @@ function checkArkAgentPlanImageRequest() {
   assert(body.output_format === 'png', 'Agent Plan output_format 未写入');
   assert(body.response_format === 'url', 'Agent Plan response_format 未写入');
   assert(body.watermark === false, 'Agent Plan watermark=false 未写入');
+  assert(Array.isArray(body.tools) && body.tools.length === 1 && body.tools[0]?.type === 'web_search', 'Agent Plan 联网搜索工具未写入');
   assert(body.image === 'https://example.com/reference.png', 'Agent Plan 单张参考图未写入 image');
   assert(!Object.prototype.hasOwnProperty.call(body, 'quality'), 'Agent Plan 不应携带 quality');
   assert(!Object.prototype.hasOwnProperty.call(body, 'n'), 'Agent Plan 不应携带 n');
@@ -630,6 +632,7 @@ function checkArkAgentPlanImageRequest() {
     'data:image/png;base64,dGVzdA==',
   ]);
   assert(Array.isArray(multiImageBody.image) && multiImageBody.image.length === 2, 'Agent Plan 多张参考图未按数组写入 image');
+  assert(!Object.prototype.hasOwnProperty.call(multiImageBody, 'tools'), 'Agent Plan 联网搜索关闭时不应发送 tools');
   logPass('火山 Agent Plan 图像请求构造正常');
 }
 
@@ -944,6 +947,7 @@ async function checkArkAgentPlanImageRuntime() {
       outputFormat: 'png',
       responseFormat: 'url',
       watermark: false,
+      webSearch: true,
       retryCount: 0,
     });
     assert(result.success === true, 'Agent Plan 运行时没有解析成功响应');
@@ -952,6 +956,7 @@ async function checkArkAgentPlanImageRuntime() {
     assert(generationRequest?.url === 'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations', 'Agent Plan 运行时请求路径错误');
     assert(generationRequest?.body?.size === '2K', 'Agent Plan 运行时未发送 2K');
     assert(generationRequest?.body?.watermark === false, 'Agent Plan 运行时未发送 watermark=false');
+    assert(generationRequest?.body?.tools?.[0]?.type === 'web_search', 'Agent Plan 运行时未发送联网搜索工具');
     assert(generationRequest?.options?.headers?.Authorization === 'Bearer test-agent-key', 'Agent Plan 运行时授权头错误');
 
     const editResult = await processor.editImage('多图融合测试', [
@@ -988,11 +993,13 @@ async function checkArkAgentPlanImageRuntime() {
         responseFormat: 'url',
         outputFormat: 'jpeg',
         watermark: false,
+        webSearch: true,
       },
     });
     assert(fallback?.imageMode === 'ark-agent-plan', '备用 Agent Plan 模式未保留');
     assert(fallback?.size === '4K' && fallback?.outputFormat === 'jpeg', '备用 Agent Plan 独立参数未生效');
     assert(fallback?.watermark === false, '备用 Agent Plan 水印开关未生效');
+    assert(fallback?.webSearch === true, '备用 Agent Plan 联网搜索开关未生效');
 
     const openAiFallback = buildImageFallbackConfig({
       imageMode: 'openai',
