@@ -77,6 +77,23 @@ ret = await Promise.allSettled(ret);
 
 let apps = {};
 const failedApps = [];
+
+function isPluginClass(value) {
+  if (typeof value !== 'function') return false;
+  try {
+    return /^class\s/.test(Function.prototype.toString.call(value));
+  } catch {
+    return false;
+  }
+}
+
+function selectPluginClass(moduleExports = {}) {
+  if (isPluginClass(moduleExports?.default)) {
+    return moduleExports.default;
+  }
+  return Object.values(moduleExports || {}).find(isPluginClass) || null;
+}
+
 for (let i in enabledApps) {
   let name = enabledApps[i].replace('.js', '');
   if (ret[i].status !== 'fulfilled') {
@@ -84,7 +101,13 @@ for (let i in enabledApps) {
     failedApps.push(name);
     continue;
   }
-  apps[name] = ret[i].value[Object.keys(ret[i].value)[0]];
+  const pluginClass = selectPluginClass(ret[i].value);
+  if (!pluginClass) {
+    logger.error(`[crystelf-plugin] 插件 ${name} 没有导出有效的插件类，已跳过加载`);
+    failedApps.push(name);
+    continue;
+  }
+  apps[name] = pluginClass;
 }
 if (failedApps.length === 0) {
   logger.info('灵晶已经完成初始化，没有发现异常');

@@ -384,8 +384,18 @@ async function main() {
   ]));
   const groupHealth = await readText('lib/webConsole/groupManagementHealth.js');
   const groupHealthFix = await readText('lib/webConsole/groupManagementHealthFix.js');
+  const pluginEntry = await readText('index.js');
   const groupManagementRuntime = await readText('apps/group-management.js');
   const contentModerationRuntime = await readText('lib/groupManagement/contentModerationRuntime.js');
+  addCheck('plugin class export selection', includesAll(pluginEntry, [
+    'function selectPluginClass',
+    'moduleExports?.default',
+    'Object.values(moduleExports || {}).find(isPluginClass)',
+    '没有导出有效的插件类',
+  ]) && !pluginEntry.includes('ret[i].value[Object.keys(ret[i].value)[0]]') && includesAll(groupManagementRuntime, [
+    'export class groupManagementRuntime extends plugin',
+    'export default groupManagementRuntime',
+  ]));
   addCheck('group management isolated spam listener', includesAll(groupManagementRuntime, [
     "bot.on('message.group'",
     'createGroupSpamEventSnapshot',

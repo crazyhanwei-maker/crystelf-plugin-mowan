@@ -220,3 +220,5 @@ export class groupManagementRuntime extends plugin {
     return false;
   }
 }
+
+export default groupManagementRuntime;
