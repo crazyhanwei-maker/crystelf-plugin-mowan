@@ -1258,6 +1258,108 @@ const guobaSchema = [
     },
   },
   {
+    label: 'LLM 命令桥接',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'coreConfig.tools.commandBridge.enabled',
+    label: '启用命令桥接',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。开启后也只允许调用魔丸控制台“命令中心”中人工授权的其他插件命令。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.commandBridge.confirmationTimeoutMs',
+    label: '命令确认时限',
+    component: 'InputNumber',
+    bottomHelpMessage: '更新、重启和高权限命令等待同一用户回复“确认执行”的时间，单位毫秒。',
+    componentProps: {
+      min: 10000,
+      max: 300000,
+      step: 5000,
+    },
+  },
+  {
+    field: 'coreConfig.tools.commandBridge.maxCommandLength',
+    label: '桥接命令最大长度',
+    component: 'InputNumber',
+    bottomHelpMessage: '限制 LLM 构造的插件命令长度，授权命令请在控制台命令中心管理。',
+    componentProps: {
+      min: 20,
+      max: 500,
+      step: 10,
+    },
+  },
+  {
+    label: 'Agent 工作台',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.enabled',
+    label: '启用 Agent 工作台',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。仅允许控制台启动 OpenCode 或 MiMo Code 的只读 plan 任务。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.defaultProvider',
+    label: '默认 Agent',
+    component: 'Select',
+    bottomHelpMessage: '控制台新任务默认选择的本地 Agent CLI。',
+    componentProps: {
+      options: [
+        { label: 'OpenCode', value: 'opencode' },
+        { label: 'MiMo Code', value: 'mimo' },
+      ],
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.timeoutMs',
+    label: 'Agent 任务超时',
+    component: 'InputNumber',
+    bottomHelpMessage: '单个只读 Agent 任务的最长运行时间，单位毫秒。',
+    componentProps: {
+      min: 60000,
+      max: 900000,
+      step: 30000,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.maxConcurrentTasks',
+    label: 'Agent 最大并发',
+    component: 'InputNumber',
+    bottomHelpMessage: '最多同时运行的 Agent 任务数，建议保持为 1。',
+    componentProps: {
+      min: 1,
+      max: 2,
+      step: 1,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.providers.opencode',
+    label: '允许 OpenCode',
+    component: 'Switch',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.providers.mimo',
+    label: '允许 MiMo Code',
+    component: 'Switch',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     label: '语音工具配置',
     component: 'SOFT_GROUP_BEGIN',
   },

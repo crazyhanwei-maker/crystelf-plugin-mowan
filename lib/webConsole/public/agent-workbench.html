@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - Agent 工作台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/agent-workbench.css" />
+</head>
+<body class="agent-workbench-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">本地 Agent</div>
+        <h1>Agent 工作台</h1>
+        <p id="agent-workbench-meta">正在探测本地 Agent CLI...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="agent-refresh-btn" type="button">刷新状态</button>
+            <button id="agent-save-btn" type="button">保存设置</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" type="button" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel agent-security-panel">
+      <div class="agent-security-state">
+        <span id="agent-master-state" class="agent-state-badge">读取中</span>
+        <div>
+          <strong>只读执行边界</strong>
+          <span>plan Agent · pure 模式 · 不自动批准 · 不直接写文件</span>
+        </div>
+      </div>
+      <div id="agent-workbench-status" class="setting-help">等待运行状态。</div>
+    </section>
+
+    <section id="agent-summary" class="agent-summary-grid"></section>
+
+    <section class="panel agent-settings-panel">
+      <div class="section-head">
+        <div>
+          <h2>运行设置</h2>
+          <div class="setting-help">设置只影响 Agent 工作台，不注册 Bot 消息监听。</div>
+        </div>
+      </div>
+      <div class="agent-settings-grid">
+        <label class="agent-switch-field">
+          <input id="agent-enabled" type="checkbox" />
+          <span><strong>启用 Agent 工作台</strong><small>关闭时禁止创建新任务</small></span>
+        </label>
+        <label>
+          <span>默认 Agent</span>
+          <select id="agent-default-provider">
+            <option value="opencode">OpenCode</option>
+            <option value="mimo">MiMo Code</option>
+          </select>
+        </label>
+        <label>
+          <span>任务超时</span>
+          <select id="agent-timeout-ms">
+            <option value="120000">2 分钟</option>
+            <option value="300000">5 分钟</option>
+            <option value="600000">10 分钟</option>
+            <option value="900000">15 分钟</option>
+          </select>
+        </label>
+        <label>
+          <span>最大并发</span>
+          <select id="agent-max-concurrent">
+            <option value="1">1 个任务</option>
+            <option value="2">2 个任务</option>
+          </select>
+        </label>
+        <label class="agent-provider-toggle">
+          <input id="agent-provider-opencode" type="checkbox" />
+          <span>允许 OpenCode</span>
+        </label>
+        <label class="agent-provider-toggle">
+          <input id="agent-provider-mimo" type="checkbox" />
+          <span>允许 MiMo Code</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="panel agent-provider-panel">
+      <div class="section-head">
+        <div>
+          <h2>Agent CLI</h2>
+          <div class="setting-help">显示当前 Bot 环境实际可启动的提供方。</div>
+        </div>
+      </div>
+      <div id="agent-provider-list" class="agent-provider-list">加载中...</div>
+    </section>
+
+    <section class="agent-workspace-layout">
+      <section class="panel agent-composer-panel">
+        <div class="section-head">
+          <div>
+            <h2>新建任务</h2>
+            <div class="setting-help">工作目录只能从后端白名单中选择。</div>
+          </div>
+        </div>
+        <div class="agent-composer-grid">
+          <label>
+            <span>Agent</span>
+            <select id="agent-provider"></select>
+          </label>
+          <label>
+            <span>工作目录</span>
+            <select id="agent-workspace"></select>
+          </label>
+          <label>
+            <span>任务模式</span>
+            <select id="agent-mode">
+              <option value="analyze">只读分析</option>
+              <option value="patch">补丁建议</option>
+            </select>
+          </label>
+          <label>
+            <span>模型（可选）</span>
+            <input id="agent-model" type="text" maxlength="160" placeholder="provider/model" />
+          </label>
+          <label class="agent-title-field">
+            <span>任务标题</span>
+            <input id="agent-title" type="text" maxlength="80" placeholder="自动使用任务内容" />
+          </label>
+          <label class="agent-prompt-field">
+            <span>任务内容</span>
+            <textarea id="agent-prompt" maxlength="6000" placeholder="例如：检查群管理模块的重复定时任务风险"></textarea>
+          </label>
+        </div>
+        <div class="agent-composer-actions">
+          <span id="agent-composer-hint">等待 Agent 状态。</span>
+          <button id="agent-run-btn" type="button">开始只读任务</button>
+        </div>
+      </section>
+
+      <section class="panel agent-output-panel">
+        <div class="section-head agent-output-head">
+          <div>
+            <h2 id="agent-output-title">任务输出</h2>
+            <div id="agent-output-meta" class="setting-help">尚未选择任务。</div>
+          </div>
+          <button id="agent-cancel-btn" type="button" disabled>取消任务</button>
+        </div>
+        <div id="agent-output-alert" class="agent-output-alert hidden"></div>
+        <pre id="agent-output" class="agent-output">等待任务...</pre>
+      </section>
+    </section>
+
+    <section class="panel agent-history-panel">
+      <div class="section-head">
+        <div>
+          <h2>最近任务</h2>
+          <div id="agent-history-meta" class="setting-help">暂无任务。</div>
+        </div>
+      </div>
+      <div id="agent-task-list" class="agent-task-list">加载中...</div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/agent-workbench.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

@@ -1577,6 +1577,7 @@ export class crystelfAI extends plugin {
   }
 
   async watchGroupMessage(e) {
+    if (e?.crystelfSynthetic || e?.crystelfCommandBridge) return false;
     if (!this.isInitialized) {
       await this.init();
     }
@@ -4134,6 +4135,7 @@ export class crystelfAIPrivate extends plugin {
   }
 
   async privateChat(e) {
+    if (e?.crystelfSynthetic || e?.crystelfCommandBridge) return false;
     if (e?.group_id) return false;
     const runtime = this.getRuntime();
     return runtime.handlePrivateMessage(e);

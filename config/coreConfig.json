@@ -62,6 +62,33 @@
         "cooldownMs": 300000
       }
     },
+    "?commandBridge": "LLM 调用其他 Yunzai 插件命令的受控桥接配置，默认关闭且不授权任何命令",
+    "commandBridge": {
+      "?enabled": "是否允许 LLM 调用控制台已授权的其他插件命令",
+      "enabled": false,
+      "?confirmationTimeoutMs": "高风险命令等待同一用户确认的有效时间",
+      "confirmationTimeoutMs": 60000,
+      "?maxCommandLength": "桥接命令允许的最大字符数",
+      "maxCommandLength": 200,
+      "?policies": "控制台授权的命令列表，新命令默认不会自动加入",
+      "policies": []
+    },
+    "?agentWorkbench": "Web 控制台本地代码 Agent 工作台，默认关闭且只允许只读 plan 模式",
+    "agentWorkbench": {
+      "?enabled": "是否允许控制台启动本地 Agent 只读任务",
+      "enabled": false,
+      "?defaultProvider": "默认 Agent 提供方，可选 opencode 或 mimo",
+      "defaultProvider": "opencode",
+      "?timeoutMs": "单个 Agent 任务的最长运行时间",
+      "timeoutMs": 300000,
+      "?maxConcurrentTasks": "最多同时运行的 Agent 任务数",
+      "maxConcurrentTasks": 1,
+      "?providers": "允许在 Agent 工作台使用的提供方",
+      "providers": {
+        "opencode": true,
+        "mimo": true
+      }
+    },
     "?tts": "内置语音合成工具配置",
     "tts": {
       "?enabled": "是否启用内置语音合成工具",

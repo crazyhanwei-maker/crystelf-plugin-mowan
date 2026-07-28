@@ -20,6 +20,7 @@ const protectedPages = [
   { path: '/group-management.html', text: '群管理' },
   { path: '/qq-simulator.html', text: '模拟调试' },
   { path: '/command-center.html', text: '命令中心' },
+  { path: '/agent-workbench.html', text: 'Agent 工作台' },
 ];
 
 const apiChecks = [
@@ -49,7 +50,47 @@ const apiChecks = [
     validate: data => data?.success === true
       && Array.isArray(data?.data?.commands)
       && data?.data?.summary
-      && Array.isArray(data?.data?.risks),
+      && Array.isArray(data?.data?.risks)
+      && data?.data?.bridge?.config
+      && Array.isArray(data?.data?.bridge?.commands),
+  },
+  {
+    path: '/api/command-center/bridge',
+    label: '命令桥接安全默认值保存',
+    method: 'POST',
+    body: {
+      enabled: false,
+      confirmationTimeoutMs: 60000,
+      maxCommandLength: 200,
+      policies: [],
+    },
+    validate: data => data?.success === true
+      && data?.data?.config?.enabled === false
+      && Array.isArray(data?.data?.config?.policies),
+  },
+  {
+    path: '/api/agent-workbench',
+    label: 'Agent 工作台',
+    validate: data => data?.success === true
+      && data?.data?.config
+      && Array.isArray(data?.data?.providers)
+      && Array.isArray(data?.data?.workspaces)
+      && Array.isArray(data?.data?.tasks),
+  },
+  {
+    path: '/api/agent-workbench/settings',
+    label: 'Agent 工作台安全默认值保存',
+    method: 'POST',
+    body: {
+      enabled: false,
+      defaultProvider: 'opencode',
+      timeoutMs: 300000,
+      maxConcurrentTasks: 1,
+      providers: { opencode: true, mimo: true },
+    },
+    validate: data => data?.success === true
+      && data?.data?.config?.enabled === false
+      && data?.data?.config?.maxConcurrentTasks === 1,
   },
   {
     path: '/api/global-search?q=命令&limit=8',

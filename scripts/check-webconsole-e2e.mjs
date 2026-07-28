@@ -22,6 +22,7 @@ const pages = [
   { path: '/group-management.html', label: '群管理', text: '群管理' },
   { path: '/qq-simulator.html', label: '模拟调试', text: '请求摘要', mobileText: '事件参数、附件与排查' },
   { path: '/command-center.html', label: '命令中心', text: '命令中心' },
+  { path: '/agent-workbench.html', label: 'Agent 工作台', text: 'Agent 工作台' },
   { path: '/file-browser.html', label: '文件编辑', text: '文件管理' },
   { path: '/bot-plugins.html', label: '插件管理', text: '机器人插件管理' },
   { path: '/dependency-check.html', label: '依赖健康', text: '依赖健康面板' },
@@ -86,7 +87,7 @@ function shouldIgnoreRequestFailure(errorText = '') {
 
 function shouldIgnoreFrontendErrorItem(error = {}) {
   const message = String(error?.message || '');
-  return /Host key verification failed|Could not read from remote repository|known_hosts.*Permission denied/i.test(message);
+  return /Host key verification failed|Could not read from remote repository|known_hosts.*Permission denied|unable to access ['"]?https:\/\/gitee\.com\/.*(?:schannel|AcquireCredentialsHandle|SEC_E_NO_CREDENTIALS|SSL|TLS|credential)/i.test(message);
 }
 
 async function startIsolatedWebConsole() {
@@ -929,6 +930,7 @@ async function inspectPage(page, baseUrl, item, runtimeErrors, options = {}) {
 
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
   await page.waitForSelector('body', { timeout: pageTimeoutMs });
+  await resetFrontendErrorCollector(page);
   await new Promise(resolve => setTimeout(resolve, 1200));
 
   const expectedText = options.checkMobileLayout ? item.mobileText || item.text : item.text;

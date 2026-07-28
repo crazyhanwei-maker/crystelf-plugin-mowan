@@ -7,6 +7,137 @@
   margin-bottom: 0;
 }
 
+.command-bridge-panel {
+  margin-bottom: 0;
+}
+
+.command-bridge-head {
+  align-items: center;
+}
+
+.command-bridge-settings {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.3fr) minmax(180px, 0.7fr) minmax(160px, 0.6fr) minmax(240px, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.command-bridge-settings > label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--soft-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.command-bridge-settings input[type='number'],
+.command-bridge-settings input[type='search'] {
+  width: 100%;
+  min-width: 0;
+}
+
+.command-bridge-switch {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--soft-bg);
+}
+
+.command-bridge-switch input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.command-bridge-switch span {
+  display: grid;
+  gap: 3px;
+}
+
+.command-bridge-switch strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.command-bridge-switch small {
+  color: var(--muted-text);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.command-bridge-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.command-bridge-list {
+  display: grid;
+  gap: 8px;
+  max-height: 560px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.command-bridge-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(130px, 0.35fr);
+  gap: 12px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--soft-bg);
+}
+
+.command-bridge-row.is-disabled {
+  opacity: 0.64;
+}
+
+.command-bridge-row > input[type='checkbox'] {
+  width: 19px;
+  height: 19px;
+  margin: 0;
+}
+
+.command-bridge-command {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.command-bridge-command strong,
+.command-bridge-command span,
+.command-bridge-command code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.command-bridge-command strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.command-bridge-command span {
+  color: var(--soft-text);
+  font-size: 12px;
+}
+
+.command-bridge-command code {
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+.command-bridge-mode {
+  width: 100%;
+  min-width: 0;
+}
+
 .command-center-source {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(180px, 0.5fr) minmax(260px, 1fr);
@@ -428,6 +559,10 @@
 }
 
 @media (max-width: 1180px) {
+  .command-bridge-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .command-center-kpi-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -442,6 +577,18 @@
 }
 
 @media (max-width: 820px) {
+  .command-bridge-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .command-bridge-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .command-bridge-mode {
+    grid-column: 2;
+  }
+
   .command-center-source,
   .command-center-filters {
     grid-template-columns: 1fr;

@@ -1,6 +1,6 @@
 {
   "name": "crystelf-plugin",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "适配crystelf-core的Yunzai插件",
   "main": "index.js",
   "type": "module",
@@ -39,6 +39,7 @@
     "node-schedule": "^2.1.1",
     "oicq": "^2.3.1",
     "openai": "^4.104.0",
+    "opencode-ai": "1.18.4",
     "pinyin-pro": "^3.28.0",
     "puppeteer": "^24.39.0",
     "rss-parser": "^3.13.0"

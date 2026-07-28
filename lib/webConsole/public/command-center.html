@@ -12,7 +12,7 @@
   <div class="page auth-guarded-content">
     <header class="hero">
       <div class="hero-copy">
-        <div class="hero-badge">只读排查</div>
+        <div class="hero-badge">命令治理</div>
         <h1>命令中心</h1>
         <p id="command-center-meta">正在扫描插件命令...</p>
       </div>
@@ -33,13 +33,46 @@
       <div class="section-head">
         <div>
           <h2>命令扫描说明</h2>
-          <div id="command-center-status" class="setting-help">页面只读取 apps 目录里的命令声明，不会执行插件代码，也不会修改配置。</div>
+          <div id="command-center-status" class="setting-help">静态扫描只读取 apps 目录；桥接授权仅保存命令白名单，不会在控制台执行命令。</div>
         </div>
       </div>
       <div id="command-center-source" class="command-center-source">等待扫描结果。</div>
     </section>
 
     <section id="command-center-kpis" class="command-center-kpi-grid"></section>
+
+    <section class="panel command-bridge-panel">
+      <div class="section-head command-bridge-head">
+        <div>
+          <h2>LLM 命令桥接</h2>
+          <div id="command-bridge-status" class="setting-help">默认关闭。只会调用人工授权的已加载插件命令，不会广播模拟消息。</div>
+        </div>
+        <button id="command-bridge-save-btn" type="button">保存桥接设置</button>
+      </div>
+      <div class="command-bridge-settings">
+        <label class="command-bridge-switch">
+          <input id="command-bridge-enabled" type="checkbox" />
+          <span>
+            <strong>允许 LLM 调用授权命令</strong>
+            <small>总开关关闭时，桥接工具不会提供给模型。</small>
+          </span>
+        </label>
+        <label>
+          <span>确认有效期（毫秒）</span>
+          <input id="command-bridge-confirm-timeout" type="number" min="10000" max="300000" step="5000" />
+        </label>
+        <label>
+          <span>命令最大长度</span>
+          <input id="command-bridge-max-length" type="number" min="20" max="500" step="10" />
+        </label>
+        <label class="command-bridge-search-field">
+          <span>搜索已加载插件命令</span>
+          <input id="command-bridge-search" type="search" placeholder="插件 / 命令规则 / 函数" />
+        </label>
+      </div>
+      <div id="command-bridge-summary" class="command-bridge-summary"></div>
+      <div id="command-bridge-list" class="command-bridge-list">正在读取 Yunzai 运行时命令...</div>
+    </section>
 
     <section class="panel command-center-filter-panel">
       <div class="section-head">

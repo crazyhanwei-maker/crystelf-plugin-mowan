@@ -216,6 +216,9 @@ async function main() {
   const pluginSettingsConsoleSuite = await readText('lib/webConsole/pluginSettingsConsoleSuite.js');
   const sandboxSimulatorConsoleSuite = await readText('lib/webConsole/sandboxSimulatorConsoleSuite.js');
   const commandCenterConsole = await readText('lib/webConsole/commandCenterConsole.js');
+  const agentWorkbenchConsole = await readText('lib/webConsole/agentWorkbenchConsole.js');
+  const bundledOpenCodeRuntime = await readText('lib/webConsole/bundledOpenCodeRuntime.js');
+  const agentWorkbenchRoutes = await readText('lib/webConsole/agentWorkbenchRoutes.js');
   const groupSummaryDiagnosticsConsole = await readText('lib/webConsole/groupSummaryDiagnosticsConsole.js');
   const globalSearchConsole = await readText('lib/webConsole/globalSearchConsole.js');
   const consoleShellJs = await readText('lib/webConsole/public/console-shell.js');
@@ -249,6 +252,8 @@ async function main() {
     pluginSettingsConsoleSuite,
     sandboxSimulatorConsoleSuite,
     commandCenterConsole,
+    agentWorkbenchConsole,
+    agentWorkbenchRoutes,
     webConsoleRoutes,
     groupSummaryDiagnosticsConsole,
     fileBrowserRoutes,
@@ -1004,6 +1009,7 @@ async function main() {
   const commandCenterHtml = await readText('lib/webConsole/public/command-center.html');
   const commandCenterJs = await readText('lib/webConsole/public/command-center.js');
   const commandCenterCss = await readText('lib/webConsole/public/command-center.css');
+  const commandBridgeRuntime = await readText('lib/ai/yunzaiCommandBridge.js');
   addCheck('command center page and api', includesAll(webConsoleSurface, [
     'createCommandCenterConsole',
     'commandCenterConsole',
@@ -1029,6 +1035,75 @@ async function main() {
     'command-center-risk-card',
     'command-center-table-wrap',
   ]));
+  addCheck('LLM Yunzai command bridge', includesAll(commandBridgeRuntime, [
+    'discoverYunzaiCommandsFromLoader',
+    'executeYunzaiCommandBridge',
+    'getYunzaiCommandBridgeTool',
+    'crystelfSynthetic',
+    'confirmationRequired',
+    'saveYunzaiCommandBridgeConfig',
+  ]) && includesAll(webConsoleSurface, [
+    '/api/command-center/bridge',
+    'saveCommandBridgeConfig',
+  ]) && includesAll(commandCenterHtml, [
+    'LLM 命令桥接',
+    'command-bridge-enabled',
+    'command-bridge-list',
+  ]) && includesAll(commandCenterJs, [
+    '/api/command-center/bridge',
+    'renderCommandBridge',
+    'saveCommandBridge',
+  ]) && includesAll(commandCenterCss, [
+    'command-bridge-settings',
+    'command-bridge-row',
+    'command-bridge-list',
+  ]));
+  const agentWorkbenchHtml = await readText('lib/webConsole/public/agent-workbench.html');
+  const agentWorkbenchJs = await readText('lib/webConsole/public/agent-workbench.js');
+  const agentWorkbenchCss = await readText('lib/webConsole/public/agent-workbench.css');
+  addCheck('agent workbench readonly console', includesAll(webConsoleSurface, [
+    'createAgentWorkbenchConsole',
+    'createAgentWorkbenchRoutes',
+    '/api/agent-workbench',
+    'buildAgentWorkbenchPayload',
+    'createAgentWorkbenchTask',
+  ]) && includesAll(agentWorkbenchConsole, [
+    'buildAgentRunCommand',
+    "'plan'",
+    "'--pure'",
+    'automaticApproval: false',
+    'workspaceChanged',
+    'cancelTask',
+  ]) && !agentWorkbenchConsole.includes("'--auto'")
+    && !agentWorkbenchConsole.includes("'--dangerously-skip-permissions'")
+    && includesAll(bundledOpenCodeRuntime, [
+      'opencode-ai',
+      'OPENCODE_CONFIG_CONTENT',
+      'crystelf-chat',
+      'baseURL',
+    ])
+    && includesAll(consoleShellJs, [
+      '/agent-workbench.html',
+      'Agent 工作台',
+    ]) && includesAll(globalSearchConsole, [
+      'page:agent-workbench',
+      '/agent-workbench.html',
+      'OpenCode',
+    ]) && includesAll(agentWorkbenchHtml, [
+      'Agent 工作台',
+      'agent-workbench.js',
+      'agent-workbench.css',
+      'auth-guarded-page',
+    ]) && includesAll(agentWorkbenchJs, [
+      '/api/agent-workbench',
+      'runTask',
+      'cancelSelectedTask',
+      'renderSelectedTask',
+    ]) && includesAll(agentWorkbenchCss, [
+      'agent-workspace-layout',
+      'agent-provider-list',
+      'agent-output',
+    ]));
   addCheck('global console search', includesAll(webConsoleSurface, [
     'createGlobalSearchConsole',
     'globalSearchConsole',

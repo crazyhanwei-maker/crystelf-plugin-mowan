@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import path from 'node:path';
 import { createQqSimulatorConsole } from '../lib/webConsole/qqSimulatorConsole.js';
 import { renderStatusImage } from '../lib/system/statusImageRenderer.js';
 import { closeSharedPuppeteerBrowser } from '../lib/system/puppeteerRenderer.js';
@@ -23,12 +24,28 @@ import {
   buildSdWebUiRequest,
   normalizeSdWebUiSettings,
 } from '../lib/ai/sdWebUiApi.js';
+import {
+  discoverYunzaiCommandsFromLoader,
+  executeYunzaiCommandBridge,
+  getYunzaiCommandBridgeTool,
+  resetYunzaiCommandBridgeRuntimeCache,
+} from '../lib/ai/yunzaiCommandBridge.js';
+import {
+  buildAgentProcessEnv,
+  buildAgentRunCommand,
+  extractAgentJsonError,
+  getAgentWorkspaceOptions,
+  normalizeAgentWorkbenchConfig,
+} from '../lib/webConsole/agentWorkbenchConsole.js';
+import { buildBundledOpenCodeEnvironment } from '../lib/webConsole/bundledOpenCodeRuntime.js';
 
 globalThis.logger ||= {
   info: () => {},
   warn: () => {},
   error: () => {},
 };
+
+const root = process.cwd();
 
 function assert(condition, message) {
   if (!condition) {
@@ -38,6 +55,203 @@ function assert(condition, message) {
 
 function logPass(message) {
   console.log(`✓ ${message}`);
+}
+
+async function checkYunzaiCommandBridge() {
+  const replies = [];
+  let queryRuns = 0;
+  let updateRuns = 0;
+  class MockTargetPlugin {
+    constructor() {
+      this.name = 'miao-plugin';
+      this.dsc = '测试目标插件';
+      this.event = 'message';
+      this.priority = 500;
+      this.rule = [
+        { reg: /^#查询面板$/, fnc: 'queryPanel' },
+        { reg: /^#更新面板$/, fnc: 'updatePanel', permission: 'master' },
+        { reg: /^#执行终端命令 (.+)$/, fnc: 'executeShell', permission: 'master' },
+        { reg: /^[\s\S]*$/, fnc: 'broadListener' },
+      ];
+    }
+
+    async queryPanel(e) {
+      queryRuns += 1;
+      await e.reply('面板查询成功');
+      return true;
+    }
+
+    async updatePanel(e) {
+      updateRuns += 1;
+      await e.reply('面板更新成功');
+      return true;
+    }
+
+    async broadListener() {
+      throw new Error('宽泛监听不应被桥接调用');
+    }
+
+    async executeShell() {
+      throw new Error('终端命令不应被桥接调用');
+    }
+  }
+  class MockCrystelfPlugin extends MockTargetPlugin {}
+  const targetPlugin = new MockTargetPlugin();
+  const loader = {
+    priority: [
+      {
+        key: 'miao-plugin/index.js',
+        name: 'miao-plugin',
+        plugin: targetPlugin,
+        class: MockTargetPlugin,
+        priority: 500,
+      },
+      {
+        key: 'crystelf-plugin/index.js',
+        name: 'crystelf-plugin',
+        plugin: new MockCrystelfPlugin(),
+        class: MockCrystelfPlugin,
+        priority: -1111,
+      },
+    ],
+  };
+  const commands = discoverYunzaiCommandsFromLoader(loader);
+  assert(commands.length === 4, '命令桥接没有读取目标插件规则或错误读取了灵晶自身规则');
+  const queryCommand = commands.find(item => item.fnc === 'queryPanel');
+  const updateCommand = commands.find(item => item.fnc === 'updatePanel');
+  const broadCommand = commands.find(item => item.fnc === 'broadListener');
+  const shellCommand = commands.find(item => item.fnc === 'executeShell');
+  assert(queryCommand?.eligible === true, '明确查询命令没有标记为可授权');
+  assert(updateCommand?.defaultMode === 'confirm', '主人更新命令没有默认要求二次确认');
+  assert(broadCommand?.eligible === false, '宽泛监听被错误标记为可授权');
+  assert(shellCommand?.eligible === false, '终端执行命令被错误标记为可授权');
+
+  const config = {
+    enabled: true,
+    confirmationTimeoutMs: 60000,
+    maxCommandLength: 200,
+    policies: [
+      { id: queryCommand.id, enabled: true, mode: 'direct' },
+      { id: updateCommand.id, enabled: true, mode: 'direct' },
+    ],
+  };
+  const baseEvent = {
+    msg: '帮我查询面板',
+    raw_message: '帮我查询面板',
+    message: [{ type: 'text', text: '帮我查询面板' }],
+    message_type: 'group',
+    post_type: 'message',
+    group_id: 10001,
+    user_id: 20002,
+    isGroup: true,
+    isMaster: true,
+    sender: { role: 'owner', nickname: '测试用户' },
+    member: { is_owner: true, is_admin: false },
+    reply: async message => replies.push(String(message)),
+  };
+  const toolCtx = {
+    sessionId: 'group:10001',
+    groupId: 10001,
+    userId: 20002,
+    event: baseEvent,
+    targetMessage: { content: '帮我查询面板' },
+  };
+  const tool = await getYunzaiCommandBridgeTool(toolCtx, { loader, config });
+  assert(tool?.name === 'run_yunzai_command', '启用且已授权时没有注册命令桥接工具');
+  assert(tool.parameters.properties.command_id.enum.length === 2, '命令桥接工具暴露了未授权规则');
+
+  const directResult = await executeYunzaiCommandBridge({
+    command_id: queryCommand.id,
+    command: '#查询面板',
+  }, toolCtx, { loader, config });
+  assert(directResult.success === true && queryRuns === 1, '直接桥接命令没有执行目标插件函数');
+  assert(baseEvent.msg === '帮我查询面板', '桥接命令污染了原始消息事件');
+  assert(replies.includes('面板查询成功'), '目标插件回复没有发送到原会话');
+
+  const deniedResult = await executeYunzaiCommandBridge({
+    command_id: updateCommand.id,
+    command: '#更新面板',
+  }, {
+    ...toolCtx,
+    userId: 30003,
+    event: {
+      ...baseEvent,
+      user_id: 30003,
+      isMaster: false,
+      sender: { role: 'member', nickname: '普通用户' },
+      member: { is_owner: false, is_admin: false },
+    },
+    targetMessage: { content: '帮我更新面板' },
+  }, { loader, config });
+  assert(deniedResult.reason === 'permission' && updateRuns === 0, '普通用户绕过了目标命令权限检查');
+
+  const prepareResult = await executeYunzaiCommandBridge({
+    command_id: updateCommand.id,
+    command: '#更新面板',
+  }, { ...toolCtx, targetMessage: { content: '帮我更新面板' } }, { loader, config });
+  assert(prepareResult.confirmationRequired === true && updateRuns === 0, '高风险命令没有等待用户二次确认');
+  const confirmEvent = { ...baseEvent, msg: '确认执行', reply: baseEvent.reply };
+  const confirmResult = await executeYunzaiCommandBridge({
+    command_id: updateCommand.id,
+    command: '#更新面板',
+  }, {
+    ...toolCtx,
+    event: confirmEvent,
+    targetMessage: { content: '确认执行' },
+  }, { loader, config });
+  assert(confirmResult.success === true && updateRuns === 1, '同一用户明确确认后没有执行高风险命令');
+  resetYunzaiCommandBridgeRuntimeCache();
+  logPass('Yunzai LLM 命令桥接隔离、授权与二次确认正常');
+}
+
+function checkAgentWorkbenchSafety() {
+  const config = normalizeAgentWorkbenchConfig({});
+  assert(config.enabled === false, 'Agent 工作台安全默认值不是关闭');
+  assert(config.maxConcurrentTasks === 1, 'Agent 工作台默认并发不是 1');
+  const workspaces = getAgentWorkspaceOptions({
+    pluginRoot: root,
+    yunzaiRoot: root,
+    pluginsRoot: path.join(root, 'plugins'),
+  });
+  assert(workspaces.length >= 1 && workspaces[0].id === 'plugin', 'Agent 工作目录白名单没有包含插件目录');
+  const command = buildAgentRunCommand({
+    providerId: 'opencode',
+    workspacePath: root,
+    mode: 'patch',
+    prompt: '检查测试文件并给出补丁建议',
+    title: 'Agent 安全烟测',
+    model: 'provider/model',
+  });
+  const argsText = command.args.join('\n');
+  assert(command.providerId === 'opencode', 'Agent 提供方规范化失败');
+  assert(argsText.includes('--pure') && argsText.includes('--agent') && argsText.includes('plan'), 'Agent 没有固定使用 pure plan 模式');
+  assert(!argsText.includes('--auto') && !argsText.includes('--dangerously-skip-permissions'), 'Agent 命令包含自动批准危险参数');
+  assert(argsText.includes('不要实际应用补丁'), '补丁建议模式没有禁止直接应用补丁');
+  const processEnv = buildAgentProcessEnv({
+    HOME: path.join(root, 'temp', 'missing-agent-home'),
+    USERPROFILE: path.join(root, 'temp', 'missing-agent-home'),
+    PATH: process.env.PATH || '',
+  }, {
+    fallbackRoot: path.join(root, 'temp', 'agent-workbench-smoke'),
+  });
+  assert(processEnv.XDG_CONFIG_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'config')), 'Agent CLI 不可写配置目录没有切换到插件私有目录');
+  assert(processEnv.XDG_DATA_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'data')), 'Agent CLI 不可写数据目录没有切换到插件私有目录');
+  assert(processEnv.XDG_STATE_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'state')), 'Agent CLI 不可写状态目录没有切换到插件私有目录');
+  assert(processEnv.XDG_CACHE_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'cache')), 'Agent CLI 不可写缓存目录没有切换到插件私有目录');
+  assert(extractAgentJsonError('{"type":"error","error":{"data":{"message":"Unsupported model mimo-auto"}}}') === 'Unsupported model mimo-auto', 'Agent JSON 错误事件没有被识别');
+  const bundledRuntime = buildBundledOpenCodeEnvironment({
+    aiConfig: {
+      baseApi: 'https://chat.example.com/v1',
+      apiKey: 'test-key',
+      modelType: 'gpt-5.4-mini',
+      userAgent: 'crystelf-agent-smoke',
+    },
+    runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'runtime'),
+  });
+  assert(bundledRuntime.config.model === 'crystelf-chat/gpt-5.4-mini', '内置 OpenCode 默认模型路由错误');
+  assert(bundledRuntime.config.provider['crystelf-chat'].options.baseURL === 'https://chat.example.com/v1', '内置 OpenCode 没有使用聊天 API 地址');
+  assert(bundledRuntime.env.OPENCODE_CONFIG_CONTENT.includes('crystelf-agent-smoke'), '内置 OpenCode 没有传入自定义 User-Agent');
+  logPass('Agent 工作台只读命令、目录白名单与安全默认值正常');
 }
 
 function checkPersistentImageMonitorMd5Store() {
@@ -524,7 +738,7 @@ async function checkStatusImageRender() {
     avatarText: '魔',
     generatedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
     rows: [
-      { label: '插件版本', value: 'crystelf-plugin v2.1.0' },
+      { label: '插件版本', value: 'crystelf-plugin v2.2.0' },
       { label: 'Bot', value: '10000' },
       { label: '运行时长', value: '1分' },
       { label: 'Node', value: process.version },
@@ -1169,6 +1383,8 @@ async function main() {
     await checkSdWebUiConsoleSecretAndProbe();
     await checkImageCapabilityRouting();
     checkArkAgentPlanFallbackPrecheck();
+    await checkYunzaiCommandBridge();
+    checkAgentWorkbenchSafety();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});
