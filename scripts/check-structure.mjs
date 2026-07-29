@@ -1061,6 +1061,7 @@ async function main() {
   const agentWorkbenchHtml = await readText('lib/webConsole/public/agent-workbench.html');
   const agentWorkbenchJs = await readText('lib/webConsole/public/agent-workbench.js');
   const agentWorkbenchCss = await readText('lib/webConsole/public/agent-workbench.css');
+  const opencodeRuntimeBootstrap = await readText('scripts/prepare-opencode-runtime.mjs');
   addCheck('agent workbench readonly console', includesAll(webConsoleSurface, [
     'createAgentWorkbenchConsole',
     'createAgentWorkbenchRoutes',
@@ -1085,6 +1086,8 @@ async function main() {
       'OPENCODE_CONFIG_CONTENT',
       'crystelf-chat',
       'baseURL',
+      'resolveBundledOpenCodeBootstrapCommand',
+      'isBundledOpenCodeBootstrapError',
     ])
     && includesAll(consoleShellJs, [
       '/agent-workbench.html',
@@ -1119,7 +1122,13 @@ async function main() {
       'agent-output',
       'agent-write-run',
       'agent-message',
-    ]));
+    ]) && includesAll(opencodeRuntimeBootstrap, [
+      'opencode-ai',
+      'postinstall.mjs',
+      '运行文件准备完成',
+    ]) && Array.isArray(pkg.pnpm?.onlyBuiltDependencies)
+      && pkg.pnpm.onlyBuiltDependencies.includes('opencode-ai')
+      && pkg.scripts?.postinstall === 'node ./scripts/prepare-opencode-runtime.mjs');
   addCheck('global console search', includesAll(webConsoleSurface, [
     'createGlobalSearchConsole',
     'globalSearchConsole',

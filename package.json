@@ -16,6 +16,8 @@
     "check:webconsole:image": "node ./scripts/check-api-image-runtime-visual.mjs",
     "check:webconsole:e2e": "node ./scripts/check-webconsole-e2e.mjs",
     "check:webconsole:mobile": "node ./scripts/check-webconsole-e2e.mjs --mobile-only",
+    "prepare:opencode": "node ./scripts/prepare-opencode-runtime.mjs",
+    "postinstall": "node ./scripts/prepare-opencode-runtime.mjs",
     "check:quick": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js",
     "check": "npm run check:quick && npm run check:functional && npm run check:render && npm run check:webconsole"
   },
@@ -43,6 +45,11 @@
     "pinyin-pro": "^3.28.0",
     "puppeteer": "^24.39.0",
     "rss-parser": "^3.13.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "opencode-ai"
+    ]
   },
   "imports": {},
   "devDependencies": {

@@ -37,7 +37,11 @@ import {
   getAgentWorkspaceOptions,
   normalizeAgentWorkbenchConfig,
 } from '../lib/webConsole/agentWorkbenchConsole.js';
-import { buildBundledOpenCodeEnvironment } from '../lib/webConsole/bundledOpenCodeRuntime.js';
+import {
+  buildBundledOpenCodeEnvironment,
+  isBundledOpenCodeBootstrapError,
+  resolveBundledOpenCodeBootstrapCommand,
+} from '../lib/webConsole/bundledOpenCodeRuntime.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -278,6 +282,9 @@ function checkAgentWorkbenchSafety() {
   assert(bundledRuntime.env.HOME?.endsWith(path.join('runtime', 'home')), '内置 OpenCode 没有使用插件私有 HOME 目录');
   assert(bundledRuntime.env.USERPROFILE === bundledRuntime.env.HOME, '内置 OpenCode 的 USERPROFILE 没有隔离');
   assert(bundledRuntime.config.permission.edit === 'deny' && bundledRuntime.config.permission.write === 'deny', '只读 Agent 没有禁用 edit/write 权限');
+  assert(isBundledOpenCodeBootstrapError("Error: opencode-ai's postinstall script was not run") === true, 'OpenCode 缺失运行文件错误没有被识别');
+  assert(isBundledOpenCodeBootstrapError('普通网络连接失败') === false, '普通错误被误判为 OpenCode 运行文件缺失');
+  assert(resolveBundledOpenCodeBootstrapCommand({ rootPath: path.join(root, 'temp', 'missing-opencode') }) === null, '缺少 OpenCode 安装脚本时不应创建补全命令');
   const writableRuntime = buildBundledOpenCodeEnvironment({
     aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
     writeMode: true,
