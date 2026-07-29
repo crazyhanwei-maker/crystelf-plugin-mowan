@@ -73,11 +73,13 @@
       "?policies": "控制台授权的命令列表，新命令默认不会自动加入",
       "policies": []
     },
-    "?agentWorkbench": "Web 控制台本地代码 Agent 工作台，默认关闭且只允许只读 plan 模式",
+    "?agentWorkbench": "Web 控制台本地代码 Agent 工作台，默认关闭；可单独授权 OpenCode 在干净的 Git 仓库中修改文件",
     "agentWorkbench": {
-      "?enabled": "是否允许控制台启动本地 Agent 只读任务",
+      "?enabled": "是否允许控制台启动本地 Agent 任务",
       "enabled": false,
-      "?defaultProvider": "默认 Agent 提供方，可选 opencode 或 mimo",
+      "?writeEnabled": "是否允许创建实际修改文件的任务；默认关闭，每次任务还需要在控制台单独确认",
+      "writeEnabled": false,
+      "?defaultProvider": "默认 Agent 提供方，当前仅支持 opencode",
       "defaultProvider": "opencode",
       "?timeoutMs": "单个 Agent 任务的最长运行时间",
       "timeoutMs": 300000,
@@ -85,8 +87,13 @@
       "maxConcurrentTasks": 1,
       "?providers": "允许在 Agent 工作台使用的提供方",
       "providers": {
-        "opencode": true,
-        "mimo": true
+        "opencode": true
+      },
+      "?writableWorkspaces": "实际修改模式允许写入的工作目录；默认只预选灵晶插件，仍需开启 writeEnabled",
+      "writableWorkspaces": {
+        "plugin": true,
+        "plugins": false,
+        "yunzai": false
       }
     },
     "?tts": "内置语音合成工具配置",

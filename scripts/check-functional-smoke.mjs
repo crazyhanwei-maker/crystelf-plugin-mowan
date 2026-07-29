@@ -207,7 +207,9 @@ async function checkYunzaiCommandBridge() {
 function checkAgentWorkbenchSafety() {
   const config = normalizeAgentWorkbenchConfig({});
   assert(config.enabled === false, 'Agent 工作台安全默认值不是关闭');
+  assert(config.writeEnabled === false, 'Agent 实际修改默认值不是关闭');
   assert(config.maxConcurrentTasks === 1, 'Agent 工作台默认并发不是 1');
+  assert(config.writableWorkspaces.plugin === true && config.writableWorkspaces.plugins === false && config.writableWorkspaces.yunzai === false, 'Agent 写入目录默认授权范围错误');
   const workspaces = getAgentWorkspaceOptions({
     pluginRoot: root,
     yunzaiRoot: root,
@@ -227,6 +229,17 @@ function checkAgentWorkbenchSafety() {
   assert(argsText.includes('--pure') && argsText.includes('--agent') && argsText.includes('plan'), 'Agent 没有固定使用 pure plan 模式');
   assert(!argsText.includes('--auto') && !argsText.includes('--dangerously-skip-permissions'), 'Agent 命令包含自动批准危险参数');
   assert(argsText.includes('不要实际应用补丁'), '补丁建议模式没有禁止直接应用补丁');
+  const editCommand = buildAgentRunCommand({
+    providerId: 'opencode',
+    workspacePath: root,
+    mode: 'edit',
+    prompt: '修复测试文件中的错误',
+    title: 'Agent 写入烟测',
+  });
+  const editArgsText = editCommand.args.join('\n');
+  assert(editArgsText.includes('--agent') && editArgsText.includes('build'), '实际修改模式没有使用 OpenCode build Agent');
+  assert(editArgsText.includes('直接在当前工作目录内创建或修改'), '实际修改模式没有写入安全提示');
+  assert(!editArgsText.includes('--auto') && !editArgsText.includes('--dangerously-skip-permissions'), '实际修改模式包含自动批准危险参数');
   const processEnv = buildAgentProcessEnv({
     HOME: path.join(root, 'temp', 'missing-agent-home'),
     USERPROFILE: path.join(root, 'temp', 'missing-agent-home'),
@@ -238,7 +251,18 @@ function checkAgentWorkbenchSafety() {
   assert(processEnv.XDG_DATA_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'data')), 'Agent CLI 不可写数据目录没有切换到插件私有目录');
   assert(processEnv.XDG_STATE_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'state')), 'Agent CLI 不可写状态目录没有切换到插件私有目录');
   assert(processEnv.XDG_CACHE_HOME?.endsWith(path.join('agent-workbench-smoke', 'agent-cli-runtime', 'cache')), 'Agent CLI 不可写缓存目录没有切换到插件私有目录');
-  assert(extractAgentJsonError('{"type":"error","error":{"data":{"message":"Unsupported model mimo-auto"}}}') === 'Unsupported model mimo-auto', 'Agent JSON 错误事件没有被识别');
+  const forcedPrivateEnv = buildAgentProcessEnv({
+    HOME: root,
+    USERPROFILE: root,
+    PATH: process.env.PATH || '',
+  }, {
+    fallbackRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'forced'),
+    forcePrivateRuntime: true,
+  });
+  assert(forcedPrivateEnv.XDG_CONFIG_HOME?.includes(path.join('forced', 'agent-cli-runtime', 'config')), '内置 OpenCode 探测没有强制使用插件私有配置目录');
+  assert(forcedPrivateEnv.HOME?.includes(path.join('forced', 'agent-cli-runtime', 'home')), '内置 OpenCode 探测没有强制使用插件私有 HOME 目录');
+  assert(forcedPrivateEnv.USERPROFILE === forcedPrivateEnv.HOME, '内置 OpenCode 的 Windows 用户目录没有隔离');
+  assert(extractAgentJsonError('{"type":"error","error":{"data":{"message":"Unsupported OpenCode model"}}}') === 'Unsupported OpenCode model', 'Agent JSON 错误事件没有被识别');
   const bundledRuntime = buildBundledOpenCodeEnvironment({
     aiConfig: {
       baseApi: 'https://chat.example.com/v1',
@@ -251,7 +275,17 @@ function checkAgentWorkbenchSafety() {
   assert(bundledRuntime.config.model === 'crystelf-chat/gpt-5.4-mini', '内置 OpenCode 默认模型路由错误');
   assert(bundledRuntime.config.provider['crystelf-chat'].options.baseURL === 'https://chat.example.com/v1', '内置 OpenCode 没有使用聊天 API 地址');
   assert(bundledRuntime.env.OPENCODE_CONFIG_CONTENT.includes('crystelf-agent-smoke'), '内置 OpenCode 没有传入自定义 User-Agent');
-  logPass('Agent 工作台只读命令、目录白名单与安全默认值正常');
+  assert(bundledRuntime.env.HOME?.endsWith(path.join('runtime', 'home')), '内置 OpenCode 没有使用插件私有 HOME 目录');
+  assert(bundledRuntime.env.USERPROFILE === bundledRuntime.env.HOME, '内置 OpenCode 的 USERPROFILE 没有隔离');
+  assert(bundledRuntime.config.permission.edit === 'deny' && bundledRuntime.config.permission.write === 'deny', '只读 Agent 没有禁用 edit/write 权限');
+  const writableRuntime = buildBundledOpenCodeEnvironment({
+    aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
+    writeMode: true,
+    runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'write-runtime'),
+  });
+  assert(writableRuntime.config.permission.edit === 'allow' && writableRuntime.config.permission.write === 'allow', '实际修改 Agent 没有开放文件编辑权限');
+  assert(writableRuntime.config.permission.bash === 'deny' && writableRuntime.config.permission.external_directory === 'deny', '实际修改 Agent 没有禁用终端或外部目录');
+  logPass('Agent 工作台分析、受控写入、目录白名单与安全默认值正常');
 }
 
 function checkPersistentImageMonitorMd5Store() {

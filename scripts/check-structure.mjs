@@ -1070,8 +1070,12 @@ async function main() {
   ]) && includesAll(agentWorkbenchConsole, [
     'buildAgentRunCommand',
     "'plan'",
+    "'build'",
     "'--pure'",
     'automaticApproval: false',
+    'writeEnabled',
+    'writableWorkspaces',
+    'AGENT_WRITE_WORKSPACE_DIRTY',
     'workspaceChanged',
     'cancelTask',
   ]) && !agentWorkbenchConsole.includes("'--auto'")
@@ -1091,6 +1095,12 @@ async function main() {
       'OpenCode',
     ]) && includesAll(agentWorkbenchHtml, [
       'Agent 工作台',
+      'agent-write-enabled',
+      'agent-mode',
+      '实际修改文件',
+      'agent-chat-stream',
+      'agent-composer-form',
+      'agent-settings-panel',
       'agent-workbench.js',
       'agent-workbench.css',
       'auth-guarded-page',
@@ -1099,10 +1109,16 @@ async function main() {
       'runTask',
       'cancelSelectedTask',
       'renderSelectedTask',
+      'writeConfirmed',
+      'buildTaskDiffOutput',
     ]) && includesAll(agentWorkbenchCss, [
-      'agent-workspace-layout',
+      'agent-workbench-shell',
+      'agent-chat-panel',
+      'agent-composer',
       'agent-provider-list',
       'agent-output',
+      'agent-write-run',
+      'agent-message',
     ]));
   addCheck('global console search', includesAll(webConsoleSurface, [
     'createGlobalSearchConsole',

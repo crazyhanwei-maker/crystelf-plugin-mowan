@@ -10,158 +10,154 @@
 </head>
 <body class="agent-workbench-page auth-guarded-page">
   <div class="page auth-guarded-content">
-    <header class="hero">
-      <div class="hero-copy">
-        <div class="hero-badge">本地 Agent</div>
-        <h1>Agent 工作台</h1>
-        <p id="agent-workbench-meta">正在探测本地 Agent CLI...</p>
-      </div>
-      <div class="hero-actions-shell">
-        <div class="hero-action-group">
-          <div class="hero-action-label">页面操作</div>
-          <div class="actions hero-actions-grid">
-            <button id="agent-refresh-btn" type="button">刷新状态</button>
-            <button id="agent-save-btn" type="button">保存设置</button>
-            <a class="link-btn" href="/index.html">返回首页</a>
-            <button id="theme-toggle-btn" type="button" data-theme-toggle>深色主题</button>
-          </div>
+    <header class="agent-topbar">
+      <div class="agent-brand">
+        <span class="agent-brand-mark">⌘</span>
+        <div>
+          <div class="agent-brand-kicker">MAGIC CORE / LOCAL AGENT</div>
+          <h1>Agent 工作台</h1>
         </div>
+      </div>
+      <div class="agent-topbar-meta">
+        <span id="agent-master-state" class="agent-state-badge tone-warn">读取中</span>
+        <span id="agent-workbench-meta">正在探测本地 Agent CLI...</span>
+      </div>
+      <div class="agent-topbar-actions">
+        <button id="agent-new-task-btn" type="button" class="agent-quiet-btn">新建会话</button>
+        <button id="agent-settings-toggle" type="button" class="agent-quiet-btn">设置</button>
+        <button id="agent-refresh-btn" type="button" class="agent-quiet-btn">刷新</button>
+        <a class="agent-quiet-btn agent-link-btn" href="/index.html">返回</a>
+        <button id="theme-toggle-btn" type="button" class="agent-quiet-btn" data-theme-toggle>主题</button>
       </div>
     </header>
 
-    <section class="panel agent-security-panel">
-      <div class="agent-security-state">
-        <span id="agent-master-state" class="agent-state-badge">读取中</span>
-        <div>
-          <strong>只读执行边界</strong>
-          <span>plan Agent · pure 模式 · 不自动批准 · 不直接写文件</span>
-        </div>
-      </div>
-      <div id="agent-workbench-status" class="setting-help">等待运行状态。</div>
-    </section>
-
-    <section id="agent-summary" class="agent-summary-grid"></section>
-
-    <section class="panel agent-settings-panel">
-      <div class="section-head">
-        <div>
-          <h2>运行设置</h2>
-          <div class="setting-help">设置只影响 Agent 工作台，不注册 Bot 消息监听。</div>
-        </div>
-      </div>
-      <div class="agent-settings-grid">
-        <label class="agent-switch-field">
-          <input id="agent-enabled" type="checkbox" />
-          <span><strong>启用 Agent 工作台</strong><small>关闭时禁止创建新任务</small></span>
-        </label>
-        <label>
-          <span>默认 Agent</span>
-          <select id="agent-default-provider">
-            <option value="opencode">OpenCode</option>
-            <option value="mimo">MiMo Code</option>
-          </select>
-        </label>
-        <label>
-          <span>任务超时</span>
-          <select id="agent-timeout-ms">
-            <option value="120000">2 分钟</option>
-            <option value="300000">5 分钟</option>
-            <option value="600000">10 分钟</option>
-            <option value="900000">15 分钟</option>
-          </select>
-        </label>
-        <label>
-          <span>最大并发</span>
-          <select id="agent-max-concurrent">
-            <option value="1">1 个任务</option>
-            <option value="2">2 个任务</option>
-          </select>
-        </label>
-        <label class="agent-provider-toggle">
-          <input id="agent-provider-opencode" type="checkbox" />
-          <span>允许 OpenCode</span>
-        </label>
-        <label class="agent-provider-toggle">
-          <input id="agent-provider-mimo" type="checkbox" />
-          <span>允许 MiMo Code</span>
-        </label>
-      </div>
-    </section>
-
-    <section class="panel agent-provider-panel">
-      <div class="section-head">
-        <div>
-          <h2>Agent CLI</h2>
-          <div class="setting-help">显示当前 Bot 环境实际可启动的提供方。</div>
-        </div>
-      </div>
-      <div id="agent-provider-list" class="agent-provider-list">加载中...</div>
-    </section>
-
-    <section class="agent-workspace-layout">
-      <section class="panel agent-composer-panel">
-        <div class="section-head">
+    <section class="agent-workbench-shell">
+      <aside class="agent-session-sidebar" aria-label="Agent 会话列表">
+        <div class="agent-sidebar-head">
           <div>
-            <h2>新建任务</h2>
-            <div class="setting-help">工作目录只能从后端白名单中选择。</div>
+            <span class="agent-eyebrow">WORKSPACE</span>
+            <strong>会话</strong>
           </div>
+          <button id="agent-sidebar-new-btn" type="button" class="agent-icon-btn" title="新建会话" aria-label="新建会话">+</button>
         </div>
-        <div class="agent-composer-grid">
-          <label>
-            <span>Agent</span>
-            <select id="agent-provider"></select>
-          </label>
-          <label>
+        <div id="agent-history-meta" class="agent-sidebar-meta">暂无任务。</div>
+        <div id="agent-task-list" class="agent-task-list">加载中...</div>
+
+        <div class="agent-sidebar-section">
+          <div class="agent-sidebar-section-head">
+            <span class="agent-eyebrow">TARGET</span>
+            <span class="agent-sidebar-section-title">执行目标</span>
+          </div>
+          <label class="agent-compact-field">
             <span>工作目录</span>
             <select id="agent-workspace"></select>
           </label>
-          <label>
+          <label class="agent-compact-field">
+            <span>Agent</span>
+            <select id="agent-provider"></select>
+          </label>
+          <label class="agent-compact-field">
             <span>任务模式</span>
             <select id="agent-mode">
               <option value="analyze">只读分析</option>
               <option value="patch">补丁建议</option>
+              <option value="edit">实际修改文件</option>
             </select>
           </label>
-          <label>
-            <span>模型（可选）</span>
-            <input id="agent-model" type="text" maxlength="160" placeholder="provider/model" />
-          </label>
-          <label class="agent-title-field">
-            <span>任务标题</span>
-            <input id="agent-title" type="text" maxlength="80" placeholder="自动使用任务内容" />
-          </label>
-          <label class="agent-prompt-field">
-            <span>任务内容</span>
-            <textarea id="agent-prompt" maxlength="6000" placeholder="例如：检查群管理模块的重复定时任务风险"></textarea>
-          </label>
         </div>
-        <div class="agent-composer-actions">
-          <span id="agent-composer-hint">等待 Agent 状态。</span>
-          <button id="agent-run-btn" type="button">开始只读任务</button>
-        </div>
-      </section>
 
-      <section class="panel agent-output-panel">
-        <div class="section-head agent-output-head">
-          <div>
-            <h2 id="agent-output-title">任务输出</h2>
-            <div id="agent-output-meta" class="setting-help">尚未选择任务。</div>
+        <div class="agent-sidebar-safety">
+          <div class="agent-safety-line">
+            <span class="agent-safety-dot"></span>
+            <strong id="agent-security-title">只读执行边界</strong>
           </div>
-          <button id="agent-cancel-btn" type="button" disabled>取消任务</button>
+          <p id="agent-security-detail">plan Agent · pure 模式 · 不自动批准 · 不直接写文件</p>
         </div>
-        <div id="agent-output-alert" class="agent-output-alert hidden"></div>
-        <pre id="agent-output" class="agent-output">等待任务...</pre>
-      </section>
-    </section>
+      </aside>
 
-    <section class="panel agent-history-panel">
-      <div class="section-head">
-        <div>
-          <h2>最近任务</h2>
-          <div id="agent-history-meta" class="setting-help">暂无任务。</div>
+      <main class="agent-chat-panel">
+        <header class="agent-chat-header">
+          <div class="agent-chat-heading">
+            <span class="agent-eyebrow">CONVERSATION</span>
+            <h2 id="agent-output-title">新建 Agent 会话</h2>
+            <div id="agent-output-meta" class="agent-chat-meta">选择工作目录后，输入你希望 Agent 处理的任务。</div>
+          </div>
+          <div class="agent-chat-actions">
+            <span id="agent-chat-status-badge" class="agent-state-badge tone-neutral">未开始</span>
+            <button id="agent-cancel-btn" type="button" class="agent-cancel-btn" disabled>停止</button>
+          </div>
+        </header>
+
+        <div id="agent-output-alert" class="agent-output-alert hidden"></div>
+        <div id="agent-output" class="agent-chat-stream" aria-live="polite">
+          <div class="agent-chat-empty">
+            <span class="agent-empty-mark">⌘</span>
+            <strong>准备好开始工作</strong>
+            <span>描述要检查、设计或修改的内容，Agent 会在当前工作目录中执行。</span>
+          </div>
         </div>
-      </div>
-      <div id="agent-task-list" class="agent-task-list">加载中...</div>
+
+        <form id="agent-composer-form" class="agent-composer" autocomplete="off">
+          <div class="agent-composer-toolbar">
+            <span class="agent-composer-context"><span class="agent-online-dot"></span><span id="agent-composer-context-label">等待 Agent 状态</span></span>
+            <label class="agent-title-inline">
+              <span>标题</span>
+              <input id="agent-title" type="text" maxlength="80" placeholder="可选" />
+            </label>
+            <label class="agent-model-inline">
+              <span>模型</span>
+              <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
+            </label>
+          </div>
+          <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...\n例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
+          <div class="agent-composer-footer">
+            <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
+            <div class="agent-composer-submit">
+              <span class="agent-key-hint">Enter 发送 · Shift + Enter 换行</span>
+              <button id="agent-run-btn" type="submit">发送</button>
+            </div>
+          </div>
+        </form>
+      </main>
+
+      <aside class="agent-context-sidebar" aria-label="Agent 上下文">
+        <div class="agent-context-head">
+          <div>
+            <span class="agent-eyebrow">CONTEXT</span>
+            <strong>任务上下文</strong>
+          </div>
+          <span id="agent-workbench-status" class="agent-context-status">等待运行状态</span>
+        </div>
+        <div id="agent-context-files" class="agent-context-section">
+          <div class="agent-context-section-head"><span>文件改动</span><span id="agent-context-file-count">0</span></div>
+          <div id="agent-context-file-list" class="agent-context-file-list"><span class="agent-context-empty">选择一个任务后显示文件改动。</span></div>
+        </div>
+        <div id="agent-context-diff" class="agent-context-section">
+          <div class="agent-context-section-head"><span>Diff 统计</span></div>
+          <pre id="agent-context-diff-stat" class="agent-context-code">暂无 Diff</pre>
+        </div>
+        <div id="agent-provider-list" class="agent-provider-list agent-context-section">加载中...</div>
+
+        <section id="agent-settings-panel" class="agent-settings-panel hidden">
+          <div class="agent-context-section-head"><span>工作台设置</span><button id="agent-save-btn" type="button" class="agent-mini-btn">保存</button></div>
+          <div class="agent-settings-stack">
+            <label class="agent-setting-check"><input id="agent-enabled" type="checkbox" /><span><strong>启用 Agent 工作台</strong><small>允许创建新任务</small></span></label>
+            <label class="agent-setting-check agent-write-master"><input id="agent-write-enabled" type="checkbox" /><span><strong>允许实际修改文件</strong><small>每次写入仍需确认</small></span></label>
+            <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
+            <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="120000">2 分钟</option><option value="300000">5 分钟</option><option value="600000">10 分钟</option><option value="900000">15 分钟</option></select></label>
+            <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
+            <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span>允许 OpenCode</span></label>
+            <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugin" type="checkbox" /><span>允许修改灵晶插件</span></label>
+            <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugins" type="checkbox" /><span>允许修改 Bot 插件目录</span></label>
+            <label class="agent-setting-check agent-write-scope"><input id="agent-write-yunzai" type="checkbox" /><span>允许修改 Yunzai 根目录</span></label>
+          </div>
+        </section>
+
+        <section class="agent-summary-section">
+          <div class="agent-context-section-head"><span>运行概览</span></div>
+          <div id="agent-summary" class="agent-summary-grid"></div>
+        </section>
+      </aside>
     </section>
   </div>
 

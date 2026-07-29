@@ -1301,7 +1301,17 @@ const guobaSchema = [
     field: 'coreConfig.tools.agentWorkbench.enabled',
     label: '启用 Agent 工作台',
     component: 'Switch',
-    bottomHelpMessage: '默认关闭。仅允许控制台启动 OpenCode 或 MiMo Code 的只读 plan 任务。',
+    bottomHelpMessage: '默认关闭。允许控制台启动内置 OpenCode 任务。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.writeEnabled',
+    label: '允许 Agent 修改文件',
+    component: 'Switch',
+    bottomHelpMessage: '高风险功能，默认关闭。开启后仍要求工作目录单独授权、Git 状态干净，并在每次任务前确认。',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
@@ -1313,17 +1323,14 @@ const guobaSchema = [
     component: 'Select',
     bottomHelpMessage: '控制台新任务默认选择的本地 Agent CLI。',
     componentProps: {
-      options: [
-        { label: 'OpenCode', value: 'opencode' },
-        { label: 'MiMo Code', value: 'mimo' },
-      ],
+      options: [{ label: 'OpenCode', value: 'opencode' }],
     },
   },
   {
     field: 'coreConfig.tools.agentWorkbench.timeoutMs',
     label: 'Agent 任务超时',
     component: 'InputNumber',
-    bottomHelpMessage: '单个只读 Agent 任务的最长运行时间，单位毫秒。',
+    bottomHelpMessage: '单个 Agent 任务的最长运行时间，单位毫秒。',
     componentProps: {
       min: 60000,
       max: 900000,
@@ -1351,9 +1358,30 @@ const guobaSchema = [
     },
   },
   {
-    field: 'coreConfig.tools.agentWorkbench.providers.mimo',
-    label: '允许 MiMo Code',
+    field: 'coreConfig.tools.agentWorkbench.writableWorkspaces.plugin',
+    label: '允许修改灵晶插件',
     component: 'Switch',
+    bottomHelpMessage: '仅在“允许 Agent 修改文件”开启后生效。实际写入前要求插件目录是干净的 Git 仓库。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.writableWorkspaces.plugins',
+    label: '允许修改 Bot 插件目录',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。聚合插件目录通常不是独立 Git 仓库根目录，后端可能拒绝直接写入。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentWorkbench.writableWorkspaces.yunzai',
+    label: '允许修改 Yunzai 根目录',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。开启前请确认已有完整备份，且 Yunzai Git 工作区没有未提交修改。',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,

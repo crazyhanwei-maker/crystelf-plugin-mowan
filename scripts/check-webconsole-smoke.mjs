@@ -86,10 +86,13 @@ const apiChecks = [
       defaultProvider: 'opencode',
       timeoutMs: 300000,
       maxConcurrentTasks: 1,
-      providers: { opencode: true, mimo: true },
+      providers: { opencode: true },
+      writeEnabled: false,
+      writableWorkspaces: { plugin: true, plugins: false, yunzai: false },
     },
     validate: data => data?.success === true
       && data?.data?.config?.enabled === false
+      && data?.data?.config?.writeEnabled === false
       && data?.data?.config?.maxConcurrentTasks === 1,
   },
   {
