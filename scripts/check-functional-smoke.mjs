@@ -34,6 +34,7 @@ import {
   buildAgentProcessEnv,
   buildAgentRunCommand,
   extractAgentJsonError,
+  extractOpenCodeSessionId,
   getAgentWorkspaceOptions,
   normalizeAgentWorkbenchConfig,
 } from '../lib/webConsole/agentWorkbenchConsole.js';
@@ -233,6 +234,31 @@ function checkAgentWorkbenchSafety() {
   assert(argsText.includes('--pure') && argsText.includes('--agent') && argsText.includes('plan'), 'Agent 没有固定使用 pure plan 模式');
   assert(!argsText.includes('--auto') && !argsText.includes('--dangerously-skip-permissions'), 'Agent 命令包含自动批准危险参数');
   assert(argsText.includes('不要实际应用补丁'), '补丁建议模式没有禁止直接应用补丁');
+  assert(!argsText.includes('--session'), '新 Agent 会话不应携带续接参数');
+  const continuedCommand = buildAgentRunCommand({
+    providerId: 'opencode',
+    workspacePath: root,
+    mode: 'analyze',
+    prompt: '继续检查上一轮提到的文件',
+    sessionId: 'ses_056f03688ffeNUpq71A0wFRNwd',
+  });
+  const continuedArgsText = continuedCommand.args.join('\n');
+  assert(continuedArgsText.includes('--session') && continuedArgsText.includes('ses_056f03688ffeNUpq71A0wFRNwd'), 'Agent 多轮会话没有使用 OpenCode session ID');
+  assert(!continuedArgsText.includes('--title'), '续接 OpenCode 会话时不应重新设置标题');
+  assert(extractOpenCodeSessionId('{"type":"text","sessionID":"ses_056f03688ffeNUpq71A0wFRNwd","part":{"type":"text","text":"完成"}}') === 'ses_056f03688ffeNUpq71A0wFRNwd', 'OpenCode session ID 没有从 JSONL 输出中提取');
+  let invalidSessionRejected = false;
+  try {
+    buildAgentRunCommand({
+      providerId: 'opencode',
+      workspacePath: root,
+      mode: 'analyze',
+      prompt: '非法会话测试',
+      sessionId: 'ses_invalid;command',
+    });
+  } catch (error) {
+    invalidSessionRejected = error?.code === 'AGENT_SESSION_ID_INVALID';
+  }
+  assert(invalidSessionRejected, '非法 OpenCode session ID 没有被拒绝');
   const editCommand = buildAgentRunCommand({
     providerId: 'opencode',
     workspacePath: root,

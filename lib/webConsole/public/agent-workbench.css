@@ -609,6 +609,45 @@
   overflow-wrap: anywhere;
 }
 
+.agent-tool-list {
+  display: grid;
+  gap: 7px;
+  padding: 9px 10px 10px;
+  border-top: 1px solid var(--agent-line);
+}
+
+.agent-tool-item {
+  overflow: hidden;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface-soft);
+}
+
+.agent-tool-item > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--agent-ink);
+  font-size: 10px;
+}
+
+.agent-tool-item > summary span {
+  color: var(--agent-muted);
+  font-weight: 600;
+}
+
+.agent-tool-item pre {
+  max-height: 220px;
+  border-top: 1px solid var(--agent-line);
+}
+
+.agent-message-live .agent-agent-bubble {
+  border-style: dashed;
+}
+
 .agent-event-list {
   display: grid;
   gap: 8px;

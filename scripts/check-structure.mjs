@@ -1076,10 +1076,18 @@ async function main() {
     'automaticApproval: false',
     'writeEnabled',
     'writableWorkspaces',
-    'AGENT_WRITE_WORKSPACE_DIRTY',
     'workspaceChanged',
     'cancelTask',
-  ]) && !agentWorkbenchConsole.includes("'--auto'")
+    'extractOpenCodeSessionId',
+    "'--session'",
+    'opencodeSessionId',
+    'agent-workbench-sessions.json',
+    'persistTasks',
+    'restoreTasks',
+  ]) && !agentWorkbenchConsole.includes('AGENT_WRITE_WORKSPACE_DIRTY')
+    && !agentWorkbenchConsole.includes('AGENT_WRITE_GIT_REQUIRED')
+    && !agentWorkbenchConsole.includes('AGENT_WRITE_GIT_ROOT_REQUIRED')
+    && !agentWorkbenchConsole.includes("'--auto'")
     && !agentWorkbenchConsole.includes("'--dangerously-skip-permissions'")
     && includesAll(bundledOpenCodeRuntime, [
       'opencode-ai',
@@ -1114,6 +1122,10 @@ async function main() {
       'renderSelectedTask',
       'writeConfirmed',
       'buildTaskDiffOutput',
+      'sessionId: continuing ? selectedTask.id',
+      'renderAgentTools',
+      '务必先备份',
+      '执行命令',
     ]) && includesAll(agentWorkbenchCss, [
       'agent-workbench-shell',
       'agent-chat-panel',
