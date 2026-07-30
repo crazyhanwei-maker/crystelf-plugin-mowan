@@ -73,12 +73,16 @@
       "?policies": "控制台授权的命令列表，新命令默认不会自动加入",
       "policies": []
     },
-    "?agentWorkbench": "Web 控制台本地代码 Agent 工作台，默认关闭；可单独授权 OpenCode 在干净的 Git 仓库中修改文件",
+    "?agentWorkbench": "Web 控制台本地代码 Agent 工作台，默认关闭；可单独授权 OpenCode 在指定工作目录中修改文件",
     "agentWorkbench": {
       "?enabled": "是否允许控制台启动本地 Agent 任务",
       "enabled": false,
-      "?writeEnabled": "是否允许创建实际修改文件的任务；默认关闭，每次任务还需要在控制台单独确认",
+      "?writeEnabled": "是否允许创建实际修改文件的任务；默认关闭，每个会话首次写入需要在控制台确认",
       "writeEnabled": false,
+      "?allowNetwork": "是否允许 Agent 使用联网工具（网页读取和搜索）；默认关闭",
+      "allowNetwork": false,
+      "?allowAllDirectories": "是否允许 Agent 访问当前工作目录以外的目录；默认关闭",
+      "allowAllDirectories": false,
       "?defaultProvider": "默认 Agent 提供方，当前仅支持 opencode",
       "defaultProvider": "opencode",
       "?timeoutMs": "单个 Agent 任务的最长运行时间",
@@ -88,6 +92,19 @@
       "?providers": "允许在 Agent 工作台使用的提供方",
       "providers": {
         "opencode": true
+      },
+      "?customApi": "OpenCode 独立使用的 OpenAI 兼容 API；关闭时沿用 AI 主对话 API",
+      "customApi": {
+        "?enabled": "是否启用 Agent 自定义 API",
+        "enabled": false,
+        "?baseApi": "OpenAI 兼容 API 基础地址，通常填写到 /v1",
+        "baseApi": "",
+        "?apiKey": "Agent 自定义 API 密钥",
+        "apiKey": "",
+        "?model": "Agent 默认模型，输入框临时指定模型时优先使用临时模型",
+        "model": "",
+        "?userAgent": "Agent 自定义 API 请求使用的 User-Agent，留空沿用主对话配置",
+        "userAgent": ""
       },
       "?writableWorkspaces": "实际修改模式允许写入的工作目录；默认只预选灵晶插件，仍需开启 writeEnabled",
       "writableWorkspaces": {

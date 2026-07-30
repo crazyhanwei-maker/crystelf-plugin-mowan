@@ -213,6 +213,7 @@ function checkAgentWorkbenchSafety() {
   const config = normalizeAgentWorkbenchConfig({});
   assert(config.enabled === false, 'Agent 工作台安全默认值不是关闭');
   assert(config.writeEnabled === false, 'Agent 实际修改默认值不是关闭');
+  assert(config.allowNetwork === false && config.allowAllDirectories === false, 'Agent 高权限默认值不是关闭');
   assert(config.maxConcurrentTasks === 1, 'Agent 工作台默认并发不是 1');
   assert(config.writableWorkspaces.plugin === true && config.writableWorkspaces.plugins === false && config.writableWorkspaces.yunzai === false, 'Agent 写入目录默认授权范围错误');
   const workspaces = getAgentWorkspaceOptions({
@@ -234,6 +235,16 @@ function checkAgentWorkbenchSafety() {
   assert(argsText.includes('--pure') && argsText.includes('--agent') && argsText.includes('plan'), 'Agent 没有固定使用 pure plan 模式');
   assert(!argsText.includes('--auto') && !argsText.includes('--dangerously-skip-permissions'), 'Agent 命令包含自动批准危险参数');
   assert(argsText.includes('不要实际应用补丁'), '补丁建议模式没有禁止直接应用补丁');
+  const privilegedCommand = buildAgentRunCommand({
+    providerId: 'opencode',
+    workspacePath: root,
+    mode: 'analyze',
+    prompt: '联网检查指定文档并对比工作目录外的配置',
+    allowNetwork: true,
+    allowAllDirectories: true,
+  });
+  const privilegedArgsText = privilegedCommand.args.join('\n');
+  assert(privilegedArgsText.includes('已授予联网权限') && privilegedArgsText.includes('已授予全目录权限'), 'Agent 高权限提示没有传入任务');
   assert(!argsText.includes('--session'), '新 Agent 会话不应携带续接参数');
   const continuedCommand = buildAgentRunCommand({
     providerId: 'opencode',
@@ -308,6 +319,25 @@ function checkAgentWorkbenchSafety() {
   assert(bundledRuntime.env.HOME?.endsWith(path.join('runtime', 'home')), '内置 OpenCode 没有使用插件私有 HOME 目录');
   assert(bundledRuntime.env.USERPROFILE === bundledRuntime.env.HOME, '内置 OpenCode 的 USERPROFILE 没有隔离');
   assert(bundledRuntime.config.permission.edit === 'deny' && bundledRuntime.config.permission.write === 'deny', '只读 Agent 没有禁用 edit/write 权限');
+  const customRuntime = buildBundledOpenCodeEnvironment({
+    aiConfig: {
+      baseApi: 'https://default-chat.example.com/v1',
+      apiKey: 'default-key',
+      modelType: 'default-model',
+    },
+    customApi: {
+      enabled: true,
+      baseApi: 'https://custom-agent.example.com/v1',
+      apiKey: 'custom-key',
+      model: 'custom-model',
+      userAgent: 'custom-agent-smoke',
+    },
+    runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'custom-runtime'),
+  });
+  assert(customRuntime.config.provider['crystelf-chat'].options.baseURL === 'https://custom-agent.example.com/v1', 'Agent 自定义 API 地址没有覆盖默认聊天 API');
+  assert(customRuntime.config.provider['crystelf-chat'].options.apiKey === 'custom-key', 'Agent 自定义 API 密钥没有生效');
+  assert(customRuntime.config.model === 'crystelf-chat/custom-model', 'Agent 自定义 API 默认模型没有生效');
+  assert(customRuntime.env.OPENCODE_CONFIG_CONTENT.includes('custom-agent-smoke'), 'Agent 自定义 API User-Agent 没有生效');
   assert(isBundledOpenCodeBootstrapError("Error: opencode-ai's postinstall script was not run") === true, 'OpenCode 缺失运行文件错误没有被识别');
   assert(isBundledOpenCodeBootstrapError('普通网络连接失败') === false, '普通错误被误判为 OpenCode 运行文件缺失');
   assert(resolveBundledOpenCodeBootstrapCommand({ rootPath: path.join(root, 'temp', 'missing-opencode') }) === null, '缺少 OpenCode 安装脚本时不应创建补全命令');
@@ -318,6 +348,16 @@ function checkAgentWorkbenchSafety() {
   });
   assert(writableRuntime.config.permission.edit === 'allow' && writableRuntime.config.permission.write === 'allow', '实际修改 Agent 没有开放文件编辑权限');
   assert(writableRuntime.config.permission.bash === 'deny' && writableRuntime.config.permission.external_directory === 'deny', '实际修改 Agent 没有禁用终端或外部目录');
+  const privilegedRuntime = buildBundledOpenCodeEnvironment({
+    aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
+    writeMode: true,
+    allowNetwork: true,
+    allowAllDirectories: true,
+    runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'privileged-runtime'),
+  });
+  assert(privilegedRuntime.config.permission.webfetch === 'allow' && privilegedRuntime.config.permission.websearch === 'allow', 'Agent 联网权限没有开放网页工具');
+  assert(privilegedRuntime.config.permission.external_directory === 'allow', 'Agent 全目录权限没有开放外部目录');
+  assert(privilegedRuntime.config.permission.bash === 'deny', 'Agent 高权限配置意外开放了终端命令');
   logPass('Agent 工作台分析、受控写入、目录白名单与安全默认值正常');
 }
 

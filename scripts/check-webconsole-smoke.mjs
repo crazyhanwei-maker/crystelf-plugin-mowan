@@ -87,13 +87,44 @@ const apiChecks = [
       timeoutMs: 300000,
       maxConcurrentTasks: 1,
       providers: { opencode: true },
+      customApi: { enabled: false, baseApi: '', apiKey: '', model: '', userAgent: '' },
       writeEnabled: false,
+      allowNetwork: false,
+      allowAllDirectories: false,
       writableWorkspaces: { plugin: true, plugins: false, yunzai: false },
     },
     validate: data => data?.success === true
       && data?.data?.config?.enabled === false
       && data?.data?.config?.writeEnabled === false
       && data?.data?.config?.maxConcurrentTasks === 1,
+  },
+  {
+    path: '/api/agent-workbench/settings',
+    label: 'Agent 自定义 API 保存与密钥脱敏',
+    method: 'POST',
+    body: {
+      enabled: false,
+      defaultProvider: 'opencode',
+      timeoutMs: 300000,
+      maxConcurrentTasks: 1,
+      providers: { opencode: true },
+      customApi: {
+        enabled: true,
+        baseApi: 'https://agent-smoke.example.com/v1',
+        apiKey: 'agent-smoke-secret',
+        model: 'agent-smoke-model',
+        userAgent: 'crystelf-agent-smoke',
+      },
+      writeEnabled: false,
+      allowNetwork: false,
+      allowAllDirectories: false,
+      writableWorkspaces: { plugin: true, plugins: false, yunzai: false },
+    },
+    validate: data => data?.success === true
+      && data?.data?.config?.customApi?.enabled === true
+      && data?.data?.config?.customApi?.baseApi === 'https://agent-smoke.example.com/v1'
+      && data?.data?.config?.customApi?.apiKey === '已配置'
+      && !JSON.stringify(data).includes('agent-smoke-secret'),
   },
   {
     path: '/api/global-search?q=命令&limit=8',

@@ -89,6 +89,7 @@
         </header>
 
         <div id="agent-output-alert" class="agent-output-alert hidden"></div>
+        <button id="agent-jump-bottom" type="button" class="agent-jump-bottom hidden" title="回到底部" aria-label="回到底部">↓</button>
         <div id="agent-output" class="agent-chat-stream" aria-live="polite">
           <div class="agent-chat-empty">
             <span class="agent-empty-mark">⌘</span>
@@ -142,8 +143,16 @@
           <div class="agent-context-section-head"><span>工作台设置</span><button id="agent-save-btn" type="button" class="agent-mini-btn">保存</button></div>
           <div class="agent-settings-stack">
             <label class="agent-setting-check"><input id="agent-enabled" type="checkbox" /><span><strong>启用 Agent 工作台</strong><small>允许创建新任务</small></span></label>
-            <label class="agent-setting-check agent-write-master"><input id="agent-write-enabled" type="checkbox" /><span><strong>允许实际修改文件</strong><small>每次写入仍需确认</small></span></label>
+            <label class="agent-setting-check agent-write-master"><input id="agent-write-enabled" type="checkbox" /><span><strong>允许实际修改文件</strong><small>每个会话首次写入确认一次</small></span></label>
+            <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-network" type="checkbox" /><span><strong>允许联网</strong><small>允许网页读取和搜索工具，终端命令仍禁用</small></span></label>
+            <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-all-directories" type="checkbox" /><span><strong>允许访问全目录</strong><small>允许访问当前工作目录以外的文件和目录</small></span></label>
             <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
+            <div class="agent-settings-divider">OpenCode API</div>
+            <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>OpenAI 兼容接口，关闭时使用默认聊天 API</small></span></label>
+            <label class="agent-compact-field agent-custom-api-field"><span>Base URL</span><input id="agent-custom-api-base" type="url" maxlength="500" placeholder="https://example.com/v1" /></label>
+            <label class="agent-compact-field agent-custom-api-field"><span>API Key</span><input id="agent-custom-api-key" type="password" maxlength="500" placeholder="留空保持当前密钥" autocomplete="new-password" /></label>
+            <label class="agent-compact-field agent-custom-api-field"><span>模型</span><input id="agent-custom-api-model" type="text" maxlength="160" placeholder="例如 gpt-5.4-mini" /></label>
+            <label class="agent-compact-field agent-custom-api-field"><span>User-Agent</span><input id="agent-custom-api-ua" type="text" maxlength="200" placeholder="可选" /></label>
             <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="120000">2 分钟</option><option value="300000">5 分钟</option><option value="600000">10 分钟</option><option value="900000">15 分钟</option></select></label>
             <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
             <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span>允许 OpenCode</span></label>

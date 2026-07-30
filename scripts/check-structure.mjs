@@ -1075,6 +1075,8 @@ async function main() {
     "'--pure'",
     'automaticApproval: false',
     'writeEnabled',
+    'allowNetwork',
+    'allowAllDirectories',
     'writableWorkspaces',
     'workspaceChanged',
     'cancelTask',
@@ -1084,6 +1086,9 @@ async function main() {
     'agent-workbench-sessions.json',
     'persistTasks',
     'restoreTasks',
+    'normalizeCustomAgentApi',
+    'customApi',
+    'includeSecrets',
   ]) && !agentWorkbenchConsole.includes('AGENT_WRITE_WORKSPACE_DIRTY')
     && !agentWorkbenchConsole.includes('AGENT_WRITE_GIT_REQUIRED')
     && !agentWorkbenchConsole.includes('AGENT_WRITE_GIT_ROOT_REQUIRED')
@@ -1094,6 +1099,10 @@ async function main() {
       'OPENCODE_CONFIG_CONTENT',
       'crystelf-chat',
       'baseURL',
+      '魔丸自定义 Agent API',
+      'customApi',
+      'allowNetwork',
+      'allowAllDirectories',
       'resolveBundledOpenCodeBootstrapCommand',
       'isBundledOpenCodeBootstrapError',
     ])
@@ -1107,11 +1116,15 @@ async function main() {
     ]) && includesAll(agentWorkbenchHtml, [
       'Agent 工作台',
       'agent-write-enabled',
+      'agent-allow-network',
+      'agent-allow-all-directories',
       'agent-mode',
       '实际修改文件',
       'agent-chat-stream',
       'agent-composer-form',
       'agent-settings-panel',
+      'agent-custom-api-base',
+      'agent-custom-api-key',
       'agent-workbench.js',
       'agent-workbench.css',
       'auth-guarded-page',
@@ -1124,6 +1137,8 @@ async function main() {
       'buildTaskDiffOutput',
       'sessionId: continuing ? selectedTask.id',
       'renderAgentTools',
+      'agent-custom-api-enabled',
+      'readSettingsDraft',
       '务必先备份',
       '执行命令',
     ]) && includesAll(agentWorkbenchCss, [
