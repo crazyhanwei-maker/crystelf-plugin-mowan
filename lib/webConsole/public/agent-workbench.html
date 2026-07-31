@@ -24,6 +24,7 @@
       </div>
       <div class="agent-topbar-actions">
         <button id="agent-new-task-btn" type="button" class="agent-quiet-btn">新建会话</button>
+        <button id="agent-native-toggle" type="button" class="agent-quiet-btn">OpenCode</button>
         <button id="agent-settings-toggle" type="button" class="agent-quiet-btn">设置</button>
         <button id="agent-refresh-btn" type="button" class="agent-quiet-btn">刷新</button>
         <a class="agent-quiet-btn agent-link-btn" href="/index.html">返回</a>
@@ -111,8 +112,13 @@
             </label>
           </div>
           <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...\n例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
+          <div id="agent-attachment-list" class="agent-attachment-list"></div>
           <div class="agent-composer-footer">
-            <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
+            <div class="agent-composer-side">
+              <input id="agent-attachment-input" type="file" multiple hidden />
+              <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
+              <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
+            </div>
             <div class="agent-composer-submit">
               <span class="agent-key-hint">Enter 发送 · Shift + Enter 换行</span>
               <button id="agent-run-btn" type="submit">发送</button>
@@ -136,6 +142,10 @@
         <div id="agent-permission-section" class="agent-context-section hidden">
           <div class="agent-context-section-head"><span>等待审批</span><span id="agent-permission-count">0</span></div>
           <div id="agent-permission-list" class="agent-permission-list"></div>
+        </div>
+        <div id="agent-question-section" class="agent-context-section hidden">
+          <div class="agent-context-section-head"><span>需要你的回答</span><span id="agent-question-count">0</span></div>
+          <div id="agent-question-list" class="agent-question-list"></div>
         </div>
         <div class="agent-context-section agent-workspace-files">
           <div class="agent-context-section-head">
@@ -196,6 +206,7 @@
         </div>
         <button id="agent-file-editor-close" type="button" class="agent-icon-btn" title="关闭" aria-label="关闭">×</button>
       </header>
+      <div id="agent-file-editor-tabs" class="agent-editor-tabs" role="tablist" aria-label="已打开文件"></div>
       <div class="agent-editor-grid">
         <div class="agent-editor-pane">
           <div class="agent-editor-pane-head"><span>文件内容</span><span id="agent-file-editor-meta"></span></div>
@@ -213,6 +224,73 @@
           <button id="agent-file-editor-save" type="button" class="agent-mini-btn">保存文件</button>
         </div>
       </footer>
+    </section>
+  </div>
+
+  <div id="agent-native-mask" class="agent-native-mask hidden" role="dialog" aria-modal="true" aria-labelledby="agent-native-title">
+    <section class="agent-native-dialog">
+      <header class="agent-native-head">
+        <div>
+          <span class="agent-eyebrow">OPENCODE NATIVE</span>
+          <strong id="agent-native-title">OpenCode 能力中心</strong>
+          <span id="agent-native-meta">读取工作区能力...</span>
+        </div>
+        <button id="agent-native-close" type="button" class="agent-icon-btn" title="关闭" aria-label="关闭">×</button>
+      </header>
+      <nav class="agent-native-tabs" aria-label="OpenCode 能力视图">
+        <button type="button" class="is-active" data-native-view="session">会话</button>
+        <button type="button" data-native-view="terminal">终端</button>
+        <button type="button" data-native-view="search">搜索</button>
+        <button type="button" data-native-view="models">模型</button>
+        <button type="button" data-native-view="tools">工具</button>
+      </nav>
+      <div class="agent-native-body">
+        <section class="agent-native-view" data-native-panel="session">
+          <div class="agent-native-section-head"><strong>当前会话</strong><span id="agent-native-session-status">未选择</span></div>
+          <label class="agent-native-field"><span>会话名称</span><input id="agent-native-session-title" type="text" maxlength="80" /></label>
+          <div class="agent-native-action-grid">
+            <button type="button" data-session-action="rename">重命名</button>
+            <button type="button" data-session-action="fork">创建分支</button>
+            <button type="button" data-session-action="summarize">压缩上下文</button>
+            <button type="button" data-session-action="revert">撤销最近一轮</button>
+            <button type="button" data-session-action="unrevert">恢复撤销</button>
+            <button type="button" class="is-danger" data-session-action="delete">删除会话</button>
+          </div>
+          <div class="agent-native-section-head"><strong>原生 Diff</strong><button id="agent-native-diff-refresh" type="button" class="agent-mini-btn">刷新</button></div>
+          <div id="agent-native-diff-list" class="agent-native-list"><span class="agent-context-empty">选择会话后读取 OpenCode Diff。</span></div>
+        </section>
+        <section class="agent-native-view hidden" data-native-panel="terminal">
+          <div class="agent-native-terminal-toolbar">
+            <select id="agent-terminal-select"><option value="">暂无终端</option></select>
+            <button id="agent-terminal-create" type="button" class="agent-mini-btn">新建终端</button>
+            <button id="agent-terminal-close" type="button" class="agent-mini-btn">关闭终端</button>
+          </div>
+          <pre id="agent-terminal-output" class="agent-terminal-output">受控终端默认关闭，请先在设置中授权。</pre>
+          <form id="agent-terminal-form" class="agent-terminal-form">
+            <input id="agent-terminal-input" type="text" maxlength="8000" autocomplete="off" placeholder="输入命令并回车" />
+            <button type="submit">发送</button>
+          </form>
+        </section>
+        <section class="agent-native-view hidden" data-native-panel="search">
+          <form id="agent-native-search-form" class="agent-native-search-form">
+            <select id="agent-native-search-type"><option value="file">文件</option><option value="text">全文</option><option value="symbol">符号</option></select>
+            <input id="agent-native-search-query" type="search" maxlength="300" placeholder="搜索工作目录" />
+            <button type="submit">搜索</button>
+          </form>
+          <div id="agent-native-search-results" class="agent-native-list"><span class="agent-context-empty">输入关键词开始搜索。</span></div>
+        </section>
+        <section class="agent-native-view hidden" data-native-panel="models">
+          <div id="agent-native-provider-list" class="agent-native-list">加载中...</div>
+        </section>
+        <section class="agent-native-view hidden" data-native-panel="tools">
+          <div class="agent-native-tool-grid">
+            <section><div class="agent-native-section-head"><strong>MCP</strong><span id="agent-native-mcp-count">0</span></div><div id="agent-native-mcp-list" class="agent-native-list"></div></section>
+            <section><div class="agent-native-section-head"><strong>Skills</strong><span id="agent-native-skill-count">0</span></div><div id="agent-native-skill-list" class="agent-native-list"></div></section>
+            <section><div class="agent-native-section-head"><strong>Commands</strong><span id="agent-native-command-count">0</span></div><div id="agent-native-command-list" class="agent-native-list"></div></section>
+            <section><div class="agent-native-section-head"><strong>语言服务</strong></div><div id="agent-native-runtime-list" class="agent-native-list"></div></section>
+          </div>
+        </section>
+      </div>
     </section>
   </div>
 
