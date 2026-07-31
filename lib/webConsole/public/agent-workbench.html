@@ -110,6 +110,10 @@
               <span>模型</span>
               <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
             </label>
+            <label class="agent-model-inline">
+              <span>Agent</span>
+              <select id="agent-agent"><option value="plan">plan</option><option value="build">build</option></select>
+            </label>
           </div>
           <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...\n例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
           <div id="agent-attachment-list" class="agent-attachment-list"></div>
@@ -117,6 +121,7 @@
             <div class="agent-composer-side">
               <input id="agent-attachment-input" type="file" multiple hidden />
               <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
+              <label class="agent-composer-option"><input id="agent-use-worktree" type="checkbox" /><span>Worktree</span></label>
               <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
@@ -243,18 +248,26 @@
         <button type="button" data-native-view="search">搜索</button>
         <button type="button" data-native-view="models">模型</button>
         <button type="button" data-native-view="tools">工具</button>
+        <button type="button" data-native-view="worktrees">Worktree</button>
       </nav>
       <div class="agent-native-body">
         <section class="agent-native-view" data-native-panel="session">
           <div class="agent-native-section-head"><strong>当前会话</strong><span id="agent-native-session-status">未选择</span></div>
           <label class="agent-native-field"><span>会话名称</span><input id="agent-native-session-title" type="text" maxlength="80" /></label>
+          <label class="agent-native-field"><span>Agent</span><select id="agent-native-agent"><option value="plan">plan</option><option value="build">build</option></select></label>
+          <label class="agent-native-field"><span>模型</span><input id="agent-native-model" type="text" maxlength="160" placeholder="默认模型" /></label>
           <div class="agent-native-action-grid">
             <button type="button" data-session-action="rename">重命名</button>
             <button type="button" data-session-action="fork">创建分支</button>
             <button type="button" data-session-action="summarize">压缩上下文</button>
             <button type="button" data-session-action="revert">撤销最近一轮</button>
             <button type="button" data-session-action="unrevert">恢复撤销</button>
+            <button type="button" data-session-action="background">子 Agent 转后台</button>
             <button type="button" class="is-danger" data-session-action="delete">删除会话</button>
+          </div>
+          <div class="agent-native-session-grid">
+            <section><div class="agent-native-section-head"><strong>Todo</strong><span id="agent-native-todo-count">0</span></div><div id="agent-native-todo-list" class="agent-native-list"></div></section>
+            <section><div class="agent-native-section-head"><strong>子 Agent</strong><span id="agent-native-child-count">0</span></div><div id="agent-native-child-list" class="agent-native-list"></div></section>
           </div>
           <div class="agent-native-section-head"><strong>原生 Diff</strong><button id="agent-native-diff-refresh" type="button" class="agent-mini-btn">刷新</button></div>
           <div id="agent-native-diff-list" class="agent-native-list"><span class="agent-context-empty">选择会话后读取 OpenCode Diff。</span></div>
@@ -286,9 +299,17 @@
           <div class="agent-native-tool-grid">
             <section><div class="agent-native-section-head"><strong>MCP</strong><span id="agent-native-mcp-count">0</span></div><div id="agent-native-mcp-list" class="agent-native-list"></div></section>
             <section><div class="agent-native-section-head"><strong>Skills</strong><span id="agent-native-skill-count">0</span></div><div id="agent-native-skill-list" class="agent-native-list"></div></section>
-            <section><div class="agent-native-section-head"><strong>Commands</strong><span id="agent-native-command-count">0</span></div><div id="agent-native-command-list" class="agent-native-list"></div></section>
+            <section><div class="agent-native-section-head"><strong>Commands</strong><span id="agent-native-command-count">0</span></div><form id="agent-native-command-form" class="agent-native-command-form"><select id="agent-native-command-select"><option value="">选择 Command</option></select><input id="agent-native-command-args" type="text" maxlength="3000" placeholder="可选参数" /><button type="submit">执行</button></form><div id="agent-native-command-list" class="agent-native-list"></div></section>
             <section><div class="agent-native-section-head"><strong>语言服务</strong></div><div id="agent-native-runtime-list" class="agent-native-list"></div></section>
           </div>
+        </section>
+        <section class="agent-native-view hidden" data-native-panel="worktrees">
+          <div class="agent-native-section-head"><strong>隔离工作目录</strong><span>不会自动删除</span></div>
+          <form id="agent-worktree-create-form" class="agent-native-command-form">
+            <input id="agent-worktree-name" type="text" maxlength="120" placeholder="Worktree 名称" />
+            <button type="submit">创建</button>
+          </form>
+          <div id="agent-worktree-list" class="agent-native-list"><span class="agent-context-empty">正在读取 Worktree...</span></div>
         </section>
       </div>
     </section>
