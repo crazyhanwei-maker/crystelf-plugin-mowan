@@ -133,6 +133,21 @@
           <div class="agent-context-section-head"><span>文件改动</span><span id="agent-context-file-count">0</span></div>
           <div id="agent-context-file-list" class="agent-context-file-list"><span class="agent-context-empty">选择一个任务后显示文件改动。</span></div>
         </div>
+        <div id="agent-permission-section" class="agent-context-section hidden">
+          <div class="agent-context-section-head"><span>等待审批</span><span id="agent-permission-count">0</span></div>
+          <div id="agent-permission-list" class="agent-permission-list"></div>
+        </div>
+        <div class="agent-context-section agent-workspace-files">
+          <div class="agent-context-section-head">
+            <span>工作目录</span>
+            <button id="agent-file-refresh-btn" type="button" class="agent-mini-btn">刷新</button>
+          </div>
+          <div class="agent-file-nav">
+            <button id="agent-file-up-btn" type="button" class="agent-icon-btn" title="返回上级目录" aria-label="返回上级目录">↑</button>
+            <code id="agent-file-path">/</code>
+          </div>
+          <div id="agent-file-tree" class="agent-file-tree"><span class="agent-context-empty">选择会话后显示文件。</span></div>
+        </div>
         <div id="agent-context-diff" class="agent-context-section">
           <div class="agent-context-section-head"><span>Diff 统计</span></div>
           <pre id="agent-context-diff-stat" class="agent-context-code">暂无 Diff</pre>
@@ -146,6 +161,7 @@
             <label class="agent-setting-check agent-write-master"><input id="agent-write-enabled" type="checkbox" /><span><strong>允许实际修改文件</strong><small>每个会话首次写入确认一次</small></span></label>
             <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-network" type="checkbox" /><span><strong>允许联网</strong><small>允许网页读取和搜索工具，终端命令仍禁用</small></span></label>
             <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-all-directories" type="checkbox" /><span><strong>允许访问全目录</strong><small>允许访问当前工作目录以外的文件和目录</small></span></label>
+            <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-terminal" type="checkbox" /><span><strong>允许受控终端</strong><small>仅实际修改模式可用，每条命令必须在审批卡中批准</small></span></label>
             <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
             <div class="agent-settings-divider">OpenCode API</div>
             <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>OpenAI 兼容接口，关闭时使用默认聊天 API</small></span></label>
@@ -167,6 +183,36 @@
           <div id="agent-summary" class="agent-summary-grid"></div>
         </section>
       </aside>
+    </section>
+  </div>
+
+  <div id="agent-file-editor-mask" class="agent-editor-mask hidden" role="dialog" aria-modal="true" aria-labelledby="agent-file-editor-title">
+    <section class="agent-editor-dialog">
+      <header class="agent-editor-head">
+        <div>
+          <span class="agent-eyebrow">WORKSPACE EDITOR</span>
+          <strong id="agent-file-editor-title">文件编辑器</strong>
+          <code id="agent-file-editor-path"></code>
+        </div>
+        <button id="agent-file-editor-close" type="button" class="agent-icon-btn" title="关闭" aria-label="关闭">×</button>
+      </header>
+      <div class="agent-editor-grid">
+        <div class="agent-editor-pane">
+          <div class="agent-editor-pane-head"><span>文件内容</span><span id="agent-file-editor-meta"></span></div>
+          <textarea id="agent-file-editor-content" spellcheck="false"></textarea>
+        </div>
+        <div class="agent-editor-pane">
+          <div class="agent-editor-pane-head"><span>会话 Diff</span><span>只读</span></div>
+          <pre id="agent-file-editor-diff">当前会话暂无 Diff。</pre>
+        </div>
+      </div>
+      <footer class="agent-editor-footer">
+        <span id="agent-file-editor-status">通过现有文件安全接口读取。</span>
+        <div>
+          <a id="agent-file-editor-full" class="agent-quiet-btn agent-link-btn" href="/file-browser.html">完整编辑器</a>
+          <button id="agent-file-editor-save" type="button" class="agent-mini-btn">保存文件</button>
+        </div>
+      </footer>
     </section>
   </div>
 

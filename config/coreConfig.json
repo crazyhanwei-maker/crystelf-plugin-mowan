@@ -83,6 +83,8 @@
       "allowNetwork": false,
       "?allowAllDirectories": "是否允许 Agent 访问当前工作目录以外的目录；默认关闭",
       "allowAllDirectories": false,
+      "?allowTerminal": "是否允许实际修改模式请求终端命令；默认关闭，开启后每条命令仍需在控制台逐项审批",
+      "allowTerminal": false,
       "?defaultProvider": "默认 Agent 提供方，当前仅支持 opencode",
       "defaultProvider": "opencode",
       "?timeoutMs": "单个 Agent 任务的最长运行时间",

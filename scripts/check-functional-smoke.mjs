@@ -213,7 +213,7 @@ function checkAgentWorkbenchSafety() {
   const config = normalizeAgentWorkbenchConfig({});
   assert(config.enabled === false, 'Agent 工作台安全默认值不是关闭');
   assert(config.writeEnabled === false, 'Agent 实际修改默认值不是关闭');
-  assert(config.allowNetwork === false && config.allowAllDirectories === false, 'Agent 高权限默认值不是关闭');
+  assert(config.allowNetwork === false && config.allowAllDirectories === false && config.allowTerminal === false, 'Agent 高权限默认值不是关闭');
   assert(config.maxConcurrentTasks === 1, 'Agent 工作台默认并发不是 1');
   assert(config.writableWorkspaces.plugin === true && config.writableWorkspaces.plugins === false && config.writableWorkspaces.yunzai === false, 'Agent 写入目录默认授权范围错误');
   const workspaces = getAgentWorkspaceOptions({
@@ -358,6 +358,14 @@ function checkAgentWorkbenchSafety() {
   assert(privilegedRuntime.config.permission.webfetch === 'allow' && privilegedRuntime.config.permission.websearch === 'allow', 'Agent 联网权限没有开放网页工具');
   assert(privilegedRuntime.config.permission.external_directory === 'allow', 'Agent 全目录权限没有开放外部目录');
   assert(privilegedRuntime.config.permission.bash === 'deny', 'Agent 高权限配置意外开放了终端命令');
+  const terminalRuntime = buildBundledOpenCodeEnvironment({
+    aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
+    writeMode: true,
+    allowTerminal: true,
+    runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'terminal-runtime'),
+  });
+  assert(terminalRuntime.config.permission.bash === 'ask', '受控终端没有设置为逐项审批');
+  assert(terminalRuntime.config.permission.edit === 'allow', '受控终端不应关闭文件编辑权限');
   logPass('Agent 工作台分析、受控写入、目录白名单与安全默认值正常');
 }
 
