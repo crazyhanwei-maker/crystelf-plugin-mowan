@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - Bot 日志</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v8h14v8H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/bot-logs.css" />
+</head>
+<body class="auth-guarded-page">
+  <div class="page bot-logs-page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">只读查看</div>
+        <h1>Bot 日志</h1>
+        <p id="bot-logs-meta">正在扫描日志文件...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">日志操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="bot-logs-refresh-btn" type="button">刷新</button>
+            <label class="bot-logs-toggle">
+              <input type="checkbox" id="bot-logs-auto-refresh" />
+              <span>自动刷新（3 秒）</span>
+            </label>
+            <button id="bot-logs-older-btn" type="button" disabled>加载更早</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel bot-logs-toolbar-panel">
+      <div class="bot-logs-toolbar">
+        <label class="bot-logs-field bot-logs-file-field">
+          <span>日志文件</span>
+          <select id="bot-logs-file-select"></select>
+        </label>
+        <label class="bot-logs-field">
+          <span>级别</span>
+          <select id="bot-logs-level-select">
+            <option value="all">全部</option>
+            <option value="ERROR">ERROR / FATAL</option>
+            <option value="WARN">WARN</option>
+            <option value="INFO">INFO</option>
+            <option value="DEBUG">DEBUG / TRACE</option>
+            <option value="other">无级别</option>
+          </select>
+        </label>
+        <label class="bot-logs-field bot-logs-search-field">
+          <span>搜索</span>
+          <input type="search" id="bot-logs-search-input" placeholder="关键字搜索（高亮匹配行）" autocomplete="off" />
+        </label>
+        <span id="bot-logs-filter-count" class="bot-logs-filter-count"></span>
+      </div>
+    </section>
+
+    <section class="panel bot-logs-viewer-panel">
+      <div class="bot-logs-viewer-wrap">
+        <div id="bot-logs-prefix-notice" class="bot-logs-notice hidden"></div>
+        <div id="bot-logs-content" class="bot-logs-content">
+          <div class="bot-logs-empty">加载中...</div>
+        </div>
+      </div>
+      <div id="bot-logs-status" class="bot-logs-status">—</div>
+    </section>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/bot-logs.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+.bot-logs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.bot-logs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary, #8892a6);
+}
+
+.bot-logs-field select,
+.bot-logs-field input[type='search'] {
+  min-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color, #3a4258);
+  border-radius: 8px;
+  background: var(--input-bg, rgba(255, 255, 255, 0.04));
+  color: var(--text-primary, #e6eaf2);
+  font-size: 13px;
+  outline: none;
+}
+
+.bot-logs-field select:focus,
+.bot-logs-field input[type='search']:focus {
+  border-color: var(--accent, #3a6df0);
+}
+
+.bot-logs-file-field select {
+  min-width: 320px;
+  max-width: 520px;
+}
+
+.bot-logs-search-field input[type='search'] {
+  min-width: 240px;
+}
+
+.bot-logs-filter-count {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-secondary, #8892a6);
+  white-space: nowrap;
+}
+
+.bot-logs-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-primary, #e6eaf2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.bot-logs-viewer-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+}
+
+.bot-logs-viewer-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 340px;
+  max-height: calc(100vh - 320px);
+  overflow: auto;
+  border: 1px solid var(--border-color, #2c3145);
+  border-radius: 10px;
+  background: var(--log-bg, rgba(13, 17, 28, 0.85));
+  font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.bot-logs-content {
+  min-width: 100%;
+  width: max-content;
+}
+
+.bot-logs-empty {
+  padding: 32px 20px;
+  color: var(--text-secondary, #8892a6);
+  text-align: center;
+}
+
+.bot-logs-notice {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 14px;
+  font-size: 12px;
+  background: var(--warn-bg, rgba(230, 162, 60, 0.16));
+  color: var(--warn-text, #f0b429);
+  border-bottom: 1px solid var(--border-color, #2c3145);
+}
+
+.log-line {
+  display: flex;
+  width: 100%;
+  min-height: 19px;
+}
+
+.log-line:hover {
+  background: var(--log-hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.log-line-no {
+  flex: 0 0 72px;
+  padding: 0 12px 0 10px;
+  text-align: right;
+  color: var(--text-tertiary, #5a637a);
+  user-select: none;
+  border-right: 1px solid var(--border-color, #2c3145);
+  background: var(--log-no-bg, rgba(255, 255, 255, 0.02));
+}
+
+.log-line-text {
+  padding: 0 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-primary, #dbe2ee);
+}
+
+.log-line-text.level-error {
+  color: #ff7b7b;
+}
+
+.log-line-text.level-warn {
+  color: #f0b429;
+}
+
+.log-line-text.level-debug {
+  color: #8b95a9;
+}
+
+.log-line-text.level-info {
+  color: var(--text-primary, #dbe2ee);
+}
+
+.log-line-text mark {
+  background: rgba(240, 180, 41, 0.35);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.bot-logs-status {
+  padding: 8px 4px 0;
+  font-size: 12px;
+  color: var(--text-secondary, #8892a6);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.bot-logs-error-banner {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--error-bg, rgba(255, 99, 99, 0.12));
+  color: var(--error-text, #ff7b7b);
+  border: 1px solid var(--error-border, rgba(255, 99, 99, 0.3));
+}
+
+@media (max-width: 900px) {
+  .bot-logs-file-field select {
+    min-width: 220px;
+    max-width: 260px;
+  }
+}
