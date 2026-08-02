@@ -78,6 +78,15 @@ const apiChecks = [
       && Array.isArray(data?.data?.tasks),
   },
   {
+    path: '/api/agent-workbench/stats',
+    label: 'Agent 用量统计',
+    validate: data => data?.success === true
+      && data?.stats
+      && typeof data.stats.taskCount === 'number'
+      && data.stats.usage
+      && typeof data.stats.usage.total === 'number',
+  },
+  {
     path: '/api/agent-workbench/settings',
     label: 'Agent 工作台安全默认值保存',
     method: 'POST',

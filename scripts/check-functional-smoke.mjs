@@ -281,6 +281,17 @@ function checkAgentWorkbenchSafety() {
   assert(editArgsText.includes('--agent') && editArgsText.includes('build'), '实际修改模式没有使用 OpenCode build Agent');
   assert(editArgsText.includes('直接在当前工作目录内创建或修改'), '实际修改模式没有写入安全提示');
   assert(!editArgsText.includes('--auto') && !editArgsText.includes('--dangerously-skip-permissions'), '实际修改模式包含自动批准危险参数');
+  const fullCommand = buildAgentRunCommand({
+    providerId: 'opencode',
+    workspacePath: root,
+    mode: 'full',
+    prompt: '以完全访问模式执行测试任务',
+    title: 'Agent 完全访问烟测',
+  });
+  const fullArgsText = fullCommand.args.join('\n');
+  assert(fullArgsText.includes('--agent') && fullArgsText.includes('build'), '完全访问模式没有使用 OpenCode build Agent');
+  assert(fullArgsText.includes('完全访问模式') && fullArgsText.includes('执行终端命令'), '完全访问模式没有传入完整安全提示');
+  assert(!fullArgsText.includes('--auto') && !fullArgsText.includes('--dangerously-skip-permissions'), '完全访问模式包含不受控的自动批准参数');
   const processEnv = buildAgentProcessEnv({
     HOME: path.join(root, 'temp', 'missing-agent-home'),
     USERPROFILE: path.join(root, 'temp', 'missing-agent-home'),
@@ -348,6 +359,13 @@ function checkAgentWorkbenchSafety() {
   });
   assert(writableRuntime.config.permission.edit === 'allow' && writableRuntime.config.permission.write === 'allow', '实际修改 Agent 没有开放文件编辑权限');
   assert(writableRuntime.config.permission.bash === 'deny' && writableRuntime.config.permission.external_directory === 'deny', '实际修改 Agent 没有禁用终端或外部目录');
+  const fullRuntime = buildBundledOpenCodeEnvironment({
+    aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
+    writeMode: true,
+    fullAccess: true,
+    runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'full-runtime'),
+  });
+  assert(Object.values(fullRuntime.config.permission).every(value => value === 'allow'), '完全访问 Agent 没有开放全部声明的工具权限');
   const privilegedRuntime = buildBundledOpenCodeEnvironment({
     aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
     writeMode: true,

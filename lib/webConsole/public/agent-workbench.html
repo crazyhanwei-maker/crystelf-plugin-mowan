@@ -25,6 +25,8 @@
       <div class="agent-topbar-actions">
         <button id="agent-new-task-btn" type="button" class="agent-quiet-btn">新建会话</button>
         <button id="agent-native-toggle" type="button" class="agent-quiet-btn">OpenCode</button>
+        <button id="agent-mobile-sessions" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="sessions" aria-expanded="false">会话</button>
+        <button id="agent-mobile-context" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="context" aria-expanded="false">上下文</button>
         <button id="agent-settings-toggle" type="button" class="agent-quiet-btn">设置</button>
         <button id="agent-refresh-btn" type="button" class="agent-quiet-btn">刷新</button>
         <a class="agent-quiet-btn agent-link-btn" href="/index.html">返回</a>
@@ -40,6 +42,12 @@
             <strong>会话</strong>
           </div>
           <button id="agent-sidebar-new-btn" type="button" class="agent-icon-btn" title="新建会话" aria-label="新建会话">+</button>
+        </div>
+        <div class="agent-session-tools">
+          <input id="agent-session-search" type="search" maxlength="200" placeholder="搜索会话" aria-label="搜索会话" />
+          <label><input id="agent-session-archived" type="checkbox" /> 已归档</label>
+          <button id="agent-session-import" type="button" class="agent-mini-btn">导入</button>
+          <input id="agent-session-import-input" type="file" accept="application/json,.json" hidden />
         </div>
         <div id="agent-history-meta" class="agent-sidebar-meta">暂无任务。</div>
         <div id="agent-task-list" class="agent-task-list">加载中...</div>
@@ -63,6 +71,7 @@
               <option value="analyze">只读分析</option>
               <option value="patch">补丁建议</option>
               <option value="edit">实际修改文件</option>
+              <option value="full">完全访问</option>
             </select>
           </label>
         </div>
@@ -87,6 +96,8 @@
             <span id="agent-chat-status-badge" class="agent-state-badge tone-neutral">未开始</span>
             <button id="agent-resume-btn" type="button" class="agent-quiet-btn hidden">继续任务</button>
             <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
+            <button id="agent-archive-btn" type="button" class="agent-quiet-btn hidden">归档</button>
+            <button id="agent-export-btn" type="button" class="agent-quiet-btn hidden">导出</button>
             <button id="agent-cancel-btn" type="button" class="agent-cancel-btn" disabled>停止</button>
           </div>
         </header>
@@ -104,22 +115,37 @@
         <form id="agent-composer-form" class="agent-composer" autocomplete="off">
           <div class="agent-composer-toolbar">
             <span class="agent-composer-context"><span class="agent-online-dot"></span><span id="agent-composer-context-label">等待 Agent 状态</span></span>
-            <label class="agent-title-inline">
-              <span>标题</span>
-              <input id="agent-title" type="text" maxlength="80" placeholder="可选" />
-            </label>
-            <label class="agent-model-inline">
-              <span>模型</span>
-              <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
-            </label>
-            <label class="agent-model-inline">
-              <span>Agent</span>
-              <select id="agent-agent"><option value="plan">plan</option><option value="build">build</option></select>
-            </label>
-            <label class="agent-model-inline">
-              <span>优先级</span>
-              <select id="agent-priority"><option value="high">高</option><option value="normal" selected>普通</option><option value="low">低</option></select>
-            </label>
+            <div id="agent-composer-options" class="agent-composer-options">
+              <label class="agent-title-inline">
+                <span>标题</span>
+                <input id="agent-title" type="text" maxlength="80" placeholder="可选" />
+              </label>
+              <label class="agent-model-inline">
+                <span>模型</span>
+                <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
+              </label>
+              <label class="agent-model-inline">
+                <span>Agent</span>
+                <select id="agent-agent"><option value="plan">plan</option><option value="build">build</option></select>
+              </label>
+              <label class="agent-model-inline">
+                <span>优先级</span>
+                <select id="agent-priority"><option value="high">高</option><option value="normal" selected>普通</option><option value="low">低</option></select>
+              </label>
+              <label class="agent-mobile-mode-inline">
+                <span>任务模式</span>
+                <select id="agent-mobile-mode">
+                  <option value="analyze">只读分析</option>
+                  <option value="patch">补丁建议</option>
+                  <option value="edit">实际修改文件</option>
+                  <option value="full">完全访问</option>
+                </select>
+              </label>
+              <label class="agent-mobile-worktree">
+                <input id="agent-mobile-worktree" type="checkbox" />
+                <span>使用隔离 Worktree</span>
+              </label>
+            </div>
           </div>
           <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...\n例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
           <div id="agent-attachment-list" class="agent-attachment-list"></div>
@@ -127,7 +153,8 @@
             <div class="agent-composer-side">
               <input id="agent-attachment-input" type="file" multiple hidden />
               <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
-              <label class="agent-composer-option"><input id="agent-use-worktree" type="checkbox" /><span>Worktree</span></label>
+              <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" title="任务设置" aria-label="任务设置" aria-expanded="false">☷</button>
+              <label class="agent-composer-option agent-desktop-worktree"><input id="agent-use-worktree" type="checkbox" /><span>Worktree</span></label>
               <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
@@ -190,6 +217,20 @@
             <label class="agent-compact-field agent-custom-api-field"><span>API Key</span><input id="agent-custom-api-key" type="password" maxlength="500" placeholder="留空保持当前密钥" autocomplete="new-password" /></label>
             <label class="agent-compact-field agent-custom-api-field"><span>模型</span><input id="agent-custom-api-model" type="text" maxlength="160" placeholder="例如 gpt-5.4-mini" /></label>
             <label class="agent-compact-field agent-custom-api-field"><span>User-Agent</span><input id="agent-custom-api-ua" type="text" maxlength="200" placeholder="可选" /></label>
+            <div class="agent-settings-divider">OpenCode 能力配置</div>
+            <label class="agent-compact-field agent-native-config-field"><span>MCP / Agent / Command JSON</span><textarea id="agent-native-config" rows="7" spellcheck="false" placeholder='{"mcp":{},"agent":{},"command":{}}'></textarea></label>
+            <details class="agent-native-config-helper">
+              <summary>分栏编辑 OpenCode 能力配置</summary>
+              <div class="agent-native-config-helper-actions">
+                <button id="agent-native-config-load" type="button" class="agent-mini-btn">从总配置载入</button>
+                <button id="agent-native-config-apply" type="button" class="agent-mini-btn">合并到总配置</button>
+              </div>
+              <label class="agent-compact-field"><span>MCP</span><textarea id="agent-native-config-mcp" rows="5" spellcheck="false" placeholder='{"本地工具":{"type":"local","command":["node","server.js"]}}'></textarea></label>
+              <label class="agent-compact-field"><span>Agent</span><textarea id="agent-native-config-agent" rows="5" spellcheck="false" placeholder='{"reviewer":{"description":"代码审查","mode":"plan"}}'></textarea></label>
+              <label class="agent-compact-field"><span>Command</span><textarea id="agent-native-config-command" rows="5" spellcheck="false" placeholder='{"review":{"template":"检查当前改动并列出风险"}}'></textarea></label>
+              <small class="agent-settings-note">分栏编辑不会触碰未展示的顶层配置。保存后重启工作台运行时才会让 OpenCode 重新读取配置。</small>
+            </details>
+            <small class="agent-settings-note">配置会写入插件运行数据，并随内置 OpenCode 启动；不要填入 API Key 或私密信息。</small>
             <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
             <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
             <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span>允许 OpenCode</span></label>
@@ -317,7 +358,7 @@
           <div id="agent-native-search-results" class="agent-native-list"><span class="agent-context-empty">输入关键词开始搜索。</span></div>
         </section>
         <section class="agent-native-view hidden" data-native-panel="models">
-          <div id="agent-native-provider-list" class="agent-native-list">加载中...</div>
+          <div id="agent-native-provider-list" class="agent-native-list"><span class="agent-context-empty">打开能力中心后读取 Provider。</span></div>
         </section>
         <section class="agent-native-view hidden" data-native-panel="tools">
           <div class="agent-native-tool-grid">
