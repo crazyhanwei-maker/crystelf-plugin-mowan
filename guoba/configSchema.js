@@ -1330,11 +1330,11 @@ const guobaSchema = [
     field: 'coreConfig.tools.agentWorkbench.timeoutMs',
     label: 'Agent 任务超时',
     component: 'InputNumber',
-    bottomHelpMessage: '单个 Agent 任务的最长运行时间，单位毫秒。',
+    bottomHelpMessage: '单个 Agent 任务的最长运行时间，单位毫秒；默认 1800000 表示 30 分钟，最长可设置为 2 小时。',
     componentProps: {
       min: 60000,
-      max: 900000,
-      step: 30000,
+      max: 7200000,
+      step: 300000,
     },
   },
   {
