@@ -401,6 +401,7 @@
 }
 
 .agent-chat-header {
+  grid-row: 1;
   justify-content: space-between;
   gap: 16px;
   min-width: 0;
@@ -452,6 +453,7 @@
 }
 
 .agent-output-alert {
+  grid-row: 2;
   margin: 12px 20px 0;
   padding: 9px 11px;
   border: 1px solid rgba(245, 158, 11, 0.36);
@@ -463,7 +465,9 @@
 }
 
 .agent-chat-stream {
+  grid-row: 3;
   min-height: 0;
+  min-block-size: 160px;
   overflow: auto;
   padding: 24px clamp(16px, 5vw, 72px);
   padding-bottom: 42px;
@@ -747,7 +751,9 @@
 .agent-event-item time { color: var(--agent-muted); white-space: nowrap; }
 
 .agent-composer {
+  grid-row: 4;
   align-self: end;
+  min-height: 0;
   height: auto;
   margin: 0 20px 18px;
   padding: 10px 11px 9px;
