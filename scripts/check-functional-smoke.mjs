@@ -32,6 +32,7 @@ import {
 } from '../lib/ai/yunzaiCommandBridge.js';
 import {
   buildAgentProcessEnv,
+  buildAgentDefaultModelSelection,
   buildAgentRunCommand,
   extractAgentJsonError,
   extractOpenCodeSessionId,
@@ -229,12 +230,22 @@ function checkAgentWorkbenchSafety() {
     prompt: '检查测试文件并给出补丁建议',
     title: 'Agent 安全烟测',
     model: 'provider/model',
+    variant: 'high',
   });
   const argsText = command.args.join('\n');
   assert(command.providerId === 'opencode', 'Agent 提供方规范化失败');
   assert(argsText.includes('--pure') && argsText.includes('--agent') && argsText.includes('plan'), 'Agent 没有固定使用 pure plan 模式');
+  assert(argsText.includes('--variant') && argsText.includes('high'), 'Agent 思考等级没有传给 OpenCode');
   assert(!argsText.includes('--auto') && !argsText.includes('--dangerously-skip-permissions'), 'Agent 命令包含自动批准危险参数');
   assert(argsText.includes('不要实际应用补丁'), '补丁建议模式没有禁止直接应用补丁');
+  const customVariantCommand = buildAgentRunCommand({
+    providerId: 'opencode',
+    workspacePath: root,
+    mode: 'analyze',
+    prompt: '验证非标准思考强度参数',
+    variant: 'Ultra-Pro',
+  });
+  assert(customVariantCommand.args.includes('Ultra-Pro'), 'Agent 自定义思考强度没有按原值传递');
   const privilegedCommand = buildAgentRunCommand({
     providerId: 'opencode',
     workspacePath: root,
@@ -384,7 +395,42 @@ function checkAgentWorkbenchSafety() {
   });
   assert(terminalRuntime.config.permission.bash === 'ask', '受控终端没有设置为逐项审批');
   assert(terminalRuntime.config.permission.edit === 'allow', '受控终端不应关闭文件编辑权限');
+  const configuredSummaryModel = buildAgentDefaultModelSelection({
+    aiConfig: { modelType: 'gpt-5.4-mini' },
+  });
+  assert(configuredSummaryModel?.providerID === 'crystelf-chat' && configuredSummaryModel?.modelID === 'gpt-5.4-mini', 'Agent 上下文压缩没有使用 AI 默认模型');
+  const customSummaryModel = buildAgentDefaultModelSelection({
+    customApi: { enabled: true, model: 'custom-agent-model' },
+    aiConfig: { modelType: 'gpt-5.4-mini' },
+  });
+  assert(customSummaryModel?.modelID === 'custom-agent-model', 'Agent 上下文压缩没有优先使用自定义 API 模型');
+  assert(buildAgentDefaultModelSelection({ aiConfig: {} }) === null, '没有配置模型时不应伪造固定模型选择');
   logPass('Agent 工作台分析、受控写入、目录白名单与安全默认值正常');
+}
+
+async function checkAgentWorkbenchSlashCommands() {
+  const [script, html, css, consoleSource] = await Promise.all([
+    fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.js'), 'utf8'),
+    fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.html'), 'utf8'),
+    fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.css'), 'utf8'),
+    fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchConsole.js'), 'utf8'),
+  ]);
+  const runTaskStart = script.indexOf('async function runTask');
+  const slashDispatch = script.indexOf('const slashCommand = parseSlashCommand(prompt);', runTaskStart);
+  const normalTaskRequest = script.indexOf("postJson('/api/agent-workbench/tasks'", runTaskStart);
+  assert(html.includes('id="agent-slash-menu"') && html.includes('id="agent-slash-btn"'), 'Agent 输入区没有斜杠命令入口');
+  assert(css.includes('.agent-slash-menu') && css.includes('.agent-slash-item.is-active'), 'Agent 斜杠命令菜单缺少桌面或键盘选中样式');
+  assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');
+  assert(consoleSource.includes('const body = modelSelection') && consoleSource.includes('{ auto: true }'), 'Agent 上下文压缩没有在未选择模型时使用默认模型');
+  assert(script.includes("name: 'undo'") && script.includes("name: 'redo'") && script.includes("name: 'fork'"), 'Agent 会话管理斜杠命令不完整');
+  assert(script.includes("name: 'archive'") && script.includes("name: 'delete'") && script.includes("name: 'export'") && script.includes("name: 'terminal'"), 'Agent 工作台功能没有完整接入斜杠命令');
+  assert(html.includes('id="agent-delete-btn"') && script.includes('data-task-delete=') && script.includes('async function deleteAgentTask'), 'Agent 会话删除入口或处理逻辑缺失');
+  assert(html.includes('id="agent-settings-mask"') && html.includes('class="agent-settings-dialog"') && script.includes('function setSettingsModalOpen'), 'Agent 工作台设置没有使用独立弹窗');
+  assert(css.includes('.agent-settings-mask') && css.includes('.agent-settings-grid') && css.includes('.agent-settings-footer'), 'Agent 工作台设置弹窗缺少响应式布局');
+  assert(script.includes("command.kind === 'native'") && script.includes('runNativeCommand(command.nativeCommand'), 'OpenCode 自定义 Command 没有接入输入框');
+  assert(script.includes("['status', 'terminal', 'search', 'worktrees'].includes(command.action)"), 'OpenCode 能力中心没有接入斜杠命令');
+  assert(runTaskStart >= 0 && slashDispatch > runTaskStart && normalTaskRequest > slashDispatch, '斜杠命令会落入普通 Agent 任务创建流程');
+  logPass('Agent 斜杠命令、会话动作与 OpenCode Command 分流正常');
 }
 
 function checkPersistentImageMonitorMd5Store() {
@@ -1518,6 +1564,7 @@ async function main() {
     checkArkAgentPlanFallbackPrecheck();
     await checkYunzaiCommandBridge();
     checkAgentWorkbenchSafety();
+    await checkAgentWorkbenchSlashCommands();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});

@@ -20,6 +20,7 @@ const pages = [
   { path: '/file-browser.html', label: '文件编辑', text: '文件浏览编辑器' },
   { path: '/bot-plugins.html', label: '插件管理', text: '机器人插件管理' },
   { path: '/performance.html', label: '性能监测', text: '性能监测' },
+  { path: '/agent-workbench.html', label: 'Agent工作台', text: 'Agent 工作台' },
 ];
 
 function fail(message) {

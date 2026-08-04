@@ -28,7 +28,7 @@
         <button id="agent-close-opencode-btn" type="button" class="agent-quiet-btn agent-close-opencode-btn" title="关闭本插件启动的 OpenCode 后台服务">关闭 OpenCode</button>
         <button id="agent-mobile-sessions" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="sessions" aria-expanded="false">会话</button>
         <button id="agent-mobile-context" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="context" aria-expanded="false">上下文</button>
-        <button id="agent-settings-toggle" type="button" class="agent-quiet-btn">设置</button>
+        <button id="agent-settings-toggle" type="button" class="agent-quiet-btn" aria-haspopup="dialog" aria-controls="agent-settings-mask" aria-expanded="false">设置</button>
         <button id="agent-refresh-btn" type="button" class="agent-quiet-btn">刷新</button>
         <a class="agent-quiet-btn agent-link-btn" href="/index.html">返回</a>
         <button id="theme-toggle-btn" type="button" class="agent-quiet-btn" data-theme-toggle>主题</button>
@@ -99,6 +99,7 @@
             <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
             <button id="agent-archive-btn" type="button" class="agent-quiet-btn hidden">归档</button>
             <button id="agent-export-btn" type="button" class="agent-quiet-btn hidden">导出</button>
+            <button id="agent-delete-btn" type="button" class="agent-quiet-btn agent-delete-btn hidden">删除</button>
             <button id="agent-cancel-btn" type="button" class="agent-cancel-btn" disabled>停止</button>
           </div>
         </header>
@@ -114,6 +115,13 @@
         </div>
 
         <form id="agent-composer-form" class="agent-composer" autocomplete="off">
+          <section id="agent-slash-menu" class="agent-slash-menu hidden" aria-label="斜杠命令" role="listbox">
+            <div class="agent-slash-menu-head">
+              <strong>命令</strong>
+              <span>WORKBENCH</span>
+            </div>
+            <div id="agent-slash-list" class="agent-slash-list"></div>
+          </section>
           <div class="agent-composer-toolbar">
             <span class="agent-composer-context"><span class="agent-online-dot"></span><span id="agent-composer-context-label">等待 Agent 状态</span></span>
             <div id="agent-composer-options" class="agent-composer-options">
@@ -124,6 +132,22 @@
               <label class="agent-model-inline">
                 <span>模型</span>
                 <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
+              </label>
+              <label class="agent-model-inline">
+                <span>思考等级</span>
+                <div id="agent-variant-control" class="agent-variant-control">
+                  <select id="agent-variant" title="使用模型默认思考等级">
+                    <option value="">默认</option>
+                    <option value="minimal">最低</option>
+                    <option value="low">低</option>
+                    <option value="medium">中</option>
+                    <option value="high">高</option>
+                    <option value="xhigh">极高</option>
+                    <option value="max">最大</option>
+                    <option value="__custom__">自定义</option>
+                  </select>
+                  <input id="agent-variant-custom" class="hidden" type="text" maxlength="80" placeholder="如 Ultra-Pro" spellcheck="false" />
+                </div>
               </label>
               <label class="agent-model-inline">
                 <span>Agent</span>
@@ -154,6 +178,7 @@
             <div class="agent-composer-side">
               <input id="agent-attachment-input" type="file" multiple hidden />
               <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
+              <button id="agent-slash-btn" type="button" class="agent-icon-btn agent-slash-btn" title="斜杠命令" aria-label="斜杠命令" aria-expanded="false">/</button>
               <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" title="任务设置" aria-label="任务设置" aria-expanded="false">☷</button>
               <label class="agent-composer-option agent-desktop-worktree"><input id="agent-use-worktree" type="checkbox" /><span>Worktree</span></label>
               <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
@@ -203,49 +228,84 @@
         </div>
         <div id="agent-provider-list" class="agent-provider-list agent-context-section">加载中...</div>
 
-        <section id="agent-settings-panel" class="agent-settings-panel hidden">
-          <div class="agent-context-section-head"><span>工作台设置</span><button id="agent-save-btn" type="button" class="agent-mini-btn">保存</button></div>
-          <div class="agent-settings-stack">
-            <label class="agent-setting-check"><input id="agent-enabled" type="checkbox" /><span><strong>启用 Agent 工作台</strong><small>允许创建新任务</small></span></label>
-            <label class="agent-setting-check agent-write-master"><input id="agent-write-enabled" type="checkbox" /><span><strong>允许实际修改文件</strong><small>每个会话首次写入确认一次</small></span></label>
-            <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-network" type="checkbox" /><span><strong>允许联网</strong><small>允许网页读取和搜索工具，终端命令仍禁用</small></span></label>
-            <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-all-directories" type="checkbox" /><span><strong>允许访问全目录</strong><small>允许访问当前工作目录以外的文件和目录</small></span></label>
-            <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-terminal" type="checkbox" /><span><strong>允许受控终端</strong><small>仅实际修改模式可用，每条命令必须在审批卡中批准</small></span></label>
-            <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
-            <div class="agent-settings-divider">OpenCode API</div>
-            <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>OpenAI 兼容接口，关闭时使用默认聊天 API</small></span></label>
-            <label class="agent-compact-field agent-custom-api-field"><span>Base URL</span><input id="agent-custom-api-base" type="url" maxlength="500" placeholder="https://example.com/v1" /></label>
-            <label class="agent-compact-field agent-custom-api-field"><span>API Key</span><input id="agent-custom-api-key" type="password" maxlength="500" placeholder="留空保持当前密钥" autocomplete="new-password" /></label>
-            <label class="agent-compact-field agent-custom-api-field"><span>模型</span><input id="agent-custom-api-model" type="text" maxlength="160" placeholder="例如 gpt-5.4-mini" /></label>
-            <label class="agent-compact-field agent-custom-api-field"><span>User-Agent</span><input id="agent-custom-api-ua" type="text" maxlength="200" placeholder="可选" /></label>
-            <div class="agent-settings-divider">OpenCode 能力配置</div>
-            <label class="agent-compact-field agent-native-config-field"><span>MCP / Agent / Command JSON</span><textarea id="agent-native-config" rows="7" spellcheck="false" placeholder='{"mcp":{},"agent":{},"command":{}}'></textarea></label>
-            <details class="agent-native-config-helper">
-              <summary>分栏编辑 OpenCode 能力配置</summary>
-              <div class="agent-native-config-helper-actions">
-                <button id="agent-native-config-load" type="button" class="agent-mini-btn">从总配置载入</button>
-                <button id="agent-native-config-apply" type="button" class="agent-mini-btn">合并到总配置</button>
-              </div>
-              <label class="agent-compact-field"><span>MCP</span><textarea id="agent-native-config-mcp" rows="5" spellcheck="false" placeholder='{"本地工具":{"type":"local","command":["node","server.js"]}}'></textarea></label>
-              <label class="agent-compact-field"><span>Agent</span><textarea id="agent-native-config-agent" rows="5" spellcheck="false" placeholder='{"reviewer":{"description":"代码审查","mode":"plan"}}'></textarea></label>
-              <label class="agent-compact-field"><span>Command</span><textarea id="agent-native-config-command" rows="5" spellcheck="false" placeholder='{"review":{"template":"检查当前改动并列出风险"}}'></textarea></label>
-              <small class="agent-settings-note">分栏编辑不会触碰未展示的顶层配置。保存后重启工作台运行时才会让 OpenCode 重新读取配置。</small>
-            </details>
-            <small class="agent-settings-note">配置会写入插件运行数据，并随内置 OpenCode 启动；不要填入 API Key 或私密信息。</small>
-            <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
-            <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
-            <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span>允许 OpenCode</span></label>
-            <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugin" type="checkbox" /><span>允许修改灵晶插件</span></label>
-            <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugins" type="checkbox" /><span>允许修改 Bot 插件目录</span></label>
-            <label class="agent-setting-check agent-write-scope"><input id="agent-write-yunzai" type="checkbox" /><span>允许修改 Yunzai 根目录</span></label>
-          </div>
-        </section>
-
         <section class="agent-summary-section">
           <div class="agent-context-section-head"><span>运行概览</span></div>
           <div id="agent-summary" class="agent-summary-grid"></div>
         </section>
       </aside>
+    </section>
+  </div>
+
+  <div id="agent-settings-mask" class="agent-settings-mask hidden" role="dialog" aria-modal="true" aria-labelledby="agent-settings-title">
+    <section id="agent-settings-panel" class="agent-settings-dialog">
+      <header class="agent-settings-head">
+        <div>
+          <span class="agent-eyebrow">AGENT PREFERENCES</span>
+          <strong id="agent-settings-title">工作台设置</strong>
+          <span>管理运行权限、模型接口与 OpenCode 能力。</span>
+        </div>
+        <button id="agent-settings-close" type="button" class="agent-icon-btn" title="关闭设置" aria-label="关闭设置">×</button>
+      </header>
+      <div class="agent-settings-body">
+        <div class="agent-settings-grid">
+          <section class="agent-settings-group">
+            <div class="agent-settings-group-head"><strong>运行与权限</strong><span>控制 Agent 可以执行的操作范围</span></div>
+            <div class="agent-settings-stack">
+              <label class="agent-setting-check"><input id="agent-enabled" type="checkbox" /><span><strong>启用 Agent 工作台</strong><small>允许创建新任务</small></span></label>
+              <label class="agent-setting-check agent-write-master"><input id="agent-write-enabled" type="checkbox" /><span><strong>允许实际修改文件</strong><small>每个会话首次写入确认一次</small></span></label>
+              <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-network" type="checkbox" /><span><strong>允许联网</strong><small>允许网页读取和搜索工具，终端命令仍禁用</small></span></label>
+              <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-all-directories" type="checkbox" /><span><strong>允许访问全目录</strong><small>允许访问当前工作目录以外的文件和目录</small></span></label>
+              <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-terminal" type="checkbox" /><span><strong>允许受控终端</strong><small>仅实际修改模式可用，每条命令必须在审批卡中批准</small></span></label>
+              <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span><strong>允许 OpenCode</strong><small>启用内置 OpenCode Agent</small></span></label>
+              <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugin" type="checkbox" /><span><strong>允许修改灵晶插件</strong></span></label>
+              <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugins" type="checkbox" /><span><strong>允许修改 Bot 插件目录</strong></span></label>
+              <label class="agent-setting-check agent-write-scope"><input id="agent-write-yunzai" type="checkbox" /><span><strong>允许修改 Yunzai 根目录</strong></span></label>
+              <div class="agent-settings-inline-grid">
+                <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
+                <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
+                <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
+              </div>
+            </div>
+          </section>
+
+          <section class="agent-settings-group">
+            <div class="agent-settings-group-head"><strong>自定义 API</strong><span>未启用时自动使用聊天默认 API</span></div>
+            <div class="agent-settings-stack">
+              <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>支持 OpenAI 兼容接口</small></span></label>
+              <label class="agent-compact-field agent-custom-api-field"><span>Base URL</span><input id="agent-custom-api-base" type="url" maxlength="500" placeholder="https://example.com/v1" /></label>
+              <label class="agent-compact-field agent-custom-api-field"><span>API Key</span><input id="agent-custom-api-key" type="password" maxlength="500" placeholder="留空保持当前密钥" autocomplete="new-password" /></label>
+              <label class="agent-compact-field agent-custom-api-field"><span>模型</span><input id="agent-custom-api-model" type="text" maxlength="160" placeholder="例如 gpt-5.4-mini" /></label>
+              <label class="agent-compact-field agent-custom-api-field"><span>User-Agent</span><input id="agent-custom-api-ua" type="text" maxlength="200" placeholder="可选" /></label>
+            </div>
+          </section>
+
+          <section class="agent-settings-group agent-settings-group-wide">
+            <div class="agent-settings-group-head"><strong>OpenCode 能力配置</strong><span>配置 MCP、Agent 与自定义 Command</span></div>
+            <div class="agent-settings-native-grid">
+              <label class="agent-compact-field agent-native-config-field"><span>MCP / Agent / Command JSON</span><textarea id="agent-native-config" rows="10" spellcheck="false" placeholder='{"mcp":{},"agent":{},"command":{}}'></textarea></label>
+              <details class="agent-native-config-helper">
+                <summary>分栏编辑 OpenCode 能力配置</summary>
+                <div class="agent-native-config-helper-actions">
+                  <button id="agent-native-config-load" type="button" class="agent-mini-btn">从总配置载入</button>
+                  <button id="agent-native-config-apply" type="button" class="agent-mini-btn">合并到总配置</button>
+                </div>
+                <label class="agent-compact-field"><span>MCP</span><textarea id="agent-native-config-mcp" rows="5" spellcheck="false" placeholder='{"本地工具":{"type":"local","command":["node","server.js"]}}'></textarea></label>
+                <label class="agent-compact-field"><span>Agent</span><textarea id="agent-native-config-agent" rows="5" spellcheck="false" placeholder='{"reviewer":{"description":"代码审查","mode":"plan"}}'></textarea></label>
+                <label class="agent-compact-field"><span>Command</span><textarea id="agent-native-config-command" rows="5" spellcheck="false" placeholder='{"review":{"template":"检查当前改动并列出风险"}}'></textarea></label>
+                <small class="agent-settings-note">分栏编辑不会触碰未展示的顶层配置。保存后重启工作台运行时才会让 OpenCode 重新读取配置。</small>
+              </details>
+            </div>
+            <small class="agent-settings-note">配置会写入插件运行数据，并随内置 OpenCode 启动；不要在能力配置 JSON 中填写 API Key 或私密信息。</small>
+          </section>
+        </div>
+      </div>
+      <footer class="agent-settings-footer">
+        <span>高权限设置会影响后续任务，请确认授权范围。</span>
+        <div>
+          <button id="agent-settings-cancel" type="button" class="agent-quiet-btn">关闭</button>
+          <button id="agent-save-btn" type="button" class="agent-settings-save-btn">保存设置</button>
+        </div>
+      </footer>
     </section>
   </div>
 
