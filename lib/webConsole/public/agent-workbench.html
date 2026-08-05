@@ -97,6 +97,7 @@
             <span id="agent-chat-status-badge" class="agent-state-badge tone-neutral">未开始</span>
             <button id="agent-resume-btn" type="button" class="agent-quiet-btn hidden">继续任务</button>
             <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
+            <button id="agent-history-load-btn" type="button" class="agent-quiet-btn hidden">加载完整历史</button>
             <button id="agent-archive-btn" type="button" class="agent-quiet-btn hidden">归档</button>
             <button id="agent-export-btn" type="button" class="agent-quiet-btn hidden">导出</button>
             <button id="agent-delete-btn" type="button" class="agent-quiet-btn agent-delete-btn hidden">删除</button>
@@ -184,6 +185,10 @@
               <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
+              <div id="agent-followup-control" class="agent-followup-control hidden" role="group" aria-label="运行中跟进方式">
+                <button type="button" data-agent-followup="queue" class="is-active" title="当前任务完成后继续执行">排队</button>
+                <button type="button" data-agent-followup="steer" title="立即把补充要求注入当前执行">调整</button>
+              </div>
               <span class="agent-key-hint">Enter 发送 · Shift + Enter 换行</span>
               <button id="agent-run-btn" type="submit">发送</button>
             </div>
@@ -210,6 +215,11 @@
         <div id="agent-question-section" class="agent-context-section hidden">
           <div class="agent-context-section-head"><span>需要你的回答</span><span id="agent-question-count">0</span></div>
           <div id="agent-question-list" class="agent-question-list"></div>
+        </div>
+        <div class="agent-context-section agent-context-usage-section">
+          <div class="agent-context-section-head"><span>上下文用量</span><span id="agent-context-usage-label">未读取</span></div>
+          <div class="agent-context-meter"><span id="agent-context-usage-bar"></span></div>
+          <small id="agent-context-usage-note" class="agent-context-empty">完成一轮对话后显示当前会话用量。</small>
         </div>
         <div class="agent-context-section agent-workspace-files">
           <div class="agent-context-section-head">
@@ -264,6 +274,17 @@
                 <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
                 <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
                 <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
+                <label class="agent-compact-field"><span>运行时上限</span><select id="agent-max-runtimes"><option value="1">1 个 OpenCode</option><option value="2">2 个 OpenCode</option><option value="3">3 个 OpenCode</option><option value="4">4 个 OpenCode</option></select></label>
+                <label class="agent-compact-field"><span>空闲回收</span><select id="agent-runtime-idle"><option value="60000">1 分钟</option><option value="120000">2 分钟</option><option value="300000">5 分钟</option><option value="600000">10 分钟</option></select></label>
+              </div>
+              <div class="agent-settings-subgroup">
+                <div class="agent-settings-group-head"><strong>上下文管理</strong><span>接近 OpenCode 上下文上限时，发送下一轮消息前自动压缩</span></div>
+                <label class="agent-setting-check"><input id="agent-auto-compact-enabled" type="checkbox" /><span><strong>自动压缩上下文</strong><small>压缩失败不会阻断当前任务</small></span></label>
+                <div class="agent-settings-inline-grid agent-compact-settings-grid">
+                  <label class="agent-compact-field"><span>触发阈值</span><select id="agent-auto-compact-threshold"><option value="70">70%</option><option value="75">75%</option><option value="80">80%</option><option value="85">85%</option><option value="90">90%</option><option value="95">95%</option></select></label>
+                  <label class="agent-compact-field"><span>压缩模型</span><input id="agent-compact-model" type="text" maxlength="160" placeholder="留空使用默认模型" /></label>
+                  <label class="agent-compact-field"><span>提供方（可选）</span><input id="agent-compact-provider" type="text" maxlength="120" placeholder="例如 openai" /></label>
+                </div>
               </div>
             </div>
           </section>
@@ -356,6 +377,7 @@
         <button type="button" data-native-view="search">搜索</button>
         <button type="button" data-native-view="models">模型</button>
         <button type="button" data-native-view="tools">工具</button>
+        <button type="button" data-native-view="runtime">运行时</button>
         <button type="button" data-native-view="worktrees">Worktree</button>
       </nav>
       <div class="agent-native-body">
@@ -368,6 +390,7 @@
             <button type="button" data-session-action="rename">重命名</button>
             <button type="button" data-session-action="fork">创建分支</button>
             <button type="button" data-session-action="summarize">压缩上下文</button>
+            <button id="agent-native-history-load" type="button">加载完整历史</button>
             <button type="button" data-session-action="revert">撤销最近一轮</button>
             <button type="button" data-session-action="unrevert">恢复撤销</button>
             <button type="button" data-session-action="background">子 Agent 转后台</button>
@@ -427,6 +450,18 @@
             <section><div class="agent-native-section-head"><strong>Skills</strong><span id="agent-native-skill-count">0</span></div><div id="agent-native-skill-list" class="agent-native-list"></div></section>
             <section><div class="agent-native-section-head"><strong>Commands</strong><span id="agent-native-command-count">0</span></div><form id="agent-native-command-form" class="agent-native-command-form"><select id="agent-native-command-select"><option value="">选择 Command</option></select><input id="agent-native-command-args" type="text" maxlength="3000" placeholder="可选参数" /><button type="submit">执行</button></form><div id="agent-native-command-list" class="agent-native-list"></div></section>
             <section><div class="agent-native-section-head"><strong>语言服务</strong></div><div id="agent-native-runtime-list" class="agent-native-list"></div></section>
+          </div>
+        </section>
+        <section class="agent-native-view hidden" data-native-panel="runtime">
+          <div class="agent-native-section-head">
+            <strong>OpenCode 运行时</strong>
+            <div class="agent-native-runtime-actions">
+              <span id="agent-opencode-runtime-meta">尚未读取</span>
+              <button id="agent-opencode-runtime-refresh" type="button" class="agent-mini-btn">刷新</button>
+            </div>
+          </div>
+          <div id="agent-opencode-runtime-list" class="agent-native-list">
+            <span class="agent-context-empty">切换到此页面后读取本插件启动的 OpenCode 服务。</span>
           </div>
         </section>
         <section class="agent-native-view hidden" data-native-panel="worktrees">

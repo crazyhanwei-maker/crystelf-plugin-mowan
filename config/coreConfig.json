@@ -91,6 +91,18 @@
       "timeoutMs": 1800000,
       "?maxConcurrentTasks": "最多同时运行的 Agent 任务数",
       "maxConcurrentTasks": 1,
+      "?maxOpenCodeRuntimes": "最多保留的 OpenCode 后台运行时数量，超出时优先回收最久未使用的空闲实例",
+      "maxOpenCodeRuntimes": 2,
+      "?runtimeIdleTimeoutMs": "OpenCode 后台运行时空闲多久后自动关闭，单位毫秒",
+      "runtimeIdleTimeoutMs": 120000,
+      "?autoCompactEnabled": "是否在发送新消息前自动压缩接近上限的会话上下文",
+      "autoCompactEnabled": true,
+      "?autoCompactThreshold": "上下文使用率达到多少百分比时自动压缩，范围 50-95",
+      "autoCompactThreshold": 80,
+      "?compactModel": "自动压缩使用的模型，留空则沿用当前会话或默认模型；可填写 provider/model",
+      "compactModel": "",
+      "?compactProviderId": "自动压缩模型提供方，通常留空；填写后优先与 compactModel 组合使用",
+      "compactProviderId": "",
       "?providers": "允许在 Agent 工作台使用的提供方",
       "providers": {
         "opencode": true

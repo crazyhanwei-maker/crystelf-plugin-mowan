@@ -216,6 +216,9 @@ function checkAgentWorkbenchSafety() {
   assert(config.writeEnabled === false, 'Agent 实际修改默认值不是关闭');
   assert(config.allowNetwork === false && config.allowAllDirectories === false && config.allowTerminal === false, 'Agent 高权限默认值不是关闭');
   assert(config.maxConcurrentTasks === 1, 'Agent 工作台默认并发不是 1');
+  assert(config.maxOpenCodeRuntimes === 2 && config.runtimeIdleTimeoutMs === 120000, 'Agent OpenCode 运行时回收默认配置错误');
+  assert(config.autoCompactEnabled === true && config.autoCompactThreshold === 80, 'Agent 自动上下文压缩默认配置错误');
+  assert(config.compactModel === '' && config.compactProviderId === '', 'Agent 压缩模型默认应回退当前或默认模型');
   assert(config.writableWorkspaces.plugin === true && config.writableWorkspaces.plugins === false && config.writableWorkspaces.yunzai === false, 'Agent 写入目录默认授权范围错误');
   const workspaces = getAgentWorkspaceOptions({
     pluginRoot: root,
@@ -409,11 +412,12 @@ function checkAgentWorkbenchSafety() {
 }
 
 async function checkAgentWorkbenchSlashCommands() {
-  const [script, html, css, consoleSource] = await Promise.all([
+  const [script, html, css, consoleSource, routesSource] = await Promise.all([
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.js'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.html'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.css'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchConsole.js'), 'utf8'),
+    fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchRoutes.js'), 'utf8'),
   ]);
   const runTaskStart = script.indexOf('async function runTask');
   const slashDispatch = script.indexOf('const slashCommand = parseSlashCommand(prompt);', runTaskStart);
@@ -429,6 +433,15 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(css.includes('.agent-settings-mask') && css.includes('.agent-settings-grid') && css.includes('.agent-settings-footer'), 'Agent 工作台设置弹窗缺少响应式布局');
   assert(script.includes("command.kind === 'native'") && script.includes('runNativeCommand(command.nativeCommand'), 'OpenCode 自定义 Command 没有接入输入框');
   assert(script.includes("['status', 'terminal', 'search', 'worktrees'].includes(command.action)"), 'OpenCode 能力中心没有接入斜杠命令');
+  assert(consoleSource.includes('/prompt_async') && consoleSource.includes('waitForOpenCodeSessionIdle') && consoleSource.includes('/session/status'), 'Agent 没有使用 OpenCode 异步任务链路或兼容等待');
+  assert(consoleSource.includes('/api/session/${encodeURIComponent(task.opencodeSessionId)}/prompt') && consoleSource.includes('delivery: normalizeAgentDelivery') && consoleSource.includes('scheduleTaskFollowUpFlush'), 'Agent 运行中跟进没有接入 OpenCode 原生队列与 Steering');
+  assert(html.includes('id="agent-followup-control"') && html.includes('data-agent-followup="queue"') && html.includes('data-agent-followup="steer"') && script.includes('followUpDelivery'), 'Agent 工作台缺少排队跟进与立即调整入口');
+  assert(consoleSource.includes('async function getSessionHistory') && routesSource.includes('/history$/'), 'OpenCode 原生会话历史接口缺失');
+  assert(html.includes('id="agent-history-load-btn"') && html.includes('id="agent-native-history-load"') && script.includes('nativeHistoryByTask'), 'OpenCode 完整历史缺少桌面或移动端入口');
+  assert(routesSource.includes('delete-message') && script.includes("data-native-message-action=\"delete-message\""), 'OpenCode 原生消息删除没有接入');
+  assert(html.includes('data-native-view="runtime"') && html.includes('id="agent-opencode-runtime-list"'), 'OpenCode 运行时监控页面缺失');
+  assert(consoleSource.includes('async function listOpenCodeRuntimes') && consoleSource.includes('async function closeOpenCodeRuntime'), 'OpenCode 运行时监控或单实例关闭缺失');
+  assert(css.includes('.agent-opencode-runtime-metrics') && css.includes('@media (max-width: 760px)'), 'OpenCode 运行时监控缺少移动端样式');
   assert(runTaskStart >= 0 && slashDispatch > runTaskStart && normalTaskRequest > slashDispatch, '斜杠命令会落入普通 Agent 任务创建流程');
   logPass('Agent 斜杠命令、会话动作与 OpenCode Command 分流正常');
 }
