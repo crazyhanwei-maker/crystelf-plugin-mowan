@@ -206,6 +206,7 @@
         </div>
         <div id="agent-context-files" class="agent-context-section">
           <div class="agent-context-section-head"><span>文件改动</span><span id="agent-context-file-count">0</span></div>
+          <div id="agent-context-file-summary" class="agent-change-summary" aria-live="polite"></div>
           <div id="agent-context-file-list" class="agent-context-file-list"><span class="agent-context-empty">选择一个任务后显示文件改动。</span></div>
         </div>
         <div id="agent-permission-section" class="agent-context-section hidden">
@@ -233,7 +234,7 @@
           <div id="agent-file-tree" class="agent-file-tree"><span class="agent-context-empty">选择会话后显示文件。</span></div>
         </div>
         <div id="agent-context-diff" class="agent-context-section">
-          <div class="agent-context-section-head"><span>Diff 统计</span></div>
+          <div class="agent-context-section-head"><span>Diff 统计</span><span id="agent-context-diff-summary"></span></div>
           <pre id="agent-context-diff-stat" class="agent-context-code">暂无 Diff</pre>
         </div>
         <div id="agent-provider-list" class="agent-provider-list agent-context-section">加载中...</div>
@@ -400,7 +401,7 @@
             <section><div class="agent-native-section-head"><strong>Todo</strong><span id="agent-native-todo-count">0</span></div><div id="agent-native-todo-list" class="agent-native-list"></div></section>
             <section><div class="agent-native-section-head"><strong>子 Agent</strong><span id="agent-native-child-count">0</span></div><div id="agent-native-child-list" class="agent-native-list"></div></section>
           </div>
-          <div class="agent-native-section-head"><strong>原生 Diff</strong><button id="agent-native-diff-refresh" type="button" class="agent-mini-btn">刷新</button></div>
+          <div class="agent-native-section-head"><strong>原生 Diff</strong><span id="agent-native-diff-summary"></span><button id="agent-native-diff-refresh" type="button" class="agent-mini-btn">刷新</button></div>
           <div id="agent-native-diff-list" class="agent-native-list"><span class="agent-context-empty">选择会话后读取 OpenCode Diff。</span></div>
           <section class="agent-native-git-section">
             <div class="agent-native-section-head"><strong>Git 工作流</strong><span id="agent-native-git-status">读取中...</span></div>
@@ -460,6 +461,7 @@
               <button id="agent-opencode-runtime-refresh" type="button" class="agent-mini-btn">刷新</button>
             </div>
           </div>
+          <div id="agent-opencode-resource-summary" class="agent-resource-summary" aria-live="polite"></div>
           <div id="agent-opencode-runtime-list" class="agent-native-list">
             <span class="agent-context-empty">切换到此页面后读取本插件启动的 OpenCode 服务。</span>
           </div>
