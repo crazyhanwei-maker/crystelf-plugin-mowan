@@ -27,7 +27,16 @@
     <div id="group-management-risk" class="risk-box hidden"></div>
     <div id="group-management-success" class="success-box hidden"></div>
 
-    <section class="panel group-management-event-panel">
+    <nav id="group-management-workspace-nav" class="group-management-workspace-nav" aria-label="群管理工作区">
+      <div class="group-management-workspace-tabs" role="tablist" aria-label="群管理页面分区">
+        <button type="button" class="tab-btn group-management-workspace-tab active" role="tab" aria-selected="true" data-workspace="current">当前群</button>
+        <button type="button" class="tab-btn group-management-workspace-tab" role="tab" aria-selected="false" data-workspace="settings">全局设置</button>
+        <button type="button" class="tab-btn group-management-workspace-tab" role="tab" aria-selected="false" data-workspace="operations">事件与诊断</button>
+      </div>
+      <div id="group-management-workspace-hint" class="group-management-workspace-hint">选择群聊并调整该群的功能与风控规则。</div>
+    </nav>
+
+    <section class="panel group-management-event-panel group-management-workspace-hidden" data-workspace-panel="operations">
       <div class="section-head">
         <div>
           <h2>实时事件流</h2>
@@ -61,7 +70,7 @@
       <div id="group-management-event-stream" class="group-management-event-stream">事件加载中...</div>
     </section>
 
-    <section class="panel group-management-toolbar-panel">
+    <section class="panel group-management-toolbar-panel" data-workspace-panel="current">
       <div class="section-head">
         <div>
           <h2>群检索</h2>
@@ -76,7 +85,7 @@
       <div id="group-management-summary" class="dashboard-strip"></div>
     </section>
 
-    <section class="panel group-management-health-panel">
+    <section class="panel group-management-health-panel group-management-workspace-hidden" data-workspace-panel="operations">
       <div class="section-head">
         <div>
           <h2>配置健康检查</h2>
@@ -93,7 +102,7 @@
       <div id="group-management-health" class="group-management-health">健康检查加载中...</div>
     </section>
 
-    <section class="panel group-management-safety-panel">
+    <section class="panel group-management-safety-panel group-management-workspace-hidden" data-workspace-panel="settings">
       <div class="section-head">
         <div>
           <h2>群管安全开关</h2>
@@ -106,7 +115,7 @@
       <div id="group-management-safety">加载中...</div>
     </section>
 
-    <section class="panel group-management-default-panel">
+    <section class="panel group-management-default-panel group-management-workspace-hidden" data-workspace-panel="settings">
       <div class="section-head">
         <div>
           <h2>默认群设置</h2>
@@ -119,7 +128,7 @@
       <div id="group-management-defaults">加载中...</div>
     </section>
 
-    <section class="panel group-management-bulk-panel">
+    <section class="panel group-management-bulk-panel group-management-workspace-hidden" data-workspace-panel="settings">
       <div class="section-head">
         <div>
           <h2>批量开启群</h2>
@@ -147,7 +156,7 @@
       <div id="group-management-bulk-list" class="group-management-bulk-list">加载中...</div>
     </section>
 
-    <div class="group-management-shell">
+    <div class="group-management-shell" data-workspace-panel="current">
       <section class="panel group-management-list-panel">
         <div class="section-head">
           <div>
@@ -163,7 +172,7 @@
       </section>
     </div>
 
-    <section class="panel group-management-log-panel">
+    <section class="panel group-management-log-panel group-management-workspace-hidden" data-workspace-panel="operations">
       <div class="section-head">
         <div>
           <h2>群管理日志</h2>
