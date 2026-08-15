@@ -2139,50 +2139,6 @@ const guobaSchema = [
     bottomHelpMessage: '开启后会移除 AI 文本回复中的 Unicode emoji 字符，避免模型频繁乱发表情；不影响 [meme:角色:情绪] 这类表情包指令',
   },
   {
-    label: '故障降级',
-    component: 'SOFT_GROUP_BEGIN',
-  },
-  {
-    field: 'ai.fallbackReply',
-    label: '故障降级回复',
-    component: 'InputTextArea',
-    bottomHelpMessage: '模型超时、失败或没有产出可发送内容时使用的兜底回复；支持一行一句，失败时随机抽一条，留空则按系统默认策略生成',
-    componentProps: {
-      rows: 4,
-      placeholder: '例如：\n我刚刚有点卡住了，你可以稍后再试试。\n我这次没顺利组织好回复，换个简短问法再试一次吧。',
-    },
-  },
-  {
-    field: 'ai.fallbackSearchReply',
-    label: '联网失败回复',
-    component: 'InputTextArea',
-    bottomHelpMessage: '联网搜索、网页读取等外部检索失败时使用的兜底回复；支持一行一句随机抽取，留空则按系统默认策略生成',
-    componentProps: {
-      rows: 4,
-      placeholder: '例如：\n我刚刚想去网上查资料，但这次外部检索没成功。\n这次联网查资料没成功，你可以晚点再问我。',
-    },
-  },
-  {
-    field: 'ai.fallbackTimeoutReply',
-    label: '超时失败回复',
-    component: 'InputTextArea',
-    bottomHelpMessage: '模型处理超时时使用的兜底回复；支持一行一句随机抽取，留空则按系统默认策略生成',
-    componentProps: {
-      rows: 4,
-      placeholder: '例如：\n我这次思考得有点久，结果超时了。\n我刚刚处理超时了，你可以把问题拆短一点再问我。',
-    },
-  },
-  {
-    field: 'ai.fallbackGenericReply',
-    label: '通用失败回复',
-    component: 'InputTextArea',
-    bottomHelpMessage: '其他通用失败场景使用的兜底回复；支持一行一句随机抽取，留空则按系统默认策略生成',
-    componentProps: {
-      rows: 4,
-      placeholder: '例如：\n我刚刚出了点小问题，暂时没组织好回复。\n这次没顺利答上来，你可以换个说法再试试。',
-    },
-  },
-  {
     field: 'ai.maxSessions',
     label: '最大会话数',
     component: 'InputNumber',
@@ -2228,6 +2184,50 @@ const guobaSchema = [
       max: 100,
       step: 1,
       placeholder: '请输入抓取群历史条数',
+    },
+  },
+  {
+    label: '故障降级',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'ai.fallbackReply',
+    label: '故障降级回复',
+    component: 'InputTextArea',
+    bottomHelpMessage: '模型超时、失败或没有产出可发送内容时使用的兜底回复；支持一行一句，失败时随机抽一条，留空则按系统默认策略生成',
+    componentProps: {
+      rows: 4,
+      placeholder: '例如：\n我刚刚有点卡住了，你可以稍后再试试。\n我这次没顺利组织好回复，换个简短问法再试一次吧。',
+    },
+  },
+  {
+    field: 'ai.fallbackSearchReply',
+    label: '联网失败回复',
+    component: 'InputTextArea',
+    bottomHelpMessage: '联网搜索、网页读取等外部检索失败时使用的兜底回复；支持一行一句随机抽取，留空则按系统默认策略生成',
+    componentProps: {
+      rows: 4,
+      placeholder: '例如：\n我刚刚想去网上查资料，但这次外部检索没成功。\n这次联网查资料没成功，你可以晚点再问我。',
+    },
+  },
+  {
+    field: 'ai.fallbackTimeoutReply',
+    label: '超时失败回复',
+    component: 'InputTextArea',
+    bottomHelpMessage: '模型处理超时时使用的兜底回复；支持一行一句随机抽取，留空则按系统默认策略生成',
+    componentProps: {
+      rows: 4,
+      placeholder: '例如：\n我这次思考得有点久，结果超时了。\n我刚刚处理超时了，你可以把问题拆短一点再问我。',
+    },
+  },
+  {
+    field: 'ai.fallbackGenericReply',
+    label: '通用失败回复',
+    component: 'InputTextArea',
+    bottomHelpMessage: '其他通用失败场景使用的兜底回复；支持一行一句随机抽取，留空则按系统默认策略生成',
+    componentProps: {
+      rows: 4,
+      placeholder: '例如：\n我刚刚出了点小问题，暂时没组织好回复。\n这次没顺利答上来，你可以换个说法再试试。',
     },
   },
   {
@@ -2423,8 +2423,17 @@ const guobaSchema = [
     },
   },
   {
-    label: '知识库与人设',
+    label: '机器人身份与人设',
     component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'profile.nickName',
+    label: '机器人昵称',
+    component: 'Input',
+    bottomHelpMessage: '机器人在回复、提示词和功能展示中使用的名称',
+    componentProps: {
+      placeholder: '请输入机器人昵称',
+    },
   },
   {
     field: 'ai.botPersona',
@@ -2435,6 +2444,10 @@ const guobaSchema = [
       rows: 4,
       placeholder: '请输入机器人人设描述',
     },
+  },
+  {
+    label: '知识库',
+    component: 'SOFT_GROUP_BEGIN',
   },
   {
     field: 'ai.knowledgeBaseEnabled',
@@ -4003,20 +4016,6 @@ const guobaSchema = [
     },
   },
 
-  // profile.json - 用户资料配置
-  {
-    label: '机器人资料',
-    component: 'SOFT_GROUP_BEGIN',
-  },
-  {
-    field: 'profile.nickName',
-    label: '机器人昵称',
-    component: 'Input',
-    bottomHelpMessage: '机器人的昵称',
-    componentProps: {
-      placeholder: '请输入机器人昵称',
-    },
-  },
 ];
 
 export default guobaSchema;

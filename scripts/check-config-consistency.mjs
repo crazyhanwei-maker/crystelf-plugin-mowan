@@ -19,6 +19,12 @@ const DERIVED_SCHEMA_FIELDS = new Set([
   'coreConfig.usageControl.totalLogFile',
   'coreConfig.tools.tts.modelSummary',
 ]);
+const EXPECTED_SCHEMA_GROUPS = {
+  'ai.maxSessions': '对话与会话',
+  'ai.chatHistory': '对话与会话',
+  'ai.maxMessageLength': '对话与会话',
+  'ai.getChatHistoryLength': '对话与会话',
+};
 
 function hasOwnPath(source, parts = []) {
   let current = source;
@@ -63,7 +69,21 @@ async function main() {
   const missingFields = [];
   const invalidSecretComponents = [];
   const duplicateFields = [];
+  const invalidGroups = [];
   const seenFields = new Set();
+
+  let currentGroup = '默认分组';
+  for (const item of Array.isArray(guobaSchema) ? guobaSchema : []) {
+    if (item?.component === 'SOFT_GROUP_BEGIN') {
+      currentGroup = item.label || '默认分组';
+      continue;
+    }
+    const field = String(item?.field || '').trim();
+    const expectedGroup = EXPECTED_SCHEMA_GROUPS[field];
+    if (expectedGroup && currentGroup !== expectedGroup) {
+      invalidGroups.push(`${field} 应属于 ${expectedGroup}，实际属于 ${currentGroup}`);
+    }
+  }
 
   for (const item of schemaItems) {
     const field = String(item.field || '').trim();
@@ -96,7 +116,8 @@ async function main() {
   const ok = missingRoots.length === 0
     && missingFields.length === 0
     && duplicateFields.length === 0
-    && invalidSecretComponents.length === 0;
+    && invalidSecretComponents.length === 0
+    && invalidGroups.length === 0;
 
   const result = {
     ok,
@@ -107,6 +128,7 @@ async function main() {
     missingFields,
     duplicateFields,
     invalidSecretComponents,
+    invalidGroups,
   };
 
   console.log(JSON.stringify(result, null, 2));

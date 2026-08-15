@@ -137,6 +137,14 @@ window.MowanSiteData = {
   simulatorTags: ['@用户', '图片', '语音', '表情', '回复', 'CQ 码', 'meme', '批量回放', '超时取消'],
   changelog: [
     {
+      version: '2.2.1',
+      date: '2026-08',
+      items: [
+        '更新检查支持多源回退：第一源 Gitee 不可用时，自动切换到 GitHub 备用仓库 crystelf-plugin-mowan，群内更新与控制台版本检查同步生效。',
+        '同步更新插件 User-Agent、状态图和官网版本文案到 2.2.1。',
+      ],
+    },
+    {
       version: '2.2.0',
       date: '2026-07',
       items: [

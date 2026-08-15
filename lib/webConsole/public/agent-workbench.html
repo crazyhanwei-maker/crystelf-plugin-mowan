@@ -24,14 +24,14 @@
       </div>
       <div class="agent-topbar-actions">
         <button id="agent-new-task-btn" type="button" class="agent-quiet-btn">新建会话</button>
-        <button id="agent-native-toggle" type="button" class="agent-quiet-btn">OpenCode</button>
+        <button id="agent-native-toggle" type="button" class="agent-quiet-btn" title="OpenCode 控制中心" aria-label="OpenCode 控制中心">OpenCode</button>
         <button id="agent-close-opencode-btn" type="button" class="agent-quiet-btn agent-close-opencode-btn" title="关闭本插件启动的 OpenCode 后台服务">关闭 OpenCode</button>
-        <button id="agent-mobile-sessions" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="sessions" aria-expanded="false">会话</button>
-        <button id="agent-mobile-context" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="context" aria-expanded="false">上下文</button>
-        <button id="agent-settings-toggle" type="button" class="agent-quiet-btn" aria-haspopup="dialog" aria-controls="agent-settings-mask" aria-expanded="false">设置</button>
+        <button id="agent-mobile-sessions" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="sessions" title="会话" aria-label="会话" aria-expanded="false">会话</button>
+        <button id="agent-mobile-context" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="context" title="任务上下文" aria-label="任务上下文" aria-expanded="false">上下文</button>
+        <button id="agent-settings-toggle" type="button" class="agent-quiet-btn" title="Agent 设置" aria-label="Agent 设置" aria-haspopup="dialog" aria-controls="agent-settings-mask" aria-expanded="false">设置</button>
         <button id="agent-refresh-btn" type="button" class="agent-quiet-btn">刷新</button>
         <a class="agent-quiet-btn agent-link-btn" href="/index.html">返回</a>
-        <button id="theme-toggle-btn" type="button" class="agent-quiet-btn" data-theme-toggle>主题</button>
+        <button id="theme-toggle-btn" type="button" class="agent-quiet-btn" data-theme-toggle title="切换亮色或暗色主题" aria-label="切换亮色或暗色主题">主题</button>
       </div>
     </header>
 
@@ -116,6 +116,7 @@
         </div>
 
         <form id="agent-composer-form" class="agent-composer" autocomplete="off">
+          <div id="agent-mobile-action-tray" class="agent-mobile-action-tray" aria-live="polite"></div>
           <section id="agent-slash-menu" class="agent-slash-menu hidden" aria-label="斜杠命令" role="listbox">
             <div class="agent-slash-menu-head">
               <strong>命令</strong>
@@ -182,7 +183,7 @@
               <button id="agent-slash-btn" type="button" class="agent-icon-btn agent-slash-btn" title="斜杠命令" aria-label="斜杠命令" aria-expanded="false">/</button>
               <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" title="任务设置" aria-label="任务设置" aria-expanded="false">☷</button>
               <label class="agent-composer-option agent-desktop-worktree"><input id="agent-use-worktree" type="checkbox" /><span>Worktree</span></label>
-              <span id="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
+              <span id="agent-composer-hint" class="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
               <div id="agent-followup-control" class="agent-followup-control hidden" role="group" aria-label="运行中跟进方式">
@@ -479,6 +480,7 @@
   </div>
 
   <script src="/auth.js"></script>
+  <script src="/vendor/markdown-it.min.js"></script>
   <script src="/agent-workbench.js"></script>
   <script src="/theme.js"></script>
 </body>
