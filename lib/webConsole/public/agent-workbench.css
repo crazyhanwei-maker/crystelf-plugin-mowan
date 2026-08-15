@@ -640,27 +640,8 @@
 }
 
 .agent-message-user {
-  flex-direction: row-reverse;
-}
-
-.agent-message-avatar {
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: #e2e8f0;
-  color: #475569;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.agent-avatar-agent {
-  background: #0f172a;
-  color: #f8fafc;
-  font-family: Georgia, serif;
-  font-size: 17px;
+  justify-content: flex-end;
+  gap: 0;
 }
 
 .agent-message-body {
@@ -669,8 +650,8 @@
 }
 
 .agent-message-agent .agent-message-body {
-  width: min(96%, 880px);
-  max-width: min(96%, 880px);
+  width: 100%;
+  max-width: 100%;
 }
 
 .agent-message-user .agent-message-body {
@@ -692,8 +673,7 @@
   justify-content: flex-end;
 }
 
-.agent-message-label time,
-.agent-message-stage {
+.agent-message-label time {
   color: var(--agent-muted);
   font-size: 10px;
   font-weight: 500;
@@ -851,6 +831,57 @@
   color: var(--agent-muted);
   font-size: 10px;
   line-height: 1.4;
+}
+
+.agent-work-report {
+  margin: 0 0 14px;
+  border: 0;
+  border-bottom: 1px solid var(--agent-line);
+  background: transparent;
+}
+
+.agent-work-report > summary,
+.agent-work-report-empty {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 6px 0;
+  color: var(--agent-muted);
+  font-size: 11px;
+  font-weight: 500;
+  list-style: none;
+}
+
+.agent-work-report > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.agent-work-report > summary::-webkit-details-marker { display: none; }
+
+.agent-work-report-chevron {
+  display: inline-block;
+  color: var(--agent-muted);
+  font-size: 17px;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.agent-work-report[open] > summary .agent-work-report-chevron {
+  transform: rotate(90deg);
+}
+
+.agent-work-report-body {
+  display: grid;
+  gap: 8px;
+  padding: 2px 0 10px;
+}
+
+.agent-work-report-body > .agent-artifact-card,
+.agent-work-report-body > .agent-event-card,
+.agent-work-report-body > .agent-usage-meta {
+  margin-top: 0;
 }
 
 .agent-native-message-actions {
@@ -2608,7 +2639,6 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-chat-actions .agent-cancel-btn { min-height: 27px; padding: 4px 7px; border: 0; font-size: 10px; }
   .agent-chat-stream { padding: 20px 18px 30px; }
   .agent-message { gap: 0; margin-bottom: 26px; }
-  .agent-message-avatar { display: none; }
   .agent-message-body { max-width: 88%; }
   .agent-message-agent .agent-message-body { width: 100%; max-width: 100%; }
   .agent-message-user { justify-content: flex-end; }
