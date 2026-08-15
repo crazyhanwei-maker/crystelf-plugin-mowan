@@ -124,55 +124,56 @@
             </div>
             <div id="agent-slash-list" class="agent-slash-list"></div>
           </section>
-          <div class="agent-composer-toolbar">
-            <span class="agent-composer-context"><span class="agent-online-dot"></span><span id="agent-composer-context-label">等待 Agent 状态</span></span>
-            <div id="agent-composer-options" class="agent-composer-options">
-              <label class="agent-title-inline">
-                <span>标题</span>
-                <input id="agent-title" type="text" maxlength="80" placeholder="可选" />
-              </label>
-              <label class="agent-model-inline">
-                <span>模型</span>
-                <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
-              </label>
-              <label class="agent-model-inline">
-                <span>思考等级</span>
-                <div id="agent-variant-control" class="agent-variant-control">
-                  <select id="agent-variant" title="使用模型默认思考等级">
-                    <option value="">默认</option>
-                    <option value="minimal">最低</option>
-                    <option value="low">低</option>
-                    <option value="medium">中</option>
-                    <option value="high">高</option>
-                    <option value="xhigh">极高</option>
-                    <option value="max">最大</option>
-                    <option value="__custom__">自定义</option>
-                  </select>
-                  <input id="agent-variant-custom" class="hidden" type="text" maxlength="80" placeholder="如 Ultra-Pro" spellcheck="false" />
-                </div>
-              </label>
-              <label class="agent-model-inline">
-                <span>Agent</span>
-                <select id="agent-agent"><option value="plan">plan</option><option value="build">build</option></select>
-              </label>
-              <label class="agent-model-inline">
-                <span>优先级</span>
-                <select id="agent-priority"><option value="high">高</option><option value="normal" selected>普通</option><option value="low">低</option></select>
-              </label>
-              <label class="agent-mobile-mode-inline">
-                <span>任务模式</span>
-                <select id="agent-mobile-mode">
-                  <option value="analyze">只读分析</option>
-                  <option value="patch">补丁建议</option>
-                  <option value="edit">实际修改文件</option>
-                  <option value="full">完全访问</option>
+          <div id="agent-composer-options" class="agent-composer-options">
+            <label class="agent-title-inline">
+              <span>标题</span>
+              <input id="agent-title" type="text" maxlength="80" placeholder="可选" />
+            </label>
+            <label class="agent-model-inline agent-model-field">
+              <span>模型</span>
+              <input id="agent-model" type="text" maxlength="160" placeholder="默认模型" />
+            </label>
+            <label class="agent-model-inline">
+              <span>思考等级</span>
+              <div id="agent-variant-control" class="agent-variant-control">
+                <select id="agent-variant" title="使用模型默认思考等级">
+                  <option value="">默认</option>
+                  <option value="minimal">最低</option>
+                  <option value="low">低</option>
+                  <option value="medium">中</option>
+                  <option value="high">高</option>
+                  <option value="xhigh">极高</option>
+                  <option value="max">最大</option>
+                  <option value="__custom__">自定义</option>
                 </select>
-              </label>
-              <label class="agent-mobile-worktree">
-                <input id="agent-mobile-worktree" type="checkbox" />
-                <span>使用隔离 Worktree</span>
-              </label>
-            </div>
+                <input id="agent-variant-custom" class="hidden" type="text" maxlength="80" placeholder="如 Ultra-Pro" spellcheck="false" />
+              </div>
+            </label>
+            <label class="agent-model-inline">
+              <span>Agent</span>
+              <select id="agent-agent"><option value="plan">plan</option><option value="build">build</option></select>
+            </label>
+            <label class="agent-model-inline">
+              <span>优先级</span>
+              <select id="agent-priority"><option value="high">高</option><option value="normal" selected>普通</option><option value="low">低</option></select>
+            </label>
+            <label class="agent-mobile-mode-inline">
+              <span>任务模式</span>
+              <select id="agent-mobile-mode">
+                <option value="analyze">只读分析</option>
+                <option value="patch">补丁建议</option>
+                <option value="edit">实际修改文件</option>
+                <option value="full">完全访问</option>
+              </select>
+            </label>
+            <label class="agent-mobile-worktree">
+              <input id="agent-mobile-worktree" type="checkbox" />
+              <span>使用隔离 Worktree</span>
+            </label>
+            <label class="agent-composer-option agent-desktop-worktree">
+              <input id="agent-use-worktree" type="checkbox" />
+              <span>使用隔离 Worktree</span>
+            </label>
           </div>
           <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...\n例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
           <div id="agent-attachment-list" class="agent-attachment-list"></div>
@@ -181,8 +182,7 @@
               <input id="agent-attachment-input" type="file" multiple hidden />
               <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
               <button id="agent-slash-btn" type="button" class="agent-icon-btn agent-slash-btn" title="斜杠命令" aria-label="斜杠命令" aria-expanded="false">/</button>
-              <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" title="任务设置" aria-label="任务设置" aria-expanded="false">☷</button>
-              <label class="agent-composer-option agent-desktop-worktree"><input id="agent-use-worktree" type="checkbox" /><span>Worktree</span></label>
+              <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" data-agent-composer-options-toggle title="任务设置" aria-label="任务设置" aria-expanded="false">⚙</button>
               <span id="agent-composer-hint" class="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
@@ -191,19 +191,23 @@
                 <button type="button" data-agent-followup="steer" title="立即把补充要求注入当前执行">调整</button>
               </div>
               <span class="agent-key-hint">Enter 发送 · Shift + Enter 换行</span>
+              <button id="agent-composer-settings-btn" type="button" class="agent-composer-settings-btn" data-agent-composer-options-toggle title="任务设置" aria-label="任务设置" aria-expanded="false"><span aria-hidden="true">⚙</span>设置</button>
               <button id="agent-run-btn" type="submit">发送</button>
             </div>
           </div>
         </form>
       </main>
 
-      <aside class="agent-context-sidebar" aria-label="Agent 上下文">
+      <aside id="agent-context-sidebar" class="agent-context-sidebar" aria-label="Agent 上下文">
         <div class="agent-context-head">
           <div>
             <span class="agent-eyebrow">CONTEXT</span>
             <strong>任务上下文</strong>
           </div>
-          <span id="agent-workbench-status" class="agent-context-status">等待运行状态</span>
+          <div class="agent-context-head-end">
+            <span id="agent-workbench-status" class="agent-context-status">等待运行状态</span>
+            <button id="agent-context-collapse-btn" type="button" class="agent-context-collapse-btn" aria-controls="agent-context-sidebar" aria-expanded="true" title="收起任务上下文" aria-label="收起任务上下文"><span aria-hidden="true">›</span></button>
+          </div>
         </div>
         <div id="agent-context-files" class="agent-context-section">
           <div class="agent-context-section-head"><span>文件改动</span><span id="agent-context-file-count">0</span></div>
