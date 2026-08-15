@@ -95,6 +95,8 @@
       "maxOpenCodeRuntimes": 2,
       "?runtimeIdleTimeoutMs": "OpenCode 后台运行时空闲多久后自动关闭，单位毫秒",
       "runtimeIdleTimeoutMs": 120000,
+      "?manualContextLimit": "模型未返回上下文上限时使用的手动容量，单位 Token；0 表示不启用，最大 10000000",
+      "manualContextLimit": 0,
       "?autoCompactEnabled": "是否在发送新消息前自动压缩接近上限的会话上下文",
       "autoCompactEnabled": true,
       "?autoCompactThreshold": "上下文使用率达到多少百分比时自动压缩，范围 50-95",
