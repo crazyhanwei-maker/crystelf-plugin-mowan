@@ -37,6 +37,7 @@ import {
   extractAgentJsonError,
   extractOpenCodeSessionId,
   getAgentWorkspaceOptions,
+  hasCompletedOpenCodeAssistantTurn,
   normalizeAgentWorkbenchConfig,
 } from '../lib/webConsole/agentWorkbenchConsole.js';
 import {
@@ -434,6 +435,17 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(script.includes("command.kind === 'native'") && script.includes('runNativeCommand(command.nativeCommand'), 'OpenCode 自定义 Command 没有接入输入框');
   assert(script.includes("['status', 'terminal', 'search', 'worktrees'].includes(command.action)"), 'OpenCode 能力中心没有接入斜杠命令');
   assert(consoleSource.includes('/prompt_async') && consoleSource.includes('waitForOpenCodeSessionIdle') && consoleSource.includes('/session/status'), 'Agent 没有使用 OpenCode 异步任务链路或兼容等待');
+  const previousAssistantIds = new Set(['msg_old']);
+  assert(!hasCompletedOpenCodeAssistantTurn([
+    { info: { id: 'msg_old', role: 'assistant', time: { completed: Date.now() } }, parts: [{ type: 'text', text: '旧回复' }] },
+  ], previousAssistantIds), 'Agent 多轮等待错误地把旧助手回复识别为本轮完成');
+  assert(!hasCompletedOpenCodeAssistantTurn([
+    { info: { id: 'msg_new', role: 'assistant', time: { created: Date.now() } }, parts: [{ type: 'text', text: '生成中' }] },
+  ], previousAssistantIds), 'Agent 多轮等待错误地把生成中的助手回复识别为本轮完成');
+  assert(hasCompletedOpenCodeAssistantTurn([
+    { info: { id: 'msg_new', role: 'assistant', time: { created: Date.now(), completed: Date.now() } }, parts: [{ type: 'text', text: '本轮回复' }] },
+  ], previousAssistantIds), 'Agent 多轮等待没有识别本轮已完成的助手回复');
+  assert(consoleSource.includes('completionCheck: async () =>') && consoleSource.includes('hasCompletedOpenCodeAssistantTurn(messages, previousOpenCodeMessageIds)'), 'Agent 异步等待没有校验本轮新助手消息');
   assert(consoleSource.includes('/api/session/${encodeURIComponent(task.opencodeSessionId)}/prompt') && consoleSource.includes('delivery: normalizeAgentDelivery') && consoleSource.includes('scheduleTaskFollowUpFlush'), 'Agent 运行中跟进没有接入 OpenCode 原生队列与 Steering');
   assert(html.includes('id="agent-followup-control"') && html.includes('data-agent-followup="queue"') && html.includes('data-agent-followup="steer"') && script.includes('followUpDelivery'), 'Agent 工作台缺少排队跟进与立即调整入口');
   assert(consoleSource.includes('async function getSessionHistory') && routesSource.includes('/history$/'), 'OpenCode 原生会话历史接口缺失');
