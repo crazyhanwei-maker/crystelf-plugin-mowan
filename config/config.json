@@ -61,7 +61,7 @@
   "webConsole": true,
   "?webConsoleToken": "控制台登录页使用的口令；留空时启动控制台会自动生成随机口令、写入运行配置并在启动日志输出",
   "webConsoleToken": "",
-  "?webConsolePublicUrl": "控制台公网访问地址；用于 #灵晶登录 生成一次性登录链接，留空时自动检测服务器公网 IPv4/IPv6；使用 CDN、NAT 或反向代理时请手动填写",
+  "?webConsolePublicUrl": "控制台公网访问地址；用于 #灵晶登录 生成一次性登录链接，留空时自动查询公网 IP 服务并回退到网卡地址；使用 CDN、NAT 或反向代理时请手动填写",
   "webConsolePublicUrl": "",
   "?webConsolePageSize": "本地控制台列表每页数量",
   "webConsolePageSize": 20,

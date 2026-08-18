@@ -2,7 +2,7 @@ import plugin from '../../../lib/plugins/plugin.js';
 import ConfigControl from '../lib/config/configControl.js';
 import { createWebConsoleLoginTicket } from '../lib/webConsole/loginTicketStore.js';
 import { getWebConsoleInfo } from '../lib/webConsole/server.js';
-import { resolveWebConsoleLoginBaseUrl } from '../lib/webConsole/publicUrlResolver.js';
+import { resolveWebConsoleLoginBaseUrlAsync } from '../lib/webConsole/publicUrlResolver.js';
 
 const LOGIN_TICKET_TTL_MS = 5 * 60 * 1000;
 
@@ -104,7 +104,7 @@ export default class CrystelfWebConsoleLogin extends plugin {
       return e.reply('控制台功能当前已关闭，请先在配置里开启 webConsole。', true);
     }
 
-    const resolvedBaseUrl = resolveWebConsoleLoginBaseUrl({
+    const resolvedBaseUrl = await resolveWebConsoleLoginBaseUrlAsync({
       config,
       runtimeInfo: getWebConsoleInfo() || {},
     });
@@ -130,7 +130,9 @@ export default class CrystelfWebConsoleLogin extends plugin {
       '有效期：5 分钟',
       '打开后自动失效，请不要转发给其他人。',
     ];
-    if (resolvedBaseUrl.source === 'auto-public') {
+    if (resolvedBaseUrl.source === 'auto-external-public') {
+      lines.push('', `当前地址由公网 IP 服务自动识别（${resolvedBaseUrl.externalIpSource || '网络服务'}）；如果使用了 NAT、CDN、反向代理或端口未转发，请在控制台设置中填写 webConsolePublicUrl。`);
+    } else if (resolvedBaseUrl.source === 'auto-public') {
       lines.push('', '当前地址由服务器网卡自动识别；如果使用了 CDN、NAT 或反向代理，请在控制台设置中填写 webConsolePublicUrl。');
     } else if (resolvedBaseUrl.source === 'auto-private') {
       lines.push('', '当前只检测到内网地址，外网可能无法访问；请填写 webConsolePublicUrl 或检查服务器公网网络。');
