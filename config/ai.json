@@ -36,6 +36,11 @@
   "blockGroup": [],
   "?whiteGroup": "白名单群聊(为空则所有群都可用)",
   "whiteGroup": [],
+  "?pseudoHuman": "伪人模式：按群单独配置普通聊天随机触发 AI",
+  "pseudoHuman": {
+    "?groups": "按群号配置 enabled 和 probability（0-100）",
+    "groups": {}
+  },
   "?character": "回复表情包的角色",
   "character": "",
   "?memeConfig": "表情包发送配置",

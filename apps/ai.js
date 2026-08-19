@@ -169,6 +169,19 @@ function hasRecentBotActivity(lastBotTime, aiConfig) {
   return Date.now() - lastBotTime <= followUpConfig.windowMs;
 }
 
+function getPseudoHumanConfig(aiConfig = {}, groupId = '') {
+  const groups = aiConfig?.pseudoHuman?.groups;
+  const raw = groups && typeof groups === 'object' && !Array.isArray(groups)
+    ? groups[String(groupId ?? '').trim()]
+    : null;
+  const probability = Math.min(100, Math.max(0, Number(raw?.probability ?? 10) || 0));
+  return {
+    enabled: raw?.enabled === true && probability > 0,
+    probability,
+    historyLimit: 10,
+  };
+}
+
 function isCommandPrefixedMessage(text = '') {
   return /^(#|＃|\/)/.test(String(text || '').trim());
 }
@@ -1417,6 +1430,7 @@ export class crystelfAI extends plugin {
       this.processingSet = new Set();
       this.idleCheckProcessing = new Set();
       this.groupLastIdleCheckTime = new Map();
+      this.groupRecentMessages = new Map();
       this.sessionControlState = new Map();
       this.sessionLastKnowledgeMatches = new Map();
       this.sessionLastToolCalls = new Map();
@@ -1582,21 +1596,30 @@ export class crystelfAI extends plugin {
       await this.init();
     }
     const aiConfig = await ConfigControl.get('ai');
+    const groupSessionId = `group:${e.group_id}`;
     const commandPrefixed = isCommandPrefixedMessage(e?.msg);
     if (commandPrefixed) {
       return false;
     }
+    const recentMessages = this.getRecentGroupMessages(groupSessionId);
+    this.recordRecentGroupMessage(groupSessionId, e);
     const pokeHandled = await processPokeFollowUpMessage(e).catch(() => false);
     if (pokeHandled) {
       return true;
     }
-    const groupSessionId = `group:${e.group_id}`;
     if (this.sessionControlState?.get(groupSessionId)?.pauseFollowUp && !shouldObserveGroupMessage(e, aiConfig)) {
       return false;
     }
     const lastBotTime = this.groupLastBotMessageTime?.get(groupSessionId) ?? 0;
-    if (!shouldObserveGroupMessage(e, aiConfig) && !hasRecentBotActivity(lastBotTime, aiConfig)) {
-      return false;
+    const observed = shouldObserveGroupMessage(e, aiConfig);
+    const recentBotActivity = hasRecentBotActivity(lastBotTime, aiConfig);
+    if (!observed && !recentBotActivity) {
+      const pseudoHuman = getPseudoHumanConfig(aiConfig, e.group_id);
+      if (!pseudoHuman.enabled || Math.random() * 100 >= pseudoHuman.probability) return false;
+      return await this.handleMessage(e, {
+        pseudoHumanHistory: recentMessages.slice(-pseudoHuman.historyLimit),
+        decisionSource: 'pseudo_human',
+      });
     }
     return await this.handleMessage(e);
   }
@@ -1695,6 +1718,7 @@ export class crystelfAI extends plugin {
     this.groupLastActivityTime?.delete(groupSessionId);
     this.groupMessageCount?.delete(groupSessionId);
     this.groupLastBotMessageTime?.delete(groupSessionId);
+    this.groupRecentMessages?.delete(groupSessionId);
     this.groupMessageCountAfterBot?.delete(groupSessionId);
     this.groupCooldownUntil?.delete(groupSessionId);
     this.groupCooldownMessages?.delete(groupSessionId);
@@ -1933,7 +1957,34 @@ export class crystelfAI extends plugin {
     }
   }
 
-  async handleMessage(e) {
+  getRecentGroupMessages(groupSessionId = '') {
+    const messages = this.groupRecentMessages?.get(String(groupSessionId || ''));
+    if (Array.isArray(messages) && messages.length > 0) return messages.slice(-10);
+    try {
+      const stored = this.db?.getMessages?.(String(groupSessionId || ''), 10);
+      return Array.isArray(stored) ? stored.slice(-10) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  recordRecentGroupMessage(groupSessionId = '', e = {}) {
+    if (!groupSessionId || isBotUser(e?.user_id, e)) return;
+    const text = String(e?.msg || '').trim();
+    if (!text || isCommandPrefixedMessage(text)) return;
+    const messages = this.groupRecentMessages?.get(groupSessionId) || [];
+    messages.push({
+      role: 'user',
+      content: text,
+      userId: e?.user_id,
+      userName: e?.sender?.nickname || e?.sender?.card || '',
+      timestamp: Date.now(),
+    });
+    while (messages.length > 10) messages.shift();
+    this.groupRecentMessages?.set(groupSessionId, messages);
+  }
+
+  async handleMessage(e, options = {}) {
     try {
       const config = await ConfigControl.get();
       const aiConfig = config?.ai;
@@ -2088,6 +2139,17 @@ export class crystelfAI extends plugin {
       this.processingSet.add(groupSessionId);
 
       try {
+        if (Array.isArray(options?.pseudoHumanHistory)) {
+          if (!this.rateLimiter.canProcess(e.user_id, e.group_id, e.msg)) return;
+          this.rateLimiter.record(e.user_id, e.group_id, e.msg);
+          await this.processChat(e, aiConfig, {
+            skipPlanner: true,
+            pseudoHumanHistory: options.pseudoHumanHistory,
+            decisionSource: 'pseudo_human',
+          });
+          return;
+        }
+
         if (flag) {
           if (!this.rateLimiter.canProcess(e.user_id, e.group_id, e.msg)) return;
 
@@ -2678,7 +2740,9 @@ export class crystelfAI extends plugin {
         return;
       }
 
-      const history = this.db.getMessages(groupSessionId, aiConfig.chatHistory || 30);
+      const history = Array.isArray(options?.pseudoHumanHistory)
+        ? options.pseudoHumanHistory
+        : this.db.getMessages(groupSessionId, aiConfig.chatHistory || 30);
       const botNickname = nickname || 'Bot';
       const sessionControl = this.sessionControlState?.get(groupSessionId) || {};
 
@@ -3949,6 +4013,7 @@ export class crystelfAI extends plugin {
       this.groupLastActivityTime.delete(groupSessionId);
       this.groupMessageCount.delete(groupSessionId);
       this.groupLastBotMessageTime.delete(groupSessionId);
+      this.groupRecentMessages.delete(groupSessionId);
       this.groupMessageCountAfterBot.delete(groupSessionId);
       this.groupCooldownUntil.delete(groupSessionId);
       this.groupCooldownMessages.delete(groupSessionId);
