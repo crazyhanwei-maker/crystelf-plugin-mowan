@@ -17,7 +17,8 @@ import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
 import { evaluateSpamMessageWindow } from '../lib/groupManagement/contentModerationRuntime.js';
-import { buildChatCompletionMessages } from '../lib/ai/chatEngine.js';
+import { buildChatCompletionMessages, resolveChatModel, runChat } from '../lib/ai/chatEngine.js';
+import AiCaller from '../lib/ai/aiCaller.js';
 import { MemoryRetrieval } from '../lib/humanize/memoryRetrieval.js';
 import {
   buildSdWebUiApiUrl,
@@ -581,7 +582,102 @@ function checkChatEngineUserMessageCompatibility() {
 
   assert(cases[0][1].content === targetMessage.content, '聊天引擎文本首轮没有保留真实用户消息');
   assert(cases[1][1].content.some(item => item.type === 'image_url'), '聊天引擎图片首轮没有保留图片消息段');
+
+  const modelConfig = {
+    modelType: 'text-model',
+    multimodalModel: 'vision-model',
+  };
+  assert(
+    resolveChatModel({ ...modelConfig, multimodalEnabled: false, smartMultimodal: true }, { hasImages: true }) === 'text-model',
+    '仅开启智能多模态时不应绕过多模态总开关',
+  );
+  assert(
+    resolveChatModel({ ...modelConfig, multimodalEnabled: true, smartMultimodal: false }, { hasImages: false }) === 'vision-model',
+    '固定多模态模式下纯文本没有使用多模态模型',
+  );
+  assert(
+    resolveChatModel({ ...modelConfig, multimodalEnabled: true, smartMultimodal: true }, { hasImages: false }) === 'text-model',
+    '智能多模态模式下纯文本没有使用文本模型',
+  );
+  assert(
+    resolveChatModel({ ...modelConfig, multimodalEnabled: true, smartMultimodal: true }, { hasImages: true }) === 'vision-model',
+    '智能多模态模式下图片消息没有切换到多模态模型',
+  );
   logPass('聊天引擎 user 消息兼容保护正常');
+}
+
+async function checkChatEngineMultimodalRouting() {
+  async function runCase(pendingImageUrls) {
+    const requests = [];
+    await runChat({
+      complete: async options => {
+        requests.push(options);
+        return { content: '测试回复', toolCalls: [] };
+      },
+    }, {
+      sessionId: 'group:functional-multimodal',
+      groupId: 10001,
+      userId: 20002,
+      config: {
+        modelType: 'text-model',
+        multimodalModel: 'vision-model',
+        multimodalEnabled: true,
+        smartMultimodal: true,
+        toolsEnabled: false,
+        maxIterations: 1,
+      },
+      pendingImageUrls,
+      disableTools: true,
+    }, [], {
+      userName: '测试用户',
+      userId: 20002,
+      content: '帮我看看这张图片',
+    }, {
+      config: {},
+      botNickname: '测试机器人',
+    }, {
+      emojiAgent: {
+        getAvailableCharacters: () => [],
+        getAvailableEmotions: () => [],
+        processMemeResponse: async content => ({ success: false, content }),
+      },
+    });
+    return requests;
+  }
+
+  const textRequests = await runCase([]);
+  assert(textRequests.length === 1, '纯文本聊天引擎没有产生唯一模型请求');
+  assert(textRequests[0].model === 'text-model' && textRequests[0].multimodal === false, '纯文本聊天没有使用文本模型');
+
+  const imageRequests = await runCase(['https://example.com/source.png']);
+  assert(imageRequests.length === 1, '图片聊天引擎没有产生唯一模型请求');
+  assert(imageRequests[0].model === 'vision-model' && imageRequests[0].multimodal === true, '图片聊天没有切换到多模态模型');
+  const imageUserMessage = imageRequests[0].messages.find(message => message.role === 'user');
+  assert(Array.isArray(imageUserMessage?.content) && imageUserMessage.content.some(item => item.type === 'image_url'), '多模态模型请求没有携带图片消息段');
+
+  const fallbackPayloads = [];
+  const fallbackCaller = {
+    openai: {
+      chat: {
+        completions: {
+          create: async payload => {
+            fallbackPayloads.push(payload);
+            return { choices: [{ message: { content: '备用回复' } }] };
+          },
+        },
+      },
+    },
+  };
+  await AiCaller.createToolCompletion(fallbackCaller, {
+    workingModel: 'fallback-text-model',
+    multimodalModel: 'fallback-vision-model',
+    retryCount: 0,
+  }, {
+    messages: [{ role: 'user', content: '测试备用多模态' }],
+    multimodal: true,
+  }, true);
+  assert(fallbackPayloads[0]?.model === 'fallback-vision-model', '备用 API 没有沿用多模态模型路由');
+  logPass('聊天引擎文本/图片智能多模态路由正常');
 }
 
 async function checkMemoryRetrievalUserMessageCompatibility() {
@@ -1568,6 +1664,7 @@ async function checkArkAgentPlanImageRuntime() {
 async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
+    await checkChatEngineMultimodalRouting();
     await checkMemoryRetrievalUserMessageCompatibility();
     await checkIsolatedGroupSpamListener();
     await checkPrivateSimulatorPreview();
