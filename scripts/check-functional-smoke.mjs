@@ -680,6 +680,18 @@ async function checkChatEngineMultimodalRouting() {
   logPass('聊天引擎文本/图片智能多模态路由正常');
 }
 
+async function checkAiImageMessageParsing() {
+  const source = await fs.readFile(path.join(root, 'apps', 'ai.js'), 'utf8');
+  assert(source.includes('const hasStructuredMessage = messageSegments.some'), 'AI 消息解析没有识别纯图片或 @ 消息段');
+  assert(source.includes('hasTextMessage || hasStructuredMessage || e.source || e.reply_id'), 'AI 消息解析仍依赖非空文本字符串');
+  assert(source.includes('normalizeAiImageMessages(originalMessages)'), 'AI 图片消息没有统一规范化处理');
+  assert(source.includes('const hasImageMessages = hasAiImageMessages(messageData?.originalMessages)'), '聊天入口仍可能把纯图片消息当成空消息拦截');
+  assert(source.includes('if (!returnMessage.trim() && hasAiImageMessages(originalMessages))'), '纯图片群消息没有补充文本上下文');
+  assert(source.includes('QQ_IMAGE_HOST_REGEX'), 'AI 图片消息没有识别 QQ 临时图片域名');
+  assert(source.includes("data:${mimeType};base64,${buffer.toString('base64')}"), 'QQ 图片没有转换为稳定的数据图片');
+  logPass('纯图片消息解析与 QQ 图片 URL 兜底正常');
+}
+
 async function checkMemoryRetrievalUserMessageCompatibility() {
   const requests = [];
   let completionIndex = 0;
@@ -1665,6 +1677,7 @@ async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
     await checkChatEngineMultimodalRouting();
+    await checkAiImageMessageParsing();
     await checkMemoryRetrievalUserMessageCompatibility();
     await checkIsolatedGroupSpamListener();
     await checkPrivateSimulatorPreview();

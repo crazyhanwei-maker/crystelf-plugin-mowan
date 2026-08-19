@@ -1,3 +1,4 @@
+import axios from 'axios';
 import ConfigControl from '../lib/config/configControl.js';
 import cfg from '../../../lib/config/config.js';
 import { defaultConfig as pluginDefaultConfig } from '../constants/path.js';
@@ -52,6 +53,68 @@ import {
 import { loadAutoSessionSkills } from '../lib/ai/httpSkillRegistry.js';
 
 const nickname = await ConfigControl.get('profile')?.nickName;
+
+const QQ_IMAGE_HOST_REGEX = /(?:^|\.)qpic\.cn$/i;
+
+async function materializeAiImageUrl(value) {
+  const source = String(value || '').trim();
+  if (!source || /^data:image\//i.test(source)) return source;
+
+  let parsed;
+  try {
+    parsed = new URL(source);
+  } catch {
+    return source;
+  }
+  if (!/^https?:$/i.test(parsed.protocol) || !QQ_IMAGE_HOST_REGEX.test(parsed.hostname)) {
+    return source;
+  }
+
+  try {
+    const response = await axios.get(source, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      maxContentLength: 12 * 1024 * 1024,
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        Referer: 'https://im.qq.com/',
+      },
+    });
+    const buffer = Buffer.from(response.data || []);
+    if (buffer.length === 0) return source;
+    const contentType = String(response.headers?.['content-type'] || '').split(';')[0].trim();
+    const mimeType = /^image\/[a-z0-9.+-]+$/i.test(contentType) ? contentType : 'image/jpeg';
+    return `data:${mimeType};base64,${buffer.toString('base64')}`;
+  } catch (error) {
+    logger.warn(`[crystelf-ai] QQ 图片本地下载失败，将保留原 URL: ${error.message}`);
+    return source;
+  }
+}
+
+async function normalizeAiImageMessages(messages = []) {
+  const normalized = [];
+  const seenSources = new Set();
+  for (const item of Array.isArray(messages) ? messages : []) {
+    if (item?.type !== 'image_url' || !item.image_url?.url) {
+      normalized.push(item);
+      continue;
+    }
+    const source = String(item.image_url.url).trim();
+    if (!source || seenSources.has(source)) continue;
+    seenSources.add(source);
+    normalized.push({
+      ...item,
+      image_url: { ...item.image_url, url: await materializeAiImageUrl(source) },
+    });
+  }
+  return normalized;
+}
+
+function hasAiImageMessages(messages = []) {
+  return Array.isArray(messages) && messages.some(item => (
+    item?.type === 'image_url' && Boolean(item.image_url?.url)
+  ));
+}
 
 const humanizeAiAdapter = {
   generateText: async (opts) => {
@@ -2316,7 +2379,8 @@ export class crystelfAI extends plugin {
       this.sessionManager.getOrCreate(sessionId, 'private', userId);
 
       const messageData = await this.extractPrivateUserMessage(e, aiConfig);
-      if (!messageData || !messageData.text || messageData.text.length === 0) {
+      const hasImageMessages = hasAiImageMessages(messageData?.originalMessages);
+      if (!messageData || (!String(messageData.text || '').trim() && !hasImageMessages)) {
         return false;
       }
 
@@ -2717,7 +2781,8 @@ export class crystelfAI extends plugin {
       this.sessionManager.getOrCreate(groupSessionId, 'group', groupId);
 
       const messageData = await this.extractUserMessage(e.msg, nickname, e, aiConfig);
-      if (!messageData || !messageData.text || messageData.text.length === 0) {
+      const hasImageMessages = hasAiImageMessages(messageData?.originalMessages);
+      if (!messageData || (!String(messageData.text || '').trim() && !hasImageMessages)) {
         return e.reply(segment.image(await Meme.getMeme(aiConfig.character, 'default')));
       }
 
@@ -3168,7 +3233,12 @@ export class crystelfAI extends plugin {
   }
 
   async extractUserMessage(msg, nickname, e, aiConfig) {
-    if (e.message && msg && msg.trim() !== '' && msg !== '\n') {
+    const messageSegments = Array.isArray(e?.message) ? e.message : [];
+    const hasStructuredMessage = messageSegments.some(item => (
+      item?.type === 'image' || item?.type === 'at'
+    ));
+    const hasTextMessage = typeof msg === 'string' && msg.trim() !== '' && msg !== '\n';
+    if (messageSegments.length > 0 && (hasTextMessage || hasStructuredMessage || e.source || e.reply_id)) {
       let text = [];
       let at = [];
       const maxMessageLength = aiConfig?.maxMessageLength || 100;
@@ -3278,13 +3348,22 @@ export class crystelfAI extends plugin {
         }
       }
 
-      if (at.length === 1 && isBotUser(at[0], e) && text.length === 0 && !returnMessage.trim()) {
-        return { text: [], originalMessages: originalMessages };
+      if (!returnMessage.trim() && hasAiImageMessages(originalMessages)) {
+        returnMessage = `[${e.sender?.nickname},id:${e.user_id},seq:${e.message_id}]发送了一张图片\n`;
       }
 
-      return { text: returnMessage, originalMessages: originalMessages };
+      if (at.length === 1 && isBotUser(at[0], e) && text.length === 0 && !returnMessage.trim()) {
+        return { text: [], originalMessages: await normalizeAiImageMessages(originalMessages) };
+      }
+
+      return {
+        text: returnMessage,
+        originalMessages: await normalizeAiImageMessages(originalMessages),
+      };
     }
-    logger.warn('[crystelf-ai] 字符串匹配失败');
+    if (!messageSegments.length && !hasTextMessage && !e?.source && !e?.reply_id) {
+      logger.warn('[crystelf-ai] 消息解析失败：事件中没有可用的文本或消息段');
+    }
     return { text: [], originalMessages: [] };
   }
 
@@ -3336,7 +3415,7 @@ export class crystelfAI extends plugin {
 
     return {
       text: returnMessage.trim(),
-      originalMessages,
+      originalMessages: await normalizeAiImageMessages(originalMessages),
     };
   }
 
