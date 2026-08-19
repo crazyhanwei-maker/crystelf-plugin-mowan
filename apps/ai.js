@@ -1428,6 +1428,7 @@ export class crystelfAI extends plugin {
       this.cooldownTimeoutIds = new Map();
       this.dynamicDelayQueues = new Map();
       this.processingSet = new Set();
+      this.recentMessageIds = new Map();
       this.idleCheckProcessing = new Set();
       this.groupLastIdleCheckTime = new Map();
       this.groupRecentMessages = new Map();
@@ -1592,6 +1593,8 @@ export class crystelfAI extends plugin {
 
   async watchGroupMessage(e) {
     if (e?.crystelfSynthetic || e?.crystelfCommandBridge) return false;
+    // Explicit command/nickname rules run before this catch-all listener.
+    if (e?.crystelfTriggeredByRule) return false;
     if (!this.isInitialized) {
       await this.init();
     }
@@ -1995,6 +1998,10 @@ export class crystelfAI extends plugin {
 
       if (!this.isGroupAllowed(e.group_id, aiConfig)) return;
       if (isBotUser(e.user_id, e)) return;
+      if (!this.claimGroupMessage(e)) {
+        logger.info(`[crystelf-ai] 跳过重复群消息: group=${e.group_id}, message=${e.message_id ?? e.messageId}`);
+        return;
+      }
       const breaker = shouldCircuitBreakSync(usageControl, 'chat');
       if (breaker.blocked) {
         logger.warn(`[crystelf-ai] 聊天AI已熔断: ${breaker.reason}`);
@@ -4025,6 +4032,29 @@ export class crystelfAI extends plugin {
     }
 
     this.rateLimiter.cleanup(expiryMs);
+
+    for (const [messageKey, claimedAt] of this.recentMessageIds || []) {
+      if (now - claimedAt > expiryMs) {
+        this.recentMessageIds.delete(messageKey);
+      }
+    }
+  }
+
+  claimGroupMessage(e) {
+    const groupId = String(e?.group_id ?? '').trim();
+    const messageId = String(e?.message_id ?? e?.messageId ?? '').trim();
+    // Synthetic/system events may not carry a QQ message id. They are handled
+    // by their dedicated paths and must not be collapsed here.
+    if (!groupId || !messageId || messageId === '0' || !this.recentMessageIds) return true;
+
+    const key = `${groupId}:${messageId}`;
+    const now = Date.now();
+    const claimedAt = this.recentMessageIds.get(key);
+    const dedupeWindowMs = 10 * 60 * 1000;
+    if (claimedAt && now - claimedAt < dedupeWindowMs) return false;
+
+    this.recentMessageIds.set(key, now);
+    return true;
   }
 
   getCooldownMs() {
