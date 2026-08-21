@@ -692,6 +692,24 @@ function validateConfig(configType, config = null) {
       }
       pushMinError(errors, config.tools?.tts?.maxTextLength, 1, '语音最大文本长度必须大于 0');
       pushMinError(errors, config.tools?.tts?.maxAutoVoiceTextLength, 1, '自动语音最大长度必须大于 0');
+      if (config.tools?.webAgent) {
+        const webAgent = config.tools.webAgent;
+        ['enabled', 'allowDownloads'].forEach((field) => {
+          if (webAgent[field] !== undefined && typeof webAgent[field] !== 'boolean') {
+            errors.push(`群聊网页 Agent 配置 ${field} 必须是布尔值`);
+          }
+        });
+        pushRangeError(errors, webAgent.maxDownloadBytes, 65536, 20971520, '网页 Agent 单文件大小必须在 64KB-20MB 之间');
+        pushRangeError(errors, webAgent.timeoutMs, 1000, 60000, '网页 Agent 下载超时必须在 1000-60000 毫秒之间');
+      }
+      if (config.tools?.logDiagnosis) {
+        const logDiagnosis = config.tools.logDiagnosis;
+        if (logDiagnosis.enabled !== undefined && typeof logDiagnosis.enabled !== 'boolean') {
+          errors.push('AI 日志自诊断配置 enabled 必须是布尔值');
+        }
+        pushRangeError(errors, logDiagnosis.maxTailLength, 6000, 60000, 'AI 日志自诊断单文件读取上限必须在 6000-60000 之间');
+        pushRangeError(errors, logDiagnosis.maxTokens, 400, 2400, 'AI 日志自诊断输出 token 必须在 400-2400 之间');
+      }
       break;
 
     case 'imageMonitor':

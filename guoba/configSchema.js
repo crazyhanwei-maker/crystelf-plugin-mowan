@@ -1258,6 +1258,88 @@ const guobaSchema = [
     },
   },
   {
+    label: '群聊网页 Agent',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'coreConfig.tools.webAgent.enabled',
+    label: '启用网页 Agent 增强',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。群聊仍可使用已有搜索和网页读取工具；开启后才会额外提供受限文件下载能力。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.webAgent.allowDownloads',
+    label: '允许下载并发送文件',
+    component: 'Switch',
+    bottomHelpMessage: '仅在用户明确要求下载、保存或发送文件时允许；只访问公网地址并限制大小和超时。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.webAgent.maxDownloadBytes',
+    label: '单文件大小上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '单个群文件最大字节数，范围 64KB-20MB。',
+    componentProps: {
+      min: 65536,
+      max: 20971520,
+      step: 1048576,
+    },
+  },
+  {
+    field: 'coreConfig.tools.webAgent.timeoutMs',
+    label: '下载超时',
+    component: 'InputNumber',
+    bottomHelpMessage: '网页 Agent 下载等待时间，单位毫秒。',
+    componentProps: {
+      min: 1000,
+      max: 60000,
+      step: 1000,
+    },
+  },
+  {
+    label: 'AI 日志自诊断',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'coreConfig.tools.logDiagnosis.enabled',
+    label: '启用主人日志自诊断',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。开启后只有 Bot 主人可以让 AI 读取白名单范围内的最近日志并进行只读排查。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.logDiagnosis.maxTailLength',
+    label: '单文件日志读取上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '每个日志文件只读取尾部内容，范围 6000-60000 字符。',
+    componentProps: {
+      min: 6000,
+      max: 60000,
+      step: 1000,
+    },
+  },
+  {
+    field: 'coreConfig.tools.logDiagnosis.maxTokens',
+    label: '诊断结论长度',
+    component: 'InputNumber',
+    bottomHelpMessage: '日志诊断 AI 输出上限，范围 400-2400 token。',
+    componentProps: {
+      min: 400,
+      max: 2400,
+      step: 100,
+    },
+  },
+  {
     label: 'LLM 命令桥接',
     component: 'SOFT_GROUP_BEGIN',
   },

@@ -18,6 +18,7 @@ import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.j
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
 import { evaluateSpamMessageWindow } from '../lib/groupManagement/contentModerationRuntime.js';
 import { buildChatCompletionMessages, resolveChatModel, runChat } from '../lib/ai/chatEngine.js';
+import { getBuiltinTools } from '../lib/ai/toolRegistry.js';
 import AiCaller from '../lib/ai/aiCaller.js';
 import { MemoryRetrieval } from '../lib/humanize/memoryRetrieval.js';
 import {
@@ -690,6 +691,18 @@ async function checkAiImageMessageParsing() {
   assert(source.includes('QQ_IMAGE_HOST_REGEX'), 'AI 图片消息没有识别 QQ 临时图片域名');
   assert(source.includes("data:${mimeType};base64,${buffer.toString('base64')}"), 'QQ 图片没有转换为稳定的数据图片');
   logPass('纯图片消息解析与 QQ 图片 URL 兜底正常');
+}
+
+async function checkWebAgentDownloadToolSafety() {
+  const groupTools = await getBuiltinTools({ groupId: 10001 });
+  const privateTools = await getBuiltinTools({ groupId: null });
+  assert(!groupTools.some(tool => tool.name === 'download_web_file'), '网页 Agent 下载工具默认不应暴露');
+  assert(!privateTools.some(tool => tool.name === 'download_web_file'), '网页 Agent 下载工具不应暴露给私聊');
+  const registrySource = await fs.readFile(path.join(root, 'lib', 'ai', 'toolRegistry.js'), 'utf8');
+  assert(registrySource.includes('validateWebReadTargetUrl(rawTargetUrl)'), '网页 Agent 下载没有复用公网地址校验');
+  assert(registrySource.includes('maxRedirects: 0'), '网页 Agent 下载没有禁止不受控跳转');
+  assert(registrySource.includes('maxDownloadBytes'), '网页 Agent 下载没有大小限制');
+  logPass('群聊网页 Agent 下载默认关闭且具备安全边界');
 }
 
 async function checkMemoryRetrievalUserMessageCompatibility() {
@@ -1678,6 +1691,7 @@ async function main() {
     checkChatEngineUserMessageCompatibility();
     await checkChatEngineMultimodalRouting();
     await checkAiImageMessageParsing();
+    await checkWebAgentDownloadToolSafety();
     await checkMemoryRetrievalUserMessageCompatibility();
     await checkIsolatedGroupSpamListener();
     await checkPrivateSimulatorPreview();

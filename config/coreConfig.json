@@ -62,6 +62,26 @@
         "cooldownMs": 300000
       }
     },
+    "?webAgent": "群聊网页 Agent 增强工具；默认关闭，仅提供受限公网文件下载，不开放文件修改、终端或全目录权限",
+    "webAgent": {
+      "?enabled": "是否启用群聊网页 Agent 增强工具",
+      "enabled": false,
+      "?allowDownloads": "是否允许 AI 在用户明确要求时下载并发送公网文件",
+      "allowDownloads": false,
+      "?maxDownloadBytes": "单个下载文件最大字节数",
+      "maxDownloadBytes": 10485760,
+      "?timeoutMs": "网页 Agent 下载超时时间（毫秒）",
+      "timeoutMs": 30000
+    },
+    "?logDiagnosis": "AI 日志自诊断工具；默认关闭，开启后仅 Bot 主人可通过 AI 调用只读日志排查",
+    "logDiagnosis": {
+      "?enabled": "是否允许主人 AI 读取白名单日志并进行自诊断",
+      "enabled": false,
+      "?maxTailLength": "每个日志文件最多读取的尾部字符数",
+      "maxTailLength": 16000,
+      "?maxTokens": "日志诊断结论最大输出 token 数",
+      "maxTokens": 1200
+    },
     "?commandBridge": "LLM 调用其他 Yunzai 插件命令的受控桥接配置，默认关闭且不授权任何命令",
     "commandBridge": {
       "?enabled": "是否允许 LLM 调用控制台已授权的其他插件命令",
