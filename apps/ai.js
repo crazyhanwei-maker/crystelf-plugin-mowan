@@ -308,7 +308,6 @@ function isPrivateAiRoutableMessage(content = '', e = {}, directVoiceText = '') 
     || /^[#＃/]?灵晶\s*(改图|融合)(?:[：:，,\s]+)?([\s\S]*)$/i.test(String(content || '').trim())
     || isPrivateVoiceModelCommand(content, e)
     || parseSessionControlCommand(content)
-    || isChatHelpRequest(content)
     || /^(#|\/)?重置(对话|会话)$/.test(content)
     || /^(#|\/)?(查看)?会话状态([\s\S]*)?$/.test(content)
   );
