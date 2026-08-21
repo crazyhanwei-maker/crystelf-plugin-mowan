@@ -87,11 +87,19 @@ function isPluginClass(value) {
   }
 }
 
-function selectPluginClass(moduleExports = {}) {
+function selectPluginClasses(moduleExports = {}) {
+  const classes = [];
+  const seen = new Set();
   if (isPluginClass(moduleExports?.default)) {
-    return moduleExports.default;
+    classes.push({ exportName: 'default', pluginClass: moduleExports.default });
+    seen.add(moduleExports.default);
   }
-  return Object.values(moduleExports || {}).find(isPluginClass) || null;
+  for (const [exportName, value] of Object.entries(moduleExports || {})) {
+    if (exportName === 'default' || !isPluginClass(value) || seen.has(value)) continue;
+    classes.push({ exportName, pluginClass: value });
+    seen.add(value);
+  }
+  return classes;
 }
 
 for (let i in enabledApps) {
@@ -101,13 +109,19 @@ for (let i in enabledApps) {
     failedApps.push(name);
     continue;
   }
-  const pluginClass = selectPluginClass(ret[i].value);
-  if (!pluginClass) {
+  const pluginClasses = selectPluginClasses(ret[i].value);
+  if (pluginClasses.length === 0) {
     logger.error(`[crystelf-plugin] 插件 ${name} 没有导出有效的插件类，已跳过加载`);
     failedApps.push(name);
     continue;
   }
-  apps[name] = pluginClass;
+  for (const [classIndex, { exportName, pluginClass }] of pluginClasses.entries()) {
+    const appName = classIndex === 0 ? name : `${name}-${exportName}`;
+    apps[appName] = pluginClass;
+  }
+  if (pluginClasses.length > 1) {
+    logger.info(`[crystelf-plugin] 插件 ${name} 注册了 ${pluginClasses.length} 个插件类: ${pluginClasses.map(({ exportName }, index) => index === 0 ? name : `${name}-${exportName}`).join(', ')}`);
+  }
 }
 if (failedApps.length === 0) {
   logger.info('灵晶已经完成初始化，没有发现异常');
