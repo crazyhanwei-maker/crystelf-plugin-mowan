@@ -246,7 +246,7 @@ function getPseudoHumanConfig(aiConfig = {}, groupId = '') {
 }
 
 function isCommandPrefixedMessage(text = '') {
-  return /^(#|＃|\/)/.test(String(text || '').trim());
+  return /^[#＃/／%％*＊~～!！.。·$￥&＆+＋=＝?？|｜]/u.test(String(text || '').trim());
 }
 
 function hasImageGenerationIntent(text = '') {
