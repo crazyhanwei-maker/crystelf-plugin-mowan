@@ -158,6 +158,34 @@
         <textarea id="help-diy-debug" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 调试 返回内容"></textarea>
       </div>
     </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>HTML 转图片</h2>
+          <div class="setting-help">粘贴自定义 HTML（支持内联 style 与外链图片），渲染成图片并填入所选板块；生成后记得保存。默认 720px 宽白底，可写完整 &lt;html&gt; 文档自定义全部样式。</div>
+        </div>
+        <div class="actions">
+          <select id="help-diy-html-slot" aria-label="图片填入板块">
+            <option value="home">总帮助</option>
+            <option value="ai">AI 分类</option>
+            <option value="manage">管理分类</option>
+            <option value="fun">娱乐分类</option>
+            <option value="debug">调试分类</option>
+          </select>
+          <button type="button" id="help-diy-html-generate-btn" class="help-diy-generate-btn">生成图片</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <span class="setting-help">内置模板</span>
+        <button type="button" class="mini-btn" data-help-html-template="home">总览导航</button>
+        <button type="button" class="mini-btn" data-help-html-template="ai">AI 对话</button>
+        <button type="button" class="mini-btn" data-help-html-template="manage">群管理</button>
+        <button type="button" class="mini-btn" data-help-html-template="fun">内容娱乐</button>
+        <button type="button" class="mini-btn" data-help-html-template="debug">调试排查</button>
+      </div>
+      <textarea id="help-diy-html-source" class="help-diy-text-input" rows="12" spellcheck="false" placeholder="在此粘贴自定义 HTML，或点击上方内置模板一键填入；也可写完整 &lt;html&gt; 文档自定义全部样式"></textarea>
+    </section>
   </div>
 <script src="/auth.js"></script>
 <script src="/help-diy.js"></script>

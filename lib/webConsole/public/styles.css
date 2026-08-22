@@ -5205,7 +5205,7 @@ body:not(.login-page) {
 }
 
 .console-topbar-tools {
-  grid-column: 5;
+  grid-column: 4;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -5408,7 +5408,7 @@ body:not(.login-page) {
   font-size: 14px;
 }
 .console-topbar-status {
-  grid-column: 4;
+  grid-column: 5;
   justify-self: end;
   display: inline-flex;
   align-items: center;
@@ -6065,11 +6065,11 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   }
 
   .console-topbar-status {
-    grid-column: 3;
+    grid-column: 4;
   }
 
   .console-topbar-tools {
-    grid-column: 4;
+    grid-column: 3;
   }
 
   .console-app-shell .hero:not(:has(.hero-action-group-data)) {

@@ -95,46 +95,6 @@
       <div id="usage-log-box" class="list log-list">加载中...</div>
       <div id="usage-log-pagination" class="pagination"></div>
     </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <div>
-          <h2>控制台审计日志</h2>
-          <div class="setting-help">记录依赖安装、配置保存、文件写入、插件安装、清理和恢复等重要操作；不会记录口令。可按操作、方法、结果和时间导出。</div>
-        </div>
-        <div class="actions">
-          <button id="export-audit-logs-btn" class="mini-btn">导出审计日志</button>
-        </div>
-      </div>
-      <div class="toolbar">
-        <input id="audit-log-search" placeholder="搜索操作、路径、IP、状态码或浏览器信息" />
-        <input id="audit-log-action" placeholder="按操作筛选，例如 file_write 或 dependency_install" />
-        <select id="audit-log-method">
-          <option value="">全部方法</option>
-          <option value="POST">POST</option>
-          <option value="PUT">PUT</option>
-          <option value="PATCH">PATCH</option>
-          <option value="DELETE">DELETE</option>
-        </select>
-        <select id="audit-log-result">
-          <option value="">全部结果</option>
-          <option value="success">仅成功</option>
-          <option value="error">仅失败</option>
-        </select>
-      </div>
-      <div class="toolbar">
-        <label class="compact-field">
-          <span>开始时间</span>
-          <input id="audit-log-start" type="datetime-local" />
-        </label>
-        <label class="compact-field">
-          <span>结束时间</span>
-          <input id="audit-log-end" type="datetime-local" />
-        </label>
-      </div>
-      <div id="audit-log-box" class="list log-list">加载中...</div>
-      <div id="audit-log-pagination" class="pagination"></div>
-    </section>
   </div>
 
 <script src="/auth.js"></script>

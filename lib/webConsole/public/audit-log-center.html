@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 控制台审计日志</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/data-lists.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>控制台审计日志</h1>
+        <p id="page-meta">正在读取控制台审计日志...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="refresh-btn">刷新数据</button>
+            <button id="clear-filters-btn">清空筛选</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div>
+        <h2>页面状态</h2>
+        <div id="refresh-status" class="setting-help">正在准备数据...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>审计记录</h2>
+          <div class="setting-help">记录依赖安装、配置保存、文件写入、插件安装、清理和恢复等重要操作；不会记录口令。可按操作、方法、结果和时间导出。</div>
+        </div>
+        <div class="actions">
+          <button id="export-audit-logs-btn" class="mini-btn">导出审计日志</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <input id="audit-log-search" placeholder="搜索操作、路径、IP、状态码或浏览器信息" />
+        <input id="audit-log-action" placeholder="按操作筛选，例如 file_write 或 dependency_install" />
+        <select id="audit-log-method">
+          <option value="">全部方法</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="PATCH">PATCH</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+        <select id="audit-log-result">
+          <option value="">全部结果</option>
+          <option value="success">仅成功</option>
+          <option value="error">仅失败</option>
+        </select>
+      </div>
+      <div class="toolbar">
+        <label class="compact-field">
+          <span>开始时间</span>
+          <input id="audit-log-start" type="datetime-local" />
+        </label>
+        <label class="compact-field">
+          <span>结束时间</span>
+          <input id="audit-log-end" type="datetime-local" />
+        </label>
+      </div>
+      <div id="audit-log-box" class="list log-list">加载中...</div>
+      <div id="audit-log-pagination" class="pagination"></div>
+    </section>
+  </div>
+
+<script src="/auth.js"></script>
+<script src="/audit-log-center.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

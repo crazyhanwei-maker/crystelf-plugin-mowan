@@ -20,22 +20,10 @@
       </div>
       <div class="hero-actions-shell">
         <div class="hero-action-group hero-action-group-data">
-          <div class="hero-action-label">数据操作</div>
           <div class="actions hero-actions-grid">
             <button id="refresh-btn">刷新数据</button>
             <button id="backup-config-btn">一键备份配置</button>
             <button id="restore-config-btn">从备份恢复</button>
-          </div>
-        </div>
-        <div class="hero-action-group hero-action-group-links">
-          <div class="hero-action-label">快捷入口</div>
-          <div class="actions hero-actions-grid">
-            <a class="link-btn" href="/group-management.html">群管理</a>
-            <a class="link-btn" href="/api-settings.html">API 接口</a>
-            <a class="link-btn" href="/bot-plugins.html">插件管理</a>
-            <a class="link-btn" href="/qq-simulator.html">模拟调试</a>
-            <a class="link-btn" href="/group-summary-diagnostics.html">群总结诊断</a>
-            <a class="link-btn" href="/performance.html">性能监测</a>
             <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
           </div>
         </div>
@@ -51,23 +39,23 @@
 
     <section id="dashboard-strip" class="dashboard-strip"></section>
 
-    <section class="panel console-health-overview-panel">
+    <section class="panel console-health-overview-panel collapsible-panel collapsed">
       <div class="section-head">
         <div>
-          <h2>控制台健康总览</h2>
+          <h2>控制台健康总览<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div class="setting-help">这里汇总控制台是否能正常使用、有没有访问风险，以及需要优先处理的问题。</div>
         </div>
         <div class="actions">
-          <a class="link-btn" href="/usage-center.html">查看审计日志</a>
+          <a class="link-btn" href="/audit-log-center.html">查看审计日志</a>
         </div>
       </div>
-      <div id="console-health-overview" class="console-health-overview-grid">加载中...</div>
+      <div id="console-health-overview" class="console-health-overview-grid collapsible-body">加载中...</div>
     </section>
 
-    <section class="panel operation-task-center-panel">
+    <section id="operation-task-center-panel" class="panel operation-task-center-panel collapsible-panel collapsed">
       <div class="section-head">
         <div>
-          <h2>操作任务中心</h2>
+          <h2>操作任务中心<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div class="setting-help">这里汇总正在进行或刚完成的安装任务，方便查看是否还在排队、是否成功。</div>
         </div>
         <div class="actions">
@@ -75,13 +63,13 @@
           <a class="link-btn" href="/bot-plugins.html?tab=catalog">插件任务</a>
         </div>
       </div>
-      <div id="operation-task-center" class="operation-task-center">加载中...</div>
+      <div id="operation-task-center" class="operation-task-center collapsible-body">加载中...</div>
     </section>
 
-    <section class="panel public-security-panel">
+    <section class="panel public-security-panel collapsible-panel collapsed">
       <div class="section-head">
         <div>
-          <h2>公网访问安全</h2>
+          <h2>公网访问安全<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div class="setting-help">这里提示控制台是否允许外部设备访问，以及当前访问方式是否需要注意安全。</div>
         </div>
         <div class="actions">
@@ -89,23 +77,68 @@
           <a class="link-btn" href="/plugin-settings.html">控制台设置</a>
         </div>
       </div>
-      <div id="public-security-overview" class="public-security-overview">加载中...</div>
+      <div id="public-security-overview" class="public-security-overview collapsible-body">加载中...</div>
     </section>
 
-    <section class="panel dashboard-control-panel">
+    <section class="panel dashboard-control-panel collapsible-panel collapsed">
       <div class="dashboard-control-head">
         <div>
-          <h2>页面状态</h2>
+          <h2>页面状态<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div id="refresh-status" class="setting-help">正在准备数据...</div>
         </div>
         <button id="clear-filters-btn" class="mini-btn">清空筛选</button>
       </div>
-      <div id="active-filters" class="active-filter-list">
+      <div id="active-filters" class="active-filter-list collapsible-body">
         <span class="active-filter-empty">当前没有生效的筛选条件</span>
       </div>
     </section>
 
-    <section class="grid cards dashboard-cards" id="overview-cards"></section>
+    <section class="panel collapsible-panel collapsed">
+      <div class="section-head">
+        <div>
+          <h2>AI请求数据预览<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
+          <div class="setting-help">汇总 AI 请求、图片监控用量、好感度日志与会话、消息、画像等核心数据。</div>
+        </div>
+      </div>
+      <div id="overview-cards" class="grid cards dashboard-cards collapsible-body"></div>
+      <div class="collapsible-body">
+        <div class="tab-header">
+          <button class="tab-btn active" data-tab-target="usage-tab">今日 AI 用量</button>
+          <button class="tab-btn" data-tab-target="image-monitor-usage-tab">图片监控小结</button>
+          <button class="tab-btn" data-tab-target="trend-tab">最近 24 小时趋势</button>
+        </div>
+        <div id="usage-tab" class="tab-panel">
+          <pre id="usage-box">加载中...</pre>
+        </div>
+        <div id="image-monitor-usage-tab" class="tab-panel hidden">
+          <pre id="image-monitor-usage-box">加载中...</pre>
+          <div id="image-monitor-usage-trend" class="chart-box">加载中...</div>
+          <div id="poke-image-summary-trend" class="chart-box">加载中...</div>
+        </div>
+        <div id="trend-tab" class="tab-panel hidden">
+          <div id="trend-chart" class="chart-box">加载中...</div>
+        </div>
+      </div>
+      <div class="dashboard-entry-card collapsible-body">
+        <div>
+          <h2>AI 用量日志中心</h2>
+          <div class="setting-help">查看请求次数、失败记录、消耗趋势和单条请求详情。</div>
+        </div>
+        <div class="actions">
+          <a class="link-btn" href="/usage-center.html">打开 AI 用量日志中心</a>
+        </div>
+      </div>
+      <div class="collapsible-body">
+        <h2>好感度日志</h2>
+        <div class="toolbar">
+          <input id="affinity-log-search" placeholder="搜索群号 / 用户 / 原因 / 文本" />
+          <input id="affinity-log-group" placeholder="按群号筛选" />
+          <button id="export-affinity-logs-btn">导出日志</button>
+        </div>
+        <div id="affinity-log-box" class="list log-list">加载中...</div>
+        <div id="affinity-log-pagination" class="pagination"></div>
+      </div>
+    </section>
 
     <section class="panel panel-two">
       <div>
@@ -167,25 +200,6 @@
     </section>
 
     <section class="panel">
-      <div class="tab-header">
-        <button class="tab-btn active" data-tab-target="usage-tab">今日 AI 用量</button>
-        <button class="tab-btn" data-tab-target="image-monitor-usage-tab">图片监控小结</button>
-        <button class="tab-btn" data-tab-target="trend-tab">最近 24 小时趋势</button>
-      </div>
-      <div id="usage-tab" class="tab-panel">
-        <pre id="usage-box">加载中...</pre>
-      </div>
-      <div id="image-monitor-usage-tab" class="tab-panel hidden">
-        <pre id="image-monitor-usage-box">加载中...</pre>
-        <div id="image-monitor-usage-trend" class="chart-box">加载中...</div>
-        <div id="poke-image-summary-trend" class="chart-box">加载中...</div>
-      </div>
-      <div id="trend-tab" class="tab-panel hidden">
-        <div id="trend-chart" class="chart-box">加载中...</div>
-      </div>
-    </section>
-
-    <section class="panel">
       <div class="section-head">
         <div>
           <h2>独立工具入口</h2>
@@ -193,30 +207,6 @@
         </div>
       </div>
       <div id="collection-entry-grid" class="settings-grid">加载中...</div>
-    </section>
-
-    <section class="panel panel-two">
-      <div>
-        <div class="dashboard-entry-card">
-          <div>
-            <h2>AI 用量日志中心</h2>
-            <div class="setting-help">查看请求次数、失败记录、消耗趋势和单条请求详情。</div>
-          </div>
-          <div class="actions">
-            <a class="link-btn" href="/usage-center.html">打开 AI 用量日志中心</a>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h2>好感度日志</h2>
-        <div class="toolbar">
-          <input id="affinity-log-search" placeholder="搜索群号 / 用户 / 原因 / 文本" />
-          <input id="affinity-log-group" placeholder="按群号筛选" />
-          <button id="export-affinity-logs-btn">导出日志</button>
-        </div>
-        <div id="affinity-log-box" class="list log-list">加载中...</div>
-        <div id="affinity-log-pagination" class="pagination"></div>
-      </div>
     </section>
 
     <section class="panel">
@@ -231,23 +221,23 @@
       </div>
     </section>
 
-    <section class="panel">
-      <h2>配置摘要</h2>
+    <section class="panel collapsible-panel collapsed">
+      <h2 class="collapsible-head">配置摘要<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
       <div class="setting-status">“一键备份配置”会导出当前插件配置；“从备份恢复”会覆盖现有配置，恢复前请确认备份来源可信。</div>
-      <div id="config-box" class="config-summary">加载中...</div>
+      <div id="config-box" class="config-summary collapsible-body">加载中...</div>
     </section>
 
-    <section class="panel config-history-panel">
+    <section class="panel config-history-panel collapsible-panel collapsed">
       <div class="section-head">
         <div>
-          <h2>配置变更历史</h2>
+          <h2>配置变更历史<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div class="setting-help">这里记录最近的配置保存动作，遇到设置错误时可以回滚到保存前状态。</div>
         </div>
         <div class="actions">
           <button id="refresh-config-history-btn" class="mini-btn" type="button">刷新历史</button>
         </div>
       </div>
-      <div id="config-history-box" class="config-history-list">加载中...</div>
+      <div id="config-history-box" class="config-history-list collapsible-body">加载中...</div>
     </section>
 
   </div>
