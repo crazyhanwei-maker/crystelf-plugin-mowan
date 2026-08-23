@@ -669,7 +669,7 @@ async function generateAiPokeReply(e, pokeConfig) {
     logger.warn(`[poke] 戳一戳AI已熔断: ${breaker.reason}`);
     return '';
   }
-  const botName = profileConfig.nickName || '晶灵';
+  const botName = profileConfig.nickName || '灵晶';
   const operatorName = await getOperatorName(e);
   const groupName = e?.group?.info?.group_name || e?.group_name || '当前群聊';
   const context = await getRecentPokeContext(e);

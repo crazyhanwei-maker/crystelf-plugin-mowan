@@ -2179,6 +2179,7 @@ pre {
 .plugin-settings-meta-chip {
   display: inline-flex;
   align-items: center;
+  line-height: 1.4;
   padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -6065,11 +6066,11 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   }
 
   .console-topbar-status {
-    grid-column: 4;
+    grid-column: 3;
   }
 
   .console-topbar-tools {
-    grid-column: 3;
+    grid-column: 4;
   }
 
   .console-app-shell .hero:not(:has(.hero-action-group-data)) {
@@ -6274,4 +6275,34 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   .console-theme-segmented {
     grid-template-columns: 1fr;
   }
+}
+
+.private-safety-metric-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.private-safety-metric-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  flex: 0 1 auto;
+}
+
+.private-safety-metric-card .kv-label {
+  margin-bottom: 0;
+  font-size: 12.5px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.private-safety-metric-card .plugin-settings-skill-metric-value {
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: 0;
 }

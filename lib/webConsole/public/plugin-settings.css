@@ -1,6 +1,22 @@
-.plugin-settings-page .page {
-  padding-top: 18px;
+.plugin-settings-page .plugin-settings-feature-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  min-width: 0;
 }
+
+.plugin-settings-page .plugin-settings-feature-search-row > input,
+.plugin-settings-page .plugin-settings-feature-search-row > button,
+.plugin-settings-page .plugin-settings-private-safety-filters > select {
+  min-width: 0;
+  width: 100%;
+}
+
+.plugin-settings-page .plugin-settings-private-safety-filters {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 0;
+}
+
 
 .plugin-settings-page .hero {
   flex-direction: row;
@@ -260,6 +276,19 @@
   }
 
   .plugin-settings-page .plugin-settings-search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-feature-search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-feature-search-row > button,
+  .plugin-settings-page .plugin-settings-private-safety-filters > select {
+    width: 100%;
+  }
+
+  .plugin-settings-page .plugin-settings-private-safety-filters {
     grid-template-columns: 1fr;
   }
 

@@ -47,7 +47,6 @@
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-console-panel">控制台设置</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-skills-panel">Skills 设置</button>
-            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-private-safety-panel">私聊安全</button>
           </div>
         </div>
         <div id="plugin-settings-config-nav" class="plugin-settings-side-section">
@@ -68,6 +67,17 @@
             <div id="plugin-settings-config-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-form" class="plugin-settings-form-grid">加载中...</div>
+
+          <section id="plugin-settings-private-safety-panel" class="plugin-settings-special-panel hidden">
+            <div class="plugin-settings-special-panel-head">
+              <div>
+                <h3>私聊安全管理</h3>
+                <div class="setting-status">查看私聊安全黑名单、警告记录和 LLM 复审缓存状态；这里不会展示用户私聊原文。</div>
+              </div>
+            </div>
+            <div id="plugin-settings-private-safety-meta" class="plugin-settings-panel-meta"></div>
+            <div id="plugin-settings-private-safety-box" class="settings-grid">加载中...</div>
+          </section>
         </section>
 
         <section id="plugin-settings-features-panel" class="panel hidden">
@@ -95,15 +105,6 @@
             <div id="plugin-settings-skills-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-skills-box" class="settings-grid">加载中...</div>
-        </section>
-
-        <section id="plugin-settings-private-safety-panel" class="panel hidden">
-          <div class="plugin-settings-content-head">
-            <h2>私聊安全</h2>
-            <div class="setting-status">查看私聊安全黑名单、警告记录和 LLM 复审缓存状态；这里不会展示用户私聊原文。</div>
-            <div id="plugin-settings-private-safety-meta" class="plugin-settings-panel-meta"></div>
-          </div>
-          <div id="plugin-settings-private-safety-box" class="settings-grid">加载中...</div>
         </section>
       </div>
     </div>

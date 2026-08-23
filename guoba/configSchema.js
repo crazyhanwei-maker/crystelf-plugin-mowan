@@ -64,7 +64,7 @@ const guobaSchema = [
   },
   {
     field: 'config.ai',
-    label: '晶灵智能',
+    label: '灵晶智能',
     component: 'Switch',
     bottomHelpMessage: '是否启用群聊 AI 主功能',
     componentProps: {
@@ -339,6 +339,10 @@ const guobaSchema = [
       rows: 3,
       placeholder: '请输入私聊黑名单回复',
     },
+  },
+  {
+    label: '功能开关（群聊与工具）',
+    component: 'SOFT_GROUP_BEGIN',
   },
   {
     field: 'config.poke',
@@ -2101,7 +2105,7 @@ const guobaSchema = [
 
   // ai.json - AI配置
   {
-    label: '晶灵智能',
+    label: '灵晶智能',
     component: 'SOFT_GROUP_BEGIN',
   },
   {

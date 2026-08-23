@@ -93,7 +93,7 @@ node -p "require('./package.json').version"
 当前文档对应版本：
 
 ```text
-2.2.1
+2.3.1
 ```
 
 ## 4. ZIP 安装怎么处理
@@ -271,10 +271,10 @@ git log -1 --oneline
 
 ## 10. 更新记录
 
-### 2.2.1
+### 2.3.1
 
 - 更新检查支持多源回退：第一源 Gitee 不可用时，自动切换到 GitHub 备用仓库 `crystelf-plugin-mowan`，群内更新与控制台版本检查同步生效。
-- 同步更新插件 User-Agent、状态图和官网版本文案到 2.2.1。
+- 同步更新插件 User-Agent、状态图和官网版本文案到 2.3.1。
 
 ### 2.2.0
 

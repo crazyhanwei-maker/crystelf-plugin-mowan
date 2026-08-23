@@ -520,7 +520,7 @@ function isChatHelpRequest(text = '') {
 
 function buildChatHelpMessage(aiConfig = {}) {
   const lines = [
-    '# 晶灵帮助菜单',
+    '# 灵晶帮助菜单',
     '',
     '> 直接选你要用的功能，就像点菜单一样。',
     '',
@@ -1372,7 +1372,7 @@ export class crystelfAI extends plugin {
   constructor() {
     super({
       name: 'crystelfAI',
-      dsc: '晶灵智能',
+      dsc: '灵晶智能',
       event: 'message.group',
       priority: -1111,
       rule: [
@@ -4267,7 +4267,7 @@ export class crystelfAIPrivate extends plugin {
   constructor() {
     super({
       name: 'crystelfAI-private',
-      dsc: '晶灵私聊智能',
+      dsc: '灵晶私聊智能',
       event: 'message',
       priority: -1111,
       rule: [
