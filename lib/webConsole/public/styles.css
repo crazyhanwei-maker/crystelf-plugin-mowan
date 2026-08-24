@@ -822,6 +822,11 @@ textarea {
   overflow: auto;
 }
 
+.preview-box-full {
+  max-height: 520px;
+  line-height: 1.6;
+}
+
 .help-diy-grid {
   align-items: start;
 }

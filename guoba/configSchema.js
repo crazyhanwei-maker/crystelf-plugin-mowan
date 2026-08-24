@@ -1091,6 +1091,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'coreConfig.usageControl.chatContent',
+    label: '记录对话内容',
+    component: 'Switch',
+    bottomHelpMessage: '在用量日志中保存完整对话（用户输入与AI回复全文、耗时、token），不记录系统提示词；关闭后只统计 token 不保存文本',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'coreConfig.usageControl.dailySummary',
     label: '今日用量概览',
     component: 'InputTextArea',

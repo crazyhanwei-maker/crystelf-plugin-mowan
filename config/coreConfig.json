@@ -19,7 +19,9 @@
     "?completionPricePer1M": "输出token每100万单价",
     "completionPricePer1M": 0,
     "?modelPricing": "按模型单价配置，每行格式: 模型名|输入单价/1M|输出单价/1M",
-    "modelPricing": ""
+    "modelPricing": "",
+    "?chatContent": "是否在用量日志中记录完整对话内容（用户输入与AI回复全文，含耗时和token，不含系统提示词）",
+    "chatContent": true
   },
   "tools": {
     "?search": "内置搜索工具配置",

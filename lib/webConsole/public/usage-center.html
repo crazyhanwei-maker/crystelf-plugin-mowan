@@ -6,6 +6,7 @@
   <title>魔丸控制台 - AI 用量日志中心</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/dashboard.css" />
   <link rel="stylesheet" href="/data-lists.css" />
 </head>
 <body>
@@ -71,29 +72,31 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel collapsible-panel collapsed">
       <div class="section-head">
         <div>
-          <h2>AI 用量日志</h2>
+          <h2>AI 用量日志<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div class="setting-help">可以按场景和关键词查找记录，详情页会显示单次请求的内容、回复、耗时和用量。</div>
         </div>
         <div class="actions">
           <button id="export-usage-logs-btn" class="mini-btn">导出日志</button>
         </div>
       </div>
-      <div class="toolbar">
-        <input id="usage-log-search" placeholder="搜索模型 / 场景 / 群号 / 用户 / 预览文本" />
-        <input id="usage-log-scene" placeholder="按场景筛选，例如 chat 或 poke_image_summary" />
+      <div class="collapsible-body">
+        <div class="toolbar">
+          <input id="usage-log-search" placeholder="搜索模型 / 场景 / 群号 / 用户 / 预览文本" />
+          <input id="usage-log-scene" placeholder="按场景筛选，例如 chat 或 poke_image_summary" />
+        </div>
+        <div class="toolbar">
+          <span class="setting-help">快捷筛选</span>
+          <button class="mini-btn active" data-usage-scene="">全部场景</button>
+          <button class="mini-btn" data-usage-scene="chat">普通对话</button>
+          <button class="mini-btn" data-usage-scene="image_monitor_review">图片监控审核</button>
+          <button class="mini-btn" data-usage-scene="poke_image_summary">戳一戳图片摘要</button>
+        </div>
+        <div id="usage-log-box" class="list log-list">加载中...</div>
+        <div id="usage-log-pagination" class="pagination"></div>
       </div>
-      <div class="toolbar">
-        <span class="setting-help">快捷筛选</span>
-        <button class="mini-btn active" data-usage-scene="">全部场景</button>
-        <button class="mini-btn" data-usage-scene="chat">普通对话</button>
-        <button class="mini-btn" data-usage-scene="image_monitor_review">图片监控审核</button>
-        <button class="mini-btn" data-usage-scene="poke_image_summary">戳一戳图片摘要</button>
-      </div>
-      <div id="usage-log-box" class="list log-list">加载中...</div>
-      <div id="usage-log-pagination" class="pagination"></div>
     </section>
   </div>
 
