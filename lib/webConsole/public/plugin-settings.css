@@ -344,3 +344,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 人设预设面板 */
+.plugin-settings-page .plugin-settings-persona-preset-panel {
+  margin-bottom: 14px;
+}
+
+.plugin-settings-page .plugin-settings-persona-preset-body {
+  display: grid;
+  gap: 10px;
+}
+
+.plugin-settings-page .plugin-settings-persona-preset-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.plugin-settings-page .plugin-settings-persona-preset-row > select,
+.plugin-settings-page .plugin-settings-persona-preset-row > input {
+  min-width: 0;
+  width: 100%;
+}
+
+.plugin-settings-page .plugin-settings-persona-preset-row [data-persona-preset-name] {
+  grid-column: 1;
+}
+
+@media (max-width: 560px) {
+  .plugin-settings-page .plugin-settings-persona-preset-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plugin-settings-page .plugin-settings-persona-preset-row > button {
+    width: 100%;
+  }
+}
