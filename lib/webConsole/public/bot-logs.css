@@ -167,6 +167,70 @@
   padding: 0 1px;
 }
 
+/* 无 ANSI 色码的结构化日志：时间、级别、详情和动作分别着色 */
+.log-token-time {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.log-token-mark,
+.log-token-info {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.log-token-detail {
+  color: #c4b5fd;
+}
+
+.log-token-error {
+  color: #f87171;
+  font-weight: 800;
+}
+
+.log-token-warn {
+  color: #facc15;
+  font-weight: 800;
+}
+
+.log-token-debug {
+  color: #a78bfa;
+}
+
+.log-token-action-start {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+.log-token-action-done {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.log-token-embedded {
+  color: #22d3ee;
+}
+
+/* TRSS/Yunzai 原始 ANSI 色码映射 */
+.log-ansi.ansi-black { color: #111827; }
+.log-ansi.ansi-red { color: #ef4444; }
+.log-ansi.ansi-green { color: #22c55e; }
+.log-ansi.ansi-yellow { color: #eab308; }
+.log-ansi.ansi-blue { color: #3b82f6; }
+.log-ansi.ansi-magenta { color: #d946ef; }
+.log-ansi.ansi-cyan { color: #06b6d4; }
+.log-ansi.ansi-white { color: #f8fafc; }
+.log-ansi.ansi-gray { color: #9ca3af; }
+.log-ansi.ansi-bright-red { color: #f87171; }
+.log-ansi.ansi-bright-green { color: #4ade80; }
+.log-ansi.ansi-bright-yellow { color: #fde047; }
+.log-ansi.ansi-bright-blue { color: #60a5fa; }
+.log-ansi.ansi-bright-magenta { color: #f0abfc; }
+.log-ansi.ansi-bright-cyan { color: #67e8f9; }
+.log-ansi.ansi-bright-white { color: #ffffff; }
+.log-ansi.ansi-bold { font-weight: 700; }
+.log-ansi.ansi-dim { opacity: 0.72; }
+
 .bot-logs-status {
   padding: 8px 4px 0;
   font-size: 12px;
