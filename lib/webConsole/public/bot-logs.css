@@ -127,10 +127,14 @@
 
 .log-line-text.level-error {
   color: #ff7b7b;
+  background: rgba(255, 123, 123, 0.12);
+  border-radius: 3px;
 }
 
 .log-line-text.level-warn {
   color: #f0b429;
+  background: rgba(240, 180, 41, 0.12);
+  border-radius: 3px;
 }
 
 .log-line-text.level-debug {
@@ -139,6 +143,21 @@
 
 .log-line-text.level-info {
   color: var(--text-primary, #dbe2ee);
+}
+
+/* 浅色主题下用更深的红/黄，保证白底上醒目 */
+:root:not([data-theme='dark']) .log-line-text.level-error {
+  color: #c0262c;
+  background: rgba(217, 45, 32, 0.10);
+}
+
+:root:not([data-theme='dark']) .log-line-text.level-warn {
+  color: #9a6700;
+  background: rgba(240, 180, 41, 0.16);
+}
+
+:root:not([data-theme='dark']) .log-line-text.level-debug {
+  color: #6b7280;
 }
 
 .log-line-text mark {
