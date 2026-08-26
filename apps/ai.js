@@ -1646,6 +1646,8 @@ export class crystelfAI extends plugin {
   }
 
   async in(e) {
+    // 消息本身就是命令（如 #扫码登录）时只可能是昵称正则误命中，绝不能进入 AI 对话。
+    if (isCommandPrefixedMessage(e?.msg)) return false;
     if (!this.isInitialized) {
       await this.init();
     }
@@ -2057,6 +2059,12 @@ export class crystelfAI extends plugin {
       const directVoiceText = parseDirectVoiceCommand(e.msg);
       const featureToggleCommand = parseFeatureToggleCommand(e.msg);
       if (!aiConfig) return;
+      // 命令消息统一放行：功能开关/语音等本插件命令之外，任何 # / / 等前缀命令都不进入 AI 对话，
+      // 防止昵称正则误命中或伪人/接话路径抢走其他插件命令（如 #扫码登录）。
+      if (isCommandPrefixedMessage(e.msg) && !directVoiceText && !featureToggleCommand) {
+        logger.debug(`[crystelf-ai] 放行命令消息，不进入AI对话: ${String(e.msg || '').slice(0, 40)}`);
+        return false;
+      }
 
       if (!this.isGroupAllowed(e.group_id, aiConfig)) return;
       if (isBotUser(e.user_id, e)) return;
