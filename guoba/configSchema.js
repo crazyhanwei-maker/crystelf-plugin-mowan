@@ -225,6 +225,19 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.privateAiSafety.warnAction',
+    label: '不明确判定处置',
+    component: 'Select',
+    bottomHelpMessage: 'LLM 复审判定为不明确(warn)时：放行=直接进入对话且不记警告；警告=回复拦截文案并计数。明确违规(block)不受此项影响。',
+    componentProps: {
+      options: [
+        { label: '放行（不警告）', value: 'allow' },
+        { label: '警告并计数', value: 'block' },
+      ],
+      placeholder: '请选择不明确判定的处置方式',
+    },
+  },
+  {
     field: 'config.privateAiSafety.ownerNotify',
     label: '拉黑通知主人',
     component: 'Switch',

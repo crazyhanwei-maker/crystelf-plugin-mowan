@@ -39,6 +39,8 @@
     "reviewCacheTtlHours": 24,
     "warnBeforeBlacklist": true,
     "directBlacklistHighRisk": true,
+    "?warnAction": "LLM 复审判定为不明确(warn)时的处置：allow=放行不警告（默认），block=警告并计数",
+    "warnAction": "allow",
     "ownerNotify": false,
     "maxWarnings": 2,
     "windowHours": 24,
