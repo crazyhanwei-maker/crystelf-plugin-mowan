@@ -301,7 +301,18 @@ function getPrivateAiAccessDecision(config = {}, e = {}) {
   return { allow: true, reason: whitelist.length > 0 ? '命中私聊 AI 白名单' : '私聊 AI 未限制用户范围' };
 }
 
+function isCredentialLikeMessage(content = '') {
+  const text = String(content || '').trim();
+  if (!text) return false;
+  // 米哈游登录插件私聊下发的 token 绑定消息（stoken=… / ltoken=… / cookie_token=… / v2_ 开头的凭证串）
+  // 不能进入私聊 AI 回复，也不应触发安全警告。
+  return /^(stoken|ltoken|cookie_token|cookieToken|mid|aid)\s*[=:]/i.test(text)
+    || /^v2_[A-Za-z0-9_\-+/=]{20,}/.test(text)
+    || /(stoken|ltoken|cookie_token)\s*[=:]\s*v2_/i.test(text);
+}
+
 function isPrivateAiRoutableMessage(content = '', e = {}, directVoiceText = '') {
+  if (isCredentialLikeMessage(content)) return false;
   if (!isCommandPrefixedMessage(content)) return true;
   return Boolean(
     directVoiceText
