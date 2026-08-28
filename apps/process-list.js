@@ -1,5 +1,5 @@
 import Version from '../lib/system/version.js';
-import { listSystemProcesses } from '../lib/system/processList.js';
+import { listSystemProcesses, killSystemProcess } from '../lib/system/processList.js';
 import { renderProcessListImage } from '../lib/system/processListImageRenderer.js';
 
 function buildProcessText(data = {}) {
@@ -21,13 +21,17 @@ export class CrystelfProcessList extends plugin {
   constructor() {
     super({
       name: 'crystelf-process-list',
-      dsc: '灵晶系统进程查看',
+      dsc: '灵晶系统进程查看与管理',
       event: 'message',
       priority: -1000,
       rule: [
         {
           reg: '^#查看进程(\\s+[\\s\\S]+)?$',
           fnc: 'showProcessList',
+        },
+        {
+          reg: '^#[杀死结束]{1,2}(进程)?\\s*(?:PID\\s*)?([1-9]\\d{1,9})\\s*$',
+          fnc: 'killProcess',
         },
       ],
     });
@@ -59,5 +63,38 @@ export class CrystelfProcessList extends plugin {
       logger.warn(`[crystelf-process] 进程图片渲染失败，回退文本: ${error.message}`);
     }
     return e.reply(buildProcessText(data), true);
+  }
+
+  async killProcess(e) {
+    if (!e.isMaster) {
+      return e.reply('该命令仅限主人使用。', true);
+    }
+
+    const match = String(e.msg || '').match(/^#[杀死结束]{1,2}(?:进程)?\s*(?:PID\s*)?([1-9]\d{1,9})\s*$/);
+    const pid = Number(match?.[1] || 0);
+    if (!pid) {
+      return e.reply('用法：#杀死PID 1234（先用 #查看进程 查 PID）', true);
+    }
+
+    // 先查进程信息用于确认展示，查不到说明已退出
+    let target = null;
+    try {
+      const list = await listSystemProcesses({ query: '', limit: 1000 });
+      target = (list.items || []).find(item => Number(item.pid) === pid) || null;
+    } catch (error) {
+      logger.warn(`[crystelf-process] 结束前查询进程失败: ${error.message}`);
+    }
+
+    if (!target) {
+      return e.reply(`未找到 PID ${pid} 对应的进程，可能已退出。可先发 #查看进程 核对。`, true);
+    }
+
+    try {
+      const result = await killSystemProcess({ pid });
+      logger.mark(`[crystelf-process] 主人 ${e.user_id} 结束进程: PID ${pid} (${result.name})`);
+      return e.reply(`已结束进程：${result.name}（PID ${result.pid}）`, true);
+    } catch (error) {
+      return e.reply(`结束进程失败：${error.message}`, true);
+    }
   }
 }
