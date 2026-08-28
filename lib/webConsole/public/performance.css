@@ -964,3 +964,29 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.process-viewer-table td:last-child {
+  text-align: center;
+}
+
+.process-kill-btn {
+  padding: 3px 10px;
+  border: 1px solid rgba(211, 93, 98, 0.45);
+  border-radius: 6px;
+  background: rgba(211, 93, 98, 0.1);
+  color: #c2464c;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.process-kill-btn:hover:not(:disabled) {
+  background: rgba(211, 93, 98, 0.22);
+  color: #a5363c;
+}
+
+.process-kill-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
