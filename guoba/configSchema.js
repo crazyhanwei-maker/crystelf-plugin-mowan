@@ -238,6 +238,16 @@ const guobaSchema = [
     },
   },
   {
+    field: 'config.privateAiSafety.useBuiltinSafetyKeywords',
+    label: '内置安全关键词',
+    component: 'Switch',
+    bottomHelpMessage: '开启后自动叠加内置兜底关键词（越狱、绕过规则、制作武器等），即使用户未填写自定义词也有基础防护。用户自定义词始终叠加在内置之上。可在下方关键词框中查看或补充。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     field: 'config.privateAiSafety.ownerNotify',
     label: '拉黑通知主人',
     component: 'Switch',

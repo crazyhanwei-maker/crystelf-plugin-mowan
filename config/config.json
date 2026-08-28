@@ -41,6 +41,8 @@
     "directBlacklistHighRisk": true,
     "?warnAction": "LLM 复审判定为不明确(warn)时的处置：allow=放行不警告（默认），block=警告并计数",
     "warnAction": "allow",
+    "?useBuiltinSafetyKeywords": "是否启用内置安全关键词兜底（越狱/绕过规则等，用户自定义词叠加在内置之上），默认开启",
+    "useBuiltinSafetyKeywords": true,
     "ownerNotify": false,
     "maxWarnings": 2,
     "windowHours": 24,
