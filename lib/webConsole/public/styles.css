@@ -5038,7 +5038,7 @@ body:not(.login-page) {
   position: sticky;
   top: 18px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 18px;
   height: calc(100vh - 36px);
   padding: 16px 12px;
@@ -6310,4 +6310,97 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   font-size: 20px;
   line-height: 1.2;
   letter-spacing: 0;
+}
+
+/* 可收起侧边栏：桌面端图标窄条模式 */
+.console-sidebar-foot {
+  display: grid;
+  padding-top: 10px;
+  border-top: 1px solid var(--console-sidebar-border);
+}
+
+.console-sidebar-collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--console-glass-border);
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--soft-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.console-sidebar-collapse:hover {
+  border-color: var(--console-active-border);
+  background: var(--console-active-bg);
+  color: var(--console-active-text);
+}
+
+@media (min-width: 901px) {
+  .console-app-shell {
+    transition: grid-template-columns 0.22s ease;
+  }
+
+  body.console-sidebar-collapsed .console-app-shell {
+    --console-shell-width: 76px;
+  }
+
+  body.console-sidebar-collapsed .console-sidebar {
+    padding: 16px 10px;
+  }
+
+  body.console-sidebar-collapsed .console-brand {
+    grid-template-columns: 44px;
+    justify-items: center;
+    padding: 10px 0;
+  }
+
+  body.console-sidebar-collapsed .console-brand-title,
+  body.console-sidebar-collapsed .console-brand-subtitle {
+    display: none;
+  }
+
+  body.console-sidebar-collapsed .console-nav {
+    padding: 4px 0 10px;
+  }
+
+  body.console-sidebar-collapsed .console-nav-section {
+    height: 1px;
+    margin: 8px 6px;
+    padding: 0;
+    overflow: hidden;
+    color: transparent;
+    background: var(--console-sidebar-border);
+  }
+
+  body.console-sidebar-collapsed .console-nav-link {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0;
+    padding: 9px 0;
+  }
+
+  body.console-sidebar-collapsed .console-nav-link::before {
+    left: 4px;
+  }
+
+  body.console-sidebar-collapsed .console-nav-label {
+    display: none;
+  }
+
+  body.console-sidebar-collapsed .console-sidebar-collapse {
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .console-sidebar-foot {
+    display: none;
+  }
 }
