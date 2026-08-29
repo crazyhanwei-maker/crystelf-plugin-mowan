@@ -71,6 +71,11 @@ body {
   overflow-x: hidden;
 }
 
+/* clip 不创建滚动容器；body 级 overflow-x: hidden 会使 position: sticky 失效 */
+body {
+  overflow-x: clip;
+}
+
 body.is-resizing-file-browser {
   cursor: col-resize;
   user-select: none;
@@ -5020,6 +5025,7 @@ body::after {
 
 body:not(.login-page) {
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .console-app-shell {
