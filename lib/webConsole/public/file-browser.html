@@ -20,11 +20,11 @@
 
     <div class="file-manager-pathbar">
       <div class="file-manager-nav-buttons">
-        <button id="file-browser-back-btn" type="button" class="file-manager-icon-btn" title="后退" aria-label="后退">‹</button>
-        <button id="file-browser-forward-btn" type="button" class="file-manager-icon-btn" title="前进" aria-label="前进">›</button>
-        <button id="file-browser-up-btn" type="button" class="file-manager-icon-btn" title="返回上一级" aria-label="返回上一级">↑</button>
-        <button id="file-browser-refresh-dir-btn" type="button" class="file-manager-icon-btn" title="刷新" aria-label="刷新">⟳</button>
-        <button id="file-browser-show-hidden-btn" type="button" class="file-manager-icon-btn" title="显示隐藏文件" aria-pressed="true" aria-label="显示隐藏文件">⊙</button>
+        <button id="file-browser-back-btn" type="button" class="file-manager-icon-btn" title="后退" aria-label="后退"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+        <button id="file-browser-forward-btn" type="button" class="file-manager-icon-btn" title="前进" aria-label="前进"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        <button id="file-browser-up-btn" type="button" class="file-manager-icon-btn" title="返回上一级" aria-label="返回上一级"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+        <button id="file-browser-refresh-dir-btn" type="button" class="file-manager-icon-btn" title="刷新" aria-label="刷新"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+        <button id="file-browser-show-hidden-btn" type="button" class="file-manager-icon-btn" title="显示隐藏文件" aria-pressed="true" aria-label="显示隐藏文件"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
       <div id="file-browser-breadcrumbs" class="file-manager-breadcrumbs"></div>
       <div class="file-manager-search-row">
@@ -37,7 +37,9 @@
       <button id="file-browser-new-file-btn" type="button" class="file-manager-primary-btn">创建文件</button>
       <button id="file-browser-new-dir-btn" type="button" class="file-manager-secondary-btn">创建目录</button>
       <button id="file-browser-copy-file-btn" type="button" class="file-manager-secondary-btn" disabled>复制文件</button>
-      <button id="file-browser-settings-btn" type="button" class="file-manager-icon-btn" aria-label="设置">⚙</button>
+      <button id="file-browser-upload-btn" type="button" class="file-manager-secondary-btn" disabled>上传文件</button>
+      <input id="file-browser-upload-input" type="file" multiple hidden />
+      <button id="file-browser-settings-btn" type="button" class="file-manager-icon-btn" aria-label="设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <div class="file-manager-spacer"></div>
       <label class="file-manager-flag">
         <input id="file-manager-subdir-toggle" type="checkbox" checked />

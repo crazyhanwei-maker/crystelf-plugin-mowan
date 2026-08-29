@@ -277,6 +277,19 @@ body.is-resizing-file-browser .file-browser-sidebar-resizer::before {
   box-shadow: none;
 }
 
+.file-browser-home-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+
+.file-browser-home-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .file-browser-crumb.is-active {
   background: var(--soft-bg-strong);
   color: var(--secondary-text);
@@ -2620,6 +2633,12 @@ body.file-manager-page .file-manager-icon-btn {
   font-size: 17px;
 }
 
+body.file-manager-page .file-manager-icon-btn svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
 body.file-manager-page .file-manager-icon-btn:hover,
 body.file-manager-page .mini-btn:hover,
 body.file-manager-page .file-manager-secondary-btn:hover,
@@ -2666,11 +2685,16 @@ body.file-manager-page .file-manager-breadcrumbs {
   min-width: 0;
   height: 38px;
   overflow-x: auto;
+  scrollbar-width: none;
   padding: 0 13px;
   border: 1px solid var(--fm-border);
   border-radius: 5px;
   background: #fff;
   box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+}
+
+body.file-manager-page .file-manager-breadcrumbs::-webkit-scrollbar {
+  display: none;
 }
 
 body.file-manager-page .file-browser-crumb {
@@ -2703,25 +2727,16 @@ body.file-manager-page .file-browser-crumb + .file-browser-crumb::before {
 }
 
 body.file-manager-page .file-browser-home-icon {
-  position: relative;
   display: inline-block;
   width: 15px;
-  height: 13px;
-  border: 2px solid #667085;
-  border-top: 0;
-  border-radius: 2px;
+  height: 15px;
+  color: inherit;
 }
 
-body.file-manager-page .file-browser-home-icon::before {
-  content: "";
-  position: absolute;
-  left: 1px;
-  top: -7px;
-  width: 11px;
-  height: 11px;
-  border-left: 2px solid #667085;
-  border-top: 2px solid #667085;
-  transform: rotate(45deg);
+body.file-manager-page .file-browser-home-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 body.file-manager-page .file-manager-search-row,
@@ -3537,16 +3552,33 @@ body.file-manager-page #file-browser-modal-confirm-btn.danger {
   }
 
   body.file-manager-page .file-manager-toolbar {
-    align-items: stretch;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
   }
 
   body.file-manager-page .file-manager-toolbar > button,
   body.file-manager-page .file-manager-toolbar > .file-manager-flag,
   body.file-manager-page .file-manager-toolbar > .file-manager-search-inline,
   body.file-manager-page .file-manager-toolbar > .file-manager-search-btn {
-    flex: 1 1 calc(50% - 8px);
+    flex: 1 1 calc(50% - 4px);
     width: auto;
     margin-right: 0;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-icon-btn {
+    flex: 0 0 auto;
+    width: 32px;
+    min-width: 32px;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-flag,
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-btn {
+    flex: 1 1 0;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-inline {
+    flex: 1 1 100%;
   }
 
   body.file-manager-page .file-manager-spacer {
@@ -3598,23 +3630,56 @@ body.file-manager-page #file-browser-modal-confirm-btn.danger {
   }
 
   body.file-manager-page .file-browser-file-row {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     min-width: 0;
-    gap: 0;
-    padding: 8px 0;
+    gap: 3px 12px;
+    padding: 10px 0;
   }
 
-  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:not(.file-browser-file-name-cell) {
-    grid-column: 1;
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell {
     height: auto;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    line-height: 1.45;
+    padding: 0;
+    line-height: 1.5;
     font-size: 12px;
+    min-width: 0;
   }
 
-  body.file-manager-page .file-browser-row-actions {
-    gap: 14px;
+  body.file-manager-page .file-browser-file-row > .file-browser-file-name-cell {
+    grid-column: 1 / -1;
+    padding-bottom: 4px;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(2)::before {
+    content: "权限：";
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(3)::before {
+    content: "所有者：";
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(4)::before {
+    content: "大小：";
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(5)::before {
+    content: "时间：";
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(2)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(3)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(4)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(5)::before {
+    color: #98a2b3;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(6) {
+    display: none;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-row-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 16px;
     padding-top: 6px !important;
   }
 
@@ -3633,6 +3698,52 @@ body.file-manager-page #file-browser-modal-confirm-btn.danger {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+  }
+
+  /* 编辑器浮层：窗口子项禁止被长代码行撑宽，横向溢出交给代码区内部滚动 */
+  body.file-manager-page .file-manager-editor-shell .file-manager-editor-window > * {
+    min-width: 0;
+  }
+
+  /* 编辑器浮层：操作条与视图切换保持横排滚动，不参与上方的单列堆叠规则 */
+  body.file-manager-page .file-manager-editor-shell .file-browser-editor-action-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+  }
+
+  body.file-manager-page .file-manager-editor-shell .file-browser-editor-action-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  body.file-manager-page .file-manager-editor-shell .file-browser-editor-action-buttons::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.file-manager-page .file-manager-editor-shell .file-browser-view-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  body.file-manager-page .file-manager-editor-shell .file-browser-view-switch {
+    display: flex;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  body.file-manager-page .file-manager-editor-shell .file-browser-view-btn {
+    flex: 0 0 auto;
+    width: auto;
+    white-space: nowrap;
   }
 }
 
