@@ -695,14 +695,65 @@ button.group-management-group-item.active {
 
 .group-management-rule-debug-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   margin-top: 12px;
   align-items: start;
 }
 
-.group-management-rule-debug-wide {
-  grid-column: span 2;
+.group-management-rule-debug-form.gm-rd-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.group-management-rule-debug-form.gm-rd-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.group-management-rule-debug-form.gm-rd-full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.group-management-rule-debug-section-box {
+  display: grid;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.group-management-rule-debug-section-box > h5 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.group-management-rule-debug-observe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.group-management-rule-debug-observe .group-management-switch {
+  margin-top: 0;
+}
+
+.group-management-rule-debug-observe .setting-item {
+  min-width: 200px;
+  max-width: 280px;
+}
+
+/* 按调试类型折叠区块：只显示当前类型相关的表单；不支持 :has 的浏览器保持全部显示 */
+.group-management-rule-debug-block:has(#gm-rule-debug-type option[value="join"]:checked) [data-rd-section="message"],
+.group-management-rule-debug-block:has(#gm-rule-debug-type option[value="title"]:checked) [data-rd-section="message"],
+.group-management-rule-debug-block:has(#gm-rule-debug-type option[value="message"]:checked) [data-rd-section="join"],
+.group-management-rule-debug-block:has(#gm-rule-debug-type option[value="title"]:checked) [data-rd-section="join"],
+.group-management-rule-debug-block:has(#gm-rule-debug-type option[value="message"]:checked) [data-rd-section="title"],
+.group-management-rule-debug-block:has(#gm-rule-debug-type option[value="join"]:checked) [data-rd-section="title"] {
+  display: none;
 }
 
 .group-management-rule-debug-switch {
@@ -1072,14 +1123,17 @@ button.group-management-group-item.active {
     display: grid;
   }
 
-  .group-management-rule-debug-form,
   .group-management-rule-debug-head {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .group-management-rule-debug-wide {
-    grid-column: auto;
+  .group-management-rule-debug-form.gm-rd-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .group-management-rule-debug-form.gm-rd-cols-3 {
+    grid-template-columns: 1fr;
   }
 
   .group-management-fold-head {
