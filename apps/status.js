@@ -39,6 +39,38 @@ function formatBytes(bytes = 0) {
   return `${size.toFixed(size >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
+function collectDiskUsage() {
+  if (typeof fs.statfsSync !== 'function') return [];
+  const candidates = process.platform === 'win32'
+    ? Array.from({ length: 26 }, (_, index) => `${String.fromCharCode(65 + index)}:/`)
+    : ['/', '/boot', '/data', '/home', '/www', '/opt'];
+  const disks = [];
+  const seenDevices = new Set();
+  for (const mount of candidates) {
+    try {
+      const dev = fs.statSync(mount).dev;
+      if (seenDevices.has(dev)) continue;
+      seenDevices.add(dev);
+      const stat = fs.statfsSync(mount);
+      const blockSize = Number(stat.bsize || 0);
+      const totalBytes = Number(stat.blocks || 0) * blockSize;
+      const freeBytes = Number(stat.bfree || 0) * blockSize;
+      if (!totalBytes) continue;
+      const usedBytes = Math.max(totalBytes - freeBytes, 0);
+      disks.push({
+        mount: process.platform === 'win32' ? mount.replace(/[\/]+$/, '') : mount,
+        totalBytes,
+        percent: Math.min(100, Math.max(0, Math.round((usedBytes / totalBytes) * 100))),
+        usedText: formatBytes(usedBytes),
+        totalText: formatBytes(totalBytes),
+      });
+    } catch {
+      // 挂载点不存在或无权限，跳过
+    }
+  }
+  return disks.sort((a, b) => b.totalBytes - a.totalBytes).slice(0, 4);
+}
+
 function formatNumber(value = 0) {
   const number = Number(value || 0);
   return Number.isFinite(number) ? number.toLocaleString('zh-CN') : '0';
@@ -239,7 +271,7 @@ function buildHealthItems(allConfigs = {}) {
   ];
 }
 
-function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health }) {
+function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks = [] }) {
   const alerts = [];
   const requestCount = Number(usage.request_count || 0);
   const errorCount = Number(usage.error_count || 0);
@@ -247,6 +279,9 @@ function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health }) 
   const imageErrors = Number(imageUsage.error_count || 0);
 
   if (memoryPercent >= 85) alerts.push({ tone: 'warn', label: '内存', text: `物理内存使用率 ${memoryPercent.toFixed(1)}%` });
+  for (const disk of disks) {
+    if (disk.percent >= 90) alerts.push({ tone: 'warn', label: '磁盘', text: `磁盘 ${disk.mount} 使用率 ${disk.percent}%（${disk.usedText} / ${disk.totalText}）` });
+  }
   if (heapPercent >= 85) alerts.push({ tone: 'warn', label: 'Heap', text: `进程 Heap 使用率 ${heapPercent.toFixed(1)}%` });
   if (requestCount > 0 && errorCount / requestCount >= 0.2) alerts.push({ tone: 'warn', label: 'AI', text: `今日 AI 错误率 ${((errorCount / requestCount) * 100).toFixed(1)}%` });
   if (imageRequests > 0 && imageErrors / imageRequests >= 0.2) alerts.push({ tone: 'warn', label: '生图', text: `今日生图错误率 ${((imageErrors / imageRequests) * 100).toFixed(1)}%` });
@@ -284,6 +319,7 @@ function buildStatusData(e = {}) {
   const cpuPercent = getCpuPercent();
   const health = buildHealthItems(allConfigs);
   const imageLatest = imageUsage.latest;
+  const disks = collectDiskUsage();
 
   const data = {
     statusText: health.some(item => item.tone !== 'success') ? '需要检查' : '运行正常',
@@ -300,6 +336,7 @@ function buildStatusData(e = {}) {
       heapPercent,
       loadAvg,
       uptimeMs,
+      disks,
     },
     metrics: [
       {
@@ -377,7 +414,7 @@ function buildStatusData(e = {}) {
     features: getFeatureEntries(),
   };
 
-  data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health });
+  data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks });
   data.summaryLines = [
     `插件：${Version.name} v${Version.ver}`,
     `Bot：${botId}`,
@@ -388,6 +425,7 @@ function buildStatusData(e = {}) {
     `平台：${process.platform} ${process.arch}`,
     `进程内存：RSS ${formatBytes(memory.rss)} / Heap ${formatBytes(memory.heapUsed)} / ${formatBytes(memory.heapTotal)}`,
     `物理内存：${formatBytes(usedMemory)} / ${formatBytes(totalMemory)}`,
+    `磁盘：${disks.map(disk => `${disk.mount} ${disk.percent}%（${disk.usedText} / ${disk.totalText}）`).join('，') || '未获取'}`,
     `系统负载：${loadAvg}`,
     requestCount > 0
       ? `AI用量：今日 ${formatNumber(usage.request_count)} 次 / 成功 ${formatNumber(usage.success_count)} / 失败 ${formatNumber(usage.error_count)}`
