@@ -242,6 +242,73 @@ button.group-management-workspace-tab.active:hover {
   overflow: hidden;
 }
 
+.gm-insights { display: grid; gap: 14px; }
+
+.gm-insights-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.gm-insights-stat {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+}
+
+.gm-insights-stat span { color: var(--soft-text); font-size: 11.5px; }
+.gm-insights-stat strong { font-size: 20px; line-height: 1.1; }
+
+.gm-insights-trend {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 4px 0;
+  overflow-x: auto;
+}
+
+.gm-insights-trend-cell {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 34px;
+}
+
+.gm-insights-trend-value { color: var(--soft-text); font-size: 10.5px; }
+
+.gm-insights-trend-bar {
+  width: 16px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--primary, #3a6df0), rgba(58, 109, 240, 0.35));
+}
+
+.gm-insights-trend-date { color: var(--soft-text); font-size: 10px; }
+
+.gm-insights-tops { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+
+.gm-insights-top { display: grid; gap: 6px; }
+
+.gm-insights-top-title { color: var(--soft-text); font-size: 12px; font-weight: 700; }
+
+.gm-insights-top-row {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.gm-insights-top-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-insights-top-label small { margin-left: 6px; color: var(--soft-text); font-size: 10.5px; }
+
+.gm-insights-top-bar { display: block; height: 6px; border-radius: 999px; background: var(--soft-bg-strong, rgba(148, 163, 184, 0.18)); overflow: hidden; }
+.gm-insights-top-bar i { display: block; height: 100%; border-radius: 999px; background: var(--primary, #3a6df0); }
+
+.gm-insights-top-count { color: var(--soft-text); font-size: 11.5px; white-space: nowrap; }
+
 .group-management-health {
   display: grid;
   gap: 14px;

@@ -102,6 +102,20 @@
       <div id="group-management-health" class="group-management-health">健康检查加载中...</div>
     </section>
 
+    <section class="panel group-management-insights-panel group-management-workspace-hidden" data-workspace-panel="operations">
+      <div class="section-head">
+        <div>
+          <h2>风控面板</h2>
+          <div id="group-management-insights-meta" class="setting-help">聚合近几天的风控动作记录：动作趋势、命中 TOP 与被处置用户。</div>
+        </div>
+        <div class="actions">
+          <button type="button" class="mini-btn gm-insights-days-toggle" data-days="7">近 7 天</button>
+          <button type="button" class="mini-btn gm-insights-days-toggle" data-days="30">近 30 天</button>
+        </div>
+      </div>
+      <div id="group-management-insights" class="gm-insights">正在加载风控统计...</div>
+    </section>
+
     <section class="panel group-management-safety-panel group-management-workspace-hidden" data-workspace-panel="settings">
       <div class="section-head">
         <div>
@@ -206,6 +220,7 @@
   <script src="/group-management-defaults-render.js"></script>
   <script src="/group-management-detail-render.js"></script>
   <script src="/group-management-health.js"></script>
+  <script src="/group-management-insights.js"></script>
   <script src="/group-management-events.js"></script>
   <script src="/group-management-settings.js"></script>
   <script src="/group-management-rule-debug.js"></script>
