@@ -44,6 +44,7 @@ export default class RssPlugin extends plugin {
         },
       ],
     });
+    global.__crystelfRssPushInstance = this;
     if (!global.__rss_job_scheduled) {
       // 默认每10分钟执行一次
       schedule.scheduleJob('*/10 * * * *', () => this.pushFeeds());

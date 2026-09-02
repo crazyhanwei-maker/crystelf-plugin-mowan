@@ -72,6 +72,20 @@
       </div>
     </section>
 
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>近 N 天用量趋势</h2>
+          <div class="setting-help">按天聚合的请求数与 Token 用量，数据来自每日用量日志。悬停查看当日明细。</div>
+        </div>
+        <div class="actions">
+          <button type="button" class="mini-btn usage-days-toggle" data-days="7">近 7 天</button>
+          <button type="button" class="mini-btn usage-days-toggle" data-days="30">近 30 天</button>
+        </div>
+      </div>
+      <div id="usage-days-chart" class="chart-box">加载中...</div>
+    </section>
+
     <section class="panel collapsible-panel collapsed">
       <div class="section-head">
         <div>
