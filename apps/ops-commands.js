@@ -19,7 +19,8 @@ function isGroupManager(e = {}) {
 }
 
 function getConfirmKey(e = {}) {
-  return `${e.group_id || 'private'}:${e.user_id || 'unknown'}`;
+  // 只按发起人 QQ 号记确认：群里发起、私聊确认（或反过来）都能通过
+  return String(e.user_id || 'unknown');
 }
 
 function pruneExpiredRestarts() {
@@ -302,7 +303,7 @@ export class CrystelfOpsCommands extends plugin {
       `当前进程：PID ${process.pid}`,
       `运行时长：${Math.round(process.uptime() / 60)} 分钟`,
       '',
-      '确认执行请在 3 分钟内发送：确认重启灵晶',
+      '确认执行请在 3 分钟内发送：确认重启灵晶（私聊或任意群均可）',
       '取消请发送：取消重启灵晶',
     ].join('\n'), true);
   }
