@@ -6,6 +6,7 @@ import {
   runScheduledBackupForChat,
   buildGroupManagementInsightsForChat,
   buildTaskCenterForChat,
+  inspectResourceWatchdog,
 } from '../lib/webConsole/server.js';
 
 const RESTART_CONFIRM_TIMEOUT_MS = 3 * 60 * 1000;
@@ -177,6 +178,26 @@ function buildTaskCenterText(payload = {}) {
   return lines.join('\n');
 }
 
+function buildResourceLevelText(result = {}) {
+  const thresholds = result.thresholds || {};
+  const lines = ['资源水位现状', '━━━━━━━━━━━━━━━━━━'];
+  const normal = Array.isArray(result.normal) ? result.normal : [];
+  const alerts = Array.isArray(result.alerts) ? result.alerts : [];
+  if (normal.length) {
+    for (const item of normal) lines.push(`  ✓ ${item}`);
+  }
+  if (alerts.length) {
+    for (const item of alerts) lines.push(`  🚨 ${item}`);
+  }
+  if (!normal.length && !alerts.length) {
+    lines.push('  暂无可用数据（磁盘接口或 Redis 不可达）');
+  }
+  lines.push('');
+  lines.push(`阈值：磁盘 ${thresholds.diskPercent}% / 内存 ${thresholds.memoryPercent}% / Redis ${thresholds.redisPercent}%（每 10 分钟检查，持续超限每 6 小时重提醒）`);
+  lines.push(`生成时间：${new Date().toLocaleString('zh-CN', { hour12: false })}`);
+  return lines.join('\n');
+}
+
 export class CrystelfOpsCommands extends plugin {
   constructor() {
     super({
@@ -191,6 +212,8 @@ export class CrystelfOpsCommands extends plugin {
         { reg: '^#群风控日报$', fnc: 'showRiskDaily' },
         { reg: '^#AI周报$', fnc: 'showAiWeekly' },
         { reg: '^#灵晶任务$', fnc: 'showTaskCenter' },
+        { reg: '^#灵晶水位$', fnc: 'showResourceLevel' },
+        { reg: '^#灵晶水位阈值\\s*(磁盘|内存|Redis|redis)\\s*([0-9]{1,3})$', fnc: 'setResourceThreshold' },
         { reg: '^#灵晶重启$', fnc: 'prepareRestart' },
         { reg: '^#?确认重启灵晶$', fnc: 'confirmRestart' },
         { reg: '^#?取消重启灵晶$', fnc: 'cancelRestart' },
@@ -283,6 +306,46 @@ export class CrystelfOpsCommands extends plugin {
     } catch (error) {
       logger.error(`[crystelf-ops] 任务信息生成失败: ${error.message}`);
       return e.reply(`任务信息生成失败：${error.message}`, true);
+    }
+  }
+
+  async showResourceLevel(e) {
+    if (!e.isMaster) {
+      return e.reply('该命令仅限主人使用。', true);
+    }
+    try {
+      const result = await inspectResourceWatchdog();
+      return e.reply(buildResourceLevelText(result), true);
+    } catch (error) {
+      logger.error(`[crystelf-ops] 水位查询失败: ${error.message}`);
+      return e.reply(`水位查询失败：${error.message}`, true);
+    }
+  }
+
+  async setResourceThreshold(e) {
+    if (!e.isMaster) {
+      return e.reply('该命令仅限主人使用。', true);
+    }
+    const match = String(e.msg || '').match(/^#灵晶水位阈值\s*(磁盘|内存|Redis|redis)\s*([0-9]{1,3})$/);
+    if (!match) {
+      return e.reply('格式：#灵晶水位阈值 磁盘 85（磁盘/内存/Redis，50-100）', true);
+    }
+    const kindRaw = match[1];
+    const value = Number(match[2]);
+    if (!Number.isFinite(value) || value < 50 || value > 100) {
+      return e.reply('阈值需在 50-100 之间。', true);
+    }
+    const kindMap = { '磁盘': 'resourceDiskPercent', '内存': 'resourceMemoryPercent', 'Redis': 'resourceRedisPercent', 'redis': 'resourceRedisPercent' };
+    const key = kindMap[kindRaw];
+    try {
+      const config = ConfigControl.get('config') || {};
+      config[key] = value;
+      await ConfigControl.set('config', config);
+      const label = kindRaw.toLowerCase() === 'redis' ? 'Redis' : kindRaw;
+      return e.reply(`已设置 ${label} 水位告警阈值为 ${value}%（每 10 分钟检查，超限即告警）。`, true);
+    } catch (error) {
+      logger.error(`[crystelf-ops] 水位阈值设置失败: ${error.message}`);
+      return e.reply(`阈值设置失败：${error.message}`, true);
     }
   }
 
