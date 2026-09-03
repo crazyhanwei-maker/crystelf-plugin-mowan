@@ -8,6 +8,21 @@ import schedule from 'node-schedule';
 import tools from '../components/tool.js';
 import { buildUserFacingErrorReply } from '../lib/ai/userFacingError.js';
 
+// targetGroups 经 JSON 落盘可能是字符串，事件 group_id 是数字；统一按字符串比较
+function normalizeGroupIdList(list) {
+  return (Array.isArray(list) ? list : []).map(id => String(id ?? '').trim()).filter(Boolean);
+}
+
+function groupListIncludes(list, groupId) {
+  const key = String(groupId ?? '').trim();
+  return normalizeGroupIdList(list).includes(key);
+}
+
+function removeFromGroupList(list, groupId) {
+  const key = String(groupId ?? '').trim();
+  return (Array.isArray(list) ? list : []).filter(id => String(id ?? '').trim() !== key);
+}
+
 export default class RssPlugin extends plugin {
   constructor() {
     super({
@@ -65,15 +80,15 @@ export default class RssPlugin extends plugin {
 
     const exists = feeds.find((f) => f.url === url);
     if (exists) {
-      if (!exists.targetGroups.includes(groupId)) {
-        exists.targetGroups.push(groupId);
+      if (!groupListIncludes(exists.targetGroups, groupId)) {
+        exists.targetGroups.push(String(groupId));
         await configControl.set('feeds', feeds);
         return e.reply('该群已添加到这个 RSS 订阅中。', true);
       }
       return e.reply('这个 RSS 已存在，且已包含当前群聊。', true);
     }
 
-    feeds.push({ url, targetGroups: [groupId], screenshot: true });
+    feeds.push({ url, targetGroups: [String(groupId)], screenshot: true });
     await configControl.set('feeds', feeds);
     return e.reply('RSS 订阅添加成功。', true);
   }
@@ -99,7 +114,7 @@ export default class RssPlugin extends plugin {
     const groupId = e.group_id;
     const currentGroupFeeds = feeds
       .map((feed, index) => ({ index, ...feed }))
-      .filter((feed) => feed.targetGroups.includes(groupId));
+      .filter((feed) => groupListIncludes(feed.targetGroups, groupId));
 
     if (currentGroupFeeds.length === 0) {
       return e.reply('当前群组暂无任何 RSS 订阅。', true);
@@ -136,10 +151,10 @@ export default class RssPlugin extends plugin {
     if (!Array.isArray(targetFeed.targetGroups)) {
       targetFeed.targetGroups = [];
     }
-    if (!targetFeed.targetGroups.includes(groupId)) {
+    if (!groupListIncludes(targetFeed.targetGroups, groupId)) {
       return e.reply('当前群组未订阅此源，无需移除。', true);
     }
-    targetFeed.targetGroups = targetFeed.targetGroups.filter((id) => id !== groupId);
+    targetFeed.targetGroups = removeFromGroupList(targetFeed.targetGroups, groupId);
     await configControl.set('feeds', feeds);
 
     return await e.reply(`已取消订阅：${targetFeed.title || targetFeed.url}`);
