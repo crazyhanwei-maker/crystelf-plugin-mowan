@@ -7,6 +7,8 @@ import {
   buildGroupManagementInsightsForChat,
   buildTaskCenterForChat,
   inspectResourceWatchdog,
+  buildMorningReportTextForChat,
+  runMorningReportForChat,
 } from '../lib/webConsole/server.js';
 
 const RESTART_CONFIRM_TIMEOUT_MS = 3 * 60 * 1000;
@@ -214,6 +216,8 @@ export class CrystelfOpsCommands extends plugin {
         { reg: '^#灵晶任务$', fnc: 'showTaskCenter' },
         { reg: '^#灵晶水位$', fnc: 'showResourceLevel' },
         { reg: '^#灵晶水位阈值\\s*(磁盘|内存|Redis|redis)\\s*([0-9]{1,3})$', fnc: 'setResourceThreshold' },
+        { reg: '^#灵晶晨报$', fnc: 'showMorningReport' },
+        { reg: '^#灵晶发晨报$', fnc: 'sendMorningReportNow' },
         { reg: '^#灵晶重启$', fnc: 'prepareRestart' },
         { reg: '^#?确认重启灵晶$', fnc: 'confirmRestart' },
         { reg: '^#?取消重启灵晶$', fnc: 'cancelRestart' },
@@ -346,6 +350,35 @@ export class CrystelfOpsCommands extends plugin {
     } catch (error) {
       logger.error(`[crystelf-ops] 水位阈值设置失败: ${error.message}`);
       return e.reply(`阈值设置失败：${error.message}`, true);
+    }
+  }
+
+  async showMorningReport(e) {
+    if (!e.isMaster) {
+      return e.reply('该命令仅限主人使用。', true);
+    }
+    try {
+      const text = buildMorningReportTextForChat();
+      return e.reply(text, true);
+    } catch (error) {
+      logger.error(`[crystelf-ops] 晨报生成失败: ${error.message}`);
+      return e.reply(`晨报生成失败：${error.message}`, true);
+    }
+  }
+
+  async sendMorningReportNow(e) {
+    if (!e.isMaster) {
+      return e.reply('该命令仅限主人使用。', true);
+    }
+    try {
+      const result = await runMorningReportForChat();
+      if (!result?.success) {
+        return e.reply(`晨报发送失败：${result?.error || '未知错误'}`, true);
+      }
+      return e.reply('晨报已发送给主人（QQ 内即时送达；QQ 离线时进持久化队列）。', true);
+    } catch (error) {
+      logger.error(`[crystelf-ops] 晨报发送失败: ${error.message}`);
+      return e.reply(`晨报发送失败：${error.message}`, true);
     }
   }
 
