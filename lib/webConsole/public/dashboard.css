@@ -6,6 +6,51 @@
   margin: 0 0 18px;
 }
 
+/* 运维监控横幅：适配器/邮件告警/连接事件一屏速览（数据来自看门狗状态） */
+.ops-monitor-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.ops-monitor-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: var(--panel-bg);
+  font-size: 13px;
+  box-shadow: var(--shadow);
+}
+
+.ops-monitor-item .ops-monitor-label {
+  color: var(--muted-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.ops-monitor-item .ops-monitor-value {
+  color: var(--soft-text);
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.ops-monitor-item.tone-success {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.ops-monitor-item.tone-error {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.ops-monitor-item.tone-warn {
+  border-color: rgba(234, 179, 8, 0.4);
+}
+
 .dashboard-control-panel {
   display: grid;
   gap: 14px;
