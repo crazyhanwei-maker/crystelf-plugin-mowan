@@ -71,10 +71,17 @@ let fc = {
    */
   mergeConfig(base, addon) {
     const result = { ...base };
+    // addon 或其嵌套值可能为 null（JSON 显式 null），typeof null === 'object' 会让
+    // 递归分支收到 null 入参崩掉整个合并——遇 null 直接取 addon 值
+    if (addon === null || typeof addon !== 'object' || Array.isArray(addon)) {
+      return addon;
+    }
     for (const [key, value] of Object.entries(addon)) {
       if (!(key in result)) {
         result[key] = value;
       } else if (
+        result[key] !== null &&
+        value !== null &&
         typeof result[key] === 'object' &&
         typeof value === 'object' &&
         !Array.isArray(result[key]) &&
