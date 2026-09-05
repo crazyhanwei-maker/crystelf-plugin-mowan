@@ -4209,6 +4209,65 @@ const guobaSchema = [
       max: 23,
     },
   },
+  {
+    label: '邮件告警（SMTP，可选）',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'config.smtpHost',
+    label: 'SMTP 服务器',
+    component: 'Input',
+    bottomHelpMessage: '看门狗告警的邮件发送服务器，如 smtp.qq.com；以下四项填齐后掉线/水位告警会同时发邮件，留空则只用 QQ 通知',
+    componentProps: {
+      placeholder: '例如 smtp.qq.com',
+    },
+  },
+  {
+    field: 'config.smtpPort',
+    label: 'SMTP 端口',
+    component: 'InputNumber',
+    bottomHelpMessage: '465 走 SSL，587 走 STARTTLS',
+    componentProps: {
+      min: 1,
+      max: 65535,
+    },
+  },
+  {
+    field: 'config.smtpUser',
+    label: 'SMTP 账号',
+    component: 'Input',
+    bottomHelpMessage: 'SMTP 登录账号（通常是发件邮箱）',
+    componentProps: {
+      placeholder: '例如 bot@example.com',
+    },
+  },
+  {
+    field: 'config.smtpPass',
+    label: 'SMTP 授权码',
+    component: 'InputPassword',
+    bottomHelpMessage: 'SMTP 登录授权码（QQ 邮箱在设置-账户里开启 SMTP 后生成授权码，不是登录密码）',
+    componentProps: {
+      placeholder: '请输入授权码',
+    },
+  },
+  {
+    field: 'config.smtpFrom',
+    label: '发件人地址',
+    component: 'Input',
+    bottomHelpMessage: '留空则使用 SMTP 账号作为发件人',
+    componentProps: {
+      placeholder: '例如 bot@example.com',
+    },
+  },
+  {
+    field: 'config.smtpTo',
+    label: '收件人地址',
+    component: 'Input',
+    bottomHelpMessage: '告警邮件发到这个邮箱',
+    componentProps: {
+      placeholder: '例如 master@example.com',
+    },
+  },
 
 ];
 
