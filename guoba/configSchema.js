@@ -4135,6 +4135,81 @@ const guobaSchema = [
     },
   },
 
+  {
+    label: '运维监控（看门狗/晨报）',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'config.botWatchdogEnabled',
+    label: 'QQ 掉线看门狗',
+    component: 'Switch',
+    bottomHelpMessage: '适配器掉线/恢复时通过 QQ 通知主人；持续断线超过 5 分钟才判定为掉线，短暂重连不打扰。改完需重启 Bot 生效',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.resourceWatchdogEnabled',
+    label: '资源水位看门狗',
+    component: 'Switch',
+    bottomHelpMessage: '每 10 分钟检查磁盘/内存/Redis，超过阈值通过 QQ（及邮件，如已配置）告警。改完需重启 Bot 生效',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.resourceDiskPercent',
+    label: '磁盘告警阈值(%)',
+    component: 'InputNumber',
+    bottomHelpMessage: '磁盘使用率超过该百分比时告警（50-100，默认 90）',
+    componentProps: {
+      min: 50,
+      max: 100,
+    },
+  },
+  {
+    field: 'config.resourceMemoryPercent',
+    label: '内存告警阈值(%)',
+    component: 'InputNumber',
+    bottomHelpMessage: '系统内存使用率超过该百分比时告警（50-100，默认 90）',
+    componentProps: {
+      min: 50,
+      max: 100,
+    },
+  },
+  {
+    field: 'config.resourceRedisPercent',
+    label: 'Redis 告警阈值(%)',
+    component: 'InputNumber',
+    bottomHelpMessage: 'Redis 内存超过 maxmemory 的百分比时告警（50-100，默认 90；Redis 未设 maxmemory 时仅展示不告警）',
+    componentProps: {
+      min: 50,
+      max: 100,
+    },
+  },
+  {
+    field: 'config.morningReportEnabled',
+    label: '每日运维晨报',
+    component: 'Switch',
+    bottomHelpMessage: '每天定时聚合看门狗事件、AI 用量、备份与水位推送给主人；默认关闭。改完需重启 Bot 生效',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'config.morningReportHour',
+    label: '晨报发送时刻',
+    component: 'InputNumber',
+    bottomHelpMessage: '晨报发送的小时（0-23，默认 8，按 timezoneOffset 时区计算；北京时间环境保持默认即可）',
+    componentProps: {
+      min: 0,
+      max: 23,
+    },
+  },
+
 ];
 
 export default guobaSchema;
