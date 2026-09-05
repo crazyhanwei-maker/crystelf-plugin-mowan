@@ -90,7 +90,8 @@ export class CrystelfMusic extends plugin {
       }
       const index = parseInt(content);
       if (!isNaN(index) && index >= 1 && index <= 20) {
-        const searchResult = musicSearch.getGroupSearchResult(e.group_id);
+        // "#听 3" 是显式意图：与"发送 N"一致给 5 分钟窗口
+        const searchResult = musicSearch.getGroupSearchResult(e.group_id, 5 * 60 * 1000);
         if (!searchResult) {
           return await e.reply('没有找到当前可选择的音乐列表，请先搜索歌曲。', true);
         }
@@ -132,7 +133,8 @@ export class CrystelfMusic extends plugin {
       if (isNaN(index) || index < 1 || index > 20) {
         return;
       }
-      const searchResult = musicSearch.getGroupSearchResult(e.group_id);
+      // 裸数字误触率高：仅搜索后 60 秒内有效，过期静默忽略（不回复，避免骚扰群聊）
+      const searchResult = musicSearch.getGroupSearchResult(e.group_id, 60 * 1000);
       if (!searchResult) {
         return;
       }
@@ -163,7 +165,8 @@ export class CrystelfMusic extends plugin {
       if (!index || index < 1 || index > 20) {
         return;
       }
-      const searchResult = musicSearch.getGroupSearchResult(e.group_id);
+      // 显式"发送 N"意图明确：给 5 分钟窗口，过期提示重新搜索而非静默
+      const searchResult = musicSearch.getGroupSearchResult(e.group_id, 5 * 60 * 1000);
       if (!searchResult) {
         return await e.reply('没有找到当前可发送的音乐列表，请先搜索歌曲。', true);
       }
