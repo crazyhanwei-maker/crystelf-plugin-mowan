@@ -752,6 +752,36 @@
 .agent-markdown li + li { margin-top: 5px; }
 .agent-markdown a { color: var(--agent-accent); text-underline-offset: 3px; }
 .agent-markdown blockquote { padding-left: 12px; border-left: 2px solid var(--agent-line-strong); color: var(--agent-muted); }
+.agent-markdown img {
+  display: block;
+  max-width: min(100%, 420px);
+  height: auto;
+  margin: 10px 0;
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  background: rgba(13, 13, 13, 0.04);
+}
+:root[data-theme='dark'] .agent-markdown img {
+  background: rgba(255, 255, 255, 0.05);
+}
+.agent-tool-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.agent-tool-image {
+  display: block;
+  max-width: min(100%, 360px);
+  max-height: 280px;
+  height: auto;
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  background: rgba(13, 13, 13, 0.04);
+}
+:root[data-theme='dark'] .agent-tool-image {
+  background: rgba(255, 255, 255, 0.05);
+}
 .agent-markdown :not(pre) > code {
   margin: 0 2px;
   padding: 2px 6px;
