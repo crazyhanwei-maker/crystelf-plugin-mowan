@@ -196,15 +196,32 @@
 }
 
 .agent-composer .agent-icon-btn {
+  /* 固定尺寸：composer 行空间不足时也不许被 flex 压扁变形；
+     min-height 需压过全局 .console-app-shell button 的 36px 规则 */
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  min-height: 32px !important;
+  max-height: 32px;
+  flex: 0 0 32px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
   font-size: 16px;
   line-height: 1;
+}
+
+/* 桌面端任务设置走顶部“设置”，⚙ 仍隐藏（上方固定尺寸规则的 display 会顶掉旧的隐藏规则） */
+.agent-composer .agent-composer-tools-btn {
+  display: none;
 }
 
 .agent-workbench-shell {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr) 300px;
   grid-template-rows: minmax(0, 1fr);
-  height: max(460px, calc(100dvh - 208px));
+  height: max(460px, calc(100dvh - 96px));
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--agent-line);
@@ -216,6 +233,50 @@
 
 .agent-workbench-shell.is-context-collapsed {
   grid-template-columns: 250px minmax(0, 1fr) 40px;
+}
+
+.agent-brand-mark {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+@media (min-width: 1021px) {
+  /* 工作台有自己的顶栏（返回/主题/设置），隐藏全局顶栏换回一屏工作区；手机端保留 ☰ 导航入口 */
+  body.agent-workbench-page .console-topbar {
+    display: none;
+  }
+}
+
+.agent-brand-mark:hover {
+  opacity: 0.82;
+}
+
+@media (min-width: 1021px) {
+  .agent-workbench-shell.is-sessions-collapsed {
+    grid-template-columns: 40px minmax(0, 1fr) 300px;
+  }
+
+  .agent-workbench-shell.is-sessions-collapsed .agent-session-sidebar {
+    overflow: hidden;
+    padding: 10px 0;
+  }
+
+  .agent-workbench-shell.is-sessions-collapsed .agent-session-sidebar > :not(.agent-sidebar-head) {
+    display: none;
+  }
+
+  .agent-workbench-shell.is-sessions-collapsed .agent-sidebar-head {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0;
+  }
+
+  .agent-workbench-shell.is-sessions-collapsed .agent-sidebar-head > div {
+    display: none;
+  }
 }
 
 .agent-session-sidebar,
@@ -507,22 +568,26 @@
   justify-content: space-between;
   gap: 16px;
   min-width: 0;
-  min-height: 76px;
-  padding: 16px 20px;
+  min-height: 50px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--agent-line);
 }
 
 .agent-chat-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   min-width: 0;
 }
 
 .agent-chat-heading h2 {
-  margin: 4px 0 4px;
+  margin: 0;
   overflow: hidden;
   color: var(--agent-ink);
-  font-size: 17px;
+  font-size: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 0 1 auto;
 }
 
 .agent-chat-meta {
@@ -531,6 +596,8 @@
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .agent-chat-actions {
