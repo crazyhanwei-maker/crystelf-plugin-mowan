@@ -257,6 +257,11 @@
     grid-template-columns: 40px minmax(0, 1fr) 300px;
   }
 
+  /* 左右同时收起：右侧窄条不沿用 300px 展开宽度，避免出现空白列 */
+  .agent-workbench-shell.is-sessions-collapsed.is-context-collapsed {
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+  }
+
   .agent-workbench-shell.is-sessions-collapsed .agent-session-sidebar {
     overflow: hidden;
     padding: 10px 0;
