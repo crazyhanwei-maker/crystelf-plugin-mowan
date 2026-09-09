@@ -875,9 +875,13 @@
 
 .agent-reasoning-ticker-badge {
   flex: 0 0 auto;
-  color: var(--agent-accent);
+  color: var(--agent-muted);
   font-size: 11px;
   font-weight: 800;
+}
+
+.agent-reasoning-ticker-badge.is-thinking {
+  color: var(--agent-accent);
   animation: agent-ticker-pulse 1.2s ease-in-out infinite;
 }
 
