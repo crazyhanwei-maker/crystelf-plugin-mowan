@@ -842,6 +842,71 @@
   gap: 8px;
   margin: 10px 0;
 }
+
+.agent-message-live-bubbles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.agent-message-live-bubbles .agent-message-bubble {
+  margin: 0;
+}
+
+/* 思考链单行滚动条：展示推理尾部，证明 Agent 活着；点击展开全文 */
+.agent-reasoning-ticker {
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px dashed var(--agent-line-strong);
+  border-radius: 8px;
+  background: var(--agent-surface-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.agent-reasoning-ticker-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.agent-reasoning-ticker-badge {
+  flex: 0 0 auto;
+  color: var(--agent-accent);
+  font-size: 11px;
+  font-weight: 800;
+  animation: agent-ticker-pulse 1.2s ease-in-out infinite;
+}
+
+.agent-reasoning-ticker-text {
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.agent-reasoning-full {
+  margin: 8px 0 2px;
+  padding: 8px;
+  border-top: 1px dashed var(--agent-line);
+  max-height: 320px;
+  overflow: auto;
+  color: var(--agent-muted);
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@keyframes agent-ticker-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
 .agent-tool-image {
   display: block;
   max-width: min(100%, 360px);
