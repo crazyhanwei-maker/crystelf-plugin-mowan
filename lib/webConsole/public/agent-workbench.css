@@ -432,10 +432,9 @@
   align-items: center;
   gap: 6px;
   width: 100%;
-  /* 不用固定高度：系统字体放大时行会自然增高，避免内容撑破后压到相邻项 */
+  /* 不锁高度也不裁切：系统字体放大时行随内容自然增高，避免撑破或切边 */
   height: auto !important;
   min-height: 32px !important;
-  overflow: hidden;
   padding: 5px 3px !important;
   border-color: transparent !important;
   border-radius: 4px !important;
@@ -457,19 +456,19 @@
 }
 
 /* 会话项归档入口：悬停/选中显示，触屏设备常显。
-   min-height 需压过控制台全局 button 的 36px 规则，否则会撑破 32px 的行高造成重叠 */
+   不锁高度（min-height:0 压过控制台全局 button 的 36px 规则），随字号自然伸缩，
+   避免大字号下被裁切或撑破行高 */
 .agent-task-archive {
-  height: 20px;
-  min-height: 20px !important;
-  max-height: 20px;
-  padding: 0 5px;
+  height: auto;
+  min-height: 0 !important;
+  padding: 2px 6px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
   color: var(--agent-muted);
   font-size: 10px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 1.5;
   white-space: nowrap;
   cursor: pointer;
   opacity: 0.5;
