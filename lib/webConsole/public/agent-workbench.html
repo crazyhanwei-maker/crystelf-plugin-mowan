@@ -129,15 +129,24 @@
         </div>
 
         <form id="agent-composer-form" class="agent-composer" autocomplete="off">
-          <section id="agent-question-section" class="agent-question-dock hidden" aria-live="polite">
-            <button type="button" id="agent-question-dock-toggle" class="agent-question-dock-head" aria-expanded="true">
-              <strong>需要你的回答</strong>
-              <span id="agent-question-count">0</span>
-              <span class="agent-question-dock-chevron" aria-hidden="true">⌃</span>
-            </button>
-            <div id="agent-question-list" class="agent-question-list"></div>
-          </section>
-          <div id="agent-mobile-action-tray" class="agent-mobile-action-tray" aria-live="polite"></div>
+          <div id="agent-action-dock" class="agent-action-dock hidden">
+            <section id="agent-permission-section" class="agent-dock-section hidden" aria-live="polite">
+              <button type="button" id="agent-permission-dock-toggle" class="agent-dock-head" aria-expanded="true">
+                <strong>等待审批</strong>
+                <span id="agent-permission-count">0</span>
+                <span class="agent-dock-chevron" aria-hidden="true">⌃</span>
+              </button>
+              <div id="agent-permission-list" class="agent-permission-list"></div>
+            </section>
+            <section id="agent-question-section" class="agent-dock-section hidden" aria-live="polite">
+              <button type="button" id="agent-question-dock-toggle" class="agent-dock-head" aria-expanded="true">
+                <strong>需要你的回答</strong>
+                <span id="agent-question-count">0</span>
+                <span class="agent-dock-chevron" aria-hidden="true">⌃</span>
+              </button>
+              <div id="agent-question-list" class="agent-question-list"></div>
+            </section>
+          </div>
           <section id="agent-slash-menu" class="agent-slash-menu hidden" aria-label="斜杠命令" role="listbox">
             <div class="agent-slash-menu-head">
               <strong>命令</strong>
@@ -204,6 +213,7 @@
               <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
               <button id="agent-slash-btn" type="button" class="agent-icon-btn agent-slash-btn" title="斜杠命令" aria-label="斜杠命令" aria-expanded="false">/</button>
               <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" data-agent-composer-options-toggle title="任务设置" aria-label="任务设置" aria-expanded="false">⚙</button>
+              <button id="agent-notify-toggle" type="button" class="agent-icon-btn agent-notify-toggle" title="桌面提醒（仅本浏览器生效，Agent 提问或等审批时通知）" aria-label="桌面提醒开关" aria-pressed="false">🔕</button>
               <span id="agent-composer-hint" class="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
@@ -256,10 +266,6 @@
           <div class="agent-context-section-head"><span>文件改动</span><span id="agent-context-file-count">0</span></div>
           <div id="agent-context-file-summary" class="agent-change-summary" aria-live="polite"></div>
           <div id="agent-context-file-list" class="agent-context-file-list"><span class="agent-context-empty">选择一个任务后显示文件改动。</span></div>
-        </div>
-        <div id="agent-permission-section" class="agent-context-section hidden">
-          <div class="agent-context-section-head"><span>等待审批</span><span id="agent-permission-count">0</span></div>
-          <div id="agent-permission-list" class="agent-permission-list"></div>
         </div>
         <div class="agent-context-section agent-workspace-files">
           <div class="agent-context-section-head">

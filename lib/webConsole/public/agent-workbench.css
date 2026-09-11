@@ -1335,10 +1335,6 @@
   box-shadow: none;
 }
 
-.agent-mobile-action-tray {
-  display: none;
-}
-
 .agent-slash-menu {
   position: absolute;
   z-index: 24;
@@ -2039,8 +2035,8 @@
   cursor: wait;
 }
 
-/* 问答悬浮卡：固定在输入栏上方（PC/手机一致），标题可折叠 */
-.agent-question-dock {
+/* 输入栏上方悬浮 dock：审批卡 + 问答卡统一容器（PC/手机一致），各节标题可折叠 */
+.agent-action-dock {
   position: absolute;
   z-index: 26;
   right: 0;
@@ -2048,7 +2044,7 @@
   left: 0;
   display: grid;
   gap: 8px;
-  max-height: min(46dvh, 420px);
+  max-height: min(52dvh, 460px);
   padding: 9px 10px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -2060,9 +2056,14 @@
   scrollbar-width: thin;
 }
 
-.agent-question-dock[hidden] { display: none; }
+.agent-action-dock[hidden] { display: none; }
 
-.agent-question-dock-head {
+.agent-action-dock .agent-dock-section + .agent-dock-section {
+  padding-top: 8px;
+  border-top: 1px solid var(--agent-line);
+}
+
+.agent-dock-head {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -2079,11 +2080,12 @@
   cursor: pointer;
 }
 
-.agent-question-dock-head > span { color: var(--agent-muted); font-weight: 500; }
-.agent-question-dock-head .agent-question-dock-chevron { margin-left: auto; color: var(--agent-muted); transition: transform 0.16s ease; }
-.agent-question-dock.is-collapsed { max-height: none; overflow: hidden; }
-.agent-question-dock.is-collapsed .agent-question-list { display: none; }
-.agent-question-dock.is-collapsed .agent-question-dock-chevron { transform: rotate(180deg); }
+.agent-dock-head > span { color: var(--agent-muted); font-weight: 500; }
+.agent-dock-head .agent-dock-chevron { margin-left: auto; color: var(--agent-muted); transition: transform 0.16s ease; }
+.agent-dock-section.is-collapsed .agent-question-list,
+.agent-dock-section.is-collapsed .agent-permission-list { display: none; }
+.agent-dock-section.is-collapsed .agent-dock-chevron { transform: rotate(180deg); }
+.agent-dock-section.is-collapsed + .agent-dock-section { padding-top: 0; border-top: 0; }
 
 .agent-question-list {
   display: grid;
@@ -2169,6 +2171,43 @@
 
 .agent-question-actions button.is-primary { border-color: #2563eb; background: #2563eb; color: #fff; }
 .agent-question-actions button:disabled { opacity: 0.55; cursor: wait; }
+
+/* 会话列表：等待回答/等待审批徽章 */
+.agent-task-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.agent-task-badge.is-question { border: 1px solid #93c5fd; background: rgba(59, 130, 246, 0.14); color: #1d4ed8; }
+.agent-task-badge.is-permission { border: 1px solid #fbbf24; background: rgba(245, 158, 11, 0.16); color: #b45309; }
+:root[data-theme='dark'] .agent-task-badge.is-question { color: #93c5fd; }
+:root[data-theme='dark'] .agent-task-badge.is-permission { color: #fcd34d; }
+
+/* 桌面提醒开关（仅本浏览器） */
+.agent-notify-toggle { font-size: 13px; line-height: 1; }
+.agent-notify-toggle.is-active { border-color: #2563eb; color: #2563eb; }
+
+/* 压缩分界线：标记模型上下文从此处折叠为摘要 */
+.agent-compact-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  color: var(--agent-muted);
+  font-size: 10px;
+}
+.agent-compact-divider::before,
+.agent-compact-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--agent-line);
+}
 
 .agent-file-nav {
   display: flex;
@@ -3159,35 +3198,6 @@ body.agent-settings-modal-open { overflow: hidden; }
     border-radius: 12px;
     box-shadow: none;
   }
-  .agent-mobile-action-tray.has-actions {
-    position: absolute;
-    z-index: 30;
-    right: 0;
-    bottom: calc(100% + 8px);
-    left: 0;
-    display: grid;
-    gap: 8px;
-    max-height: min(52dvh, 360px);
-    padding: 10px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    border: 1px solid var(--agent-line-strong);
-    border-radius: 8px;
-    background: var(--agent-surface);
-    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.26);
-    scrollbar-width: thin;
-  }
-  .agent-mobile-action-tray .agent-context-section {
-    margin: 0;
-    padding: 0;
-    border: 0;
-  }
-  .agent-mobile-action-tray .agent-context-section + .agent-context-section:not(.hidden) {
-    padding-top: 8px;
-    border-top: 1px solid var(--agent-line);
-  }
-  .agent-mobile-action-tray .agent-context-section-head { margin-bottom: 7px; }
   .agent-composer-options {
     position: absolute;
     z-index: 12;
