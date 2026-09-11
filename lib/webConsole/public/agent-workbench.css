@@ -2039,6 +2039,52 @@
   cursor: wait;
 }
 
+/* 问答悬浮卡：固定在输入栏上方（PC/手机一致），标题可折叠 */
+.agent-question-dock {
+  position: absolute;
+  z-index: 26;
+  right: 0;
+  bottom: calc(100% + 10px);
+  left: 0;
+  display: grid;
+  gap: 8px;
+  max-height: min(46dvh, 420px);
+  padding: 9px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #60a5fa;
+  border-radius: 12px;
+  background: var(--agent-surface);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.2);
+  scrollbar-width: thin;
+}
+
+.agent-question-dock[hidden] { display: none; }
+
+.agent-question-dock-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0;
+  padding: 1px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--agent-ink);
+  font-size: 11px;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-question-dock-head > span { color: var(--agent-muted); font-weight: 500; }
+.agent-question-dock-head .agent-question-dock-chevron { margin-left: auto; color: var(--agent-muted); transition: transform 0.16s ease; }
+.agent-question-dock.is-collapsed { max-height: none; overflow: hidden; }
+.agent-question-dock.is-collapsed .agent-question-list { display: none; }
+.agent-question-dock.is-collapsed .agent-question-dock-chevron { transform: rotate(180deg); }
+
 .agent-question-list {
   display: grid;
   gap: 8px;

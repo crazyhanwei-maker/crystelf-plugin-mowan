@@ -129,6 +129,14 @@
         </div>
 
         <form id="agent-composer-form" class="agent-composer" autocomplete="off">
+          <section id="agent-question-section" class="agent-question-dock hidden" aria-live="polite">
+            <button type="button" id="agent-question-dock-toggle" class="agent-question-dock-head" aria-expanded="true">
+              <strong>需要你的回答</strong>
+              <span id="agent-question-count">0</span>
+              <span class="agent-question-dock-chevron" aria-hidden="true">⌃</span>
+            </button>
+            <div id="agent-question-list" class="agent-question-list"></div>
+          </section>
           <div id="agent-mobile-action-tray" class="agent-mobile-action-tray" aria-live="polite"></div>
           <section id="agent-slash-menu" class="agent-slash-menu hidden" aria-label="斜杠命令" role="listbox">
             <div class="agent-slash-menu-head">
@@ -188,7 +196,7 @@
               <span>使用隔离 Worktree</span>
             </label>
           </div>
-          <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...\n例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
+          <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...&#10;例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
           <div id="agent-attachment-list" class="agent-attachment-list"></div>
           <div class="agent-composer-footer">
             <div class="agent-composer-side">
@@ -252,10 +260,6 @@
         <div id="agent-permission-section" class="agent-context-section hidden">
           <div class="agent-context-section-head"><span>等待审批</span><span id="agent-permission-count">0</span></div>
           <div id="agent-permission-list" class="agent-permission-list"></div>
-        </div>
-        <div id="agent-question-section" class="agent-context-section hidden">
-          <div class="agent-context-section-head"><span>需要你的回答</span><span id="agent-question-count">0</span></div>
-          <div id="agent-question-list" class="agent-question-list"></div>
         </div>
         <div class="agent-context-section agent-workspace-files">
           <div class="agent-context-section-head">
