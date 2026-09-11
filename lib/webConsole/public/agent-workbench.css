@@ -491,6 +491,81 @@
   color: var(--agent-ink);
 }
 
+/* ===== 会话批量管理 ===== */
+.agent-sidebar-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#agent-manage-toggle.is-active {
+  border-color: var(--agent-accent);
+  color: var(--agent-accent);
+}
+
+.agent-batch-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-surface-soft);
+}
+
+.agent-batch-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.agent-batch-count {
+  color: var(--agent-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.agent-batch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.agent-batch-actions .agent-mini-btn {
+  min-height: 22px !important;
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+}
+
+.agent-batch-actions .agent-batch-danger {
+  border-color: rgba(220, 38, 38, 0.32) !important;
+  color: #b91c1c !important;
+}
+
+/* 管理模式下多出复选框列，归档按钮隐藏由 JS 处理 */
+.agent-task-list.is-managing .agent-task-item {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+}
+
+.agent-task-list.is-managing .agent-task-item.is-checked {
+  background: var(--agent-surface-strong);
+}
+
+.agent-task-check {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--agent-accent);
+  cursor: pointer;
+}
+
 .agent-task-item:hover {
   background: var(--agent-surface-strong) !important;
 }

@@ -42,13 +42,27 @@
             <span class="agent-eyebrow">WORKSPACE</span>
             <strong>会话</strong>
           </div>
-          <button id="agent-sidebar-new-btn" type="button" class="agent-icon-btn" title="新建会话" aria-label="新建会话">+</button>
+          <div class="agent-sidebar-head-actions">
+            <button id="agent-manage-toggle" type="button" class="agent-mini-btn" title="批量管理会话" aria-label="批量管理会话" aria-pressed="false">管理</button>
+            <button id="agent-sidebar-new-btn" type="button" class="agent-icon-btn" title="新建会话" aria-label="新建会话">+</button>
+          </div>
         </div>
         <div class="agent-session-tools">
           <input id="agent-session-search" type="search" maxlength="200" placeholder="搜索会话" aria-label="搜索会话" />
           <label><input id="agent-session-archived" type="checkbox" /> 已归档</label>
           <button id="agent-session-import" type="button" class="agent-mini-btn">导入</button>
           <input id="agent-session-import-input" type="file" accept="application/json,.json" hidden />
+        </div>
+        <div id="agent-batch-bar" class="agent-batch-bar hidden">
+          <label class="agent-batch-select-all"><input type="checkbox" id="agent-batch-all" /> 全选</label>
+          <span id="agent-batch-count" class="agent-batch-count">已选 0 项</span>
+          <div class="agent-batch-actions">
+            <button id="agent-batch-archive" type="button" class="agent-mini-btn">归档</button>
+            <button id="agent-batch-unarchive" type="button" class="agent-mini-btn hidden">取消归档</button>
+            <button id="agent-batch-delete" type="button" class="agent-mini-btn agent-batch-danger">删除</button>
+            <button id="agent-batch-clear-archived" type="button" class="agent-mini-btn agent-batch-danger hidden">清空已归档</button>
+            <button id="agent-batch-exit" type="button" class="agent-mini-btn">退出管理</button>
+          </div>
         </div>
         <div id="agent-history-meta" class="agent-sidebar-meta">暂无任务。</div>
         <div id="agent-task-list" class="agent-task-list">加载中...</div>
