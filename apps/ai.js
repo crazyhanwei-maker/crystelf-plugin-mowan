@@ -2460,12 +2460,7 @@ export class crystelfAI extends plugin {
         return true;
       }
 
-      const memoryContext = await this.humanize.memoryRetrieval.retrieve(
-        sessionId,
-        messageData.text,
-        e.sender?.nickname || '用户',
-        history
-      );
+      const memoryContext = this.humanize.memoryDistiller.getMemoryContext(sessionId, messageData.text, e.sender?.nickname || '');
       const topicContext = this.humanize.topicTracker.getTopicContext(sessionId);
       const expressionContext = this.humanize.expressionLearner.getExpressionContext(sessionId);
       const knowledgeItems = aiConfig?.knowledgeBaseEnabled ? parseRuntimeKnowledgeBase(aiConfig?.knowledgeBase || '') : [];
@@ -2867,12 +2862,7 @@ export class crystelfAI extends plugin {
         return;
       }
       
-      const memoryContext = await this.humanize.memoryRetrieval.retrieve(
-        groupSessionId,
-        messageData.text,
-        e.sender?.nickname || '用户',
-        history
-      );
+      const memoryContext = this.humanize.memoryDistiller.getMemoryContext(groupSessionId, messageData.text, e.sender?.nickname || '');
       const affinityRecord = await affinityManager.updateFromMessage(
         groupId,
         userId,
@@ -3225,6 +3215,7 @@ export class crystelfAI extends plugin {
         userName: e.sender?.nickname,
         timestamp: Date.now(),
       }).catch(() => {});
+      this.humanize.memoryDistiller.onMessage(groupSessionId);
 
       this.startCooldownTimer(groupSessionId, groupId);
 
