@@ -1534,6 +1534,21 @@
 .agent-composer textarea::placeholder {
   color: var(--agent-muted);
 }
+.agent-workbench-page .agent-composer textarea,
+.agent-workbench-page .agent-composer textarea:focus,
+.agent-workbench-page .agent-composer textarea:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.agent-composer:focus-within {
+  border-color: rgba(37, 99, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+.agent-composer-footer {
+  padding-top: 4px;
+}
 
 .agent-composer-footer {
   justify-content: space-between;
@@ -1630,6 +1645,26 @@
   border-color: #b45309;
   background: #b45309;
 }
+
+/* 发送/停止按钮：显式配色（不再继承全局按钮的暗色白底） */
+#agent-run-btn {
+  min-height: 30px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+#agent-run-btn:hover:not(:disabled) { background: #1d4ed8; }
+#agent-run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+#agent-run-btn.is-stop {
+  background: #dc2626;
+  color: #fff;
+}
+#agent-run-btn.is-stop:hover:not(:disabled) { background: #b91c1c; }
 
 .agent-composer-submit .agent-composer-settings-btn {
   display: inline-flex;
@@ -2171,6 +2206,153 @@
 
 .agent-question-actions button.is-primary { border-color: #2563eb; background: #2563eb; color: #fff; }
 .agent-question-actions button:disabled { opacity: 0.55; cursor: wait; }
+
+/* ＋ 弹层（附件/命令收纳） */
+.agent-plus-menu {
+  position: absolute;
+  z-index: 24;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: min(300px, 80%);
+  overflow: hidden;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 12px;
+  background: var(--agent-surface);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22);
+}
+.agent-plus-menu[hidden] { display: none; }
+.agent-plus-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--agent-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.agent-plus-item:hover { background: var(--agent-surface-soft); }
+.agent-plus-item + .agent-plus-item { border-top: 1px solid var(--agent-line); }
+.agent-plus-item-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  font-size: 13px;
+}
+.agent-plus-item strong { display: block; font-size: 12px; }
+.agent-plus-item small { display: block; color: var(--agent-muted); font-size: 10px; }
+
+/* 底栏图标：无边框纯图标（ZCode 式） */
+.agent-composer-footer .agent-icon-btn {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  height: 30px;
+  min-height: 30px !important;
+  max-height: 30px;
+  padding: 0 !important;
+  font-size: 18px;
+  color: var(--agent-muted);
+}
+.agent-composer-footer .agent-icon-btn:hover { color: var(--agent-ink); }
+.agent-composer-footer .agent-icon-btn.agent-model-btn.is-active { color: #2563eb; }
+.agent-composer-footer .agent-icon-btn.agent-notify-toggle.is-active { color: #2563eb; }
+
+/* 模型选择弹层 */
+.agent-model-menu {
+  position: absolute;
+  z-index: 24;
+  right: 0;
+  bottom: calc(100% + 8px);
+  max-width: min(340px, 86%);
+  max-height: min(420px, 56dvh);
+  overflow: hidden auto;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 12px;
+  background: var(--agent-surface);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22);
+  scrollbar-width: thin;
+}
+.agent-model-menu[hidden] { display: none; }
+.agent-model-menu-current {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--agent-line);
+}
+.agent-model-menu-current strong { color: var(--agent-muted); font-size: 10px; }
+.agent-model-menu-current span { color: var(--agent-ink); font-size: 13px; font-weight: 700; }
+.agent-model-menu-list { display: grid; padding: 5px; }
+.agent-model-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 6px 8px 3px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+.agent-model-group small { overflow: hidden; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.agent-model-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--agent-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.agent-model-item:hover { background: var(--agent-surface-soft); }
+.agent-model-item > span:first-child { display: grid; gap: 1px; min-width: 0; }
+.agent-model-item strong { font-size: 12px; }
+.agent-model-item small { color: var(--agent-muted); font-size: 10px; }
+.agent-model-item .agent-model-check { color: #2563eb; font-weight: 900; }
+.agent-model-item.is-current { background: rgba(37, 99, 235, 0.08); }
+
+/* 管理模型模态 */
+.agent-model-manager-body { display: grid; gap: 12px; }
+.agent-model-manager-hint { margin: 0; color: var(--agent-muted); font-size: 11px; }
+.agent-model-provider-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  background: var(--agent-surface-soft);
+}
+.agent-model-provider-grid { display: grid; gap: 8px; }
+.agent-model-provider-grid label { display: grid; gap: 4px; color: var(--agent-muted); font-size: 10px; }
+.agent-model-provider-grid input,
+.agent-model-provider-grid textarea {
+  min-height: 30px;
+  padding: 6px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+.agent-model-provider-grid textarea { resize: vertical; font-family: ui-monospace, monospace; }
 
 /* 会话列表：等待回答/等待审批徽章 */
 .agent-task-badge {
@@ -3268,6 +3450,7 @@ body.agent-settings-modal-open { overflow: hidden; }
   #agent-slash-btn { width: 30px !important; min-width: 30px; min-height: 30px; flex: 0 0 30px; padding: 0; border-color: transparent; }
   #agent-run-btn { width: 32px; min-width: 32px; min-height: 32px; flex: 0 0 32px; padding: 0; border-radius: 7px; font-size: 0; }
   #agent-run-btn::before { content: '↑'; font-size: 16px; line-height: 1; }
+  #agent-run-btn.is-stop::before { content: '■'; font-size: 11px; }
   .agent-key-hint { display: none; }
   .agent-slash-menu { right: -1px; left: -1px; max-height: min(340px, 42vh); border-radius: 11px; }
   .agent-slash-list { max-height: calc(min(340px, 42vh) - 37px); }

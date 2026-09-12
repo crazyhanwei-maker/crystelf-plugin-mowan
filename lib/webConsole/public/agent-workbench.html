@@ -147,6 +147,13 @@
               <div id="agent-question-list" class="agent-question-list"></div>
             </section>
           </div>
+          <section id="agent-model-menu" class="agent-model-menu hidden" aria-label="模型选择">
+            <div class="agent-model-menu-current">
+              <strong id="agent-model-menu-provider">默认</strong>
+              <span id="agent-model-menu-model">默认模型</span>
+            </div>
+            <div id="agent-model-menu-list" class="agent-model-menu-list"></div>
+          </section>
           <section id="agent-slash-menu" class="agent-slash-menu hidden" aria-label="斜杠命令" role="listbox">
             <div class="agent-slash-menu-head">
               <strong>命令</strong>
@@ -210,15 +217,22 @@
           <div class="agent-composer-footer">
             <div class="agent-composer-side">
               <input id="agent-attachment-input" type="file" multiple hidden />
-              <button id="agent-attachment-btn" type="button" class="agent-icon-btn" title="添加文件或图片" aria-label="添加文件或图片">＋</button>
-              <button id="agent-slash-btn" type="button" class="agent-icon-btn agent-slash-btn" title="斜杠命令" aria-label="斜杠命令" aria-expanded="false">/</button>
+              <button id="agent-model-btn" type="button" class="agent-icon-btn agent-model-btn" title="选择模型" aria-label="选择模型" aria-expanded="false">◇</button>
+              <button id="agent-plus-btn" type="button" class="agent-icon-btn" title="添加附件与命令" aria-label="添加附件与命令" aria-expanded="false">＋</button>
+              <section id="agent-plus-menu" class="agent-plus-menu hidden" aria-label="添加附件与命令">
+                <button type="button" class="agent-plus-item" data-plus-action="attachment">
+                  <span class="agent-plus-item-icon">📎</span><span><strong>添加附件</strong><small>文件或图片，也可直接 Ctrl+V 粘贴</small></span>
+                </button>
+                <button type="button" class="agent-plus-item" data-plus-action="slash">
+                  <span class="agent-plus-item-icon">/</span><span><strong>命令与能力</strong><small>斜杠命令、技能与原生能力</small></span>
+                </button>
+              </section>
               <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" data-agent-composer-options-toggle title="任务设置" aria-label="任务设置" aria-expanded="false">⚙</button>
               <button id="agent-notify-toggle" type="button" class="agent-icon-btn agent-notify-toggle" title="桌面提醒（仅本浏览器生效，Agent 提问或等审批时通知）" aria-label="桌面提醒开关" aria-pressed="false">🔕</button>
               <span id="agent-composer-hint" class="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
               <span class="agent-key-hint">Enter 发送 · Shift + Enter 换行</span>
-              <button id="agent-composer-settings-btn" type="button" class="agent-composer-settings-btn" data-agent-composer-options-toggle title="任务设置" aria-label="任务设置" aria-expanded="false"><span aria-hidden="true">⚙</span>设置</button>
               <details id="agent-context-usage-menu" class="agent-context-usage-menu">
                 <summary id="agent-context-usage-trigger" class="agent-context-usage-trigger" title="查看模型与上下文用量">
                   <span id="agent-context-usage-ring" class="agent-context-usage-ring" aria-hidden="true"></span>
@@ -292,7 +306,23 @@
     </section>
   </div>
 
-  <div id="agent-settings-mask" class="agent-settings-mask hidden" role="dialog" aria-modal="true" aria-labelledby="agent-settings-title">
+  <div id="agent-model-manager-mask" class="agent-settings-mask hidden">
+        <section class="agent-settings-panel agent-model-manager" role="dialog" aria-label="管理模型">
+          <header class="agent-settings-head">
+            <strong>管理模型</strong>
+            <button id="agent-model-manager-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+          </header>
+          <div class="agent-settings-body agent-model-manager-body">
+            <p class="agent-model-manager-hint">每个供应商填 API 地址与密钥，模型一行一个。密钥留空表示保持已保存的值。</p>
+            <div id="agent-model-manager-list"></div>
+            <button id="agent-model-manager-add" type="button" class="agent-quiet-btn">＋ 添加供应商</button>
+          </div>
+          <footer class="agent-settings-footer">
+            <button id="agent-model-manager-save" type="button" class="agent-quiet-btn is-primary">保存</button>
+          </footer>
+        </section>
+      </div>
+      <div id="agent-settings-mask" class="agent-settings-mask hidden" role="dialog" aria-modal="true" aria-labelledby="agent-settings-title">
     <section id="agent-settings-panel" class="agent-settings-dialog">
       <header class="agent-settings-head">
         <div>
