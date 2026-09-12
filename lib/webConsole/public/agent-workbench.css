@@ -2208,6 +2208,19 @@
   height: 1px;
   background: var(--agent-line);
 }
+.agent-compact-divider.is-active {
+  color: #2563eb;
+  font-weight: 700;
+}
+.agent-compact-divider.is-active::before,
+.agent-compact-divider.is-active::after {
+  background: rgba(37, 99, 235, 0.45);
+  animation: agent-compact-pulse 1.2s ease-in-out infinite;
+}
+@keyframes agent-compact-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
 
 .agent-file-nav {
   display: flex;
