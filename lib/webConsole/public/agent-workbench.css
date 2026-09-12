@@ -1,8 +1,8 @@
 .agent-workbench-page {
-  --agent-bg: #f8f8f8;
+  --agent-bg: #f6f7f9;
   --agent-surface: #ffffff;
-  --agent-surface-soft: #f3f3f3;
-  --agent-surface-strong: #ebebeb;
+  --agent-surface-soft: #f1f2f5;
+  --agent-surface-strong: #eaecf0;
   --agent-line: rgba(13, 13, 13, 0.1);
   --agent-line-strong: rgba(13, 13, 13, 0.16);
   --agent-ink: #333333;
@@ -672,7 +672,9 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: var(--agent-surface);
+  border: 1px solid var(--agent-line);
+  border-radius: 12px;
+  background: var(--agent-bg);
 }
 
 .agent-chat-panel > * {
@@ -1173,15 +1175,43 @@
   justify-content: flex-end;
   gap: 6px;
   margin-top: 7px;
+  /* 悬停消息才浮现；触屏设备无 hover，保持常显 */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.agent-message:hover .agent-native-message-actions,
+.agent-native-message-actions:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .agent-native-message-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .agent-native-message-actions button {
-  padding: 3px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
   border: 0;
+  border-radius: 6px;
   background: transparent;
   color: var(--agent-muted);
-  font-size: 9px;
   cursor: pointer;
+}
+
+.agent-native-message-actions button svg {
+  display: block;
+  width: 15px;
+  height: 15px;
 }
 
 .agent-native-message-actions button:hover { color: var(--agent-accent); }
@@ -1208,6 +1238,135 @@
   font-weight: 800;
   cursor: pointer;
 }
+
+/* 文件更改独立卡（ZCode 式）：标签 + 增删统计 + 展开箭头 */
+.agent-file-changes summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-file-changes .agent-change-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.agent-file-changes .agent-change-inline .agent-change-count.is-added { color: var(--agent-added); }
+.agent-file-changes .agent-change-inline .agent-change-count.is-deleted { color: var(--agent-deleted); }
+
+.agent-file-changes .agent-work-report-chevron {
+  margin-left: auto;
+  color: var(--agent-muted);
+  font-size: 13px;
+  transition: transform 0.15s ease;
+}
+
+.agent-file-changes[open] .agent-work-report-chevron { transform: rotate(90deg); }
+
+/* 文件行列表（ZCode 式）：彩标 + 文件名 + 目录 + 增删 + 审查/打开 */
+.agent-file-change-list { display: grid; }
+
+.agent-file-change-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-top: 1px solid var(--agent-line);
+}
+
+.agent-file-change-row:first-child { border-top: 0; }
+.agent-file-change-row:hover { background: var(--agent-surface-soft); }
+
+.agent-file-ext {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 20px;
+  border-radius: 5px;
+  background: #64748b;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.agent-file-ext[data-ext='js'], .agent-file-ext[data-ext='mjs'], .agent-file-ext[data-ext='cjs'] { background: #eab308; }
+.agent-file-ext[data-ext='json'] { background: #ca8a04; }
+.agent-file-ext[data-ext='css'] { background: #2563eb; }
+.agent-file-ext[data-ext='html'], .agent-file-ext[data-ext='htm'] { background: #ea580c; }
+.agent-file-ext[data-ext='md'] { background: #7c3aed; }
+.agent-file-ext[data-ext='py'] { background: #0284c7; }
+.agent-file-ext[data-ext='sh'], .agent-file-ext[data-ext='cmd'] { background: #334155; }
+
+.agent-file-change-name {
+  overflow: hidden;
+  color: var(--agent-ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-file-change-dir {
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--agent-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-file-change-stats {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.agent-file-change-stats .is-added { color: var(--agent-added); }
+.agent-file-change-stats .is-deleted { color: var(--agent-deleted); }
+
+.agent-file-change-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.agent-file-change-actions button {
+  min-height: 24px;
+  padding: 3px 10px;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 6px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agent-file-change-actions button:hover { border-color: var(--agent-accent); color: var(--agent-accent); }
+
+.agent-file-change-diff {
+  width: 100%;
+  max-height: 320px;
+  margin: 0;
+  padding: 10px 12px;
+  border-top: 1px dashed var(--agent-line);
+  background: var(--agent-surface-soft);
+  font-size: 11px;
+  line-height: 1.55;
+  overflow: auto;
+}
+
+.agent-file-change-diff.hidden { display: none; }
 
 .agent-artifact-card summary span,
 .agent-event-card summary span {
@@ -1646,20 +1805,20 @@
   background: #b45309;
 }
 
-/* 发送/停止按钮：显式配色（不再继承全局按钮的暗色白底） */
+/* 发送/停止按钮：ZCode 式炭黑方键，禁用中灰，停止态红色 */
 #agent-run-btn {
   min-height: 30px;
   padding: 6px 14px;
   border: 0;
   border-radius: 8px;
-  background: #2563eb;
+  background: #212428;
   color: #fff;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
-#agent-run-btn:hover:not(:disabled) { background: #1d4ed8; }
-#agent-run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+#agent-run-btn:hover:not(:disabled) { background: #101215; }
+#agent-run-btn:disabled { background: #85888e; color: #fff; opacity: 1; cursor: not-allowed; }
 #agent-run-btn.is-stop {
   background: #dc2626;
   color: #fff;
@@ -2211,9 +2370,9 @@
 .agent-plus-menu {
   position: absolute;
   z-index: 24;
-  left: 0;
-  bottom: calc(100% + 8px);
-  width: min(300px, 80%);
+  left: -4px;
+  bottom: calc(100% + 10px);
+  width: min(300px, calc(100vw - 48px));
   overflow: hidden;
   border: 1px solid var(--agent-line-strong);
   border-radius: 12px;
@@ -2262,19 +2421,131 @@
   max-height: 30px;
   padding: 0 !important;
   font-size: 18px;
-  color: var(--agent-muted);
+  color: var(--agent-muted) !important;
 }
-.agent-composer-footer .agent-icon-btn:hover { color: var(--agent-ink); }
-.agent-composer-footer .agent-icon-btn.agent-model-btn.is-active { color: #2563eb; }
-.agent-composer-footer .agent-icon-btn.agent-notify-toggle.is-active { color: #2563eb; }
+/* color 需压过 styles.css 的 .console-app-shell button:not(...)×3 (0,5,1) */
+.agent-composer-footer .agent-icon-btn:hover { color: var(--agent-ink) !important; }
+.agent-composer-footer .agent-icon-btn.agent-model-btn.is-active { color: #2563eb !important; }
+.agent-composer-footer .agent-icon-btn.agent-notify-toggle.is-active { color: var(--agent-ink) !important; }
+
+/* 模型按钮：ZCode 式立体盒子 SVG 图标 */
+.agent-composer-footer .agent-model-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agent-model-btn svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+
+/* 通知按钮：SVG 铃铛双态（is-active 切换 响铃/静音） */
+.agent-composer-footer .agent-notify-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.agent-notify-toggle svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+
+.agent-notify-toggle .bell-on { display: none; }
+.agent-notify-toggle.is-active .bell-on { display: block; }
+.agent-notify-toggle.is-active .bell-off { display: none; }
+
+/* 思考等级按钮：ZCode 式 脑图标+档位+⌄，豁免 30px 方键约束 */
+.agent-composer-footer .agent-variant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto !important;
+  min-width: 30px;
+  max-width: 150px !important;
+  padding: 0 7px !important;
+}
+.agent-variant-btn svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+.agent-variant-btn-label {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.agent-variant-btn-chevron { font-size: 10px; line-height: 1; }
+
+/* 思考等级弹层：锚定按钮本体，悬浮其正上方 */
+.agent-variant-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.agent-variant-menu {
+  position: absolute;
+  z-index: 24;
+  right: -4px;
+  bottom: calc(100% + 10px);
+  min-width: 128px;
+  max-width: min(260px, 80%);
+  max-height: min(360px, 52dvh);
+  overflow: hidden auto;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 12px;
+  background: var(--agent-surface);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.22);
+  scrollbar-width: thin;
+}
+.agent-variant-menu[hidden] { display: none; }
+.agent-variant-menu { display: grid; padding: 5px; }
+.agent-variant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 30px !important;
+  height: auto !important;
+  padding: 5px 9px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-muted);
+  font-size: 12px;
+  font-weight: 600 !important;
+  text-align: left;
+  cursor: pointer;
+}
+.agent-variant-item:hover { background: var(--agent-surface-soft) !important; color: var(--agent-ink); }
+.agent-variant-item.is-selected { color: var(--agent-ink); font-weight: 800; }
+.agent-variant-check { font-size: 11px; }
+
+/* 弹层锚点：菜单悬浮在各自按钮正上方 */
+.agent-model-anchor,
+.agent-plus-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
 
 /* 模型选择弹层 */
 .agent-model-menu {
   position: absolute;
   z-index: 24;
-  right: 0;
-  bottom: calc(100% + 8px);
-  max-width: min(340px, 86%);
+  right: -4px;
+  bottom: calc(100% + 10px);
+  width: max-content;
+  min-width: 180px;
+  max-width: min(340px, calc(100vw - 48px));
   max-height: min(420px, 56dvh);
   overflow: hidden auto;
   border: 1px solid var(--agent-line-strong);
@@ -2313,15 +2584,16 @@
   width: 100%;
   min-height: 0 !important;
   height: auto !important;
-  padding: 8px 9px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
+  padding: 8px 9px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--agent-ink);
   text-align: left;
   cursor: pointer;
 }
-.agent-model-item:hover { background: var(--agent-surface-soft); }
+.agent-model-item:hover { background: var(--agent-surface-soft) !important; }
 .agent-model-item > span:first-child { display: grid; gap: 1px; min-width: 0; }
 .agent-model-item strong { font-size: 12px; }
 .agent-model-item small { color: var(--agent-muted); font-size: 10px; }
@@ -3450,6 +3722,8 @@ body.agent-settings-modal-open { overflow: hidden; }
   #agent-slash-btn { width: 30px !important; min-width: 30px; min-height: 30px; flex: 0 0 30px; padding: 0; border-color: transparent; }
   #agent-run-btn { width: 32px; min-width: 32px; min-height: 32px; flex: 0 0 32px; padding: 0; border-radius: 7px; font-size: 0; }
   #agent-run-btn::before { content: '↑'; font-size: 16px; line-height: 1; }
+  .agent-variant-btn-label { display: none; }
+  .agent-variant-btn { padding: 0 !important; }
   #agent-run-btn.is-stop::before { content: '■'; font-size: 11px; }
   .agent-key-hint { display: none; }
   .agent-slash-menu { right: -1px; left: -1px; max-height: min(340px, 42vh); border-radius: 11px; }

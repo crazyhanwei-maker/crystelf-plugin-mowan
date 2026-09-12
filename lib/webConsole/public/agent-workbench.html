@@ -147,13 +147,6 @@
               <div id="agent-question-list" class="agent-question-list"></div>
             </section>
           </div>
-          <section id="agent-model-menu" class="agent-model-menu hidden" aria-label="模型选择">
-            <div class="agent-model-menu-current">
-              <strong id="agent-model-menu-provider">默认</strong>
-              <span id="agent-model-menu-model">默认模型</span>
-            </div>
-            <div id="agent-model-menu-list" class="agent-model-menu-list"></div>
-          </section>
           <section id="agent-slash-menu" class="agent-slash-menu hidden" aria-label="斜杠命令" role="listbox">
             <div class="agent-slash-menu-head">
               <strong>命令</strong>
@@ -212,13 +205,12 @@
               <span>使用隔离 Worktree</span>
             </label>
           </div>
-          <textarea id="agent-prompt" maxlength="6000" rows="4" placeholder="描述你希望 Agent 完成的任务...&#10;例如：检查群管理模块的重复定时任务，并给出修复方案。"></textarea>
+          <textarea id="agent-prompt" maxlength="6000" rows="4"></textarea>
           <div id="agent-attachment-list" class="agent-attachment-list"></div>
           <div class="agent-composer-footer">
             <div class="agent-composer-side">
               <input id="agent-attachment-input" type="file" multiple hidden />
-              <button id="agent-model-btn" type="button" class="agent-icon-btn agent-model-btn" title="选择模型" aria-label="选择模型" aria-expanded="false">◇</button>
-              <button id="agent-plus-btn" type="button" class="agent-icon-btn" title="添加附件与命令" aria-label="添加附件与命令" aria-expanded="false">＋</button>
+              <span class="agent-plus-anchor"><button id="agent-plus-btn" type="button" class="agent-icon-btn" title="添加附件与命令" aria-label="添加附件与命令" aria-expanded="false">＋</button>
               <section id="agent-plus-menu" class="agent-plus-menu hidden" aria-label="添加附件与命令">
                 <button type="button" class="agent-plus-item" data-plus-action="attachment">
                   <span class="agent-plus-item-icon">📎</span><span><strong>添加附件</strong><small>文件或图片，也可直接 Ctrl+V 粘贴</small></span>
@@ -226,9 +218,9 @@
                 <button type="button" class="agent-plus-item" data-plus-action="slash">
                   <span class="agent-plus-item-icon">/</span><span><strong>命令与能力</strong><small>斜杠命令、技能与原生能力</small></span>
                 </button>
-              </section>
+              </section></span>
               <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" data-agent-composer-options-toggle title="任务设置" aria-label="任务设置" aria-expanded="false">⚙</button>
-              <button id="agent-notify-toggle" type="button" class="agent-icon-btn agent-notify-toggle" title="桌面提醒（仅本浏览器生效，Agent 提问或等审批时通知）" aria-label="桌面提醒开关" aria-pressed="false">🔕</button>
+              <button id="agent-notify-toggle" type="button" class="agent-icon-btn agent-notify-toggle" title="桌面提醒（仅本浏览器生效，Agent 提问或等审批时通知）" aria-label="桌面提醒开关" aria-pressed="false"><svg class="bell-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.7 3A6 6 0 0 1 18 8c0 2 .3 3.7.8 5.2"/><path d="M17 17H3s3-2 3-9c0-.7.1-1.3.3-1.9"/><path d="M9.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/></svg><svg class="bell-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
               <span id="agent-composer-hint" class="agent-composer-hint">任务将以只读 plan Agent 启动。</span>
             </div>
             <div class="agent-composer-submit">
@@ -259,6 +251,16 @@
                   <small id="agent-context-usage-note" class="agent-context-empty">完成一轮对话后显示当前会话用量。</small>
                 </section>
               </details>
+              <span class="agent-model-anchor"><button id="agent-model-btn" type="button" class="agent-icon-btn agent-model-btn" title="选择模型" aria-label="选择模型" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></button>
+              <section id="agent-model-menu" class="agent-model-menu hidden" aria-label="模型选择">
+                <div class="agent-model-menu-current">
+                  <strong id="agent-model-menu-provider">默认</strong>
+                  <span id="agent-model-menu-model">默认模型</span>
+                </div>
+                <div id="agent-model-menu-list" class="agent-model-menu-list"></div>
+              </section></span>
+              <span class="agent-variant-anchor"><button id="agent-variant-btn" type="button" class="agent-icon-btn agent-variant-btn" title="思考等级（仅作用于当前会话）" aria-label="思考等级" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg><span id="agent-variant-btn-label" class="agent-variant-btn-label">默认</span><span class="agent-variant-btn-chevron" aria-hidden="true">⌄</span></button>
+              <section id="agent-variant-menu" class="agent-variant-menu hidden" aria-label="思考等级"></section></span>
               <button id="agent-run-btn" type="submit">发送</button>
             </div>
           </div>
