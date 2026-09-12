@@ -45,6 +45,35 @@
   --agent-code-ink: #d9e7f5;
 }
 
+/* 新建任务：ZCode 式 图标+文字 无边框按钮（位于会话列表顶部） */
+.agent-new-task-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-height: 30px;
+  margin: 2px 0 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.agent-new-task-btn:hover {
+  background: var(--agent-surface) !important;
+  color: var(--agent-ink) !important;
+}
+
+.agent-new-task-btn svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+}
+
 .agent-workbench-page .page {
   display: grid;
   width: 100%;
@@ -2813,6 +2842,24 @@
   gap: 6px;
 }
 
+/* 图片附件缩略图预览 */
+.agent-message-attachment-image {
+  display: block;
+  max-width: min(220px, 100%);
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.agent-message-attachment-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+}
+
+.agent-message-user .agent-message-attachments { justify-content: flex-end; }
+
 .agent-attachment-list:empty { display: none; }
 
 .agent-attachment-chip,
@@ -3478,21 +3525,36 @@ body.agent-settings-modal-open { overflow: hidden; }
 @media (max-width: 1020px) {
   .agent-workbench-shell {
     grid-template-columns: 220px minmax(0, 1fr);
+    position: relative;
   }
 
+  /* 平板：上下文栏不占版面，改为顶栏「上下文」按钮唤起的浮层（与手机一致） */
   .agent-context-sidebar {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    border-top: 1px solid var(--agent-line);
-    border-left: 0;
+    display: none;
+    position: absolute;
+    z-index: 25;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: auto;
+    border: 0;
+    background: var(--agent-surface);
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+    padding: 12px;
   }
 
-  .agent-context-head { grid-column: 1 / -1; }
+  .agent-context-sidebar.is-mobile-visible { display: block; }
+
+  .agent-mobile-panel-btn { display: inline-flex; }
   .agent-context-collapse-btn { display: none !important; }
   .agent-context-section,
   .agent-summary-section { margin-top: 0; padding-top: 0; border-top: 0; }
+}
+
+/* 平板区间：会话侧栏本身可见，「会话」切换按钮无意义，隐藏 */
+@media (min-width: 761px) and (max-width: 1020px) {
+  #agent-mobile-sessions { display: none !important; }
 }
 
 @media (max-width: 760px) {
@@ -3550,7 +3612,7 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-topbar-actions #theme-toggle-btn { display: inline-grid !important; }
   :root[data-theme='dark'] .agent-topbar-actions #theme-toggle-btn::before { content: '☀'; }
   :root[data-theme='light'] .agent-topbar-actions #theme-toggle-btn::before { content: '☾'; }
-  .agent-topbar-actions #agent-new-task-btn { display: none; }
+  .agent-new-task-btn { margin-bottom: 6px; }
   .agent-topbar-actions #agent-close-opencode-btn { display: none; }
   .agent-topbar-actions #agent-refresh-btn,
   .agent-topbar-actions .agent-link-btn { display: none; }
