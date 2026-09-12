@@ -2329,7 +2329,7 @@
 .agent-model-item.is-current { background: rgba(37, 99, 235, 0.08); }
 
 /* 管理模型模态 */
-.agent-model-manager-body { display: grid; gap: 12px; }
+.agent-model-manager-body { display: grid; gap: 12px; align-content: start; }
 .agent-model-manager-hint { margin: 0; color: var(--agent-muted); font-size: 11px; }
 .agent-model-provider-row {
   display: grid;
