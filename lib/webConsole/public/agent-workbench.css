@@ -250,7 +250,8 @@
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr) 300px;
   grid-template-rows: minmax(0, 1fr);
-  height: max(460px, calc(100dvh - 96px));
+  /* 上下 chrome 实测 140px（控制台顶栏+页边距）：按真实占用计算，避免整页滚动条 */
+  height: max(460px, calc(100dvh - 140px));
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--agent-line);
@@ -3526,7 +3527,21 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-workbench-shell {
     grid-template-columns: 220px minmax(0, 1fr);
     position: relative;
+    /* 平板隐藏控制台顶栏（会换行变高导致整页滚动） */
+    height: max(460px, calc(100dvh - 132px));
   }
+
+  /* 顶栏按钮单行不换行，放不下时横向滚动（避免顶栏折行把页面撑出滚动条） */
+  .agent-topbar { grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto); }
+  .agent-topbar-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .agent-topbar-actions::-webkit-scrollbar { display: none; }
+
+  body.agent-workbench-page .console-topbar { display: none; }
+  body.agent-workbench-page .console-app-shell { padding-top: 0; }
 
   /* 平板：上下文栏不占版面，改为顶栏「上下文」按钮唤起的浮层（与手机一致） */
   .agent-context-sidebar {
@@ -3558,8 +3573,15 @@ body.agent-settings-modal-open { overflow: hidden; }
 }
 
 @media (max-width: 760px) {
+  /* 手机模式：整页锁定为 app 式布局，只有对话流/浮层内部滚动 */
+  body.agent-workbench-page {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
   body.agent-workbench-page .console-topbar { display: none; }
   body.agent-workbench-page .console-app-shell { padding-top: 0; }
+  body.agent-workbench-page .page { padding-bottom: 0; }
   body.agent-workbench-page .console-auth-floating-btn { display: none; }
   .agent-workbench-page { min-height: 100dvh; background: var(--agent-bg); }
   .agent-workbench-page .page { min-height: 100dvh; padding: 0; gap: 0; }
