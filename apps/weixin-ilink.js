@@ -182,16 +182,24 @@ export class weixinIlink extends plugin {
   // ── QQ 侧管理指令 ──
 
   async startLogin(e) {
-    await e.reply('开始微信 ilink 登录：请在手机微信 → ClawBot 入口扫码确认（2 分钟内完成，过期自动刷新二维码）。');
+    await e.reply('开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。');
     try {
       const credentials = await loginByQrcode({
         logger,
-        onState: state => {
-          if (state.state === 'wait' && state.qrcodeContent) {
-            logger.info(`[weixin-ilink] 登录二维码内容（可用手机浏览器打开或微信扫码）：${state.qrcodeContent}`);
-            if (state.refreshCount > 0) e.reply('二维码已过期，已自动刷新，请重新扫码。').catch(() => { });
+        onState: async state => {
+          if (state.state === 'wait' && state.qrcodeUrl) {
+            // 生成二维码图片发到 QQ；文字链接兜底
+            try {
+              const QRCode = (await import('qrcode')).default;
+              const pngBuffer = await QRCode.toBuffer(state.qrcodeUrl, { type: 'png', width: 480, margin: 2 });
+              await e.reply([segment.image(`base64://${pngBuffer.toString('base64')}`), '\n若二维码无法扫描，把此链接在手机浏览器打开：\n', state.qrcodeUrl]);
+            } catch (error) {
+              await e.reply(`二维码生成失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
+            }
+            if (state.refreshCount > 0) return; // 刷新时上面已发新码
           }
-          if (state.state === 'scaned') e.reply('已扫码，请在手机上确认登录。').catch(() => { });
+          if (state.state === 'scaned') await e.reply('已扫码，请在手机上确认登录。').catch(() => { });
+          if (state.state === 'expired') await e.reply('二维码已过期，正在自动刷新，请扫新码。').catch(() => { });
         },
       });
       await e.reply(`微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`);
