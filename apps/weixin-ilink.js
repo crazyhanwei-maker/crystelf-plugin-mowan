@@ -48,11 +48,6 @@ function resolveAllowedWeixinIds(config = {}) {
   return new Set(list.map(item => String(item ?? '').trim()).filter(Boolean));
 }
 
-// 群里只发提示时用：去掉链接等登录凭证，避免任何情况下把可扫的码带进群
-function stripCredential(text) {
-  return String(text || '').replace(/https?:\/\/\S+/gi, '[链接已省略]').slice(0, 200);
-}
-
 // 长文本按行边界切块：微信单条过长会被截断
 function splitTextChunks(text, limit = 1000) {
   const source = String(text || '').trim();
@@ -485,124 +480,45 @@ export class weixinIlink extends plugin {
 
   // ── QQ 侧管理指令 ──
 
-  // 定向私发：兼容各 Yunzai 分支的接口差异
-  // —— TRSS 用 Bot.pickUser，标准 Yunzai / Miao-Yunzai 用 Bot.pickFriend（oicq 风格）。
-  // 之前只认 pickUser，在 Miao-Yunzai 上必然抛错，导致登录流程被提前 return 掉、二维码永远发不出。
-  async sendPrivateToUser(userId, message) {
-    const bot = globalThis.Bot;
-    const pickers = [];
-    if (typeof bot?.pickUser === 'function') pickers.push(() => bot.pickUser(userId));
-    if (typeof bot?.pickFriend === 'function') pickers.push(() => bot.pickFriend(userId));
-    if (!pickers.length) throw new Error('当前框架没有可用的私聊发送接口（pickUser/pickFriend 均不可用）');
-    let lastError = null;
-    for (const pick of pickers) {
-      try {
-        const target = pick();
-        if (typeof target?.sendMsg !== 'function') throw new Error('私聊对象不可发送');
-        await target.sendMsg(message);
-        return;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    throw lastError || new Error('私发失败');
-  }
-
-  async sendLoginMessage(e, message, { groupNotice = '', reason = '', silentInGroup = false } = {}) {
-    const isGroup = e?.isGroup === true;
-    const requesterId = String(e?.user_id || '').trim();
-    let status = 'failed';
-
-    if (!isGroup) {
-      // 私聊发起：当前会话就是发起人的私聊，直接回复即可。
-      // 不依赖 pickUser/pickFriend，各框架都成立（之前这里失败会让整个登录流程不启动）
-      try {
-        await e.reply(message);
-        status = 'sent';
-      } catch (error) {
-        logger.warn(`[weixin-ilink] 登录信息回复失败：${error.message}`);
-      }
-    } else if (/^[1-9]\d{4,11}$/.test(requesterId)) {
-      for (let attempt = 0; attempt < 2 && status !== 'sent'; attempt++) {
-        try {
-          await this.sendPrivateToUser(requesterId, message);
-          status = 'sent';
-        } catch (error) {
-          if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 1000));
-          else logger.warn(`[weixin-ilink] 登录信息私发 ${requesterId} 失败：${error.message}`);
-        }
-      }
-    }
-
-    if (isGroup && !silentInGroup) {
-      // 默认不在群里说话（过期/刷新/扫码类消息只在私聊出现）；
-      // 只有私发失败时才在群里出声一次，否则发起人什么都不知道
-      const notice = groupNotice
-        || (status === 'sent' ? '' : '私发失败：请主人先加 bot 为好友，并在私聊中执行该指令。');
-      if (notice) {
-        const detail = reason ? `（原因：${stripCredential(reason)}）` : '';
-        await e.reply(`${notice}${detail}`).catch(() => { });
-      }
-    }
-    return status;
-  }
-
   async startLogin(e) {
-    // 登录二维码等同登录凭证：只私发发起人。
-    // 群聊最多在整个登录流程里出现一条提示（下面 groupNotice 只在第一次给），
-    // 扫码/过期/刷新/成功这些一律只走私聊，避免在群里刷屏
-    // 群聊里整个登录流程只允许一条提示：首次以外的所有消息在群里保持静默
-    let groupNotified = false;
-    const notify = (message, options = {}) => {
-      if (!options.groupNotice) options.silentInGroup = true;
-      if (e?.isGroup === true && groupNotified) options.silentInGroup = true;
-      if (e?.isGroup === true && !options.silentInGroup) groupNotified = true;
-      return this.sendLoginMessage(e, message, options);
-    };
-    const queued = await notify('开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。', {
-      groupNotice: '登录流程已私发给发起人，请在私聊中查看。',
-    });
-    if (queued !== 'sent') return true; // 私发不成功就不启动登录流程，避免二维码无处可送
+    // 登录二维码等同登录凭证：只允许在私聊使用，群里不受理（也彻底杜绝把码发进群）。
+    // 私聊里全程用当前会话回复，不依赖各 Yunzai 分支的私聊接口差异（pickUser/pickFriend）
+    if (e?.isGroup) {
+      await e.reply('涉及登录二维码，请在私聊中使用。');
+      return true;
+    }
+    await e.reply('开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。');
     try {
       const credentials = await loginByQrcode({
         logger,
         onState: async state => {
           if (state.state === 'wait' && state.qrcodeUrl) {
-            // 生成二维码图片私发主人；文字链接兜底。
-            // 用仓库内置编码器（lib/weixin/qrCode.js）而不是 npm 的 qrcode 包：
-            // 新机器上第三方依赖常缺失，一旦缺失登录就只剩一条不能直接扫的链接。
+            // 二维码用仓库内置编码器（lib/weixin/qrCode.js）生成，不依赖 npm 的 qrcode 包；
+            // 图片发不出去就退回私发链接，不让用户干等
             const segmentApi = globalThis.segment;
             const linkText = `\n若二维码无法扫描，把此链接在手机浏览器打开：\n${state.qrcodeUrl}`;
-            let delivered = false;
             if (typeof segmentApi?.image === 'function') {
               try {
                 const { renderQrPng } = await import('../lib/weixin/qrCode.js');
                 const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
-                const sendStatus = await notify([segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText]);
-                delivered = sendStatus === 'sent';
+                await e.reply([segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText]);
               } catch (error) {
                 logger.warn(`[weixin-ilink] 二维码图片发送失败：${error.message}`);
-                await notify(`二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
-                delivered = true; // 链接已私发出去，不再重复发送
+                await e.reply(`二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
               }
-            }
-            if (!delivered) {
-              // 环境不提供 segment（不同 Yunzai 分支可能没有）：退回私发链接，别让用户干等
-              await notify(`当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`);
+            } else {
+              await e.reply(`当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`);
             }
             if (state.refreshCount > 0) return; // 刷新时上面已发新码
           }
-          if (state.state === 'scaned') await notify('已扫码，请在手机上确认登录。');
-          if (state.state === 'expired') await notify('二维码已过期，正在自动刷新，请扫新码。');
+          if (state.state === 'scaned') await e.reply('已扫码，请在手机上确认登录。');
+          if (state.state === 'expired') await e.reply('二维码已过期，正在自动刷新，请扫新码。');
         },
       });
-      await notify(`微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`);
+      await e.reply(`微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`);
       await this.ensurePoller();
     } catch (error) {
-      await this.sendLoginMessage(e, `微信桥登录失败：${error.message}`, {
-        groupNotice: '微信桥登录失败，详情见私聊。',
-        reason: error.message,
-      });
+      await e.reply(`微信桥登录失败：${error.message}`);
     }
     return true;
   }
@@ -631,8 +547,12 @@ export class weixinIlink extends plugin {
   }
 
   // #微信机器人诊断：一条命令把登录链路上所有可能卡住的地方挨个验一遍。
-  // 结果私发发起人（不把凭证类信息带进群），群里只回一句提示。
+  // 只在私聊受理（结果里含路径/版本等运维信息），群里只回一句提示。
   async diagnose(e) {
+    if (e?.isGroup) {
+      await e.reply('请在私聊中使用。');
+      return true;
+    }
     const lines = ['微信桥自检'];
     try {
       const Path = (await import('../constants/path.js')).default;
@@ -674,9 +594,7 @@ export class weixinIlink extends plugin {
     const canPrivate = typeof botApi.pickUser === 'function' || typeof botApi.pickFriend === 'function';
     lines.push(`图片消息：${typeof segmentApi?.image === 'function' ? 'segment 可用' : 'segment 不可用'} / 私聊接口：${canPrivate ? `可用（${typeof botApi.pickUser === 'function' ? 'pickUser' : 'pickFriend'}）` : '不可用'}`);
 
-    await this.sendLoginMessage(e, lines.join('\n'), {
-      groupNotice: '自检结果已私发给发起人。',
-    });
+    await e.reply(lines.join('\n'));
     return true;
   }
 
