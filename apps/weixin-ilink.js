@@ -268,10 +268,10 @@ export class weixinIlink extends plugin {
       ].join('\n'), token);
       return;
     }
-    if (cmd === '停止' || cmd === 'stop') {
+    if (cmd === '停止' || cmd === '停止任务' || cmd === 'stop') {
       const bridge = this.getBridge(senderId);
       const stopped = await bridge.cancelActive();
-      await this.sendTo(senderId, stopped ? '已发送取消请求，当前任务将中断。' : '当前没有运行中的任务。', token);
+      await this.sendTo(senderId, stopped ? '已发送取消请求，当前任务将中断（含排队的后续指令）。' : '当前没有运行中的任务。', token);
       return;
     }
     if (cmd === '灵晶状态' || cmd === '状态') {
