@@ -9,6 +9,7 @@ import { resolveBotIdentity } from '../lib/system/botIdentity.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { execFileSync } from 'child_process';
 
 const START_TIME = Date.now();
 
@@ -271,7 +272,7 @@ function buildHealthItems(allConfigs = {}) {
   ];
 }
 
-function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks = [] }) {
+function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks = [], swap = null }) {
   const alerts = [];
   const requestCount = Number(usage.request_count || 0);
   const errorCount = Number(usage.error_count || 0);
@@ -279,6 +280,9 @@ function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, di
   const imageErrors = Number(imageUsage.error_count || 0);
 
   if (memoryPercent >= 85) alerts.push({ tone: 'warn', label: '内存', text: `物理内存使用率 ${memoryPercent.toFixed(1)}%` });
+  const swapRatio = swap && Number(swap.totalBytes) > 0 ? swap.usedBytes / swap.totalBytes : 0;
+  if (swapRatio >= 0.8) alerts.push({ tone: 'warn', label: 'Swap', text: `虚拟内存使用率 ${Math.round(swapRatio * 100)}%（内存压力 OOM 风险）` });
+  else if (swapRatio >= 0.5) alerts.push({ tone: 'warn', label: 'Swap', text: `虚拟内存使用率 ${Math.round(swapRatio * 100)}%` });
   for (const disk of disks) {
     if (disk.percent >= 90) alerts.push({ tone: 'warn', label: '磁盘', text: `磁盘 ${disk.mount} 使用率 ${disk.percent}%（${disk.usedText} / ${disk.totalText}）` });
   }
@@ -294,7 +298,172 @@ function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, di
   return alerts.length > 0 ? alerts.slice(0, 4) : [{ tone: 'success', label: 'OK', text: '暂无运行告警' }];
 }
 
-function buildStatusData(e = {}) {
+function collectCpuModel() {
+  try {
+    return String(os.cpus?.()?.[0]?.model || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+// 内存代际：Linux 走 dmidecode（需 root，Bot 满足）；Windows 走 wmic SMBIOSMemoryType
+function collectMemoryType() {
+  try {
+    if (process.platform === 'linux') {
+      let out = '';
+      for (const bin of ['dmidecode', '/usr/sbin/dmidecode', '/usr/local/sbin/dmidecode']) {
+        try {
+          out = execFileSync(bin, ['-t', 'memory'], { timeout: 3000, encoding: 'utf8' });
+          break;
+        } catch (error) {
+          if (error?.code !== 'ENOENT') out = '';
+        }
+      }
+      const types = [...out.matchAll(/^\s*Type:\s*(DDR[3-5]S?)\s*$/gmi)].map(match => match[1].toUpperCase());
+      return [...new Set(types)].join('/') || '';
+    }
+    if (process.platform === 'win32') {
+      const out = execFileSync('wmic', ['memorychip', 'get', 'SMBIOSMemoryType', '/value'], { timeout: 5000, encoding: 'utf8' });
+      const map = { 20: 'DDR', 21: 'DDR2', 24: 'DDR3', 26: 'DDR4', 31: 'LPDDR3', 32: 'LPDDR4', 33: 'LPDDR5', 34: 'DDR5' };
+      const codes = [...out.matchAll(/SMBIOSMemoryType=(\d+)/g)].map(match => map[Number(match[1])]).filter(Boolean);
+      return [...new Set(codes)].join('/') || '';
+    }
+  } catch {
+    // 权限或工具缺失时静默降级
+  }
+  return '';
+}
+
+// 虚拟内存（Linux Swap / Windows 页面文件）：主机级占用
+function collectSwapMemory() {
+  try {
+    if (process.platform === 'linux') {
+      const meminfo = fs.readFileSync('/proc/meminfo', 'utf8');
+      const total = Number((meminfo.match(/^SwapTotal:\s*(\d+)\s*kB/mi) || [])[1] || 0) * 1024;
+      const free = Number((meminfo.match(/^SwapFree:\s*(\d+)\s*kB/mi) || [])[1] || 0) * 1024;
+      return total > 0 ? { totalBytes: total, usedBytes: Math.max(0, total - free) } : null;
+    }
+    if (process.platform === 'win32') {
+      // Win11 已移除 wmic 别名，用 PowerShell CIM 查询页面文件
+      const out = execFileSync('powershell', [
+        '-NoProfile', '-Command',
+        '(Get-CimInstance Win32_PageFileUsage | Measure-Object -Property AllocatedBaseSize -Sum).Sum; (Get-CimInstance Win32_PageFileUsage | Measure-Object -Property CurrentUsage -Sum).Sum',
+      ], { timeout: 8000, encoding: 'utf8' });
+      const numbers = [...out.matchAll(/\d+(?:\.\d+)?/g)].map(match => Number(match[0]));
+      const allocated = numbers[0] || 0;
+      const used = numbers[1] || 0;
+      return allocated > 0 ? { totalBytes: allocated * 1024 * 1024, usedBytes: used * 1024 * 1024 } : null;
+    }
+  } catch {
+    // 采集失败静默降级
+  }
+  return null;
+}
+
+// 网络流量：读系统累计计数器，配合当日基线持久化换算"今日收发"
+function readNetworkCounters() {
+  try {
+    if (process.platform === 'linux') {
+      const raw = fs.readFileSync('/proc/net/dev', 'utf8');
+      let rx = 0;
+      let tx = 0;
+      for (const line of raw.split('\n').slice(2)) {
+        const colon = line.indexOf(':');
+        if (colon < 0) continue;
+        const ifname = line.slice(0, colon).trim();
+        if (ifname === 'lo' || /^(docker|veth|br-|virbr)/.test(ifname)) continue;
+        const columns = line.slice(colon + 1).trim().split(/\s+/);
+        rx += Number(columns[0]) || 0;
+        tx += Number(columns[8]) || 0;
+      }
+      return rx || tx ? { rx, tx } : null;
+    }
+    if (process.platform === 'win32') {
+      const out = execFileSync('powershell', [
+        '-NoProfile', '-Command',
+        '(Get-NetAdapterStatistics | Measure-Object -Property ReceivedBytes -Sum).Sum; (Get-NetAdapterStatistics | Measure-Object -Property SentBytes -Sum).Sum',
+      ], { timeout: 8000, encoding: 'utf8' });
+      const numbers = [...out.matchAll(/\d+/g)].map(match => Number(match[0]));
+      return numbers[0] || numbers[1] ? { rx: numbers[0] || 0, tx: numbers[1] || 0 } : null;
+    }
+  } catch {
+    // 采集失败静默降级
+  }
+  return null;
+}
+
+function collectNetworkTraffic(allConfigs = {}) {
+  try {
+    const counters = readNetworkCounters();
+    if (!counters) return null;
+    // "今日"按业务时区（默认北京）翻转
+    const offsetMinutes = Number(allConfigs?.config?.timezoneOffset ?? 480);
+    const today = new Date(Date.now() + offsetMinutes * 60000).toISOString().slice(0, 10);
+    const storeFile = path.join(Path.data, 'status-network.json');
+    let store = {};
+    try {
+      store = JSON.parse(fs.readFileSync(storeFile, 'utf8'));
+    } catch { }
+    if (store?.date !== today || !Number.isFinite(store?.rxBase) || !Number.isFinite(store?.txBase)) {
+      store = { date: today, rxBase: counters.rx, txBase: counters.tx };
+      try { fs.writeFileSync(storeFile, JSON.stringify(store)); } catch { }
+    }
+    let rxToday = counters.rx - store.rxBase;
+    let txToday = counters.tx - store.txBase;
+    if (rxToday < 0 || txToday < 0) {
+      // 重启后计数器清零：基线重置，今日流量从头累计
+      store.rxBase = counters.rx;
+      store.txBase = counters.tx;
+      rxToday = 0;
+      txToday = 0;
+      try { fs.writeFileSync(storeFile, JSON.stringify(store)); } catch { }
+    }
+    return { rxToday: Math.max(0, rxToday), txToday: Math.max(0, txToday) };
+  } catch {
+    return null;
+  }
+}
+
+// 磁盘 IO：/proc/diskstats 双采样差分（仅 Linux；Windows 计数器本地化问题放弃）
+function readDiskStats() {
+  try {
+    if (process.platform !== 'linux') return null;
+    const raw = fs.readFileSync('/proc/diskstats', 'utf8');
+    let readSectors = 0;
+    let writeSectors = 0;
+    let ioMs = 0;
+    for (const line of raw.split('\n')) {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length < 14) continue;
+      if (!/^(?:sd[a-z]+|vd[a-z]+|hd[a-z]+|xvd[a-z]+|nvme\d+n\d+)$/.test(parts[2])) continue;
+      readSectors += Number(parts[5]) || 0;
+      writeSectors += Number(parts[9]) || 0;
+      ioMs += Number(parts[12]) || 0;
+    }
+    return { readSectors, writeSectors, ioMs, at: Date.now() };
+  } catch {
+    return null;
+  }
+}
+
+async function collectDiskIo() {
+  try {
+    const first = readDiskStats();
+    if (!first) return null;
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const second = readDiskStats();
+    if (!second) return null;
+    const wallMs = Math.max(1, second.at - first.at);
+    const sectors = Math.max(0, second.readSectors - first.readSectors) + Math.max(0, second.writeSectors - first.writeSectors);
+    const mbps = Math.round(sectors * 512 * 1000 / (1024 * 1024) / wallMs * 10) / 10;
+    const busy = Math.min(100, Math.round((second.ioMs - first.ioMs) / wallMs * 100));
+    return { mbps, busy };
+  } catch {
+    return null;
+  }
+}
+
+async function buildStatusData(e = {}) {
   const allConfigs = ConfigControl.get() || {};
   const memory = process.memoryUsage();
   const totalMemory = os.totalmem();
@@ -320,6 +489,9 @@ function buildStatusData(e = {}) {
   const health = buildHealthItems(allConfigs);
   const imageLatest = imageUsage.latest;
   const disks = collectDiskUsage();
+  const swap = collectSwapMemory();
+  const network = collectNetworkTraffic(allConfigs);
+  const diskIo = await collectDiskIo();
 
   const data = {
     statusText: health.some(item => item.tone !== 'success') ? '需要检查' : '运行正常',
@@ -327,6 +499,11 @@ function buildStatusData(e = {}) {
     generatedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
     resources: {
       cpuPercent,
+      cpuModel: collectCpuModel(),
+      memoryType: collectMemoryType(),
+      swap,
+      network,
+      diskIo,
       rssBytes: memory.rss,
       heapUsedBytes: memory.heapUsed,
       heapTotalBytes: memory.heapTotal,
@@ -415,7 +592,7 @@ function buildStatusData(e = {}) {
     features: getFeatureEntries(),
   };
 
-  data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks });
+  data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks, swap });
   data.summaryLines = [
     `插件：${Version.name} v${Version.ver}`,
     `Bot：${botId}`,
@@ -446,8 +623,8 @@ function buildStatusData(e = {}) {
   return data;
 }
 
-function buildStatusText(e = {}) {
-  const data = buildStatusData(e);
+async function buildStatusText(e = {}) {
+  const data = await buildStatusData(e);
   return ['灵晶状态', '━━━━━━━━━━━━', ...data.summaryLines].join('\n');
 }
 
@@ -468,7 +645,7 @@ export class CrystelfStatus extends plugin {
   }
 
   async showStatus(e) {
-    const data = buildStatusData(e);
+    const data = await buildStatusData(e);
     try {
       const imagePath = await renderStatusImage(data);
       if (imagePath) {
