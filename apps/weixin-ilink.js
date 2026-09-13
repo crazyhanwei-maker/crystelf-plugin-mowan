@@ -164,10 +164,9 @@ export class weixinIlink extends plugin {
       return;
     }
 
-    // ── 任务输入模式：下一条普通消息直接作为任务提交 ──
-    if (this.taskInputUsers?.has(senderId)) {
-      this.taskInputUsers.delete(senderId);
-      await this.dispatchAgent(senderId, trimmed, token);
+    // ── 任务模式（/新建任务 进入，黏性）：除 / 指令与 # 指令外的消息都作为当前任务指令 ──
+    if (this.taskModeUsers?.has(senderId) && !trimmed.startsWith('#') && !trimmed.startsWith('/')) {
+      await this.handleTaskMessage(senderId, trimmed, token);
       return;
     }
 
@@ -233,18 +232,22 @@ export class weixinIlink extends plugin {
       return;
     }
     if (cmd === '新建任务') {
-      if (this.taskInputUsers?.has(senderId)) {
-        await this.sendTo(senderId, '已在任务输入模式：直接发任务内容即可，发 /取消 退出。', token);
-        return;
-      }
-      if (!this.taskInputUsers) this.taskInputUsers = new Set();
-      this.taskInputUsers.add(senderId);
-      await this.sendTo(senderId, '请直接发送任务内容（下一条消息将提交给 Agent）。发 /取消 退出输入模式。', token);
+      if (!this.taskModeUsers) this.taskModeUsers = new Set();
+      this.taskModeUsers.add(senderId);
+      await this.sendTo(senderId, [
+        '已进入任务模式（全权限）：接下来直接发消息即可。',
+        '· 任务执行中发的消息会作为后续指令并入当前任务',
+        '· 任务结束后发的消息会在同一会话里继续（上下文保留）',
+        '· / 开头的指令随时可用（/取消 退出任务模式）',
+        '现在请直接发送任务内容。',
+      ].join('\n'), token);
       return;
     }
-    if (cmd === '取消') {
-      const inInput = this.taskInputUsers?.delete(senderId);
-      await this.sendTo(senderId, inInput ? '已退出任务输入模式。' : '当前没有可取消的输入会话；运行中的任务用 /停止 或 #agent停止。', token);
+    if (cmd === '取消' || cmd === '退出') {
+      const inTask = this.taskModeUsers?.delete(senderId);
+      await this.sendTo(senderId, inTask
+        ? '已退出任务模式，需要时再发 /新建任务。'
+        : '当前不在任务模式；运行中的任务用 /停止 或 #agent停止 中断。', token);
       return;
     }
     if (cmd === '模型') {
@@ -374,27 +377,22 @@ export class weixinIlink extends plugin {
     return [
       '灵晶 Agent 微信桥已就绪。可用指令：',
       '',
-      '① #agent <任务描述>',
-      '   让 Agent 在插件工作目录执行任务并回报过程与结论。',
+      '① /新建任务 —— 进入任务模式（推荐）',
+      '   之后直接发消息即任务；执行中发的消息会作为后续指令并入当前任务，',
+      '   任务结束后继续发消息会在同一会话里接着聊（上下文保留）。',
+      '   /取消 退出任务模式。',
+      '',
+      '② #agent <任务描述> —— 单次提交任务（不进入任务模式）',
       '   示例：#agent 检查 rssCache 的过期清理逻辑是否有内存泄漏',
-      '   执行中会分段推送进展（不含思考链），单轮约 30~90 秒。',
       '',
-      '② #agent停止',
-      '   取消当前正在执行的任务。',
+      '③ #agent停止 或 /停止 —— 中断当前任务',
       '',
-      '③ #灵晶状态',
-      '   查看插件运行状态。',
+      '④ /模型 · /思考等级 · /当前配置 —— 选择模型与思考深度',
       '',
-      '更多（斜杠指令）：',
-      '· /新建任务 —— 输入模式下一条消息直接作为任务提交',
-      '· /模型 —— 查看/切换 Agent 模型，/模型 0 恢复默认',
-      '· /思考等级 —— 调节思考深度（最低~最大）',
-      '· /当前配置 —— 查看当前模型与思考等级',
-      '· /停止 —— 中断运行中的任务（等同 #agent停止）',
-      '· /状态 —— 精简状态',
-      '· /取消 —— 退出任务输入模式',
+      '⑤ #灵晶状态 或 /状态 —— 查看插件运行状态',
       '',
-      '注意：同一时间只执行一个任务；任务在服务器上真实运行（只读模式，不会改动文件）。',
+      '说明：任务以全权限模式在服务器上真实执行，可修改文件、联网、执行命令，请谨慎描述任务。',
+      '同一时间只执行一个任务；执行中的进展会分段推送，结束时给出结论。',
     ].join('\n');
   }
 
@@ -409,6 +407,27 @@ export class weixinIlink extends plugin {
     return this.bridges.get(senderId);
   }
 
+  // 任务模式下的消息：执行中 → 并入当前任务；空闲 → 同一会话里开新一轮
+  async handleTaskMessage(senderId, text, token) {
+    const bridgeState = getBridgeState();
+    if (!bridgeState.enabled) {
+      await this.sendTo(senderId, 'Agent 桥当前关闭：QQ 侧发送 #agent开关 打开后再试。', token);
+      return;
+    }
+    const bridge = this.getBridge(senderId);
+    const progress = bridge.getProgress?.() || {};
+    if (progress.running) {
+      try {
+        await bridge.sendFollowUp(text);
+        await this.sendTo(senderId, '已作为后续指令并入当前任务（执行中）；完成后会一并回复结论。', token);
+      } catch (error) {
+        await this.sendTo(senderId, `后续指令发送失败：${error.message}`, token);
+      }
+      return;
+    }
+    await this.dispatchAgent(senderId, text, token);
+  }
+
   async dispatchAgent(senderId, promptText, token) {
     const bridgeState = getBridgeState();
     if (!bridgeState.enabled) {
@@ -420,7 +439,7 @@ export class weixinIlink extends plugin {
       await this.sendTo(senderId, '已有桥接任务在执行中，可发送 #agent停止 取消后重试。', token);
       return;
     }
-    await this.sendTo(senderId, '任务已提交，执行过程会分段推送（不含思考链）。', token);
+    await this.sendTo(senderId, '任务已提交（全权限模式：可改文件、联网、执行命令）。执行过程分段推送；同一会话保留上下文，直接发消息即可追加指令。', token);
     try {
       const result = await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
