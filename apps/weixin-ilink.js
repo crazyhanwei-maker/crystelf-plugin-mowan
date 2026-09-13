@@ -485,10 +485,12 @@ export class weixinIlink extends plugin {
         logger,
         onState: async state => {
           if (state.state === 'wait' && state.qrcodeUrl) {
-            // 生成二维码图片发到 QQ；文字链接兜底
+            // 生成二维码图片发到 QQ；文字链接兜底。
+            // 用仓库内置编码器（lib/weixin/qrCode.js）而不是 npm 的 qrcode 包：
+            // 新机器上第三方依赖常缺失，一旦缺失登录就只剩一条不能直接扫的链接。
             try {
-              const QRCode = (await import('qrcode')).default;
-              const pngBuffer = await QRCode.toBuffer(state.qrcodeUrl, { type: 'png', width: 480, margin: 2 });
+              const { renderQrPng } = await import('../lib/weixin/qrCode.js');
+              const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
               await e.reply([segment.image(`base64://${pngBuffer.toString('base64')}`), '\n若二维码无法扫描，把此链接在手机浏览器打开：\n', state.qrcodeUrl]);
             } catch (error) {
               await e.reply(`二维码生成失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
