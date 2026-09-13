@@ -1,6 +1,7 @@
 // 微信 ilink bot 桥（官方 ClawBot 开放接口）：主人白名单私聊 → #agent / #灵晶状态
 // plugin 为 Yunzai 运行时注入的全局基类（与其他 apps 一致，不 import）
 // 登录：#微信机器人登录 拿登录链接扫码（二维码内容输出到终端/控制台日志）
+import fs from 'fs';
 import ConfigControl from '../lib/config/configControl.js';
 import {
   loadCredentials,
@@ -8,6 +9,7 @@ import {
   loginByQrcode,
   longPollUpdates,
   sendTextMessage,
+  sendImageMessage,
   extractTextFromMessage,
 } from '../lib/weixin/ilinkClient.js';
 import { createAgentChatBridge, getBridgeState, setBridgeEnabled } from '../lib/agent/agentChatBridge.js';
@@ -141,10 +143,21 @@ export class weixinIlink extends plugin {
       return;
     }
     if (/^#灵晶状态$/.test(trimmed)) {
-      const { buildStatusText } = await import('./status.js');
-      const text = await buildStatusText({ self_id: 'weixin-ilink', adapter_name: 'weixin-ilink' });
-      await this.sendTo(senderId, text, token);
-      return;
+      // 图片版优先（微信 bot 支持图片），失败降级文字版
+      try {
+        const { buildStatusData } = await import('./status.js');
+        const { renderStatusImage } = await import('../lib/system/statusImageRenderer.js');
+        const imagePath = await renderStatusImage(await buildStatusData({ self_id: 'weixin-ilink', adapter_name: 'weixin-ilink' }));
+        const imageBuffer = fs.readFileSync(imagePath);
+        await this.sendImageTo(senderId, imageBuffer, token);
+        return;
+      } catch (error) {
+        logger.warn(`[weixin-ilink] 状态图发送失败，降级文字版：${error.message}`);
+        const { buildStatusText } = await import('./status.js');
+        const text = await buildStatusText({ self_id: 'weixin-ilink', adapter_name: 'weixin-ilink' });
+        await this.sendTo(senderId, text, token);
+        return;
+      }
     }
     // 非指令内容：回使用引导（首次详细，之后简短，避免刷屏）
     if (!this.greetedUsers) this.greetedUsers = new Set();
@@ -212,6 +225,13 @@ export class weixinIlink extends plugin {
     const token = tokenOverride || credentials?.botToken || '';
     const contextToken = sessionContexts.get(userId) || '';
     await sendTextMessage({ token, toUserId: userId, content: String(text || '').slice(0, 4000), contextToken });
+  }
+
+  async sendImageTo(userId, imageBuffer, tokenOverride = '') {
+    const credentials = this.getCredentials();
+    const token = tokenOverride || credentials?.botToken || '';
+    const contextToken = sessionContexts.get(userId) || '';
+    await sendImageMessage({ token, toUserId: userId, contextToken, imageBuffer });
   }
 
   // ── QQ 侧管理指令 ──
