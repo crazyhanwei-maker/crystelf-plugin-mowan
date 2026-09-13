@@ -417,12 +417,11 @@ export class weixinIlink extends plugin {
     const bridge = this.getBridge(senderId);
     const progress = bridge.getProgress?.() || {};
     if (progress.running) {
-      try {
-        await bridge.sendFollowUp(text);
-        await this.sendTo(senderId, '已作为后续指令并入当前任务（执行中）；完成后会一并回复结论。', token);
-      } catch (error) {
-        await this.sendTo(senderId, `后续指令发送失败：${error.message}`, token);
-      }
+      const res = bridge.sendFollowUp(text);
+      await this.sendTo(senderId, res?.queued
+        ? `已加入队列（第 ${res.position} 条）：本轮结束后立即在同一会话里执行，结论会单独推送。`
+        : '当前轮次刚好结束，已作为新一轮任务提交。', token);
+      if (!res?.queued) await this.dispatchAgent(senderId, text, token);
       return;
     }
     await this.dispatchAgent(senderId, text, token);
@@ -441,10 +440,11 @@ export class weixinIlink extends plugin {
     }
     await this.sendTo(senderId, '任务已提交（全权限模式：可改文件、联网、执行命令）。执行过程分段推送；同一会话保留上下文，直接发消息即可追加指令。', token);
     try {
-      const result = await bridge.runTaskWithReport(promptText, {
+      await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
+        // 每一轮（含排队执行的后续指令）单独推送结论
+        onResultReply: result => this.sendReport(senderId, result, token).catch(() => { }),
       });
-      await this.sendReport(senderId, result, token);
     } catch (error) {
       await this.sendTo(senderId, `任务提交失败：${error.message}`, token);
     }
@@ -560,17 +560,19 @@ export class weixinIlink extends plugin {
       await e.reply('已有桥接任务在执行中，可发送 #agent停止 取消后重试。');
       return true;
     }
-    await e.reply('任务已提交，执行过程会分段推送（不含思考链）。');
+    await e.reply('任务已提交（全权限模式）。执行过程会分段推送；同一会话保留上下文，直接发消息即可追加指令。');
     try {
-      const result = await bridge.runTaskWithReport(promptText, {
+      await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => e.reply(line).catch(() => { }),
+        onResultReply: async result => {
+          const body = String(result?.text || '').trim() || '任务结束。';
+          const chunks = splitTextChunks(body, 1500);
+          for (let i = 0; i < chunks.length; i++) {
+            const head = i === 0 ? (result?.ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
+            await e.reply(`${head}${chunks[i]}`);
+          }
+        },
       });
-      const body = String(result?.text || '').trim() || '任务结束。';
-      const chunks = splitTextChunks(body, 1500);
-      for (let i = 0; i < chunks.length; i++) {
-        const head = i === 0 ? (result?.ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
-        await e.reply(`${head}${chunks[i]}`);
-      }
     } catch (error) {
       await e.reply(`任务提交失败：${error.message}`);
     }
