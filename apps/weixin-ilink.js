@@ -28,7 +28,8 @@ function readConfig() {
 }
 
 function resolveAllowedWeixinIds(config = {}) {
-  // 白名单：config.weixinIlink.allowedUsers（微信用户 ID 数组），空 = 仅拒绝所有人
+  // 权限模型：bot 挂在主人微信上，扫码登录即主人授权，默认放行所有私聊用户。
+  // 白名单是可选收紧项：仅当配置了非空 allowedUsers 时才过滤。
   const raw = config?.weixinIlink?.allowedUsers;
   const list = Array.isArray(raw) ? raw : [];
   return new Set(list.map(item => String(item ?? '').trim()).filter(Boolean));
@@ -111,15 +112,12 @@ export class weixinIlink extends plugin {
     if (messageType !== MessageTypeUSER && messageType !== 0) return; // 只处理用户消息(1)，0 视为兼容
     if (contextToken) sessionContexts.set(senderId, contextToken);
     const allowed = resolveAllowedWeixinIds(readConfig());
-    if (!allowed.has(senderId)) {
+    if (allowed.size && !allowed.has(senderId)) {
       logger.info(`[weixin-ilink] 已拒绝非白名单用户 ${senderId}`);
       return;
     }
     const trimmed = content.trim();
     if (/^#微信机器人/.test(trimmed)) return; // 管理指令走 QQ 侧
-    if (/^#agent/i.test(trimmed) || /^#灵晶状态/.test(trimmed)) {
-      // ilink 官方接口暂无 typing 状态接口的稳定调用面，忽略
-    }
     if (/^#agent停止$/i.test(trimmed)) {
       const bridge = this.getBridge(senderId);
       const stopped = await bridge.cancelActive();
@@ -130,14 +128,43 @@ export class weixinIlink extends plugin {
       await this.dispatchAgent(senderId, trimmed.replace(/^#agent\s+/i, ''), token);
       return;
     }
+    if (/^#agent$/i.test(trimmed)) {
+      await this.sendTo(senderId, this.buildGuide(), token);
+      return;
+    }
     if (/^#灵晶状态$/.test(trimmed)) {
       const { buildStatusText } = await import('./status.js');
       const text = await buildStatusText({ self_id: 'weixin-ilink', adapter_name: 'weixin-ilink' });
       await this.sendTo(senderId, text, token);
       return;
     }
-    // 非指令内容：给出提示，不做自由对话（避免误解与滥用）
-    await this.sendTo(senderId, '支持指令：#agent <任务描述>、#agent停止、#灵晶状态', token);
+    // 非指令内容：回使用引导（首次详细，之后简短，避免刷屏）
+    if (!this.greetedUsers) this.greetedUsers = new Set();
+    if (this.greetedUsers.has(senderId)) {
+      await this.sendTo(senderId, '发 #agent 可查看用法。', token);
+      return;
+    }
+    this.greetedUsers.add(senderId);
+    await this.sendTo(senderId, this.buildGuide(), token);
+  }
+
+  buildGuide() {
+    return [
+      '灵晶 Agent 微信桥已就绪。可用指令：',
+      '',
+      '① #agent <任务描述>',
+      '   让 Agent 在插件工作目录执行任务并回报过程与结论。',
+      '   示例：#agent 检查 rssCache 的过期清理逻辑是否有内存泄漏',
+      '   执行中会分段推送进展（不含思考链），单轮约 30~90 秒。',
+      '',
+      '② #agent停止',
+      '   取消当前正在执行的任务。',
+      '',
+      '③ #灵晶状态',
+      '   查看插件运行状态。',
+      '',
+      '注意：同一时间只执行一个任务；任务在服务器上真实运行（只读模式，不会改动文件）。',
+    ].join('\n');
   }
 
   getBridge(senderId) {
@@ -226,7 +253,7 @@ export class weixinIlink extends plugin {
       `登录：${credentials?.botToken ? '已登录' : '未登录（发送 #微信机器人登录 扫码）'}`,
       `botId：${credentials?.botId || '—'}`,
       `Agent 桥：${bridgeState.enabled ? '开启' : '关闭（#agent开关）'}`,
-      `白名单用户：${allowed.size ? [...allowed].join('、') : '空（所有人拒绝）'}`,
+      `白名单：${allowed.size ? `仅限 ${[...allowed].join('、')}` : '未启用（所有私聊用户放行）'}`,
       `轮询：${this.pollerRunning ? '运行中' : '停止'}`,
     ];
     await e.reply(lines.join('\n'));
