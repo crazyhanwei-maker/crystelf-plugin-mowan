@@ -3,7 +3,6 @@
 // 登录：#微信机器人登录 拿登录链接扫码（二维码内容输出到终端/控制台日志）
 import fs from 'fs';
 import ConfigControl from '../lib/config/configControl.js';
-import { createMasterNotifier } from '../lib/webConsole/masterNotifier.js';
 import {
   loadCredentials,
   clearCredentials,
@@ -479,42 +478,31 @@ export class weixinIlink extends plugin {
 
   // ── QQ 侧管理指令 ──
 
-  // 登录流程的所有信息（含二维码/链接，等同登录凭证）一律私发主人；
-  // 群里只回一句不含凭证的提示，避免把可扫描的登录码暴露到群聊
-  getMasterNotifier() {
-    if (!this.masterNotifier) this.masterNotifier = createMasterNotifier({ logger });
-    return this.masterNotifier;
+  // 登录凭证只发给「发起这条指令的那一位主人」：其他主人既不需要、也不该拿到这张码。
+  // 定向私发失败时不外泄（群里如实报失败），也不广播给其他主人。
+  async sendPrivateToUser(userId, message) {
+    const bot = globalThis.Bot;
+    if (!bot?.pickUser) throw new Error('Bot 未就绪，无法私发');
+    await bot.pickUser(userId).sendMsg(message);
   }
 
-  // 主人 QQ 列表（只保留可私发的数字号；masterQQ 常含 "stdin" 之类的伪账号）
-  async resolveMasterIds() {
-    if (this.masterIds) return this.masterIds;
-    try {
-      const mod = await import('../../lib/config/config.js');
-      const cfg = mod?.default || mod?.cfg || {};
-      this.masterIds = Array.isArray(cfg.masterQQ)
-        ? cfg.masterQQ.map(item => String(item ?? '').trim()).filter(id => /^[1-9]\d{4,11}$/.test(id))
-        : [];
-    } catch (error) {
-      logger.warn(`[weixin-ilink] 读取 masterQQ 失败：${error.message}`);
-      this.masterIds = [];
-    }
-    return this.masterIds;
-  }
-
-  async sendLoginMessage(e, message, { groupNotice = '', label = '微信桥登录' } = {}) {
+  async sendLoginMessage(e, message, { groupNotice = '' } = {}) {
     const isGroup = e?.isGroup === true;
-    const masterIds = await this.resolveMasterIds();
+    const requesterId = String(e?.user_id || '').trim();
     let status = 'failed';
-    if (masterIds.length) {
-      try {
-        status = await this.getMasterNotifier().notifyMasters(message, { label });
-      } catch (error) {
-        logger.warn(`[weixin-ilink] 登录信息私发失败：${error.message}`);
-        status = 'failed';
+    if (/^[1-9]\d{4,11}$/.test(requesterId)) {
+      for (let attempt = 0; attempt < 2 && status !== 'sent'; attempt++) {
+        try {
+          await this.sendPrivateToUser(requesterId, message);
+          status = 'sent';
+        } catch (error) {
+          if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 1000));
+          else logger.warn(`[weixin-ilink] 登录信息私发 ${requesterId} 失败：${error.message}`);
+        }
       }
-    } else if (!isGroup) {
-      // 未配置 masterQQ 的部署：当前会话本身是私聊，直接回复即可
+    }
+    if (status !== 'sent' && !isGroup) {
+      // 本来就在私聊里：退化为当前会话直接回复
       try {
         await e.reply(message);
         status = 'sent';
@@ -524,16 +512,16 @@ export class weixinIlink extends plugin {
     }
     if (isGroup) {
       const notice = groupNotice
-        || (status === 'sent' ? '详情已私发给主人。' : '私发主人失败：未配置 masterQQ，请让主人在私聊中执行该指令。');
+        || (status === 'sent' ? '详情已私发给发起指令的主人。' : '私发失败：请主人先加 bot 为好友，并在私聊中执行该指令。');
       await e.reply(notice).catch(() => { });
     }
     return status;
   }
 
   async startLogin(e) {
-    // 登录二维码等同登录凭证：只走私聊，群里最多留一句不含凭证的提示
+    // 登录二维码等同登录凭证：只私发发起人，群里最多留一句不含凭证的提示
     const queued = await this.sendLoginMessage(e, '开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。', {
-      groupNotice: '登录流程已私发给主人，请在私聊中查看。',
+      groupNotice: '登录流程已私发给发起人，请在私聊中查看。',
     });
     if (queued !== 'sent') return true; // 私发不成功就不启动登录流程，避免二维码无处可送
     try {
