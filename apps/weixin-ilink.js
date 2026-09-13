@@ -12,7 +12,14 @@ import {
   sendImageMessage,
   extractTextFromMessage,
 } from '../lib/weixin/ilinkClient.js';
-import { createAgentChatBridge, getBridgeState, setBridgeEnabled } from '../lib/agent/agentChatBridge.js';
+import {
+  createAgentChatBridge,
+  getBridgeState,
+  setBridgeEnabled,
+  listAvailableModels,
+  setBridgeModel,
+  setBridgeVariant,
+} from '../lib/agent/agentChatBridge.js';
 
 const logger = globalThis.logger || console;
 
@@ -128,6 +135,20 @@ export class weixinIlink extends plugin {
     }
     const trimmed = content.trim();
     if (/^#微信机器人/.test(trimmed)) return; // 管理指令走 QQ 侧
+
+    // ── 斜杠指令（微信侧专用）──
+    if (trimmed.startsWith('/')) {
+      await this.handleSlashCommand(senderId, trimmed, token);
+      return;
+    }
+
+    // ── 任务输入模式：下一条普通消息直接作为任务提交 ──
+    if (this.taskInputUsers?.has(senderId)) {
+      this.taskInputUsers.delete(senderId);
+      await this.dispatchAgent(senderId, trimmed, token);
+      return;
+    }
+
     if (/^#agent停止$/i.test(trimmed)) {
       const bridge = this.getBridge(senderId);
       const stopped = await bridge.cancelActive();
@@ -169,6 +190,154 @@ export class weixinIlink extends plugin {
     await this.sendTo(senderId, this.buildGuide(), token);
   }
 
+  // ── 斜杠指令分发 ──
+  async handleSlashCommand(senderId, text, token) {
+    const [rawCmd, ...rest] = text.slice(1).split(/\s+/);
+    const cmd = rawCmd.toLowerCase();
+    const arg = rest.join(' ').trim();
+
+    if (cmd === '帮助' || cmd === 'help' || cmd === 'start') {
+      await this.sendTo(senderId, this.buildGuide(), token);
+      return;
+    }
+    if (cmd === '新建任务') {
+      if (this.taskInputUsers?.has(senderId)) {
+        await this.sendTo(senderId, '已在任务输入模式：直接发任务内容即可，发 /取消 退出。', token);
+        return;
+      }
+      if (!this.taskInputUsers) this.taskInputUsers = new Set();
+      this.taskInputUsers.add(senderId);
+      await this.sendTo(senderId, '请直接发送任务内容（下一条消息将提交给 Agent）。发 /取消 退出输入模式。', token);
+      return;
+    }
+    if (cmd === '取消') {
+      const inInput = this.taskInputUsers?.delete(senderId);
+      await this.sendTo(senderId, inInput ? '已退出任务输入模式。' : '当前没有可取消的输入会话；运行中的任务用 /停止 或 #agent停止。', token);
+      return;
+    }
+    if (cmd === '模型') {
+      await this.handleModelCommand(senderId, arg, token);
+      return;
+    }
+    if (cmd === '思考等级') {
+      await this.handleVariantCommand(senderId, arg, token);
+      return;
+    }
+    if (cmd === '当前配置' || cmd === '配置') {
+      const state = getBridgeState();
+      await this.sendTo(senderId, [
+        '当前配置',
+        `模型：${state.model || '默认（服务端决定）'}`,
+        `思考等级：${state.variant || '默认'}`,
+        `Agent 桥：${state.enabled ? '开启' : '关闭'}`,
+      ].join('\n'), token);
+      return;
+    }
+    if (cmd === '停止' || cmd === 'stop') {
+      const bridge = this.getBridge(senderId);
+      const stopped = await bridge.cancelActive();
+      await this.sendTo(senderId, stopped ? '已发送取消请求，当前任务将中断。' : '当前没有运行中的任务。', token);
+      return;
+    }
+    if (cmd === '灵晶状态' || cmd === '状态') {
+      try {
+        const { buildStatusData } = await import('./status.js');
+        const data = await buildStatusData({ self_id: 'weixin-ilink', adapter_name: 'weixin-ilink' });
+        await this.sendTo(senderId, buildCompactStatus(data), token);
+      } catch (error) {
+        await this.sendTo(senderId, `状态获取失败：${error.message}`, token);
+      }
+      return;
+    }
+    await this.sendTo(senderId, this.buildGuide(), token);
+  }
+
+  // /状态 的精简文字版（微信文本消息，控制在十几行内）
+  buildCompactStatus(data) {
+    const rowMap = new Map((Array.isArray(data?.rows) ? data.rows : []).map(([label, value]) => [label, value]));
+    const resources = data?.resources || {};
+    const ai = data?.aiUsage || {};
+    const state = getBridgeState();
+    return [
+      `灵晶状态：${data?.statusText || '未知'}`,
+      `版本：${rowMap.get('插件版本') || '未知'}`,
+      `运行时长：${rowMap.get('运行时长') || '未知'}`,
+      `内存：${String(resources.memoryPercent ?? '?').slice(0, 5)}%  CPU：${String(resources.cpuPercent ?? '?').slice(0, 5)}%`,
+      `今日 AI：${ai.requestCountText || 0} 次 / ${ai.totalTokensText || 0} tokens`,
+      `成本：${ai.costText || '未启用'}`,
+      `Agent 桥：${state.enabled ? '开启' : '关闭'} · 模型：${state.model || '默认'}`,
+      `思考等级：${state.variant || '默认'}`,
+    ].join('\n');
+  }
+
+  // /模型 [编号|名称]：列出或选择模型
+  async handleModelCommand(senderId, arg, token) {
+    const models = await listAvailableModels();
+    if (!models.length) {
+      await this.sendTo(senderId, '暂未获取到可用模型列表（OpenCode 未运行或无可用供应商）。', token);
+      return;
+    }
+    if (!arg) {
+      const state = getBridgeState();
+      const lines = models.slice(0, 15).map((model, index) => `${index + 1}. ${model.name}${model.id !== model.name ? ` (${model.id})` : ''}${model.reasoning ? ' 🧠' : ''}`);
+      lines.push('', `当前：${state.model || '默认'}`, '选择：/模型 <编号或名称>；/模型 0 恢复默认');
+      await this.sendTo(senderId, lines.join('\n'), token);
+      return;
+    }
+    const state = getBridgeState();
+    let picked = null;
+    if (/^\d+$/.test(arg)) {
+      const index = Number(arg) - 1;
+      if (arg === '0') {
+        setBridgeModel('');
+        await this.sendTo(senderId, '已恢复默认模型。', token);
+        return;
+      }
+      picked = models.slice(0, 15)[index] || null;
+    } else {
+      const query = arg.toLowerCase();
+      picked = models.find(m => m.id.toLowerCase() === query || m.name.toLowerCase() === query)
+        || models.find(m => m.name.toLowerCase().includes(query) || m.id.toLowerCase().includes(query)) || null;
+    }
+    if (!picked) {
+      await this.sendTo(senderId, `未找到模型「${arg}」，发 /模型 查看列表。`, token);
+      return;
+    }
+    setBridgeModel(picked.id);
+    await this.sendTo(senderId, `模型已切换：${picked.name}（${picked.providerId}）${picked.reasoning ? ' · 支持思考' : ''}`, token);
+  }
+
+  // /思考等级 [编号|名称]
+  async handleVariantCommand(senderId, arg, token) {
+    const state = getBridgeState();
+    const VARIANTS = [['', '默认'], ['minimal', '最低'], ['low', '低'], ['medium', '中'], ['high', '高'], ['xhigh', '极高'], ['max', '最大']];
+    if (!arg) {
+      const current = VARIANTS.find(([value]) => value === state.variant);
+      const lines = VARIANTS.map(([value, label], index) => `${index}. ${label}${value === state.variant ? ' ✓' : ''}`);
+      lines.push('', '选择：/思考等级 <编号或名称>；/思考等级 0 恢复默认');
+      await this.sendTo(senderId, lines.join('\n'), token);
+      return;
+    }
+    const query = arg.toLowerCase();
+    let matched = null;
+    if (/^\d+$/.test(query)) {
+      const index = Number(query);
+      if (index < 0 || index >= VARIANTS.length) {
+        await this.sendTo(senderId, `编号超出范围（0~${VARIANTS.length - 1}）。发 /思考等级 查看列表。`, token);
+        return;
+      }
+      matched = VARIANTS[index];
+    } else {
+      matched = VARIANTS.find(([value]) => value === query) || VARIANTS.find(([, label]) => label === arg) || null;
+    }
+    if (!matched) {
+      await this.sendTo(senderId, `未知的思考等级「${arg}」。可选：最低/低/中/高/极高/最大，或发 /思考等级 查看列表。`, token);
+      return;
+    }
+    setBridgeVariant(matched[0]);
+    await this.sendTo(senderId, `思考等级已切换：${matched[1] || '默认'}${matched[0] ? `（${matched[0]}）` : ''}`, token);
+  }
+
   buildGuide() {
     return [
       '灵晶 Agent 微信桥已就绪。可用指令：',
@@ -183,6 +352,15 @@ export class weixinIlink extends plugin {
       '',
       '③ #灵晶状态',
       '   查看插件运行状态。',
+      '',
+      '更多（斜杠指令）：',
+      '· /新建任务 —— 输入模式下一条消息直接作为任务提交',
+      '· /模型 —— 查看/切换 Agent 模型，/模型 0 恢复默认',
+      '· /思考等级 —— 调节思考深度（最低~最大）',
+      '· /当前配置 —— 查看当前模型与思考等级',
+      '· /停止 —— 中断运行中的任务（等同 #agent停止）',
+      '· /状态 —— 精简状态',
+      '· /取消 —— 退出任务输入模式',
       '',
       '注意：同一时间只执行一个任务；任务在服务器上真实运行（只读模式，不会改动文件）。',
     ].join('\n');
