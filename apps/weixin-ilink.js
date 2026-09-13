@@ -16,6 +16,9 @@ const logger = globalThis.logger || console;
 
 const MessageTypeUSER = 1; // ilink message_type: 1=USER 2=BOT
 
+// 轮询单例：模块级状态（QQ 侧每条指令都会触发 ensurePoller，实例字段会导致循环叠加、消息重复处理）
+const pollerState = { running: false, generation: 0, started: false };
+
 // 每个会话只保留最近一条消息的 contextToken（sendMessage 必须回传）
 const sessionContexts = new Map();
 
@@ -60,8 +63,6 @@ export class weixinIlink extends plugin {
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
       ],
     });
-    this.poller = null;
-    this.pollerRunning = false;
     this.qrCache = new Map();
     // 延迟启动轮询：Yunzai 装载完成后自起
     setTimeout(() => this.ensurePoller().catch(error => logger.warn(`[weixin-ilink] 轮询启动失败：${error.message}`)), 8000);
@@ -73,21 +74,24 @@ export class weixinIlink extends plugin {
 
   // 长轮询主循环：游标增量拉消息 → 白名单过滤 → 分发
   async ensurePoller() {
-    if (this.pollerRunning) return;
+    if (pollerState.running || pollerState.started) return; // started: 启动中防竞态
     const credentials = this.getCredentials();
     if (!credentials?.botToken) return;
-    this.pollerRunning = true;
+    pollerState.running = true;
+    pollerState.started = true;
+    // 单例保证：杀掉旧 generation 的循环（正常不会存在，双保险）
+    const myGeneration = ++pollerState.generation;
     logger.info('[weixin-ilink] 微信桥轮询已启动');
     const loop = async () => {
       let backoffMs = 0;
       let failureCount = 0;
-      while (this.pollerRunning) {
+      while (pollerState.running && pollerState.generation === myGeneration) {
         try {
           const { updates, cursorBuf } = await longPollUpdates({
             token: credentials.botToken,
-            cursorBuf: this.cursorBuf || '',
+            cursorBuf: pollerState.cursorBuf || '',
           });
-          this.cursorBuf = cursorBuf || this.cursorBuf;
+          pollerState.cursorBuf = cursorBuf || pollerState.cursorBuf;
           failureCount = 0;
           backoffMs = 0;
           for (const update of updates) {
@@ -102,8 +106,12 @@ export class weixinIlink extends plugin {
         }
         if (backoffMs) await new Promise(resolve => setTimeout(resolve, backoffMs));
       }
+      if (pollerState.generation === myGeneration) {
+        pollerState.started = false;
+        pollerState.running = false;
+      }
     };
-    this.poller = loop();
+    loop();
   }
 
   async handleIncoming(update, token) {
@@ -254,7 +262,7 @@ export class weixinIlink extends plugin {
       `botId：${credentials?.botId || '—'}`,
       `Agent 桥：${bridgeState.enabled ? '开启' : '关闭（#agent开关）'}`,
       `白名单：${allowed.size ? `仅限 ${[...allowed].join('、')}` : '未启用（所有私聊用户放行）'}`,
-      `轮询：${this.pollerRunning ? '运行中' : '停止'}`,
+      `轮询：${pollerState.running ? '运行中' : '停止'}`,
     ];
     await e.reply(lines.join('\n'));
     return true;
