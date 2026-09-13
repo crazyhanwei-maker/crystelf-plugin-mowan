@@ -3,6 +3,7 @@
 // 登录：#微信机器人登录 拿登录链接扫码（二维码内容输出到终端/控制台日志）
 import fs from 'fs';
 import ConfigControl from '../lib/config/configControl.js';
+import { createMasterNotifier } from '../lib/webConsole/masterNotifier.js';
 import {
   loadCredentials,
   clearCredentials,
@@ -478,33 +479,66 @@ export class weixinIlink extends plugin {
 
   // ── QQ 侧管理指令 ──
 
+  // 登录流程的所有信息（含二维码/链接，等同登录凭证）一律私发主人；
+  // 群里只回一句不含凭证的提示，避免把可扫描的登录码暴露到群聊
+  getMasterNotifier() {
+    if (!this.masterNotifier) this.masterNotifier = createMasterNotifier({ logger });
+    return this.masterNotifier;
+  }
+
+  async sendLoginMessage(e, message, { groupNotice = '' } = {}) {
+    let result = 'sent';
+    try {
+      result = await this.getMasterNotifier().notifyMasters(message, { label: '微信桥登录' });
+    } catch (error) {
+      logger.warn(`[weixin-ilink] 登录信息私发失败：${error.message}`);
+      result = 'failed';
+    }
+    if (e?.isGroup && groupNotice) await e.reply(groupNotice).catch(() => { });
+    return result;
+  }
+
   async startLogin(e) {
-    await e.reply('开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。');
+    if (e?.isGroup) await e.reply('微信登录二维码等同登录凭证，已私发给主人，请在私聊中查看。');
+    const queued = await this.sendLoginMessage(e, '开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。', {
+      groupNotice: '登录流程已开始在私聊进行，请主人查看私聊。',
+    });
+    if (queued === 'failed') return true;
     try {
       const credentials = await loginByQrcode({
         logger,
         onState: async state => {
           if (state.state === 'wait' && state.qrcodeUrl) {
-            // 生成二维码图片发到 QQ；文字链接兜底。
+            // 生成二维码图片私发主人；文字链接兜底。
             // 用仓库内置编码器（lib/weixin/qrCode.js）而不是 npm 的 qrcode 包：
             // 新机器上第三方依赖常缺失，一旦缺失登录就只剩一条不能直接扫的链接。
             try {
               const { renderQrPng } = await import('../lib/weixin/qrCode.js');
               const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
-              await e.reply([segment.image(`base64://${pngBuffer.toString('base64')}`), '\n若二维码无法扫描，把此链接在手机浏览器打开：\n', state.qrcodeUrl]);
+              await this.sendLoginMessage(e, [segment.image(`base64://${pngBuffer.toString('base64')}`), '\n若二维码无法扫描，把此链接在手机浏览器打开：\n', state.qrcodeUrl], {
+                groupNotice: '二维码已私发给主人。',
+              });
             } catch (error) {
-              await e.reply(`二维码生成失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
+              await this.sendLoginMessage(e, `二维码生成失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`, {
+                groupNotice: '二维码生成失败，详情已私发主人。',
+              });
             }
             if (state.refreshCount > 0) return; // 刷新时上面已发新码
           }
-          if (state.state === 'scaned') await e.reply('已扫码，请在手机上确认登录。').catch(() => { });
-          if (state.state === 'expired') await e.reply('二维码已过期，正在自动刷新，请扫新码。').catch(() => { });
+          if (state.state === 'scaned') await this.sendLoginMessage(e, '已扫码，请在手机上确认登录。');
+          if (state.state === 'expired') await this.sendLoginMessage(e, '二维码已过期，正在自动刷新，请扫新码。', {
+            groupNotice: '二维码已过期，正在刷新，详情见私聊。',
+          });
         },
       });
-      await e.reply(`微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`);
+      await this.sendLoginMessage(e, `微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`, {
+        groupNotice: '微信桥登录成功。',
+      });
       await this.ensurePoller();
     } catch (error) {
-      await e.reply(`微信桥登录失败：${error.message}`);
+      await this.sendLoginMessage(e, `微信桥登录失败：${error.message}`, {
+        groupNotice: `微信桥登录失败：${error.message}`,
+      });
     }
     return true;
   }
