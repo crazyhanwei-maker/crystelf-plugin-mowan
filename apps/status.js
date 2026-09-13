@@ -272,7 +272,7 @@ function buildHealthItems(allConfigs = {}) {
   ];
 }
 
-function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks = [], swap = null }) {
+function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks = [], swap = null, diskIo = null }) {
   const alerts = [];
   const requestCount = Number(usage.request_count || 0);
   const errorCount = Number(usage.error_count || 0);
@@ -283,6 +283,9 @@ function buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, di
   const swapRatio = swap && Number(swap.totalBytes) > 0 ? swap.usedBytes / swap.totalBytes : 0;
   if (swapRatio >= 0.8) alerts.push({ tone: 'warn', label: 'Swap', text: `虚拟内存使用率 ${Math.round(swapRatio * 100)}%（内存压力 OOM 风险）` });
   else if (swapRatio >= 0.5) alerts.push({ tone: 'warn', label: 'Swap', text: `虚拟内存使用率 ${Math.round(swapRatio * 100)}%` });
+  const stealPercent = Number(diskIo?.stealPercent);
+  if (Number.isFinite(stealPercent) && stealPercent >= 25) alerts.push({ tone: 'warn', label: '宿主', text: `CPU 被宿主抢占 ${stealPercent}%，整机性能受损严重` });
+  else if (Number.isFinite(stealPercent) && stealPercent >= 10) alerts.push({ tone: 'warn', label: '宿主', text: `CPU 被宿主抢占 ${stealPercent}%，机器整体偏慢` });
   for (const disk of disks) {
     if (disk.percent >= 90) alerts.push({ tone: 'warn', label: '磁盘', text: `磁盘 ${disk.mount} 使用率 ${disk.percent}%（${disk.usedText} / ${disk.totalText}）` });
   }
@@ -446,18 +449,37 @@ function readDiskStats() {
   }
 }
 
+// /proc/stat 采样：steal 时间片（宿主抢占），与磁盘 IO 共用同一采样窗口
+function readCpuStealSample() {
+  try {
+    if (process.platform !== 'linux') return null;
+    const line = (fs.readFileSync('/proc/stat', 'utf8').split('\n')[0] || '').trim();
+    const parts = line.split(/\s+/).slice(1).map(Number);
+    if (parts.length < 8 || !Number.isFinite(parts[7])) return null;
+    return { steal: parts[7], total: parts.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0) };
+  } catch {
+    return null;
+  }
+}
+
 async function collectDiskIo() {
   try {
     const first = readDiskStats();
+    const firstCpu = readCpuStealSample();
     if (!first) return null;
     await new Promise(resolve => setTimeout(resolve, 400));
     const second = readDiskStats();
+    const secondCpu = readCpuStealSample();
     if (!second) return null;
     const wallMs = Math.max(1, second.at - first.at);
     const sectors = Math.max(0, second.readSectors - first.readSectors) + Math.max(0, second.writeSectors - first.writeSectors);
     const mbps = Math.round(sectors * 512 * 1000 / (1024 * 1024) / wallMs * 10) / 10;
     const busy = Math.min(100, Math.round((second.ioMs - first.ioMs) / wallMs * 100));
-    return { mbps, busy };
+    let stealPercent = null;
+    if (firstCpu && secondCpu && secondCpu.total > firstCpu.total) {
+      stealPercent = Math.round((secondCpu.steal - firstCpu.steal) / (secondCpu.total - firstCpu.total) * 1000) / 10;
+    }
+    return { mbps, busy, stealPercent };
   } catch {
     return null;
   }
@@ -592,7 +614,7 @@ async function buildStatusData(e = {}) {
     features: getFeatureEntries(),
   };
 
-  data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks, swap });
+  data.alerts = buildAlerts({ memoryPercent, heapPercent, usage, imageUsage, health, disks, swap, diskIo });
   data.summaryLines = [
     `插件：${Version.name} v${Version.ver}`,
     `Bot：${botId}`,
