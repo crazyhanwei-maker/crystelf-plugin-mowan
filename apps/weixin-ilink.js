@@ -508,7 +508,7 @@ export class weixinIlink extends plugin {
     throw lastError || new Error('私发失败');
   }
 
-  async sendLoginMessage(e, message, { groupNotice = '', reason = '' } = {}) {
+  async sendLoginMessage(e, message, { groupNotice = '', reason = '', silentInGroup = false } = {}) {
     const isGroup = e?.isGroup === true;
     const requesterId = String(e?.user_id || '').trim();
     let status = 'failed';
@@ -534,18 +534,32 @@ export class weixinIlink extends plugin {
       }
     }
 
-    if (isGroup) {
+    if (isGroup && !silentInGroup) {
+      // 默认不在群里说话（过期/刷新/扫码类消息只在私聊出现）；
+      // 只有私发失败时才在群里出声一次，否则发起人什么都不知道
       const notice = groupNotice
-        || (status === 'sent' ? '详情已私发给发起指令的主人。' : '私发失败：请主人先加 bot 为好友，并在私聊中执行该指令。');
-      const detail = reason ? `（原因：${stripCredential(reason)}）` : '';
-      await e.reply(`${notice}${detail}`).catch(() => { });
+        || (status === 'sent' ? '' : '私发失败：请主人先加 bot 为好友，并在私聊中执行该指令。');
+      if (notice) {
+        const detail = reason ? `（原因：${stripCredential(reason)}）` : '';
+        await e.reply(`${notice}${detail}`).catch(() => { });
+      }
     }
     return status;
   }
 
   async startLogin(e) {
-    // 登录二维码等同登录凭证：只私发发起人，群里最多留一句不含凭证的提示
-    const queued = await this.sendLoginMessage(e, '开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。', {
+    // 登录二维码等同登录凭证：只私发发起人。
+    // 群聊最多在整个登录流程里出现一条提示（下面 groupNotice 只在第一次给），
+    // 扫码/过期/刷新/成功这些一律只走私聊，避免在群里刷屏
+    // 群聊里整个登录流程只允许一条提示：首次以外的所有消息在群里保持静默
+    let groupNotified = false;
+    const notify = (message, options = {}) => {
+      if (!options.groupNotice) options.silentInGroup = true;
+      if (e?.isGroup === true && groupNotified) options.silentInGroup = true;
+      if (e?.isGroup === true && !options.silentInGroup) groupNotified = true;
+      return this.sendLoginMessage(e, message, options);
+    };
+    const queued = await notify('开始微信 ilink 登录：二维码随后发出，请用手机微信扫码并在 ClawBot 确认（8 分钟内完成，过期自动刷新）。', {
       groupNotice: '登录流程已私发给发起人，请在私聊中查看。',
     });
     if (queued !== 'sent') return true; // 私发不成功就不启动登录流程，避免二维码无处可送
@@ -564,37 +578,25 @@ export class weixinIlink extends plugin {
               try {
                 const { renderQrPng } = await import('../lib/weixin/qrCode.js');
                 const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
-                const sendStatus = await this.sendLoginMessage(e, [segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText], {
-                  groupNotice: '二维码已私发给发起人。',
-                });
+                const sendStatus = await notify([segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText]);
                 delivered = sendStatus === 'sent';
               } catch (error) {
                 logger.warn(`[weixin-ilink] 二维码图片发送失败：${error.message}`);
-                await this.sendLoginMessage(e, `二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`, {
-                  groupNotice: '二维码图片发送失败，链接已私发。',
-                  reason: error.message,
-                });
+                await notify(`二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
                 delivered = true; // 链接已私发出去，不再重复发送
               }
             }
             if (!delivered) {
               // 环境不提供 segment（不同 Yunzai 分支可能没有）：退回私发链接，别让用户干等
-              await this.sendLoginMessage(e, `当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`, {
-                groupNotice: '无法生成二维码图片，链接已私发。',
-                reason: 'segment 不可用或图片发送失败',
-              });
+              await notify(`当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`);
             }
             if (state.refreshCount > 0) return; // 刷新时上面已发新码
           }
-          if (state.state === 'scaned') await this.sendLoginMessage(e, '已扫码，请在手机上确认登录。');
-          if (state.state === 'expired') await this.sendLoginMessage(e, '二维码已过期，正在自动刷新，请扫新码。', {
-            groupNotice: '二维码已过期，正在刷新，详情见私聊。',
-          });
+          if (state.state === 'scaned') await notify('已扫码，请在手机上确认登录。');
+          if (state.state === 'expired') await notify('二维码已过期，正在自动刷新，请扫新码。');
         },
       });
-      await this.sendLoginMessage(e, `微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`, {
-        groupNotice: '微信桥登录成功。',
-      });
+      await notify(`微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`);
       await this.ensurePoller();
     } catch (error) {
       await this.sendLoginMessage(e, `微信桥登录失败：${error.message}`, {
