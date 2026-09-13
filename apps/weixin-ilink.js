@@ -47,8 +47,30 @@ function resolveAllowedWeixinIds(config = {}) {
   return new Set(list.map(item => String(item ?? '').trim()).filter(Boolean));
 }
 
-function extractIncomingMessage(update = {}) {
-  // 官方结构：WeixinMessage 平铺（无 msg 包裹层），文本在 item_list
+// 长文本按行边界切块：微信单条过长会被截断
+function splitTextChunks(text, limit = 1000) {
+  const source = String(text || '').trim();
+  if (!source) return [];
+  const chunks = [];
+  let current = '';
+  for (const line of source.split('\n')) {
+    if (line.length > limit) {
+      if (current) { chunks.push(current); current = ''; }
+      for (let i = 0; i < line.length; i += limit) chunks.push(line.slice(i, i + limit));
+      continue;
+    }
+    if ((current + '\n' + line).length > limit && current) {
+      chunks.push(current);
+      current = line;
+      continue;
+    }
+    current = current ? `${current}\n${line}` : line;
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+function extractIncomingMessage(update = {}) {  // 官方结构：WeixinMessage 平铺（无 msg 包裹层），文本在 item_list
   const content = extractTextFromMessage(update).trim();
   const senderId = String(update?.from_user_id || '').trim();
   const contextToken = String(update?.context_token || '').trim();
@@ -180,7 +202,17 @@ export class weixinIlink extends plugin {
         return;
       }
     }
-    // 非指令内容：回使用引导（首次详细，之后简短，避免刷屏）
+    // 非指令内容：任务进行中则回报最近进展，否则给使用引导
+    const progress = this.getBridge(senderId).getProgress?.();
+    if (progress?.running) {
+      const elapsed = progress.startedAt ? Math.max(1, Math.round((Date.now() - progress.startedAt) / 1000)) : 0;
+      await this.sendTo(senderId, [
+        `任务执行中（已 ${elapsed} 秒）`,
+        progress.text ? `最近进展：${progress.text}` : '暂未产生新的进展。',
+        '完成后会推送结论；发送 #agent停止 或 /停止 可中断。',
+      ].join('\n'), token);
+      return;
+    }
     if (!this.greetedUsers) this.greetedUsers = new Set();
     if (this.greetedUsers.has(senderId)) {
       await this.sendTo(senderId, '发 #agent 可查看用法。', token);
@@ -390,12 +422,25 @@ export class weixinIlink extends plugin {
     }
     await this.sendTo(senderId, '任务已提交，执行过程会分段推送（不含思考链）。', token);
     try {
-      await bridge.runTaskWithReport(promptText, {
+      const result = await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
       });
+      await this.sendReport(senderId, result, token);
     } catch (error) {
       await this.sendTo(senderId, `任务提交失败：${error.message}`, token);
     }
+  }
+
+  // 最终结论：微信文本较长易被截断，按段落切成多条发
+  async sendReport(senderId, result, token) {
+    const ok = result?.ok === true;
+    const body = String(result?.text || '').trim() || '任务结束。';
+    const chunks = splitTextChunks(body, 1000);
+    for (let i = 0; i < chunks.length; i++) {
+      const head = i === 0 ? (ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
+      await this.sendTo(senderId, `${head}${chunks[i]}`, token);
+    }
+    if (!ok) await this.sendTo(senderId, '可到控制台查看任务详情；需要重试直接再发一次任务。', token);
   }
 
   async sendTo(userId, text, tokenOverride = '') {
@@ -498,9 +543,15 @@ export class weixinIlink extends plugin {
     }
     await e.reply('任务已提交，执行过程会分段推送（不含思考链）。');
     try {
-      await bridge.runTaskWithReport(promptText, {
+      const result = await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => e.reply(line).catch(() => { }),
       });
+      const body = String(result?.text || '').trim() || '任务结束。';
+      const chunks = splitTextChunks(body, 1500);
+      for (let i = 0; i < chunks.length; i++) {
+        const head = i === 0 ? (result?.ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
+        await e.reply(`${head}${chunks[i]}`);
+      }
     } catch (error) {
       await e.reply(`任务提交失败：${error.message}`);
     }
