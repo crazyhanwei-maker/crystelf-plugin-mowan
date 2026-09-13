@@ -485,19 +485,44 @@ export class weixinIlink extends plugin {
 
   // ── QQ 侧管理指令 ──
 
-  // 登录凭证只发给「发起这条指令的那一位主人」：其他主人既不需要、也不该拿到这张码。
-  // 定向私发失败时不外泄（群里如实报失败），也不广播给其他主人。
+  // 定向私发：兼容各 Yunzai 分支的接口差异
+  // —— TRSS 用 Bot.pickUser，标准 Yunzai / Miao-Yunzai 用 Bot.pickFriend（oicq 风格）。
+  // 之前只认 pickUser，在 Miao-Yunzai 上必然抛错，导致登录流程被提前 return 掉、二维码永远发不出。
   async sendPrivateToUser(userId, message) {
     const bot = globalThis.Bot;
-    if (!bot?.pickUser) throw new Error('Bot 未就绪，无法私发');
-    await bot.pickUser(userId).sendMsg(message);
+    const pickers = [];
+    if (typeof bot?.pickUser === 'function') pickers.push(() => bot.pickUser(userId));
+    if (typeof bot?.pickFriend === 'function') pickers.push(() => bot.pickFriend(userId));
+    if (!pickers.length) throw new Error('当前框架没有可用的私聊发送接口（pickUser/pickFriend 均不可用）');
+    let lastError = null;
+    for (const pick of pickers) {
+      try {
+        const target = pick();
+        if (typeof target?.sendMsg !== 'function') throw new Error('私聊对象不可发送');
+        await target.sendMsg(message);
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error('私发失败');
   }
 
   async sendLoginMessage(e, message, { groupNotice = '', reason = '' } = {}) {
     const isGroup = e?.isGroup === true;
     const requesterId = String(e?.user_id || '').trim();
     let status = 'failed';
-    if (/^[1-9]\d{4,11}$/.test(requesterId)) {
+
+    if (!isGroup) {
+      // 私聊发起：当前会话就是发起人的私聊，直接回复即可。
+      // 不依赖 pickUser/pickFriend，各框架都成立（之前这里失败会让整个登录流程不启动）
+      try {
+        await e.reply(message);
+        status = 'sent';
+      } catch (error) {
+        logger.warn(`[weixin-ilink] 登录信息回复失败：${error.message}`);
+      }
+    } else if (/^[1-9]\d{4,11}$/.test(requesterId)) {
       for (let attempt = 0; attempt < 2 && status !== 'sent'; attempt++) {
         try {
           await this.sendPrivateToUser(requesterId, message);
@@ -508,17 +533,7 @@ export class weixinIlink extends plugin {
         }
       }
     }
-    if (status !== 'sent' && !isGroup) {
-      // 本来就在私聊里：退化为当前会话直接回复。
-      // 兜底自己失败也必须留下痕迹，否则用户看到"二维码随后发出"后就再无下文
-      try {
-        await e.reply(message);
-        status = 'sent';
-      } catch (error) {
-        logger.warn(`[weixin-ilink] 登录信息回复失败：${error.message}`);
-        status = 'failed';
-      }
-    }
+
     if (isGroup) {
       const notice = groupNotice
         || (status === 'sent' ? '详情已私发给发起指令的主人。' : '私发失败：请主人先加 bot 为好友，并在私聊中执行该指令。');
@@ -653,7 +668,9 @@ export class weixinIlink extends plugin {
     lines.push(`登录凭证：${credentials?.botToken ? `已有（${credentials.botId || '未知 botId'}）` : '无'}`);
     lines.push(`轮询：${pollerState.running ? '运行中' : '已停止'}`);
     const segmentApi = globalThis.segment;
-    lines.push(`图片消息：${typeof segmentApi?.image === 'function' ? 'segment 可用' : 'segment 不可用'} / ${globalThis.Bot?.pickUser ? 'Bot 可私发' : 'Bot 不可私发'}`);
+    const botApi = globalThis.Bot || {};
+    const canPrivate = typeof botApi.pickUser === 'function' || typeof botApi.pickFriend === 'function';
+    lines.push(`图片消息：${typeof segmentApi?.image === 'function' ? 'segment 可用' : 'segment 不可用'} / 私聊接口：${canPrivate ? `可用（${typeof botApi.pickUser === 'function' ? 'pickUser' : 'pickFriend'}）` : '不可用'}`);
 
     await this.sendLoginMessage(e, lines.join('\n'), {
       groupNotice: '自检结果已私发给发起人。',
