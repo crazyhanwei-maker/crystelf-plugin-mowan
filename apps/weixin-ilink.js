@@ -11,6 +11,7 @@ import {
   sendTextMessage,
   sendImageMessage,
   extractTextFromMessage,
+  probeQrEndpoint,
 } from '../lib/weixin/ilinkClient.js';
 import {
   createAgentChatBridge,
@@ -45,6 +46,11 @@ function resolveAllowedWeixinIds(config = {}) {
   const raw = config?.weixinIlink?.allowedUsers;
   const list = Array.isArray(raw) ? raw : [];
   return new Set(list.map(item => String(item ?? '').trim()).filter(Boolean));
+}
+
+// 群里只发提示时用：去掉链接等登录凭证，避免任何情况下把可扫的码带进群
+function stripCredential(text) {
+  return String(text || '').replace(/https?:\/\/\S+/gi, '[链接已省略]').slice(0, 200);
 }
 
 // 长文本按行边界切块：微信单条过长会被截断
@@ -89,6 +95,7 @@ export class weixinIlink extends plugin {
         { reg: '^#微信机器人登录$', fnc: 'startLogin', permission: 'master' },
         { reg: '^#微信机器人登出$', fnc: 'logout', permission: 'master' },
         { reg: '^#微信机器人状态$', fnc: 'bridgeStatus', permission: 'master' },
+        { reg: '^#微信机器人诊断$', fnc: 'diagnose', permission: 'master' },
         { reg: '^#agent开关$', fnc: 'toggleAgent', permission: 'master' },
         { reg: '^#agent停止$', fnc: 'stopAgent', permission: 'master' },
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
@@ -486,7 +493,7 @@ export class weixinIlink extends plugin {
     await bot.pickUser(userId).sendMsg(message);
   }
 
-  async sendLoginMessage(e, message, { groupNotice = '' } = {}) {
+  async sendLoginMessage(e, message, { groupNotice = '', reason = '' } = {}) {
     const isGroup = e?.isGroup === true;
     const requesterId = String(e?.user_id || '').trim();
     let status = 'failed';
@@ -502,18 +509,21 @@ export class weixinIlink extends plugin {
       }
     }
     if (status !== 'sent' && !isGroup) {
-      // 本来就在私聊里：退化为当前会话直接回复
+      // 本来就在私聊里：退化为当前会话直接回复。
+      // 兜底自己失败也必须留下痕迹，否则用户看到"二维码随后发出"后就再无下文
       try {
         await e.reply(message);
         status = 'sent';
-      } catch {
+      } catch (error) {
+        logger.warn(`[weixin-ilink] 登录信息回复失败：${error.message}`);
         status = 'failed';
       }
     }
     if (isGroup) {
       const notice = groupNotice
         || (status === 'sent' ? '详情已私发给发起指令的主人。' : '私发失败：请主人先加 bot 为好友，并在私聊中执行该指令。');
-      await e.reply(notice).catch(() => { });
+      const detail = reason ? `（原因：${stripCredential(reason)}）` : '';
+      await e.reply(`${notice}${detail}`).catch(() => { });
     }
     return status;
   }
@@ -532,15 +542,31 @@ export class weixinIlink extends plugin {
             // 生成二维码图片私发主人；文字链接兜底。
             // 用仓库内置编码器（lib/weixin/qrCode.js）而不是 npm 的 qrcode 包：
             // 新机器上第三方依赖常缺失，一旦缺失登录就只剩一条不能直接扫的链接。
-            try {
-              const { renderQrPng } = await import('../lib/weixin/qrCode.js');
-              const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
-              await this.sendLoginMessage(e, [segment.image(`base64://${pngBuffer.toString('base64')}`), '\n若二维码无法扫描，把此链接在手机浏览器打开：\n', state.qrcodeUrl], {
-                groupNotice: '二维码已私发给主人。',
-              });
-            } catch (error) {
-              await this.sendLoginMessage(e, `二维码生成失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`, {
-                groupNotice: '二维码生成失败，详情已私发主人。',
+            const segmentApi = globalThis.segment;
+            const linkText = `\n若二维码无法扫描，把此链接在手机浏览器打开：\n${state.qrcodeUrl}`;
+            let delivered = false;
+            if (typeof segmentApi?.image === 'function') {
+              try {
+                const { renderQrPng } = await import('../lib/weixin/qrCode.js');
+                const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
+                const sendStatus = await this.sendLoginMessage(e, [segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText], {
+                  groupNotice: '二维码已私发给发起人。',
+                });
+                delivered = sendStatus === 'sent';
+              } catch (error) {
+                logger.warn(`[weixin-ilink] 二维码图片发送失败：${error.message}`);
+                await this.sendLoginMessage(e, `二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`, {
+                  groupNotice: '二维码图片发送失败，链接已私发。',
+                  reason: error.message,
+                });
+                delivered = true; // 链接已私发出去，不再重复发送
+              }
+            }
+            if (!delivered) {
+              // 环境不提供 segment（不同 Yunzai 分支可能没有）：退回私发链接，别让用户干等
+              await this.sendLoginMessage(e, `当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`, {
+                groupNotice: '无法生成二维码图片，链接已私发。',
+                reason: 'segment 不可用或图片发送失败',
               });
             }
             if (state.refreshCount > 0) return; // 刷新时上面已发新码
@@ -557,7 +583,8 @@ export class weixinIlink extends plugin {
       await this.ensurePoller();
     } catch (error) {
       await this.sendLoginMessage(e, `微信桥登录失败：${error.message}`, {
-        groupNotice: `微信桥登录失败：${error.message}`,
+        groupNotice: '微信桥登录失败，详情见私聊。',
+        reason: error.message,
       });
     }
     return true;
@@ -583,6 +610,54 @@ export class weixinIlink extends plugin {
       `轮询：${pollerState.running ? '运行中' : '停止'}`,
     ];
     await e.reply(lines.join('\n'));
+    return true;
+  }
+
+  // #微信机器人诊断：一条命令把登录链路上所有可能卡住的地方挨个验一遍。
+  // 结果私发发起人（不把凭证类信息带进群），群里只回一句提示。
+  async diagnose(e) {
+    const lines = ['微信桥自检'];
+    try {
+      const Path = (await import('../constants/path.js')).default;
+      lines.push(`插件目录：${Path.root}`);
+      try {
+        const { execFileSync } = await import('child_process');
+        const head = execFileSync('git', ['log', '--oneline', '-1'], { cwd: Path.root, timeout: 5000, encoding: 'utf8' }).trim();
+        lines.push(`代码版本：${head}`);
+        const dirty = execFileSync('git', ['status', '--porcelain'], { cwd: Path.root, timeout: 5000, encoding: 'utf8' }).trim();
+        if (dirty) lines.push(`未提交改动：${dirty.split('\n').length} 个文件`);
+      } catch (error) {
+        lines.push(`代码版本：读取失败（${error.message.slice(0, 60)}）`);
+      }
+    } catch (error) {
+      lines.push(`插件目录：读取失败（${error.message.slice(0, 60)}）`);
+    }
+
+    lines.push(`Node：${process.version}`);
+    try {
+      const { renderQrPng } = await import('../lib/weixin/qrCode.js');
+      const png = renderQrPng('微信桥自检', { width: 320, margin: 3 });
+      lines.push(`二维码生成：可用（${png.length} 字节 PNG）`);
+    } catch (error) {
+      lines.push(`二维码生成：不可用（${error.message}）`);
+    }
+
+    try {
+      const probe = await probeQrEndpoint({ timeoutMs: 12000 });
+      lines.push(`ilink 接口：${probe.ok ? '可达' : '异常'}（${probe.detail}）`);
+    } catch (error) {
+      lines.push(`ilink 接口：异常（${error.message}）`);
+    }
+
+    const credentials = this.getCredentials();
+    lines.push(`登录凭证：${credentials?.botToken ? `已有（${credentials.botId || '未知 botId'}）` : '无'}`);
+    lines.push(`轮询：${pollerState.running ? '运行中' : '已停止'}`);
+    const segmentApi = globalThis.segment;
+    lines.push(`图片消息：${typeof segmentApi?.image === 'function' ? 'segment 可用' : 'segment 不可用'} / ${globalThis.Bot?.pickUser ? 'Bot 可私发' : 'Bot 不可私发'}`);
+
+    await this.sendLoginMessage(e, lines.join('\n'), {
+      groupNotice: '自检结果已私发给发起人。',
+    });
     return true;
   }
 
