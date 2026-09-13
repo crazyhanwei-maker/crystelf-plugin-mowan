@@ -8,11 +8,13 @@ import {
   loginByQrcode,
   longPollUpdates,
   sendTextMessage,
-  sendTyping,
+  extractTextFromMessage,
 } from '../lib/weixin/ilinkClient.js';
 import { createAgentChatBridge, getBridgeState, setBridgeEnabled } from '../lib/agent/agentChatBridge.js';
 
 const logger = globalThis.logger || console;
+
+const MessageTypeUSER = 1; // ilink message_type: 1=USER 2=BOT
 
 // 每个会话只保留最近一条消息的 contextToken（sendMessage 必须回传）
 const sessionContexts = new Map();
@@ -33,11 +35,11 @@ function resolveAllowedWeixinIds(config = {}) {
 }
 
 function extractIncomingMessage(update = {}) {
-  const message = update?.msg || update?.message || update;
-  const senderId = String(message?.from_user_id || message?.fromUserId || message?.sender_id || update?.from_user_id || '').trim();
-  const content = String(message?.content || message?.text || '').trim();
-  const contextToken = String(update?.context_token || message?.context_token || update?.contextToken || '').trim();
-  const messageType = String(message?.msg_type || message?.message_type || 'TEXT').toUpperCase();
+  // 官方结构：WeixinMessage 平铺（无 msg 包裹层），文本在 item_list
+  const content = extractTextFromMessage(update).trim();
+  const senderId = String(update?.from_user_id || '').trim();
+  const contextToken = String(update?.context_token || '').trim();
+  const messageType = Number(update?.message_type || 0);
   return { senderId, content, contextToken, messageType };
 }
 
@@ -106,7 +108,7 @@ export class weixinIlink extends plugin {
   async handleIncoming(update, token) {
     const { senderId, content, contextToken, messageType } = extractIncomingMessage(update);
     if (!senderId || !content) return;
-    if (messageType !== 'TEXT' && messageType !== 'USER' && messageType !== '') return;
+    if (messageType !== MessageTypeUSER && messageType !== 0) return; // 只处理用户消息(1)，0 视为兼容
     if (contextToken) sessionContexts.set(senderId, contextToken);
     const allowed = resolveAllowedWeixinIds(readConfig());
     if (!allowed.has(senderId)) {
@@ -116,7 +118,7 @@ export class weixinIlink extends plugin {
     const trimmed = content.trim();
     if (/^#微信机器人/.test(trimmed)) return; // 管理指令走 QQ 侧
     if (/^#agent/i.test(trimmed) || /^#灵晶状态/.test(trimmed)) {
-      await sendTyping({ token, toUserId: senderId, contextToken });
+      // ilink 官方接口暂无 typing 状态接口的稳定调用面，忽略
     }
     if (/^#agent停止$/i.test(trimmed)) {
       const bridge = this.getBridge(senderId);
