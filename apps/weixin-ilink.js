@@ -491,28 +491,34 @@ export class weixinIlink extends plugin {
     try {
       const credentials = await loginByQrcode({
         logger,
+        // onState 由 loginByQrcode 同步调用、不 await：这里整体兜住，
+        // 否则 icqq 发图被拒之类的问题会变成未处理的 Promise 拒绝，直接把进程崩掉
         onState: async state => {
-          if (state.state === 'wait' && state.qrcodeUrl) {
-            // 二维码用仓库内置编码器（lib/weixin/qrCode.js）生成，不依赖 npm 的 qrcode 包；
-            // 图片发不出去就退回私发链接，不让用户干等
-            const segmentApi = globalThis.segment;
-            const linkText = `\n若二维码无法扫描，把此链接在手机浏览器打开：\n${state.qrcodeUrl}`;
-            if (typeof segmentApi?.image === 'function') {
-              try {
-                const { renderQrPng } = await import('../lib/weixin/qrCode.js');
-                const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
-                await e.reply([segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText]);
-              } catch (error) {
-                logger.warn(`[weixin-ilink] 二维码图片发送失败：${error.message}`);
-                await e.reply(`二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`);
+          try {
+            if (state.state === 'wait' && state.qrcodeUrl) {
+              // 二维码用仓库内置编码器（lib/weixin/qrCode.js）生成，不依赖 npm 的 qrcode 包；
+              // 图片发不出去就退回私发链接，不让用户干等
+              const segmentApi = globalThis.segment;
+              const linkText = `\n若二维码无法扫描，把此链接在手机浏览器打开：\n${state.qrcodeUrl}`;
+              if (typeof segmentApi?.image === 'function') {
+                try {
+                  const { renderQrPng } = await import('../lib/weixin/qrCode.js');
+                  const pngBuffer = renderQrPng(state.qrcodeUrl, { width: 480, margin: 3 });
+                  await e.reply([segmentApi.image(`base64://${pngBuffer.toString('base64')}`), linkText]);
+                } catch (error) {
+                  logger.warn(`[weixin-ilink] 二维码图片发送失败：${error.message}`);
+                  await e.reply(`二维码图片发送失败（${error.message}），请用手机浏览器打开链接扫码：\n${state.qrcodeUrl}`).catch(() => { });
+                }
+              } else {
+                await e.reply(`当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`).catch(() => { });
               }
-            } else {
-              await e.reply(`当前环境无法生成二维码图片，请用手机浏览器打开这个链接扫码：\n${state.qrcodeUrl}`);
+              if (state.refreshCount > 0) return; // 刷新时上面已发新码
             }
-            if (state.refreshCount > 0) return; // 刷新时上面已发新码
+            if (state.state === 'scaned') await e.reply('已扫码，请在手机上确认登录。').catch(() => { });
+            if (state.state === 'expired') await e.reply('二维码已过期，正在自动刷新，请扫新码。').catch(() => { });
+          } catch (error) {
+            logger.warn(`[weixin-ilink] 登录状态推送失败：${error.message}`);
           }
-          if (state.state === 'scaned') await e.reply('已扫码，请在手机上确认登录。');
-          if (state.state === 'expired') await e.reply('二维码已过期，正在自动刷新，请扫新码。');
         },
       });
       await e.reply(`微信桥登录成功（botId: ${credentials.botId || '未知'}）。轮询已启动，发送 #微信机器人状态 查看详情。`);
