@@ -217,6 +217,24 @@ export class weixinIlink extends plugin {
       return;
     }
 
+    // ── 任务列表后的编号：切换到对应会话（仅刚看完列表后的下一条数字消息生效）──
+    if (/^\d+$/.test(trimmed) && this.taskSwitchChoices?.has(`${senderId}:${Number(trimmed) - 1}`)) {
+      const targetId = this.taskSwitchChoices.get(`${senderId}:${Number(trimmed) - 1}`);
+      this.taskSwitchChoices.delete(`${senderId}:${Number(trimmed) - 1}`);
+      this.taskSwitchChoices.clear(); // 一次性选择：消费任意编号后整表作废（避免残留旧列表误触）
+      try {
+        const switched = this.getBridge(senderId).switchSession(targetId);
+        await this.sendTo(senderId, `已切换到「${switched.title.slice(0, 24)}」的会话：之后发 /新建任务 或直接发 #agent <任务> 会接着它的上下文继续。`, token);
+      } catch (error) {
+        await this.sendTo(senderId, `切换失败：${error.message}`, token);
+      }
+      return;
+    }
+    // 数字没匹配到切换选择 → 清掉过期选择表，走正常流程
+    if (/^\d+$/.test(trimmed) && this.taskSwitchChoices?.size) {
+      this.taskSwitchChoices.clear();
+    }
+
     // ── 任务模式（/新建任务 进入，黏性）：除 / 指令与 # 指令外的消息都作为当前任务指令 ──
     if (this.taskModeUsers?.has(senderId) && !trimmed.startsWith('#') && !trimmed.startsWith('/')) {
       await this.handleTaskMessage(senderId, trimmed, token);
@@ -334,8 +352,15 @@ export class weixinIlink extends plugin {
         return;
       }
       const ICONS = { success: '✅', error: '❌', running: '⏳', pending: '🕐', queued: '⏸', canceled: '✋', timeout: '⚠', interrupted: '⟳' };
-      const lines = tasks.map(task => `${ICONS[task.status] || '·'} ${task.title.slice(0, 24)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒）`);
-      await this.sendTo(senderId, ['最近任务', ...lines].join(String.fromCharCode(10)), token);
+      const lines = tasks.map((task, index) => `${index + 1}. ${ICONS[task.status] || '·'} ${task.title.slice(0, 24)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒）`);
+      // 记住编号 -> taskId：接下来一条纯数字消息会被当作"切换到该会话"
+      this.taskSwitchChoices = new Map(tasks.map((task, index) => [`${senderId}:${index}`, task.id]));
+      await this.sendTo(senderId, [
+        '最近任务',
+        ...lines,
+        '',
+        '回复编号切换到该会话继续对话；不切换直接发别的指令即可。',
+      ].join(String.fromCharCode(10)), token);
       return;
     }
     if (cmd === '会话重置' || cmd === '重置会话') {
