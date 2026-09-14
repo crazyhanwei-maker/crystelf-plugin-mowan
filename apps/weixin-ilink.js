@@ -224,7 +224,14 @@ export class weixinIlink extends plugin {
       this.taskSwitchChoices.clear(); // 一次性选择：消费任意编号后整表作废（避免残留旧列表误触）
       try {
         const switched = this.getBridge(senderId).switchSession(targetId);
-        await this.sendTo(senderId, `已切换到「${switched.title.slice(0, 24)}」的会话：之后发 /新建任务 或直接发 #agent <任务> 会接着它的上下文继续。`, token);
+        let ctxLine = '';
+        const tasks = this.getBridge(senderId).listMyTasks?.(20) || [];
+        const matched = tasks.find(t => t.id === switched.id);
+        if (matched && matched.contextLimit > 0 && matched.contextUsage > 0) {
+          const percent = Math.min(100, Math.round((matched.contextUsage / matched.contextLimit) * 100));
+          ctxLine = `上下文已用 ${percent}%${percent > 70 ? '（偏高：可能遗忘早期细节，可用 /会话重置 重开）' : ''}。`;
+        }
+        await this.sendTo(senderId, `已切换到「${switched.title.slice(0, 24)}」的会话：之后发 /新建任务 或直接发 #agent <任务> 会接着它的上下文继续。${ctxLine}`, token);
       } catch (error) {
         await this.sendTo(senderId, `切换失败：${error.message}`, token);
       }
@@ -352,7 +359,11 @@ export class weixinIlink extends plugin {
         return;
       }
       const ICONS = { success: '✅', error: '❌', running: '⏳', pending: '🕐', queued: '⏸', canceled: '✋', timeout: '⚠', interrupted: '⟳' };
-      const lines = tasks.map((task, index) => `${index + 1}. ${ICONS[task.status] || '·'} ${task.title.slice(0, 24)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒）`);
+      const lines = tasks.map((task, index) => {
+        const ctx = task.contextLimit > 0 && task.contextUsage > 0 ? `，上下文 ${Math.min(100, Math.round((task.contextUsage / task.contextLimit) * 100))}%` : '';
+        const warn = task.contextLimit > 0 && task.contextUsage / Math.max(1, task.contextLimit) > 0.7 ? '⚠' : '';
+        return `${index + 1}. ${ICONS[task.status] || '·'} ${warn}${task.title.slice(0, 22)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒${ctx}）`;
+      });
       // 记住编号 -> taskId：接下来一条纯数字消息会被当作"切换到该会话"
       this.taskSwitchChoices = new Map(tasks.map((task, index) => [`${senderId}:${index}`, task.id]));
       await this.sendTo(senderId, [
@@ -631,6 +642,11 @@ export class weixinIlink extends plugin {
       await bridge.runTaskWithReport(promptText, {
         attachments,
         onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
+        // 控制台侧动作 / 会话事件同步到微信（取消、压缩各提示一次，不刷屏）
+        onEventNotice: notice => {
+          if (notice?.type === 'cancel-external') this.sendTo(senderId, 'ℹ 检测到任务在控制台被取消，即将停止跟踪。', token).catch(() => { });
+          if (notice?.type === 'compacted') this.sendTo(senderId, 'ℹ 会话上下文已达阈值，已自动压缩：模型可能遗忘早期细节；本轮结束后可 /会话重置 或切换任务。', token).catch(() => { });
+        },
         // 每一轮（含排队执行的后续指令）单独推送结论
         onResultReply: result => this.sendReport(senderId, result, token).catch(() => { }),
         // 模型提问：微信里没有点选卡片，转成编号清单等用户回复
