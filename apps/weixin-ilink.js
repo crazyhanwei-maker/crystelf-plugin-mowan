@@ -327,6 +327,27 @@ export class weixinIlink extends plugin {
       await this.sendTo(senderId, stopped ? '已发送取消请求，当前任务将中断（含排队的后续指令）。' : '当前没有运行中的任务。', token);
       return;
     }
+    if (cmd === '任务列表' || cmd === '任务') {
+      const tasks = this.getBridge(senderId).listMyTasks?.(5) || [];
+      if (!tasks.length) {
+        await this.sendTo(senderId, '最近没有你的桥任务。发 /新建任务 开始一个。', token);
+        return;
+      }
+      const ICONS = { success: '✅', error: '❌', running: '⏳', pending: '🕐', queued: '⏸', canceled: '✋', timeout: '⚠', interrupted: '⟳' };
+      const lines = tasks.map(task => `${ICONS[task.status] || '·'} ${task.title.slice(0, 24)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒）`);
+      await this.sendTo(senderId, ['最近任务', ...lines].join(String.fromCharCode(10)), token);
+      return;
+    }
+    if (cmd === '会话重置' || cmd === '重置会话') {
+      const bridge = this.getBridge(senderId);
+      if (await bridge.isBusy()) {
+        await this.sendTo(senderId, '任务执行中不能重置会话，先发 /停止。', token);
+        return;
+      }
+      bridge.resetSession?.();
+      await this.sendTo(senderId, '上下文已清空：下一条任务从全新会话开始。', token);
+      return;
+    }
     if (cmd === '灵晶状态' || cmd === '状态') {
       try {
         const { buildStatusData } = await import('./status.js');
@@ -358,11 +379,25 @@ export class weixinIlink extends plugin {
     ].join('\n');
   }
 
-  // /模型 [编号|名称]：列出或选择模型
+  // /模型 [编号|名称]：列出或选择模型。
+  // 列表为空多半是 OpenCode 没跑：首次请求会触发运行时拉起，等一会重试两次再放弃
+  async fetchModelsWithWake(senderId, token) {
+    const wakeDelayMs = this.modelWakeDelayMs || 15000;
+    let models = await (this.listModels || listAvailableModels)();
+    if (models.length) return models;
+    await this.sendTo(senderId, 'OpenCode 未运行，正在唤醒（首次约需 20~40 秒）…', token);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, wakeDelayMs));
+      models = await (this.listModels || listAvailableModels)();
+      if (models.length) return models;
+    }
+    return [];
+  }
+
   async handleModelCommand(senderId, arg, token) {
-    const models = await listAvailableModels();
+    let models = await this.fetchModelsWithWake(senderId, token);
     if (!models.length) {
-      await this.sendTo(senderId, '暂未获取到可用模型列表（OpenCode 未运行或无可用供应商）。', token);
+      await this.sendTo(senderId, '唤醒超时：OpenCode 仍不可用。发 #微信机器人诊断 查看原因。', token);
       return;
     }
     if (!arg) {
@@ -443,6 +478,8 @@ export class weixinIlink extends plugin {
       '④ /模型 · /思考等级 · /当前配置 —— 选择模型与思考深度',
       '',
       '⑤ #灵晶状态 或 /状态 —— 查看插件运行状态',
+      '',
+      '⑥ /任务列表 —— 最近任务与状态 · /会话重置 —— 清空上下文重新开始',
       '',
       '说明：任务以全权限模式在服务器上真实执行，可修改文件、联网、执行命令，请谨慎描述任务。',
       '同一时间只执行一个任务；执行中的进展会分段推送，结束时给出结论。',
