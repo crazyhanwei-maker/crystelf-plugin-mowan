@@ -409,7 +409,47 @@ export class weixinIlink extends plugin {
     return this.bridges.get(senderId);
   }
 
-  // 任务模式下的消息：执行中 → 并入当前任务；空闲 → 同一会话里开新一轮
+  // 待答问题的微信侧状态：senderId -> { taskId, requestId, options: [label,...], askedAt }
+  // 生命周期：轮询发现提问时建立 → 用户数字回复后提交/拒绝 → 清除；超时 10 分钟自动失效
+  rememberPendingQuestion(senderId, entry) {
+    if (!this.pendingQuestions) this.pendingQuestions = new Map();
+    // entry 显式带 askedAt 时保留（重挂/测试回填），否则从现在起算
+    this.pendingQuestions.set(senderId, { askedAt: Date.now(), ...entry });
+  }
+
+  takePendingQuestion(senderId) {
+    const entry = this.pendingQuestions?.get(senderId) || null;
+    if (!entry) return null;
+    if (Date.now() - entry.askedAt > 10 * 60 * 1000) {
+      this.pendingQuestions.delete(senderId);
+      return null;
+    }
+    return entry;
+  }
+
+  clearPendingQuestion(senderId) {
+    this.pendingQuestions?.delete(senderId);
+  }
+
+  // 把模型的提问渲染成编号选择清单（微信没有点选卡片，用数字回复）
+  formatQuestion(entry) {
+    const lines = [];
+    for (const question of entry.questions.slice(0, 3)) {
+      if (question.header) lines.push(`【${question.header}】`);
+      if (question.question) lines.push(String(question.question).slice(0, 400));
+      const options = Array.isArray(question.options) ? question.options.slice(0, 8) : [];
+      options.forEach((option, index) => {
+        const label = String(option?.label || '').trim();
+        if (!label) return;
+        lines.push(`${index + 1}. ${label}${option.description ? `（${String(option.description).slice(0, 60)}）` : ''}`);
+      });
+      if (question.custom !== false) lines.push('也可直接输入自定义回答。');
+      lines.push('回复编号选择；发「跳过」让模型自行决定。');
+    }
+    return lines.join('\n');
+  }
+
+  // 任务模式下的消息：模型提问待答 → 数字/文字作答；执行中 → 并入当前任务；空闲 → 同一会话里开新一轮
   async handleTaskMessage(senderId, text, token) {
     const bridgeState = getBridgeState();
     if (!bridgeState.enabled) {
@@ -418,6 +458,35 @@ export class weixinIlink extends plugin {
     }
     const bridge = this.getBridge(senderId);
     const progress = bridge.getProgress?.() || {};
+
+    // 模型提问待答：数字 = 选选项，其他文字 = 自定义回答，「跳过」= 拒绝
+    const pending = this.takePendingQuestion(senderId);
+    if (pending) {
+      try {
+        if (/^(跳过|skip)$/i.test(text.trim())) {
+          await bridge.rejectQuestion(pending.taskId, pending.requestId);
+          this.clearPendingQuestion(senderId);
+          await this.sendTo(senderId, '已跳过该问题，模型会自行决定下一步。', token);
+        } else {
+          const numeric = /^\d+$/.test(text.trim())
+            ? pending.options[Number(text.trim()) - 1] || null
+            : null;
+          if (/^\d+$/.test(text.trim()) && !numeric) {
+            await this.sendTo(senderId, `编号超出范围（1~${pending.options.length}），请重新选择。`, token);
+            this.rememberPendingQuestion(senderId, pending);
+            return;
+          }
+          await bridge.answerQuestion(pending.taskId, pending.requestId, [numeric || text.trim()]);
+          this.clearPendingQuestion(senderId);
+          await this.sendTo(senderId, `已回答：${numeric || text.trim().slice(0, 50)}`, token);
+        }
+      } catch (error) {
+        this.clearPendingQuestion(senderId);
+        await this.sendTo(senderId, `回答提交失败：${error.message}。可直接再发一条消息继续任务。`, token);
+      }
+      return;
+    }
+
     if (progress.running) {
       const res = bridge.sendFollowUp(text);
       await this.sendTo(senderId, res?.queued
@@ -446,6 +515,19 @@ export class weixinIlink extends plugin {
         onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
         // 每一轮（含排队执行的后续指令）单独推送结论
         onResultReply: result => this.sendReport(senderId, result, token).catch(() => { }),
+        // 模型提问：微信里没有点选卡片，转成编号清单等用户回复
+        onQuestionReply: ({ taskId, request }) => {
+          const firstQuestion = (request?.questions || [])[0] || {};
+          const options = (firstQuestion.options || []).map(option => String(option?.label || '').trim()).filter(Boolean);
+          this.rememberPendingQuestion(senderId, {
+            taskId,
+            requestId: request?.id || '',
+            options,
+            questions: request?.questions || [],
+          });
+          const header = firstQuestion.header ? `【${firstQuestion.header}】\n` : '';
+          this.sendTo(senderId, `❓ ${header}${this.formatQuestion(this.takePendingQuestion(senderId))}`, token).catch(() => { });
+        },
       });
     } catch (error) {
       await this.sendTo(senderId, `任务提交失败：${error.message}`, token);
