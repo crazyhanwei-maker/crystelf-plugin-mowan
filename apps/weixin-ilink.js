@@ -2,6 +2,7 @@
 // plugin 为 Yunzai 运行时注入的全局基类（与其他 apps 一致，不 import）
 // 登录：#微信机器人登录 拿登录链接扫码（二维码内容输出到终端/控制台日志）
 import fs from 'fs';
+import path from 'path';
 import ConfigControl from '../lib/config/configControl.js';
 import {
   loadCredentials,
@@ -12,6 +13,7 @@ import {
   sendImageMessage,
   extractTextFromMessage,
   probeQrEndpoint,
+  extractIncomingAttachments,
 } from '../lib/weixin/ilinkClient.js';
 import {
   createAgentChatBridge,
@@ -147,9 +149,45 @@ export class weixinIlink extends plugin {
     loop();
   }
 
+  // 待投喂给 Agent 的图片：senderId -> { attachments, askedAt }（5 分钟过期）
+  stashAttachments(senderId, attachments) {
+    if (!this.attachmentStash) this.attachmentStash = new Map();
+    const existing = this.takeAttachments(senderId) || [];
+    this.attachmentStash.set(senderId, { attachments: [...existing, ...attachments].slice(0, 5), askedAt: Date.now() });
+  }
+
+  takeAttachments(senderId) {
+    const entry = this.attachmentStash?.get(senderId) || null;
+    if (!entry) return null;
+    this.attachmentStash.delete(senderId); // take 语义：取走即清空
+    if (Date.now() - entry.askedAt > 5 * 60 * 1000) return null;
+    return entry.attachments;
+  }
+
+  clearAttachments(senderId) {
+    this.attachmentStash?.delete(senderId);
+  }
+
   async handleIncoming(update, token) {
     const { senderId, content, contextToken, messageType } = extractIncomingMessage(update);
-    if (!senderId || !content) return;
+    if (!senderId) return;
+    if (messageType !== MessageTypeUSER && messageType !== 0) return; // 只处理用户消息(1)，0 视为兼容
+
+    // 图片消息：先提取暂存（5 分钟内发的任务描述会自动带上）
+    let incomingAttachments = [];
+    try {
+      incomingAttachments = await extractIncomingAttachments(update, { logger });
+    } catch (error) {
+      logger.warn(`[weixin-ilink] 图片提取失败：${error.message}`);
+    }
+    if (incomingAttachments.length) {
+      this.stashAttachments(senderId, incomingAttachments);
+      if (!content) {
+        await this.sendTo(senderId, `收到 ${incomingAttachments.length} 张图片（保留 5 分钟）。发 /新建任务 后描述任务，或直接发任务描述，图片会一并交给 Agent。`, token);
+        return;
+      }
+    }
+    if (!content) return;
     if (messageType !== MessageTypeUSER && messageType !== 0) return; // 只处理用户消息(1)，0 视为兼容
     if (contextToken) sessionContexts.set(senderId, contextToken);
     const allowed = resolveAllowedWeixinIds(readConfig());
@@ -163,6 +201,19 @@ export class weixinIlink extends plugin {
     // ── 斜杠指令（微信侧专用）──
     if (trimmed.startsWith('/')) {
       await this.handleSlashCommand(senderId, trimmed, token);
+      return;
+    }
+
+    // ── 「看全文」：取回最近一次长结论的纯文本（任务模式里也优先响应）──
+    if (/^(看全文|全文)$/.test(trimmed)) {
+      const fullText = this.takeFullText(senderId);
+      if (!fullText) {
+        await this.sendTo(senderId, '暂无可查看的长文。长结论任务完成后 10 分钟内回复「看全文」有效。', token);
+        return;
+      }
+      for (const chunk of splitTextChunks(fullText, 1000)) {
+        await this.sendTo(senderId, chunk, token);
+      }
       return;
     }
 
@@ -456,6 +507,9 @@ export class weixinIlink extends plugin {
       await this.sendTo(senderId, 'Agent 桥当前关闭：QQ 侧发送 #agent开关 打开后再试。', token);
       return;
     }
+    // 暂存的图片附件先取走（任务模式里的任何去向都随消息带上）
+    const attachments = this.takeAttachments(senderId) || [];
+    if (attachments.length) this.clearAttachments(senderId);
     const bridge = this.getBridge(senderId);
     const progress = bridge.getProgress?.() || {};
 
@@ -488,17 +542,17 @@ export class weixinIlink extends plugin {
     }
 
     if (progress.running) {
-      const res = bridge.sendFollowUp(text);
+      const res = bridge.sendFollowUp(text, attachments);
       await this.sendTo(senderId, res?.queued
         ? `已加入队列（第 ${res.position} 条）：本轮结束后立即在同一会话里执行，结论会单独推送。`
         : '当前轮次刚好结束，已作为新一轮任务提交。', token);
-      if (!res?.queued) await this.dispatchAgent(senderId, text, token);
+      if (!res?.queued) await this.dispatchAgent(senderId, text, token, attachments);
       return;
     }
-    await this.dispatchAgent(senderId, text, token);
+    await this.dispatchAgent(senderId, text, token, attachments);
   }
 
-  async dispatchAgent(senderId, promptText, token) {
+  async dispatchAgent(senderId, promptText, token, attachments = []) {
     const bridgeState = getBridgeState();
     if (!bridgeState.enabled) {
       await this.sendTo(senderId, 'Agent 桥当前关闭：QQ 侧发送 #agent开关 打开后再试。', token);
@@ -509,9 +563,11 @@ export class weixinIlink extends plugin {
       await this.sendTo(senderId, '已有桥接任务在执行中，可发送 #agent停止 取消后重试。', token);
       return;
     }
-    await this.sendTo(senderId, '任务已提交（全权限模式：可改文件、联网、执行命令）。执行过程分段推送；同一会话保留上下文，直接发消息即可追加指令。', token);
+    const attachmentNote = attachments.length ? `含 ${attachments.length} 张图片附件。` : '';
+    await this.sendTo(senderId, `任务已提交（全权限模式：可改文件、联网、执行命令）。${attachmentNote}执行过程分段推送；同一会话保留上下文，直接发消息即可追加指令。`, token);
     try {
       await bridge.runTaskWithReport(promptText, {
+        attachments,
         onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
         // 每一轮（含排队执行的后续指令）单独推送结论
         onResultReply: result => this.sendReport(senderId, result, token).catch(() => { }),
@@ -534,10 +590,86 @@ export class weixinIlink extends plugin {
     }
   }
 
-  // 最终结论：微信文本较长易被截断，按段落切成多条发
+  // 长结论渲染成图片所需的临时态：senderId -> { text, askedAt }（10 分钟过期）
+  stashFullText(senderId, text) {
+    if (!this.fullTextCache) this.fullTextCache = new Map();
+    this.fullTextCache.set(senderId, { text: String(text || ''), askedAt: Date.now() });
+  }
+
+  takeFullText(senderId) {
+    const entry = this.fullTextCache?.get(senderId) || null;
+    if (!entry) return null;
+    if (Date.now() - entry.askedAt > 10 * 60 * 1000) {
+      this.fullTextCache.delete(senderId);
+      return null;
+    }
+    return entry.text;
+  }
+
+  // 长结论渲染为长图（微信里读长文比刷多条碎片舒服得多）；失败返回 false 走文本分片
+  async sendReportAsImage(senderId, body, token) {
+    try {
+      const [{ default: MarkdownIt }, { renderHtmlToImage }, PathNamespace] = await Promise.all([
+        import('markdown-it'),
+        import('../lib/system/puppeteerRenderer.js'),
+        import('../constants/path.js'),
+      ]);
+      const PathModule = PathNamespace.default || PathNamespace;
+      const markdown = new MarkdownIt({ html: false, linkify: true, breaks: true });
+      const contentHtml = markdown.render(String(body).slice(0, 60000));
+      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+        body { margin: 0; padding: 28px 30px; background: #f6f7f9; font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; }
+        .card { background: #ffffff; border-radius: 12px; padding: 24px 26px; box-shadow: 0 1px 4px rgba(0,0,0,.08); color: #24292f; font-size: 15px; line-height: 1.7; word-break: break-word; }
+        h1, h2, h3, h4 { margin: 18px 0 10px; line-height: 1.4; }
+        h1 { font-size: 21px; } h2 { font-size: 18px; } h3 { font-size: 16px; }
+        p { margin: 10px 0; } ul, ol { margin: 8px 0; padding-left: 24px; } li { margin: 4px 0; }
+        pre { background: #0d1117; color: #e6edf3; padding: 14px 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.55; }
+        code { font-family: Consolas, "JetBrains Mono", monospace; }
+        :not(pre) > code { background: #eff1f3; color: #d63384; padding: 2px 6px; border-radius: 4px; font-size: 13.5px; }
+        table { border-collapse: collapse; margin: 12px 0; width: 100%; }
+        th, td { border: 1px solid #d0d7de; padding: 7px 10px; font-size: 13.5px; text-align: left; }
+        th { background: #f2f4f7; }
+        blockquote { margin: 10px 0; padding: 6px 14px; border-left: 4px solid #d0d7de; color: #57606a; background: #f6f8fa; }
+        img { max-width: 100%; }
+        a { color: #0969da; }
+      </style></head><body><div class="card">${contentHtml}</div></body></html>`;
+      const outputDir = path.join(PathModule.root, 'temp', 'html', 'crystelf-plugin');
+      fs.mkdirSync(outputDir, { recursive: true });
+      const outputPath = path.join(outputDir, `report_${Date.now()}.png`);
+      await renderHtmlToImage({
+        html,
+        outputPath,
+        viewport: { width: 860, height: 1200, deviceScaleFactor: 2 },
+        minHeight: 600,
+        maxHeight: 8000,
+      });
+      const imageBuffer = fs.readFileSync(outputPath);
+      fs.unlinkSync(outputPath);
+      await this.sendImageTo(senderId, imageBuffer, token);
+      return true;
+    } catch (error) {
+      logger.warn(`[weixin-ilink] 结论渲染成图失败，退回文本分片：${error.message}`);
+      return false;
+    }
+  }
+
+  // 最终结论：长文渲染成图 + 摘要 + 「看全文」；短文按段落切成多条发
   async sendReport(senderId, result, token) {
     const ok = result?.ok === true;
     const body = String(result?.text || '').trim() || '任务结束。';
+    const LONG_THRESHOLD = 600;
+    if (ok && body.length > LONG_THRESHOLD) {
+      const rendered = await this.sendReportAsImage(senderId, body, token);
+      if (rendered) {
+        this.stashFullText(senderId, body);
+        const preview = body.replace(/\s+/g, ' ').slice(0, 150);
+        await this.sendTo(senderId, `📄 结论共 ${body.length} 字，已渲染成上图。
+摘要：${preview}…
+回复「看全文」获取纯文本。`, token);
+        return;
+      }
+    }
+    if (body.length > LONG_THRESHOLD) this.stashFullText(senderId, body);
     const chunks = splitTextChunks(body, 1000);
     for (let i = 0; i < chunks.length; i++) {
       const head = i === 0 ? (ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
