@@ -280,7 +280,7 @@ export class weixinIlink extends plugin {
       try {
         const { buildStatusData } = await import('./status.js');
         const data = await buildStatusData({ self_id: 'weixin-ilink', adapter_name: 'weixin-ilink' });
-        await this.sendTo(senderId, buildCompactStatus(data), token);
+        await this.sendTo(senderId, this.buildCompactStatus(data), token);
       } catch (error) {
         await this.sendTo(senderId, `状态获取失败：${error.message}`, token);
       }
