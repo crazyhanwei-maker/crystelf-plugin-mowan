@@ -4,6 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import ConfigControl from '../lib/config/configControl.js';
+import { setBridgePollerRunning } from '../lib/weixin/bridgeState.js';
 import {
   loadCredentials,
   clearCredentials,
@@ -113,6 +114,7 @@ export class weixinIlink extends plugin {
     if (!credentials?.botToken) return;
     pollerState.running = true;
     pollerState.started = true;
+    setBridgePollerRunning(true);
     // 单例保证：杀掉旧 generation 的循环（正常不会存在，双保险）
     const myGeneration = ++pollerState.generation;
     logger.info('[weixin-ilink] 微信桥轮询已启动');
@@ -143,6 +145,7 @@ export class weixinIlink extends plugin {
       if (pollerState.generation === myGeneration) {
         pollerState.started = false;
         pollerState.running = false;
+        setBridgePollerRunning(false);
       }
     };
     loop();
@@ -946,6 +949,7 @@ export class weixinIlink extends plugin {
     this.pollerRunning = false;
     pollerState.running = false;  // 让轮询循环自然退出，下次登录 ensurePoller 能干净重启
     pollerState.started = false;
+    setBridgePollerRunning(false);
     await e.reply('微信桥已登出，凭证已删除，轮询已停止。');
     return true;
   }
