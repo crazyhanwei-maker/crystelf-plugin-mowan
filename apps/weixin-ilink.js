@@ -394,6 +394,58 @@ export class weixinIlink extends plugin {
 最新：${String(progress.text || '').slice(0, 300)}`, token);
       return;
     }
+    if (cmd === '压缩') {
+      const bridge = this.getBridge(senderId);
+      if (await bridge.isBusy()) {
+        await this.sendTo(senderId, '任务执行中不能压缩，等本轮结束。', token);
+        return;
+      }
+      try {
+        const result = await bridge.compactSession();
+        const percent = result?.limit > 0 ? `，当前约 ${Math.min(100, Math.round((result.usage / result.limit) * 100))}%` : '';
+        await this.sendTo(senderId, `✅ 上下文已压缩${percent}。模型可以继续较长对话了。`, token);
+      } catch (error) {
+        await this.sendTo(senderId, `压缩失败：${error.message}`, token);
+      }
+      return;
+    }
+    if (cmd === '恢复') {
+      const bridge = this.getBridge(senderId);
+      if (await bridge.isBusy()) {
+        await this.sendTo(senderId, '当前有任务在执行中，不能恢复其他任务。', token);
+        return;
+      }
+      const resumable = bridge.findResumable?.();
+      if (!resumable) {
+        await this.sendTo(senderId, '没有可恢复的任务（只有服务重启时被中断的任务可以恢复）。', token);
+        return;
+      }
+      await this.sendTo(senderId, `正在恢复中断任务「${resumable.title.slice(0, 30)}」，完成后结论会推给你。`, token);
+      try {
+        await bridge.resumeInterrupted({
+          onProgressReply: line => this.sendTo(senderId, line).catch(() => { }),
+          onResultReply: result => this.sendReport(senderId, result, token).catch(() => { }),
+          onEventNotice: notice => {
+            if (notice?.type === 'cancel-external') this.sendTo(senderId, 'ℹ 任务在控制台被取消。', token).catch(() => { });
+          },
+        });
+      } catch (error) {
+        await this.sendTo(senderId, `恢复失败：${error.message}`, token);
+      }
+      return;
+    }
+    if (cmd === '归档') {
+      const bridge = this.getBridge(senderId);
+      if (await bridge.isBusy()) {
+        await this.sendTo(senderId, '任务执行中不能归档，先发 /停止。', token);
+        return;
+      }
+      const result = bridge.archiveTasks?.();
+      await this.sendTo(senderId, result?.archived
+        ? `已归档 ${result.archived} 条已结束的任务（/任务列表 更清爽了）。`
+        : '没有可归档的任务（运行中的不会被动）。', token);
+      return;
+    }
     if (cmd === '任务列表' || cmd === '任务') {
       const tasks = this.getBridge(senderId).listMyTasks?.(5) || [];
       if (!tasks.length) {
@@ -558,7 +610,8 @@ export class weixinIlink extends plugin {
       '',
       '⑤ #灵晶状态 或 /状态 —— 查看插件运行状态',
       '',
-      '⑥ /任务列表 —— 最近任务与状态 · /会话重置 —— 清空上下文重新开始',
+      '⑥ /任务列表 · /会话重置 · /归档 —— 任务管理',
+      '⑦ /恢复 —— 继续服务重启时被中断的任务 · /压缩 —— 手动压缩上下文',
       '',
       '说明：任务以全权限模式在服务器上真实执行，可修改文件、联网、执行命令，请谨慎描述任务。',
       '同一时间只执行一个任务；执行中的进展会分段推送，结束时给出结论。',
