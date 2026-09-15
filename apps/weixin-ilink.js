@@ -149,6 +149,22 @@ export class weixinIlink extends plugin {
     loop();
   }
 
+  // 失败任务的可重试缓存：senderId -> { prompt, at }（30 分钟内回复「重试」可原样重跑）
+  stashFailedPrompt(senderId, prompt) {
+    if (!this.failedPromptCache) this.failedPromptCache = new Map();
+    this.failedPromptCache.set(senderId, { prompt: String(prompt || ''), at: Date.now() });
+  }
+
+  getFailedPrompt(senderId) {
+    const entry = this.failedPromptCache?.get(senderId) || null;
+    if (!entry) return null;
+    if (Date.now() - entry.at > 30 * 60 * 1000) {
+      this.failedPromptCache.delete(senderId);
+      return null;
+    }
+    return entry.prompt;
+  }
+
   // 待投喂给 Agent 的图片：senderId -> { attachments, askedAt }（5 分钟过期）
   stashAttachments(senderId, attachments) {
     if (!this.attachmentStash) this.attachmentStash = new Map();
@@ -240,6 +256,23 @@ export class weixinIlink extends plugin {
     // 数字没匹配到切换选择 → 清掉过期选择表，走正常流程
     if (/^\d+$/.test(trimmed) && this.taskSwitchChoices?.size) {
       this.taskSwitchChoices.clear();
+    }
+
+    // ── 「重试」：30 分钟内失败过的任务原样重跑（描述 + 模型/思考等级都是当前配置）──
+    if (/^重试$/.test(trimmed)) {
+      const failedPrompt = this.getFailedPrompt(senderId);
+      if (!failedPrompt) {
+        await this.sendTo(senderId, '暂无可重试的失败任务（失败后 30 分钟内回复「重试」有效）。', token);
+        return;
+      }
+      const bridge = this.getBridge(senderId);
+      if (await bridge.isBusy()) {
+        await this.sendTo(senderId, '当前有任务在执行中，结束后再回「重试」。', token);
+        return;
+      }
+      await this.sendTo(senderId, `重试上次失败的任务：${failedPrompt.slice(0, 60)}${failedPrompt.length > 60 ? '…' : ''}`, token);
+      await this.dispatchAgent(senderId, failedPrompt, token);
+      return;
     }
 
     // ── 任务模式（/新建任务 进入，黏性）：除 / 指令与 # 指令外的消息都作为当前任务指令 ──
@@ -352,6 +385,15 @@ export class weixinIlink extends plugin {
       await this.sendTo(senderId, stopped ? '已发送取消请求，当前任务将中断（含排队的后续指令）。' : '当前没有运行中的任务。', token);
       return;
     }
+    if (cmd === '进展') {
+      const progress = this.getBridge(senderId).latestProgress?.() || { running: false, text: '当前没有可查询的任务。' };
+      const head = progress.running
+        ? `⏳ ${progress.status === 'queued' ? `排队中（第 ${progress.queuePosition || 1} 位）` : `运行中（已 ${progress.elapsedSec} 秒）`}`
+        : `任务不在运行中（状态：${progress.status || '无'}）`;
+      await this.sendTo(senderId, `${head}
+最新：${String(progress.text || '').slice(0, 300)}`, token);
+      return;
+    }
     if (cmd === '任务列表' || cmd === '任务') {
       const tasks = this.getBridge(senderId).listMyTasks?.(5) || [];
       if (!tasks.length) {
@@ -362,7 +404,8 @@ export class weixinIlink extends plugin {
       const lines = tasks.map((task, index) => {
         const ctx = task.contextLimit > 0 && task.contextUsage > 0 ? `，上下文 ${Math.min(100, Math.round((task.contextUsage / task.contextLimit) * 100))}%` : '';
         const warn = task.contextLimit > 0 && task.contextUsage / Math.max(1, task.contextLimit) > 0.7 ? '⚠' : '';
-        return `${index + 1}. ${ICONS[task.status] || '·'} ${warn}${task.title.slice(0, 22)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒${ctx}）`;
+        const queue = task.status === 'queued' && task.queuePosition > 0 ? `，排队第 ${task.queuePosition} 位` : '';
+        return `${index + 1}. ${ICONS[task.status] || '·'} ${warn}${task.title.slice(0, 22)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒${queue}${ctx}）`;
       });
       // 记住编号 -> taskId：接下来一条纯数字消息会被当作"切换到该会话"
       this.taskSwitchChoices = new Map(tasks.map((task, index) => [`${senderId}:${index}`, task.id]));
@@ -615,6 +658,15 @@ export class weixinIlink extends plugin {
     }
 
     if (progress.running) {
+      if (/^停止$/.test(text)) {
+        const stopped = await bridge.cancelActive();
+        await this.sendTo(senderId, stopped ? '已发送取消请求，任务将中断。' : '取消请求未生效（任务可能刚结束）。', token);
+        return;
+      }
+      if (/^继续$/.test(text)) {
+        await this.sendTo(senderId, '任务仍在执行中，无需操作；完成后结论会自动推送。', token);
+        return;
+      }
       const res = bridge.sendFollowUp(text, attachments);
       await this.sendTo(senderId, res?.queued
         ? `已加入队列（第 ${res.position} 条）：本轮结束后立即在同一会话里执行，结论会单独推送。`
@@ -647,8 +699,11 @@ export class weixinIlink extends plugin {
           if (notice?.type === 'cancel-external') this.sendTo(senderId, 'ℹ 检测到任务在控制台被取消，即将停止跟踪。', token).catch(() => { });
           if (notice?.type === 'compacted') this.sendTo(senderId, 'ℹ 会话上下文已达阈值，已自动压缩：模型可能遗忘早期细节；本轮结束后可 /会话重置 或切换任务。', token).catch(() => { });
         },
-        // 每一轮（含排队执行的后续指令）单独推送结论
-        onResultReply: result => this.sendReport(senderId, result, token).catch(() => { }),
+        // 每一轮（含排队执行的后续指令）单独推送结论；失败轮缓存 prompt 供「重试」
+        onResultReply: (result, meta) => {
+          if (result?.ok === false && meta?.prompt) this.stashFailedPrompt(senderId, meta.prompt);
+          return this.sendReport(senderId, result, token).catch(() => { });
+        },
         // 模型提问：微信里没有点选卡片，转成编号清单等用户回复
         onQuestionReply: ({ taskId, request }) => {
           const firstQuestion = (request?.questions || [])[0] || {};
