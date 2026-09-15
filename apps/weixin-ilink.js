@@ -98,7 +98,6 @@ export class weixinIlink extends plugin {
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
       ],
     });
-    this.qrCache = new Map();
     // 延迟启动轮询：Yunzai 装载完成后自起
     setTimeout(() => this.ensurePoller().catch(error => logger.warn(`[weixin-ilink] 轮询启动失败：${error.message}`)), 8000);
   }
@@ -502,7 +501,7 @@ export class weixinIlink extends plugin {
       `灵晶状态：${data?.statusText || '未知'}`,
       `版本：${rowMap.get('插件版本') || '未知'}`,
       `运行时长：${rowMap.get('运行时长') || '未知'}`,
-      `内存：${String(resources.memoryPercent ?? '?').slice(0, 5)}%  CPU：${String(resources.cpuPercent ?? '?').slice(0, 5)}%`,
+      `内存：${Number.isFinite(Number(resources.memoryPercent)) ? Number(resources.memoryPercent).toFixed(1) : '?'}%  CPU：${Number.isFinite(Number(resources.cpuPercent)) ? Number(resources.cpuPercent).toFixed(1) : '?'}%`,
       `今日 AI：${ai.requestCountText || 0} 次 / ${ai.totalTokensText || 0} tokens`,
       `成本：${ai.costText || '未启用'}`,
       `Agent 桥：${state.enabled ? '开启' : '关闭'} · 模型：${state.model || '默认'}`,
@@ -558,7 +557,7 @@ export class weixinIlink extends plugin {
       return;
     }
     setBridgeModel(picked.id);
-    await this.sendTo(senderId, `模型已切换：${picked.name}（${picked.providerId}）${picked.reasoning ? ' · 支持思考' : ''}`, token);
+    await this.sendTo(senderId, `模型已切换：${picked.name}（${picked.providerId}）${picked.reasoning ? ' · 支持思考' : ''}。对下一个任务生效；运行中的任务不受影响。`, token);
   }
 
   // /思考等级 [编号|名称]
@@ -793,7 +792,7 @@ export class weixinIlink extends plugin {
   }
 
   // 长结论渲染为长图（微信里读长文比刷多条碎片舒服得多）；失败返回 false 走文本分片
-  async sendReportAsImage(senderId, body, token) {
+  async sendReportAsImage(senderId, body, token, { qqEvent = null, sendImage = null } = {}) {
     try {
       const [{ default: MarkdownIt }, { renderHtmlToImage }, PathNamespace] = await Promise.all([
         import('markdown-it'),
@@ -831,7 +830,8 @@ export class weixinIlink extends plugin {
       });
       const imageBuffer = fs.readFileSync(outputPath);
       fs.unlinkSync(outputPath);
-      await this.sendImageTo(senderId, imageBuffer, token);
+      if (qqEvent) await this.qqSendImage(qqEvent, imageBuffer);
+      else await this.sendImageTo(senderId, imageBuffer, token);
       return true;
     } catch (error) {
       logger.warn(`[weixin-ilink] 结论渲染成图失败，退回文本分片：${error.message}`);
@@ -839,19 +839,20 @@ export class weixinIlink extends plugin {
     }
   }
 
-  // 最终结论：长文渲染成图 + 摘要 + 「看全文」；短文按段落切成多条发
-  async sendReport(senderId, result, token) {
+  // 最终结论：长文渲染成图 + 摘要 + 「看全文」；短文按段落切成多条发。
+  // senderId（微信 ilink 通道）或 qqEvent（QQ e.reply 通道）二选一
+  async sendReport(senderId, result, token, { qqEvent = null } = {}) {
+    const sendText = async (text) => (qqEvent ? this.qqSend(qqEvent, text) : this.sendTo(senderId, text, token));
+    const sendImage = async (buffer) => (qqEvent ? this.qqSendImage(qqEvent, buffer) : this.sendImageTo(senderId, buffer, token));
     const ok = result?.ok === true;
     const body = String(result?.text || '').trim() || '任务结束。';
     const LONG_THRESHOLD = 600;
     if (ok && body.length > LONG_THRESHOLD) {
-      const rendered = await this.sendReportAsImage(senderId, body, token);
+      const rendered = await this.sendReportAsImage(senderId, body, token, { qqEvent, sendImage });
       if (rendered) {
         this.stashFullText(senderId, body);
         const preview = body.replace(/\s+/g, ' ').slice(0, 150);
-        await this.sendTo(senderId, `📄 结论共 ${body.length} 字，已渲染成上图。
-摘要：${preview}…
-回复「看全文」获取纯文本。`, token);
+        await sendText(`📄 结论共 ${body.length} 字，已渲染成上图。\n摘要：${preview}…\n回复「看全文」获取纯文本。`);
         return;
       }
     }
@@ -859,9 +860,20 @@ export class weixinIlink extends plugin {
     const chunks = splitTextChunks(body, 1000);
     for (let i = 0; i < chunks.length; i++) {
       const head = i === 0 ? (ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
-      await this.sendTo(senderId, `${head}${chunks[i]}`, token);
+      await sendText(`${head}${chunks[i]}`);
     }
-    if (!ok) await this.sendTo(senderId, '可到控制台查看任务详情；需要重试直接再发一次任务。', token);
+    if (!ok) await sendText('可到控制台查看任务详情；需要重试直接再发一次任务。');
+  }
+
+  // QQ 侧单条文本/图片发送（走 e.reply，与微信 ilink 通道解耦）
+  async qqSend(e, content) {
+    await e.reply(content);
+  }
+
+  async qqSendImage(e, imageBuffer) {
+    const segmentApi = globalThis.segment;
+    if (typeof segmentApi?.image !== 'function') throw new Error('当前框架没有可用的图片消息接口（segment.image）');
+    await e.reply(segmentApi.image(`base64://${imageBuffer.toString('base64')}`));
   }
 
   async sendTo(userId, text, tokenOverride = '') {
@@ -932,6 +944,8 @@ export class weixinIlink extends plugin {
   async logout(e) {
     clearCredentials();
     this.pollerRunning = false;
+    pollerState.running = false;  // 让轮询循环自然退出，下次登录 ensurePoller 能干净重启
+    pollerState.started = false;
     await e.reply('微信桥已登出，凭证已删除，轮询已停止。');
     return true;
   }
@@ -1038,13 +1052,14 @@ export class weixinIlink extends plugin {
     try {
       await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => e.reply(line).catch(() => { }),
-        onResultReply: async result => {
-          const body = String(result?.text || '').trim() || '任务结束。';
-          const chunks = splitTextChunks(body, 1500);
-          for (let i = 0; i < chunks.length; i++) {
-            const head = i === 0 ? (result?.ok ? '✅ 任务完成\n\n' : '❌ 任务未成功\n\n') : `（接上，${i + 1}/${chunks.length}）\n`;
-            await e.reply(`${head}${chunks[i]}`);
-          }
+        // 与微信侧一致：长结论渲染成图、失败缓存供「重试」
+        onResultReply: (result, meta) => {
+          if (result?.ok === false && meta?.prompt) this.stashFailedPrompt(`qq:${e.user_id}`, meta.prompt);
+          return this.sendReport(e.user_id, result, '', { qqEvent: e }).catch(error => logger.warn(`[weixin-ilink] QQ 侧结论推送失败：${error.message}`));
+        },
+        onEventNotice: notice => {
+          if (notice?.type === 'cancel-external') e.reply('ℹ 检测到任务在控制台被取消，即将停止跟踪。').catch(() => { });
+          if (notice?.type === 'compacted') e.reply('ℹ 会话上下文已达阈值，已自动压缩：模型可能遗忘早期细节。').catch(() => { });
         },
       });
     } catch (error) {
