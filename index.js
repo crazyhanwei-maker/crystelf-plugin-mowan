@@ -4,6 +4,7 @@ import Path from './constants/path.js';
 import { crystelfInit } from './lib/system/init.js';
 import updater from './lib/system/updater.js';
 import { startWebConsole } from './lib/webConsole/server.js';
+import { reapOrphanOpenCodeServers } from './lib/webConsole/orphanReaper.js';
 
 const logger = globalThis.logger || {
   info: (...args) => console.log(...args),
@@ -50,6 +51,20 @@ import('./lib/ai/ttsRegistry.js')
   });
 
 const appPath = Path.apps;
+
+// 孤儿 opencode 回收：pm2 重启会把 serve 进程留成 PPID=1 的孤儿，插件空闲回收够不着。
+// 延迟 60 秒（等运行时注册表先有机会拉起自己的 serve，且孤儿判定要求存活 >60 秒，互不冲突）。
+setTimeout(() => {
+  try {
+    const result = reapOrphanOpenCodeServers({ pluginRoot: Path.root, logger });
+    if (result.killed?.length) {
+      logger.mark(`[crystelf-plugin] 孤儿 opencode 进程回收完成：${result.killed.length} 个`);
+    }
+  } catch (error) {
+    logger.warn(`[crystelf-plugin] 孤儿 opencode 回收异常: ${error.message}`);
+  }
+}, 60000).unref?.();
+
 const jsFiles = await fc.readDirRecursive(appPath, 'js');
 const enabledApps = [];
 const disabledApps = [];
