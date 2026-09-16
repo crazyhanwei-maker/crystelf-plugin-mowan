@@ -108,9 +108,18 @@
               </div>
               <div class="settings-grid">
                 <div class="setting-item">
+                  <div class="kv-label">接入协议</div>
+                  <select id="ai-apiProtocol">
+                    <option value="openai">OpenAI 兼容格式</option>
+                    <option value="anthropic">Anthropic（Claude Messages API）</option>
+                    <option value="grok">Grok（xAI，OpenAI 兼容）</option>
+                  </select>
+                  <div class="setting-help">OpenAI 兼容格式适用于官方 OpenAI、绝大多数中转和国产端点；Grok 官方地址填 https://api.x.ai/v1；备用接口跟随主接口协议。</div>
+                </div>
+                <div class="setting-item">
                   <div class="kv-label">API 基础地址 <span class="required">*</span></div>
                   <input type="text" id="ai-baseApi" placeholder="https://xx.xx.com/v1" />
-                  <div class="setting-help">填写服务商给你的基础地址，通常到 /v1 结束，不要填完整的聊天接口路径。</div>
+                  <div class="setting-help" id="ai-baseApi-help">填写服务商给你的基础地址，以 /v1 结尾，例如 https://api.qnaigc.com/v1；不要填完整的聊天接口路径。</div>
                 </div>
                 <div class="setting-item">
                   <div class="kv-label">API 密钥 <span class="required">*</span></div>
@@ -175,7 +184,17 @@
                 <div class="setting-item">
                   <div class="kv-label">备用 API 基础地址</div>
                   <input type="text" id="ai-fallback-baseApi" placeholder="https://backup.example.com/v1" />
-                  <div class="setting-help">备用服务商的 OpenAI 兼容基础地址。</div>
+                  <div class="setting-help" id="ai-fallback-baseApi-help">备用服务商的 OpenAI 兼容基础地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">备用接入协议</div>
+                  <select id="ai-fallback-apiProtocol">
+                    <option value="">跟随主接口</option>
+                    <option value="openai">OpenAI 兼容格式</option>
+                    <option value="anthropic">Anthropic（Claude Messages API）</option>
+                    <option value="grok">Grok（xAI，OpenAI 兼容）</option>
+                  </select>
+                  <div class="setting-help">默认跟随主接口协议；备用服务商与主接口协议不同时在此单独指定。</div>
                 </div>
                 <div class="setting-item">
                   <div class="kv-label">备用 API 密钥</div>

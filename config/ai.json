@@ -8,6 +8,8 @@
   "apiKey": "free",
   "?userAgent": "LLM请求使用的User-Agent，留空则使用插件默认UA；最多200字符，不能包含换行",
   "userAgent": "",
+  "?apiProtocol": "主对话接入协议：openai（OpenAI兼容格式，含中转/国产端点）| anthropic（Claude Messages API）| grok（xAI，OpenAI兼容）",
+  "apiProtocol": "openai",
   "?modelType": "模型名称,请根据baseApi填写的服务商的对应的模型",
   "modelType": "gpt-5.4-mini",
   "?workingModel": "工作模型(用于规划器、记忆检索等辅助任务)",
