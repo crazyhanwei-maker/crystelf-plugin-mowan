@@ -3796,6 +3796,10 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-context-usage-summary small span + span::before { display: none; }
   .agent-context-usage-chevron { display: none; }
   .agent-context-usage-popover { position: fixed; left: 12px; right: 12px; bottom: 12px; width: auto; max-height: min(420px, 54dvh); z-index: 90; }
+  .agent-file-change-row { flex-wrap: wrap; row-gap: 4px; padding: 7px 8px; }
+  .agent-file-change-name { flex: 1 1 auto; min-width: 0; }
+  .agent-file-change-stats { margin-left: auto; }
+  .agent-file-change-dir { order: 9; flex: 1 0 100%; }
   .agent-composer textarea { height: 60px; min-height: 60px; margin: 4px 0; padding: 7px 2px; font-size: 13px; line-height: 1.55; }
   .agent-composer-footer { align-items: center; }
   .agent-followup-control { gap: 1px; }
