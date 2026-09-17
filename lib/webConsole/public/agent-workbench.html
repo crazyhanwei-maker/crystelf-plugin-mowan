@@ -365,7 +365,8 @@
           <section class="agent-settings-group">
             <div class="agent-settings-group-head"><strong>自定义 API</strong><span>未启用时自动使用聊天默认 API</span></div>
             <div class="agent-settings-stack">
-              <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>支持 OpenAI 兼容接口</small></span></label>
+              <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>支持 OpenAI 兼容 / Anthropic / Grok 接口</small></span></label>
+              <label class="agent-compact-field agent-custom-api-field"><span>接入协议</span><select id="agent-custom-api-protocol"><option value="">跟随主接口</option><option value="openai">OpenAI 兼容格式</option><option value="anthropic">Anthropic（Claude Messages API）</option><option value="grok">Grok（xAI，OpenAI 兼容）</option></select></label>
               <label class="agent-compact-field agent-custom-api-field"><span>Base URL</span><input id="agent-custom-api-base" type="url" maxlength="500" placeholder="https://example.com/v1" /></label>
               <label class="agent-compact-field agent-custom-api-field"><span>API Key</span><input id="agent-custom-api-key" type="password" maxlength="500" placeholder="留空保持当前密钥" autocomplete="new-password" /></label>
               <label class="agent-compact-field agent-custom-api-field"><span>模型</span><input id="agent-custom-api-model" type="text" maxlength="160" placeholder="例如 gpt-5.4-mini" /></label>

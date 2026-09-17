@@ -2644,6 +2644,7 @@
 .agent-model-provider-grid { display: grid; gap: 8px; }
 .agent-model-provider-grid label { display: grid; gap: 4px; color: var(--agent-muted); font-size: 10px; }
 .agent-model-provider-grid input,
+.agent-model-provider-grid select,
 .agent-model-provider-grid textarea {
   min-height: 30px;
   padding: 6px 8px;
@@ -3794,7 +3795,7 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-context-usage-summary small span:last-child { display: none; }
   .agent-context-usage-summary small span + span::before { display: none; }
   .agent-context-usage-chevron { display: none; }
-  .agent-context-usage-popover { right: -40px; width: min(320px, calc(100vw - 24px)); max-height: min(420px, 54dvh); }
+  .agent-context-usage-popover { position: fixed; left: 12px; right: 12px; bottom: 12px; width: auto; max-height: min(420px, 54dvh); z-index: 90; }
   .agent-composer textarea { height: 60px; min-height: 60px; margin: 4px 0; padding: 7px 2px; font-size: 13px; line-height: 1.55; }
   .agent-composer-footer { align-items: center; }
   .agent-followup-control { gap: 1px; }
