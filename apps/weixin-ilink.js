@@ -97,6 +97,8 @@ export class weixinIlink extends plugin {
         { reg: '^#agent开关$', fnc: 'toggleAgent', permission: 'master' },
         { reg: '^#agent停止$', fnc: 'stopAgent', permission: 'master' },
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
+        // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
+        { reg: '^\\/(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出|帮助|help)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
       ],
     });
     // 延迟启动轮询：Yunzai 装载完成后自起
@@ -880,6 +882,12 @@ export class weixinIlink extends plugin {
   }
 
   async sendTo(userId, text, tokenOverride = '') {
+    // QQ 斜杠指令执行期间（qqSlashCommand 注册了 sink）：回复改道 e.reply，不进微信发送通道
+    const sink = this.qqReplySinks?.get(userId);
+    if (sink) {
+      await sink(text);
+      return;
+    }
     const credentials = this.getCredentials();
     const token = tokenOverride || credentials?.botToken || '';
     const contextToken = sessionContexts.get(userId) || '';
@@ -1019,6 +1027,34 @@ export class weixinIlink extends plugin {
     lines.push(`图片消息：${typeof segmentApi?.image === 'function' ? 'segment 可用' : 'segment 不可用'} / 私聊接口：${canPrivate ? `可用（${typeof botApi.pickUser === 'function' ? 'pickUser' : 'pickFriend'}）` : '不可用'}`);
 
     await e.reply(lines.join('\n'));
+    return true;
+  }
+
+  // QQ 侧斜杠指令：与微信桥共用 handleSlashCommand（含 /模型 供应商透传），
+  // 执行期间把 sendTo 改道到 e.reply；/新建任务 的黏性任务模式不适用于群聊，改为引导
+  async qqSlashCommand(e) {
+    const text = String(e.msg || '').trim();
+    if (/^\/新建任务/i.test(text)) {
+      await e.reply([
+        'QQ 里不需要任务模式：直接发 #agent <任务描述> 即可（全权限、同一会话续跑）。',
+        '常用指令：/模型、/思考等级、/进展、/任务列表、/停止。',
+      ].join('\n'));
+      return true;
+    }
+    const senderKey = `qq:${e.user_id}`;
+    if (!this.qqReplySinks) this.qqReplySinks = new Map();
+    // sendReport 等路径可能用裸 user_id 寻址，两个键都挂上 sink
+    const sink = async replyText => { await e.reply(String(replyText || '')); };
+    this.qqReplySinks.set(senderKey, sink);
+    this.qqReplySinks.set(String(e.user_id), sink);
+    try {
+      await this.handleSlashCommand(senderKey, text, '');
+    } catch (error) {
+      await e.reply(`指令执行失败：${error.message}`).catch(() => { });
+    } finally {
+      this.qqReplySinks.delete(senderKey);
+      this.qqReplySinks.delete(String(e.user_id));
+    }
     return true;
   }
 
