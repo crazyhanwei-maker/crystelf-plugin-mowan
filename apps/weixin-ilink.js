@@ -98,7 +98,8 @@ export class weixinIlink extends plugin {
         { reg: '^#agent停止$', fnc: 'stopAgent', permission: 'master' },
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
-        { reg: '^\\/(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出|帮助|help)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
+        // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
+        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出|帮助|help)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
       ],
     });
     // 延迟启动轮询：Yunzai 装载完成后自起
@@ -1033,7 +1034,8 @@ export class weixinIlink extends plugin {
   // QQ 侧斜杠指令：与微信桥共用 handleSlashCommand（含 /模型 供应商透传），
   // 执行期间把 sendTo 改道到 e.reply；/新建任务 的黏性任务模式不适用于群聊，改为引导
   async qqSlashCommand(e) {
-    const text = String(e.msg || '').trim();
+    // TRSS 的 /→# 会把 /模型 变 #模型；统一剥掉前缀再按 '/命令' 交给 handleSlashCommand
+    const text = '/' + String(e.msg || '').trim().replace(/^[#/]+/, '');
     if (/^\/新建任务/i.test(text)) {
       await e.reply([
         'QQ 里不需要任务模式：直接发 #agent <任务描述> 即可（全权限、同一会话续跑）。',
