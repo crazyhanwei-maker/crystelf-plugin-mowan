@@ -536,7 +536,7 @@ export class weixinIlink extends plugin {
     if (!arg) {
       const state = getBridgeState();
       const lines = models.slice(0, 15).map((model, index) => `${index + 1}. ${model.name}${model.id !== model.name ? ` (${model.id})` : ''}${model.reasoning ? ' 🧠' : ''}`);
-      lines.push('', `当前：${state.model || '默认'}`, '选择：/模型 <编号或名称>；/模型 0 恢复默认');
+      lines.push('', `当前：${state.model || '默认'}${state.model && state.modelProviderId ? `（${state.modelProviderId}）` : ''}`, '选择：/模型 <编号或名称>；/模型 0 恢复默认');
       await this.sendTo(senderId, lines.join('\n'), token);
       return;
     }
@@ -559,8 +559,8 @@ export class weixinIlink extends plugin {
       await this.sendTo(senderId, `未找到模型「${arg}」，发 /模型 查看列表。`, token);
       return;
     }
-    setBridgeModel(picked.id);
-    await this.sendTo(senderId, `模型已切换：${picked.name}（${picked.providerId}）${picked.reasoning ? ' · 支持思考' : ''}。对下一个任务生效；运行中的任务不受影响。`, token);
+    setBridgeModel(picked.id, picked.providerId || '');
+    await this.sendTo(senderId, `模型已切换：${picked.name}（${picked.providerId || '默认'}）${picked.reasoning ? ' · 支持思考' : ''}。对下一个任务生效；运行中的任务不受影响。`, token);
   }
 
   // /思考等级 [编号|名称]
