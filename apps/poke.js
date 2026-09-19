@@ -290,11 +290,22 @@ async function decideFollowReply(e, windowState) {
     `现在群里有人又说了：${String(e.msg || '').trim()}`,
     `请你判断是否值得继续接一句。若不值得，请只输出 [[[silence]]]。若值得，请最多输出 ${Math.max(1, Number(pokeConfig.maxReplyMessages || 1))} 条短句，用空行或 \n---\n 分隔。`,
   ].join('\n\n');
-  const result = await AiCaller.callAiDirect(prompt, [], [], e, [], {
+  // 戳一戳回复输出上限：16384（32768 的一半）。
+// 旧默认 80 对思考型模型必坏——thinking 直接占满额度，回复为空；
+// 且历史数据配置里存的就是旧默认值 80，视为未配置一并升到新默认。
+const POKE_MAX_TOKENS_DEFAULT = 16384;
+const POKE_MAX_TOKENS_LEGACY = 80;
+function resolvePokeMaxTokens(value) {
+  const num = Number(value);
+  if (Number.isFinite(num) && num > 0 && num !== POKE_MAX_TOKENS_LEGACY) return num;
+  return POKE_MAX_TOKENS_DEFAULT;
+}
+
+const result = await AiCaller.callAiDirect(prompt, [], [], e, [], {
     systemPrompt: '你是在群聊里被戳后短暂继续观察的机器人。只在真的自然时才继续接话，不要强行插话。',
     model: pokeConfig.model || aiConfig.workingModel || aiConfig.modelType,
     temperature: pokeConfig.temperature ?? 0.9,
-    max_tokens: Math.max(80, Number(pokeConfig.maxTokens || 80)),
+    max_tokens: resolvePokeMaxTokens(pokeConfig.maxTokens),
     scene: 'poke_follow_reply',
     sessionId: `poke-follow:${e.group_id}`,
     groupId: e.group_id,
@@ -717,7 +728,7 @@ async function generateAiPokeReply(e, pokeConfig) {
     systemPrompt,
     model: model || undefined,
     temperature: pokeConfig.temperature ?? 0.9,
-    max_tokens: pokeConfig.maxTokens ?? 80,
+    max_tokens: resolvePokeMaxTokens(pokeConfig.maxTokens),
     messages,
     scene: 'poke_ai_reply',
     sessionId: e?.group_id ? `poke:${e.group_id}` : `poke:${e?.operator_id || 'unknown'}`,
