@@ -264,7 +264,7 @@ async function diagnoseDependencyFailuresWithAi(tasks = [], skipped = [], e = nu
       systemPrompt: '你是 Node.js 依赖安装错误排查助手。你只能用中文给出简洁、可执行的原因和修复建议。',
       model: aiConfig.workingModel || aiConfig.modelType || aiConfig.model,
       temperature: 0.2,
-      max_tokens: 520,
+      max_tokens: 16384,
       scene: 'dependency_repair_diagnosis',
       sessionId: e?.group_id ? `group:${e.group_id}:dependency-repair` : 'dependency-repair',
       groupId: e?.group_id,

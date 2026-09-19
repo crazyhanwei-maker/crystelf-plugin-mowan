@@ -70,7 +70,7 @@ function normalizeAiReviewConfig(value = {}) {
     autoRejectIllegal: source.autoRejectIllegal !== false,
     model: String(source.model || '').trim(),
     temperature: clampNumber(source.temperature, 0, 2, 0),
-    maxTokens: Math.round(clampNumber(source.maxTokens, 100, 1000, 300)),
+    maxTokens: Math.round(clampNumber(source.maxTokens, 100, 16384, 16384)),
     policy: policy || DEFAULT_TITLE_REVIEW_POLICY,
   };
 }

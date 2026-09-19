@@ -132,7 +132,7 @@ async function generateAiWelcomeText(e, welcomeCfg = {}) {
       systemPrompt: '你只负责生成群聊新人欢迎语。输出最终欢迎语本身，不要补充说明。',
       model: aiConfig.workingModel || aiConfig.modelType || aiConfig.model,
       temperature: aiConfig.welcomeTemperature ?? aiConfig.temperature ?? 0.8,
-      max_tokens: 120,
+      max_tokens: 16384,
       scene: 'ai_welcome',
       sessionId: `welcome:${groupId}`,
       groupId,

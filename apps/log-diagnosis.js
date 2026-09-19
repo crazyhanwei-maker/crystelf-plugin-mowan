@@ -79,7 +79,7 @@ export default class CrystelfLogDiagnosis extends plugin {
       const result = await diagnoser.diagnosePayload({
         source: 'auto',
         includeWarnings: true,
-        maxTokens: 1200,
+        maxTokens: 16384,
       });
       try {
         const profile = ConfigControl.get('profile') || {};

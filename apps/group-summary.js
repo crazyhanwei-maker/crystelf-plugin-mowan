@@ -210,7 +210,7 @@ async function generateGroupSummaryText(groupId = '', groupName = '', dateKey = 
     systemPrompt: '你是群聊日报助手，只负责把聊天记录总结成适合发回群里的中文日报。',
     model: cfg.model || aiConfig.workingModel || aiConfig.modelType || aiConfig.model,
     temperature: cfg.temperature,
-    max_tokens: cfg.maxTokens,
+    max_tokens: Number(cfg.maxTokens) > 0 ? (Number(cfg.maxTokens) === 800 ? 16384 : Number(cfg.maxTokens)) : 16384,  // 旧默认 800 对思考型模型必坏，自动升级
     scene: 'daily_group_summary',
     sessionId: `group:${groupId}:daily-summary:${dateKey}`,
     groupId,

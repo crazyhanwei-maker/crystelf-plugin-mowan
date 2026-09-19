@@ -181,7 +181,7 @@
     "?temperature": "每日总结生成温度",
     "temperature": 0.3,
     "?maxTokens": "每日总结最大输出 token",
-    "maxTokens": 800,
+    "maxTokens": 16384,
     "?includeCommands": "是否把 # / 开头的命令消息也纳入总结",
     "includeCommands": false,
     "?imageEnabled": "是否把群聊总结渲染成图片发送，失败时自动回退文本",
