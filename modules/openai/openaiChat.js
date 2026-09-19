@@ -9,6 +9,7 @@ import {
   providerLabelForProtocol,
   resolveAiProtocol,
 } from './protocolAdapter.js';
+import { lookupModelOutputLimit } from '../../lib/ai/modelCatalog.js';
 
 const ALLOWED_MESSAGE_ROLES = new Set(['system', 'user', 'assistant', 'tool']);
 
@@ -21,7 +22,7 @@ async function fetchAnthropicWithBudgetBoost(request) {
   }
   const boosted = {
     ...request,
-    body: { ...request.body, max_tokens: Math.min((Number(request.body?.max_tokens) || 8192) * 2, 32768) },
+    body: { ...request.body, max_tokens: Math.max(Number(request.body?.max_tokens) || 0, Math.min((Number(request.body?.max_tokens) || 8192) * 2, lookupModelOutputLimit(request.body.model) || 32768)) },
   };
   logger.warn(`[crystelf-ai][anthropic] 思考占满输出额度（blocks=${(parsed.blockTypes || []).join(',')}），max_tokens 提升到 ${boosted.body.max_tokens} 重试一次`);
   return fetchAnthropicMessages(boosted);
@@ -251,6 +252,7 @@ class OpenaiChat {
       messages,
       timeout: this.timeout,
       maxTokens: max_tokens || this.maxTokens,
+      outputLimit: lookupModelOutputLimit(model),
       userAgentOptions: { userAgent: this.userAgent },
       tools,
     });

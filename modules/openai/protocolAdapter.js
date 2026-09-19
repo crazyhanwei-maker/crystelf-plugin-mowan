@@ -194,11 +194,13 @@ export function buildAnthropicMessagesUrl(baseUrl = '') {
 }
 
 // 生成 Anthropic Messages API 的 fetch 参数：{ url, headers, body }
-export function buildAnthropicRequest({ baseUrl, apiKey, model, temperature, messages, timeout, maxTokens, userAgentOptions, tools } = {}) {
+export function buildAnthropicRequest({ baseUrl, apiKey, model, temperature, messages, timeout, maxTokens, outputLimit, userAgentOptions, tools } = {}) {
   const { system, messages: anthropicMessages } = mapMessagesForAnthropic(messages);
+  // 默认输出上限：优先 models.dev 里该模型的真实输出上限（封顶 32768 防网关挑剔），未知模型回退 8192
+  const outputCap = Number.isFinite(Number(outputLimit)) && Number(outputLimit) > 0 ? Math.min(Number(outputLimit), 32768) : 0;
   const body = {
     model: String(model || ''),
-    max_tokens: Number.isFinite(Number(maxTokens)) && Number(maxTokens) > 0 ? Number(maxTokens) : DEFAULT_MAX_TOKENS,
+    max_tokens: Number.isFinite(Number(maxTokens)) && Number(maxTokens) > 0 ? Number(maxTokens) : (outputCap || DEFAULT_MAX_TOKENS),
     messages: anthropicMessages,
   };
   // Anthropic temperature 取值 0-1（OpenAI 0-2），超界会被 400 拒绝
