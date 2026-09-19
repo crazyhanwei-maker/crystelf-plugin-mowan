@@ -3843,3 +3843,156 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-context-usage-trigger { max-width: 112px; }
   .agent-context-usage-summary strong { max-width: 66px; }
 }
+
+/* 自定义思考/模型入口的高亮引导：弹层选"自定义"后面板自动展开，闪烁指示输入框位置 */
+@keyframes agentInputFlash {
+  0%, 45% {
+    box-shadow: 0 0 0 3px var(--agent-accent-soft), 0 0 0 1.5px var(--agent-accent);
+    border-color: var(--agent-accent);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(20, 128, 122, 0);
+  }
+}
+
+.agent-workbench-page .agent-input-flash {
+  animation: agentInputFlash 1.8s ease-out;
+}
+
+/* 模型选择二级菜单：一级供应商 / 二级模型列表 */
+.agent-model-menu-list { display: flex; align-items: stretch; gap: 3px; padding: 5px; max-height: min(380px, 52dvh); }
+.agent-model-menu .agent-model-rail {
+  display: grid;
+  gap: 1px;
+  align-content: start;
+  flex: 0 0 124px;
+  max-height: inherit;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.agent-workbench-page .agent-model-provider {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 7px 8px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.agent-workbench-page .agent-model-provider:hover { background: var(--agent-surface-soft) !important; }
+.agent-workbench-page .agent-model-provider.is-active { background: var(--agent-accent-soft) !important; }
+.agent-model-provider span { overflow: hidden; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.agent-model-provider small { overflow: hidden; color: var(--agent-muted); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+.agent-workbench-page .agent-model-pane {
+  display: grid;
+  gap: 1px;
+  align-content: start;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: inherit;
+  overflow-y: auto;
+  padding-left: 5px;
+  border-left: 1px solid var(--agent-line);
+  scrollbar-width: thin;
+}
+.agent-model-pane-hint { margin: 10px 6px; color: var(--agent-muted); font-size: 11px; line-height: 1.6; }
+
+/* 管理模型双栏改版：左供应商列表（状态点） / 右编辑区（字段 + 模型徽章行） */
+.agent-model-manager-body { display: grid; gap: 10px; grid-template-rows: minmax(0, 1fr) auto; }
+.agent-model-manager-layout { display: flex; align-items: stretch; gap: 10px; min-height: 0; }
+.agent-model-manager-rail {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  flex: 0 0 196px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  border-right: 1px solid var(--agent-line);
+  scrollbar-width: thin;
+}
+.agent-workbench-page .agent-model-manager-provider {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 8px 26px 8px 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.agent-workbench-page .agent-model-manager-provider:hover { background: var(--agent-surface-soft) !important; }
+.agent-workbench-page .agent-model-manager-provider.is-active {
+  background: var(--agent-accent-soft) !important;
+  border-color: var(--agent-accent) !important;
+}
+.agent-model-manager-provider span { overflow: hidden; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.agent-model-manager-provider small { overflow: hidden; color: var(--agent-muted); font-size: 9.5px; text-overflow: ellipsis; white-space: nowrap; }
+.agent-model-dot {
+  position: absolute;
+  top: 12px;
+  right: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--agent-line-strong);
+}
+.agent-model-dot.is-ok { background: #16a34a; }
+.agent-model-manager-editor { display: grid; gap: 10px; align-content: start; flex: 1 1 auto; min-width: 0; overflow-y: auto; padding-left: 2px; scrollbar-width: thin; }
+.agent-manager-editor-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.agent-manager-editor-head strong { font-size: 14px; }
+.agent-manager-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.agent-manager-field-grid label { display: grid; gap: 4px; color: var(--agent-muted); font-size: 10px; }
+.agent-manager-field-grid input,
+.agent-manager-field-grid select {
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+.agent-manager-key-wrap { display: flex; gap: 6px; }
+.agent-manager-key-wrap input { flex: 1; min-width: 0; }
+.agent-manager-key-eye { padding: 0 8px; border: 1px solid var(--agent-line); border-radius: 7px; background: var(--agent-surface); cursor: pointer; }
+.agent-manager-models-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--agent-muted); font-size: 10px; font-weight: 900; text-transform: none; }
+.agent-manager-model-list { display: grid; gap: 5px; }
+.agent-manager-model-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-surface-soft);
+}
+.agent-manager-model-row strong { flex: 0 1 auto; overflow: hidden; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.agent-manager-model-row .agent-manager-model-remove { margin-left: auto; border: 0; background: transparent; cursor: pointer; opacity: 0.55; }
+.agent-manager-model-row .agent-manager-model-remove:hover { opacity: 1; }
+.agent-manager-model-badges { display: flex; flex: 1 1 auto; gap: 4px; justify-content: flex-end; }
+.agent-manager-badge { padding: 1px 6px; border: 1px solid var(--agent-line); border-radius: 999px; color: var(--agent-muted); font-size: 9.5px; }
+.agent-manager-model-add-row input {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px dashed var(--agent-line-strong);
+  border-radius: 8px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 12px;
+  font-family: inherit;
+}

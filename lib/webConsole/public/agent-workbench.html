@@ -308,9 +308,14 @@
             <button id="agent-model-manager-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
           </header>
           <div class="agent-settings-body agent-model-manager-body">
-            <p class="agent-model-manager-hint">每个供应商填 API 地址与密钥，模型一行一个。密钥留空表示保持已保存的值。</p>
-            <div id="agent-model-manager-list"></div>
-            <button id="agent-model-manager-add" type="button" class="agent-quiet-btn">＋ 添加供应商</button>
+            <div class="agent-model-manager-layout">
+              <aside class="agent-model-manager-rail">
+                <div id="agent-model-manager-list" class="agent-model-manager-rail-list"></div>
+                <button id="agent-model-manager-add" type="button" class="agent-quiet-btn">＋ 添加供应商</button>
+              </aside>
+              <div id="agent-model-manager-editor" class="agent-model-manager-editor"></div>
+            </div>
+            <p class="agent-model-manager-hint">密钥留空表示保持已保存的值；保存后立即生效。徽章来自 models.dev 模型表（K/M = 上下文窗口，视觉 = 支持图片输入）。</p>
           </div>
           <footer class="agent-settings-footer">
             <button id="agent-model-manager-save" type="button" class="agent-quiet-btn is-primary">保存</button>
