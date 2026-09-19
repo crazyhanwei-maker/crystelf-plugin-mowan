@@ -97,6 +97,8 @@ export class weixinIlink extends plugin {
         { reg: '^#agent开关$', fnc: 'toggleAgent', permission: 'master' },
         { reg: '^#agent停止$', fnc: 'stopAgent', permission: 'master' },
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
+        // 模型提问转发到 QQ 后的作答/跳过入口
+        { reg: '^#(?:回答|跳过)(?:\\s+([\\s\\S]+))?$', fnc: 'answerQuestion', permission: 'master' },
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
         { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出|帮助|help)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
@@ -1060,6 +1062,40 @@ export class weixinIlink extends plugin {
     return true;
   }
 
+  // QQ 侧模型提问作答：#回答 编号/自定义答案，#回答 跳过 = 拒绝（模型自行决定）
+  async answerQuestion(e) {
+    const senderKey = `qq:${e.user_id}`;
+    const raw = String(e.msg || '').trim();
+    const isSkip = /^#跳过/.test(raw);
+    const text = isSkip ? '跳过' : raw.replace(/^#回答\s*/i, '').trim();
+    const pending = this.takePendingQuestion(senderKey);
+    if (!pending) {
+      await e.reply('当前没有待回答的问题。').catch(() => { });
+      return true;
+    }
+    try {
+      if (/^(跳过|skip)$/i.test(text)) {
+        await this.getBridge(senderKey).rejectQuestion(pending.taskId, pending.requestId);
+        this.clearPendingQuestion(senderKey);
+        await e.reply('已跳过该问题，模型会自行决定下一步。');
+        return true;
+      }
+      const numeric = /^\d+$/.test(text) ? pending.options[Number(text) - 1] || null : null;
+      if (/^\d+$/.test(text) && !numeric) {
+        await e.reply(`编号超出范围（1~${pending.options.length}），请重新 #回答。`);
+        this.rememberPendingQuestion(senderKey, pending);
+        return true;
+      }
+      await this.getBridge(senderKey).answerQuestion(pending.taskId, pending.requestId, [numeric || text]);
+      this.clearPendingQuestion(senderKey);
+      await e.reply(`已回答：${String(numeric || text).slice(0, 50)}`);
+    } catch (error) {
+      this.rememberPendingQuestion(senderKey, pending);
+      await e.reply(`回答提交失败：${error.message}`);
+    }
+    return true;
+  }
+
   async toggleAgent(e) {
     const next = !getBridgeState().enabled;
     setBridgeEnabled(next);
@@ -1094,6 +1130,20 @@ export class weixinIlink extends plugin {
     try {
       await bridge.runTaskWithReport(promptText, {
         onProgressReply: line => e.reply(line).catch(() => { }),
+        // 模型提问转发到 QQ：转编号清单，用 #回答 作答（微信侧同款机制）
+        onQuestionReply: ({ taskId, request }) => {
+          const senderKey = `qq:${e.user_id}`;
+          const firstQuestion = (request?.questions || [])[0] || {};
+          const options = (firstQuestion.options || []).map(option => String(option?.label || '').trim()).filter(Boolean);
+          this.rememberPendingQuestion(senderKey, {
+            taskId,
+            requestId: request?.id || '',
+            options,
+            questions: request?.questions || [],
+          });
+          const header = firstQuestion.header ? `【${firstQuestion.header}】\n` : '';
+          e.reply(`❓ ${header}${this.formatQuestion(this.takePendingQuestion(senderKey))}\n（回复 #回答 编号 或 #回答 你的答案；#回答 跳过 让模型自行决定）`).catch(() => { });
+        },
         // 与微信侧一致：长结论渲染成图、失败缓存供「重试」
         onResultReply: (result, meta) => {
           if (result?.ok === false && meta?.prompt) this.stashFailedPrompt(`qq:${e.user_id}`, meta.prompt);
