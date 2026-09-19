@@ -235,14 +235,23 @@ class OpenaiChat {
   // anthropic 时把 OpenAI 形态的请求/响应双向转换，调用方无感
   async createChatCompletion({ model, messages, tools, temperature, max_tokens }) {
     if (this.protocol !== 'anthropic') {
-      return this.openai.chat.completions.create({
+      const request = {
         model,
         messages,
         ...(tools ? { tools } : {}),
         temperature,
         ...(max_tokens ? { max_tokens } : {}),
         stream: false,
-      });
+      };
+      let completion = await this.openai.chat.completions.create(request);
+      // 思考型模型（glm 雷霆思考等）可能把额度全花在 reasoning_content 上返回空正文：
+      // 自动重试一次，大概率能拿到正文
+      const message = completion?.choices?.[0]?.message;
+      if (message && !String(message.content || '').trim()
+        && String(message.reasoning_content || message.reasoning || '').trim()) {
+        completion = await this.openai.chat.completions.create(request);
+      }
+      return completion;
     }
     const request = buildAnthropicRequest({
       baseUrl: this.baseUrl,
