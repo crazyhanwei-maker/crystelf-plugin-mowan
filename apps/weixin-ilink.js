@@ -21,6 +21,9 @@ import {
   getBridgeState,
   setBridgeEnabled,
   listAvailableModels,
+  setBridgePendingQuestion,
+  getBridgePendingQuestion,
+  clearBridgePendingQuestion,
   setBridgeModel,
   setBridgeVariant,
 } from '../lib/agent/agentChatBridge.js';
@@ -641,14 +644,19 @@ export class weixinIlink extends plugin {
   rememberPendingQuestion(senderId, entry) {
     if (!this.pendingQuestions) this.pendingQuestions = new Map();
     // entry 显式带 askedAt 时保留（重挂/测试回填），否则从现在起算
-    this.pendingQuestions.set(senderId, { askedAt: Date.now(), ...entry });
+    const stored = { askedAt: Date.now(), ...entry };
+    this.pendingQuestions.set(senderId, stored);
+    // 同步到桥状态文件：bot 重启后 #回答 仍可用（内存映射会被重启清空）
+    setBridgePendingQuestion(senderId, stored);
   }
 
   takePendingQuestion(senderId) {
-    const entry = this.pendingQuestions?.get(senderId) || null;
+    // 内存映射优先，重启后从桥状态文件恢复（跨重启可作答）
+    let entry = this.pendingQuestions?.get(senderId) || getBridgePendingQuestion(senderId);
     if (!entry) return null;
-    if (Date.now() - entry.askedAt > 10 * 60 * 1000) {
-      this.pendingQuestions.delete(senderId);
+    if (Date.now() - (entry.askedAt || 0) > 10 * 60 * 1000) {
+      this.pendingQuestions?.delete(senderId);
+      clearBridgePendingQuestion(senderId);
       return null;
     }
     return entry;
@@ -656,6 +664,7 @@ export class weixinIlink extends plugin {
 
   clearPendingQuestion(senderId) {
     this.pendingQuestions?.delete(senderId);
+    clearBridgePendingQuestion(senderId);
   }
 
   // 把模型的提问渲染成编号选择清单（微信没有点选卡片，用数字回复）
