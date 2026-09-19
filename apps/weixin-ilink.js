@@ -28,6 +28,14 @@ import {
   setBridgeVariant,
 } from '../lib/agent/agentChatBridge.js';
 
+// ── 跨消息状态必须放模块级 ──
+// Miao-Yunzai 的 loader 每条消息都会 new 一遍插件类（loader.js:211），
+// 实例字段（this.xxx）在 QQ 侧每条消息都是新的，跨消息状态全部失效。
+const bridgeAttachmentStash = new Map();
+const bridgeFailedPromptCache = new Map();
+const bridgeFullTextCache = new Map();
+let bridgeTaskSwitchChoices = new Map();
+
 const logger = globalThis.logger || console;
 
 const MessageTypeUSER = 1; // ilink message_type: 1=USER 2=BOT
@@ -161,15 +169,15 @@ export class weixinIlink extends plugin {
 
   // 失败任务的可重试缓存：senderId -> { prompt, at }（30 分钟内回复「重试」可原样重跑）
   stashFailedPrompt(senderId, prompt) {
-    if (!this.failedPromptCache) this.failedPromptCache = new Map();
-    this.failedPromptCache.set(senderId, { prompt: String(prompt || ''), at: Date.now() });
+    if (!bridgeFailedPromptCache) bridgeFailedPromptCache = new Map();
+    bridgeFailedPromptCache.set(senderId, { prompt: String(prompt || ''), at: Date.now() });
   }
 
   getFailedPrompt(senderId) {
-    const entry = this.failedPromptCache?.get(senderId) || null;
+    const entry = bridgeFailedPromptCache?.get(senderId) || null;
     if (!entry) return null;
     if (Date.now() - entry.at > 30 * 60 * 1000) {
-      this.failedPromptCache.delete(senderId);
+      bridgeFailedPromptCache.delete(senderId);
       return null;
     }
     return entry.prompt;
@@ -177,21 +185,21 @@ export class weixinIlink extends plugin {
 
   // 待投喂给 Agent 的图片：senderId -> { attachments, askedAt }（5 分钟过期）
   stashAttachments(senderId, attachments) {
-    if (!this.attachmentStash) this.attachmentStash = new Map();
+    if (!bridgeAttachmentStash) bridgeAttachmentStash = new Map();
     const existing = this.takeAttachments(senderId) || [];
-    this.attachmentStash.set(senderId, { attachments: [...existing, ...attachments].slice(0, 5), askedAt: Date.now() });
+    bridgeAttachmentStash.set(senderId, { attachments: [...existing, ...attachments].slice(0, 5), askedAt: Date.now() });
   }
 
   takeAttachments(senderId) {
-    const entry = this.attachmentStash?.get(senderId) || null;
+    const entry = bridgeAttachmentStash?.get(senderId) || null;
     if (!entry) return null;
-    this.attachmentStash.delete(senderId); // take 语义：取走即清空
+    bridgeAttachmentStash.delete(senderId); // take 语义：取走即清空
     if (Date.now() - entry.askedAt > 5 * 60 * 1000) return null;
     return entry.attachments;
   }
 
   clearAttachments(senderId) {
-    this.attachmentStash?.delete(senderId);
+    bridgeAttachmentStash?.delete(senderId);
   }
 
   async handleIncoming(update, token) {
@@ -244,10 +252,10 @@ export class weixinIlink extends plugin {
     }
 
     // ── 任务列表后的编号：切换到对应会话（仅刚看完列表后的下一条数字消息生效）──
-    if (/^\d+$/.test(trimmed) && this.taskSwitchChoices?.has(`${senderId}:${Number(trimmed) - 1}`)) {
-      const targetId = this.taskSwitchChoices.get(`${senderId}:${Number(trimmed) - 1}`);
-      this.taskSwitchChoices.delete(`${senderId}:${Number(trimmed) - 1}`);
-      this.taskSwitchChoices.clear(); // 一次性选择：消费任意编号后整表作废（避免残留旧列表误触）
+    if (/^\d+$/.test(trimmed) && bridgeTaskSwitchChoices?.has(`${senderId}:${Number(trimmed) - 1}`)) {
+      const targetId = bridgeTaskSwitchChoices.get(`${senderId}:${Number(trimmed) - 1}`);
+      bridgeTaskSwitchChoices.delete(`${senderId}:${Number(trimmed) - 1}`);
+      bridgeTaskSwitchChoices.clear(); // 一次性选择：消费任意编号后整表作废（避免残留旧列表误触）
       try {
         const switched = this.getBridge(senderId).switchSession(targetId);
         let ctxLine = '';
@@ -264,8 +272,8 @@ export class weixinIlink extends plugin {
       return;
     }
     // 数字没匹配到切换选择 → 清掉过期选择表，走正常流程
-    if (/^\d+$/.test(trimmed) && this.taskSwitchChoices?.size) {
-      this.taskSwitchChoices.clear();
+    if (/^\d+$/.test(trimmed) && bridgeTaskSwitchChoices?.size) {
+      bridgeTaskSwitchChoices.clear();
     }
 
     // ── 「重试」：30 分钟内失败过的任务原样重跑（描述 + 模型/思考等级都是当前配置）──
@@ -470,7 +478,7 @@ export class weixinIlink extends plugin {
         return `${index + 1}. ${ICONS[task.status] || '·'} ${warn}${task.title.slice(0, 22)}（${task.status}，${Math.max(1, Math.round(task.elapsedMs / 1000))} 秒${queue}${ctx}）`;
       });
       // 记住编号 -> taskId：接下来一条纯数字消息会被当作"切换到该会话"
-      this.taskSwitchChoices = new Map(tasks.map((task, index) => [`${senderId}:${index}`, task.id]));
+      bridgeTaskSwitchChoices = new Map(tasks.map((task, index) => [`${senderId}:${index}`, task.id]));
       await this.sendTo(senderId, [
         '最近任务',
         ...lines,
@@ -794,15 +802,15 @@ export class weixinIlink extends plugin {
 
   // 长结论渲染成图片所需的临时态：senderId -> { text, askedAt }（10 分钟过期）
   stashFullText(senderId, text) {
-    if (!this.fullTextCache) this.fullTextCache = new Map();
-    this.fullTextCache.set(senderId, { text: String(text || ''), askedAt: Date.now() });
+    if (!bridgeFullTextCache) bridgeFullTextCache = new Map();
+    bridgeFullTextCache.set(senderId, { text: String(text || ''), askedAt: Date.now() });
   }
 
   takeFullText(senderId) {
-    const entry = this.fullTextCache?.get(senderId) || null;
+    const entry = bridgeFullTextCache?.get(senderId) || null;
     if (!entry) return null;
     if (Date.now() - entry.askedAt > 10 * 60 * 1000) {
-      this.fullTextCache.delete(senderId);
+      bridgeFullTextCache.delete(senderId);
       return null;
     }
     return entry.text;
