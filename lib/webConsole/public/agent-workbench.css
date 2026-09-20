@@ -3982,29 +3982,32 @@ body.agent-settings-modal-open { overflow: hidden; }
 }
 .agent-manager-model-row strong { flex: 0 1 auto; overflow: hidden; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .agent-manager-model-row .agent-manager-model-name { flex: 1 1 30%; min-width: 90px; }
-.agent-manager-model-row .agent-manager-model-context {
-  flex: 0 0 88px;
-  min-height: 26px;
+.agent-workbench-page .agent-model-form-dialog { width: min(480px, 100%); height: auto; max-height: min(640px, 90dvh); }
+.agent-form-field { display: grid; gap: 4px; color: var(--agent-muted); font-size: 10px; }
+.agent-form-field input,
+.agent-form-field select {
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 12px;
+  font-family: inherit;
+}
+.agent-form-field span i { color: #dc2626; font-style: normal; margin-left: 2px; }
+.agent-workbench-page .agent-manager-model-edit {
+  display: inline-flex;
+  align-items: center;
   padding: 3px 6px;
-  border: 1px solid var(--agent-line);
+  border: 0;
   border-radius: 6px;
-  background: var(--agent-surface);
+  background: transparent;
   color: var(--agent-ink);
-  font-size: 11px;
-  font-family: inherit;
-  text-align: right;
+  cursor: pointer;
 }
-.agent-manager-model-row .agent-manager-model-vision {
-  flex: 0 0 92px;
-  min-height: 26px;
-  padding: 3px 4px;
-  border: 1px solid var(--agent-line);
-  border-radius: 6px;
-  background: var(--agent-surface);
-  color: var(--agent-ink);
-  font-size: 11px;
-  font-family: inherit;
-}
+.agent-workbench-page .agent-manager-model-edit:hover { background: var(--agent-surface-soft); }
+.agent-workbench-page .agent-manager-model-edit svg { width: 14px; height: 14px; }
 .agent-manager-model-row .agent-manager-model-remove {
   display: inline-flex;
   align-items: center;

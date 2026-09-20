@@ -322,6 +322,24 @@
           </footer>
         </section>
       </div>
+  <div id="agent-model-form-mask" class="agent-settings-mask hidden">
+        <section class="agent-settings-dialog agent-model-form-dialog" role="dialog" aria-label="添加模型">
+          <header class="agent-settings-head">
+            <strong id="agent-model-form-title">添加模型</strong>
+            <button id="agent-model-form-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+          </header>
+          <div class="agent-settings-body agent-model-form-body">
+            <label class="agent-form-field"><span>模型 ID<i>*</i></span><input id="agent-model-form-name" type="text" maxlength="160" placeholder="模型 ID" /></label>
+            <label class="agent-form-field"><span>上下文窗口（token）</span><input id="agent-model-form-context" type="text" inputmode="numeric" maxlength="12" placeholder="留空按 models.dev 模型表" /></label>
+            <label class="agent-form-field"><span>最大输出 Token</span><input id="agent-model-form-output" type="text" inputmode="numeric" maxlength="12" placeholder="留空自动（查表封顶 32768）" /></label>
+            <label class="agent-form-field agent-form-switch-field"><span>支持视觉（图片输入）</span><select id="agent-model-form-vision"><option value="">自动（按模型表）</option><option value="true">支持视觉</option><option value="false">纯文本</option></select></label>
+          </div>
+          <footer class="agent-settings-footer">
+            <button id="agent-model-form-cancel" type="button" class="agent-quiet-btn">取消</button>
+            <button id="agent-model-form-save" type="button" class="agent-quiet-btn is-primary">保存</button>
+          </footer>
+        </section>
+      </div>
       <div id="agent-settings-mask" class="agent-settings-mask hidden" role="dialog" aria-modal="true" aria-labelledby="agent-settings-title">
     <section id="agent-settings-panel" class="agent-settings-dialog">
       <header class="agent-settings-head">
