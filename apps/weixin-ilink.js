@@ -112,7 +112,7 @@ export class weixinIlink extends plugin {
         { reg: '^#(?:回答|跳过)(?:\\s+([\\s\\S]+))?$', fnc: 'answerQuestion', permission: 'master' },
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
-        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出|帮助|help)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
+        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
       ],
     });
     // 延迟启动轮询：Yunzai 装载完成后自起
@@ -356,6 +356,7 @@ export class weixinIlink extends plugin {
     const cmd = rawCmd.toLowerCase();
     const arg = rest.join(' ').trim();
 
+    // 微信侧保留 /帮助；QQ 侧 #帮助 已从规则表移除（归还原插件）
     if (cmd === '帮助' || cmd === 'help' || cmd === 'start') {
       await this.sendTo(senderId, this.buildGuide(), token);
       return;
@@ -1055,6 +1056,8 @@ export class weixinIlink extends plugin {
   async qqSlashCommand(e) {
     // TRSS 的 /→# 会把 /模型 变 #模型；统一剥掉前缀再按 '/命令' 交给 handleSlashCommand
     const text = '/' + String(e.msg || '').trim().replace(/^[#/]+/, '');
+    // #帮助 是其他插件的指令：QQ 侧明确不接管（防御，规则表已不放行）
+    if (/^\/(帮助|help)$/i.test(text)) return false;
     if (/^\/新建任务/i.test(text)) {
       await e.reply([
         'QQ 里不需要任务模式：直接发 #agent <任务描述> 即可（全权限、同一会话续跑）。',
