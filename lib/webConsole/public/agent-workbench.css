@@ -4038,3 +4038,13 @@ body.agent-settings-modal-open { overflow: hidden; }
   font-size: 12px;
   font-family: inherit;
 }
+
+/* 二级模型菜单里的元数据小徽章（128K / 视觉 / 纯文本） */
+.agent-model-item .agent-model-item-chips { display: inline-flex; gap: 4px; margin-left: 8px; }
+.agent-model-item .agent-model-item-chips small {
+  padding: 1px 6px;
+  border: 1px solid var(--agent-line);
+  border-radius: 999px;
+  color: var(--agent-muted);
+  font-size: 9.5px;
+}
