@@ -112,7 +112,7 @@ export class weixinIlink extends plugin {
         { reg: '^#(?:回答|跳过)(?:\\s+([\\s\\S]+))?$', fnc: 'answerQuestion', permission: 'master' },
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
-        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|取消|退出)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
+        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|新建会话|会话重置|重置会话|取消|退出)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
       ],
     });
     // 延迟启动轮询：Yunzai 装载完成后自起
@@ -488,14 +488,14 @@ export class weixinIlink extends plugin {
       ].join(String.fromCharCode(10)), token);
       return;
     }
-    if (cmd === '会话重置' || cmd === '重置会话') {
+    if (cmd === '新建会话' || cmd === '会话重置' || cmd === '重置会话') {
       const bridge = this.getBridge(senderId);
       if (await bridge.isBusy()) {
-        await this.sendTo(senderId, '任务执行中不能重置会话，先发 /停止。', token);
+        await this.sendTo(senderId, '任务执行中不能新建会话，先发 /停止。', token);
         return;
       }
       bridge.resetSession?.();
-      await this.sendTo(senderId, '上下文已清空：下一条任务从全新会话开始。', token);
+      await this.sendTo(senderId, '✅ 已切到全新会话：下一条 #agent 任务不再接着之前的上下文（旧任务仍可在 /任务列表 里回复编号切回）。', token);
       return;
     }
     if (cmd === '灵晶状态' || cmd === '状态') {
@@ -622,6 +622,7 @@ export class weixinIlink extends plugin {
       '',
       '② #agent <任务描述> —— 单次提交任务（不进入任务模式）',
       '   示例：#agent 检查 rssCache 的过期清理逻辑是否有内存泄漏',
+      '   默认接着上一条任务的会话继续；想从零开始，先发 /新建会话',
       '',
       '③ #agent停止 或 /停止 —— 中断当前任务',
       '',
@@ -629,7 +630,8 @@ export class weixinIlink extends plugin {
       '',
       '⑤ #灵晶状态 或 /状态 —— 查看插件运行状态',
       '',
-      '⑥ /任务列表 · /会话重置 · /归档 —— 任务管理',
+      '⑥ /任务列表 · /归档 —— 任务管理',
+      '   /新建会话（或 /会话重置）—— 丢弃上下文：下一条任务从全新会话开始',
       '⑦ /恢复 —— 继续服务重启时被中断的任务 · /压缩 —— 手动压缩上下文',
       '',
       '说明：任务以全权限模式在服务器上真实执行，可修改文件、联网、执行命令，请谨慎描述任务。',
