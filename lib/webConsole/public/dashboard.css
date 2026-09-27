@@ -2330,3 +2330,70 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Flarum 风格面板：扁平浅灰块、无投影、紧凑标题、无左侧色条（仅总览页） ──
+   注意 console-modern.css 由 shell 在本文件之后注入，同权重会盖过这里，
+   因此面板本体用 .dashboard-page .console-app-shell .panel 三级权重压住 */
+.dashboard-page .console-app-shell .panel {
+  border: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel-bg));
+  box-shadow: none;
+  padding: 16px 18px;
+}
+
+.dashboard-page .panel h2,
+.dashboard-page .panel h3 {
+  padding-left: 0;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.dashboard-page .panel h2::before,
+.dashboard-page .panel h3::before {
+  content: none;
+}
+
+/* 标题前的小图标：沿用控制台侧边栏的字符图标语言 */
+.dashboard-page .panel h2::before {
+  display: inline-block;
+  width: auto;
+  margin-right: 8px;
+  background: none;
+  color: var(--soft-text);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.dashboard-page .console-health-overview-panel h2::before {
+  content: '✓';
+}
+
+.dashboard-page .operation-task-center-panel h2::before {
+  content: '⏱';
+}
+
+.dashboard-page .public-security-panel h2::before {
+  content: '◇';
+}
+
+.dashboard-page .dashboard-control-panel h2::before {
+  content: '◌';
+}
+
+.dashboard-page .panel:has(#overview-cards) h2::before {
+  content: '▤';
+}
+
+.dashboard-page .collapsible-toggle-mark {
+  font-size: 13px;
+  color: var(--soft-text);
+  vertical-align: 1px;
+}
+
+.dashboard-page .panel .section-head .actions .link-btn,
+.dashboard-page .panel .section-head .actions .mini-btn {
+  background: var(--panel-bg);
+}

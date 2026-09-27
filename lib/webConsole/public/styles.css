@@ -6410,3 +6410,59 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     display: none;
   }
 }
+
+/* ── Flarum 风格面板（通用）：body 加 flarum-flat 类生效，任意页面可复用 ──
+   三级权重压住 shell 后注入的 console-modern.css 同权重规则 */
+body.flarum-flat .console-app-shell .panel {
+  border: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 6%, var(--panel-bg));
+  box-shadow: none;
+  padding: 16px 18px;
+}
+
+body.flarum-flat .panel h2,
+body.flarum-flat .panel h3 {
+  padding-left: 0;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+body.flarum-flat .panel h2::before,
+body.flarum-flat .panel h3::before {
+  content: none;
+}
+
+body.flarum-flat .panel h2::before {
+  display: inline-block;
+  width: auto;
+  margin-right: 8px;
+  background: none;
+  color: var(--soft-text);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+body.flarum-flat .collapsible-toggle-mark {
+  font-size: 13px;
+  color: var(--soft-text);
+  vertical-align: 1px;
+}
+
+body.flarum-flat .panel .section-head .actions .link-btn,
+body.flarum-flat .panel .section-head .actions .mini-btn {
+  background: var(--panel-bg);
+}
+
+/* AI 用量中心各面板图标（flarum-flat 作用域下）；
+   双标题面板用 h2 + 相邻兄弟 id 精确匹配，避免同面板两个标题抢同一个图标 */
+body.flarum-flat .panel h2:has(+ #refresh-status)::before { content: '◌'; }
+body.flarum-flat .panel h2:has(+ #daily-usage-box)::before { content: '⌂'; }
+body.flarum-flat .panel:has(#usage-summary) h2::before { content: '◈'; }
+body.flarum-flat .panel:has(#free-chat-usage) h2::before { content: '⌁'; }
+body.flarum-flat .panel h2:has(+ #scene-summary-box)::before { content: '◎'; }
+body.flarum-flat .panel h2:has(+ #trend-chart)::before { content: '▥'; }
+body.flarum-flat .panel:has(#usage-days-chart) h2::before { content: '▧'; }
+body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
