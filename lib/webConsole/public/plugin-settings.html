@@ -47,6 +47,7 @@
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-console-panel">控制台设置</button>
             <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-skills-panel">Skills 设置</button>
+            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-nav-panel">导航设置</button>
           </div>
         </div>
         <div id="plugin-settings-config-nav" class="plugin-settings-side-section">
@@ -106,6 +107,29 @@
           </div>
           <div id="plugin-settings-skills-box" class="settings-grid">加载中...</div>
         </section>
+
+        <section id="plugin-settings-nav-panel" class="panel hidden">
+          <div class="plugin-settings-content-head">
+            <h2>导航设置</h2>
+            <div class="setting-status">控制侧边栏显示哪些导航项，并添加自定义外部链接；保存后所有设备生效。</div>
+            <div id="plugin-settings-nav-meta" class="plugin-settings-panel-meta"></div>
+          </div>
+          <div class="settings-grid">
+            <div style="grid-column: 1 / -1;">
+              <div class="kv-label">侧边栏显示项（取消勾选即隐藏；当前页入口会保留以防迷路）</div>
+              <div id="plugin-settings-nav-items" style="display: flex; flex-direction: column; gap: 10px;">加载中...</div>
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <div class="kv-label">自定义链接（最多 30 个，仅支持 http/https，新窗口打开）</div>
+              <div id="plugin-settings-nav-custom-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+              <button id="plugin-settings-nav-custom-add" type="button" class="mini-btn" style="margin-top: 6px;">＋ 添加链接</button>
+            </div>
+            <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
+              <button id="plugin-settings-nav-save" type="button" class="mini-btn">保存导航设置</button>
+              <span id="plugin-settings-nav-status" class="setting-status"></span>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -123,6 +147,7 @@
 <script src="/plugin-settings-private-safety.js"></script>
 <script src="/plugin-settings-persona-preset.js"></script>
 <script src="/plugin-settings.js"></script>
+  <script src="/plugin-settings-nav.js"></script>
 <script src="/plugin-settings-events.js"></script>
   <script src="/theme.js"></script>
 </body>
