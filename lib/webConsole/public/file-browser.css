@@ -2877,7 +2877,27 @@ body.file-manager-page .file-manager-editor-shell {
 }
 
 body.file-manager-page .file-manager-table-panel {
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* flex 纵向：批量条显隐不会挤错表格/页脚的位置（grid 行模板做不到） */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+body.file-manager-page .file-manager-table-panel > .file-manager-table {
+  flex: 1 1 0;
+  min-height: 260px;
+}
+
+/* 提示条：悬浮在表格右上角，不再挤占标题行 */
+body.file-manager-page #file-browser-editor-status {
+  position: absolute;
+  top: 52px;
+  right: 14px;
+  z-index: 6;
+  max-width: min(420px, 60vw);
+  margin: 0;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.14);
+  pointer-events: none;
 }
 
 body.file-manager-page .file-browser-project-search-panel {
@@ -2933,10 +2953,79 @@ body.file-manager-page #file-browser-editor-status.hidden {
 body.file-manager-page .file-browser-file-table-head,
 body.file-manager-page .file-browser-file-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.75fr) 80px minmax(150px, 0.95fr) 90px 170px minmax(80px, 0.42fr) 150px;
+  grid-template-columns: 44px minmax(240px, 1.6fr) 80px minmax(150px, 0.95fr) 90px 170px minmax(80px, 0.42fr) 150px;
   gap: 0;
   align-items: center;
   min-width: 1120px;
+}
+
+/* 行首勾选框（自绘样式，勾选时显示 ✓） */
+body.file-manager-page .file-browser-row-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0 0 0 12px;
+  padding: 0;
+  border: 1.5px solid var(--fm-border, var(--border));
+  border-radius: 5px;
+  background: var(--panel-bg);
+  color: transparent;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+body.file-manager-page .file-browser-row-check:hover {
+  border-color: var(--primary);
+}
+
+body.file-manager-page .file-browser-row-check.is-checked {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+body.file-manager-page .file-browser-file-row.is-selected {
+  background: color-mix(in srgb, var(--primary) 8%, transparent 92%);
+}
+
+/* 批量操作条 */
+.file-browser-batch-bar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--panel-bg));
+}
+
+.file-browser-batch-bar.hidden {
+  display: none;
+}
+
+.file-browser-batch-count {
+  color: var(--muted-text);
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.file-browser-batch-count strong {
+  color: var(--primary);
+}
+
+body.file-manager-page .file-browser-file-table-head > .file-browser-row-check {
+  padding: 0;
+  margin-left: 12px;
 }
 
 body.file-manager-page .file-browser-file-table-head {
@@ -4406,5 +4495,306 @@ body.file-manager-page .file-manager-editor-shell .file-browser-tab-list::-webki
 
   body.file-manager-page .file-manager-editor-shell .file-browser-editor-line-gutter > span {
     height: 21px;
+  }
+}
+
+/* 图片内联预览 */
+.file-browser-preview.file-browser-image-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background:
+    linear-gradient(45deg, rgba(148, 163, 184, 0.12) 25%, transparent 25%, transparent 75%, rgba(148, 163, 184, 0.12) 75%),
+    linear-gradient(45deg, rgba(148, 163, 184, 0.12) 25%, transparent 25%, transparent 75%, rgba(148, 163, 184, 0.12) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.file-browser-image-preview {
+  display: block;
+  max-width: 100%;
+  max-height: min(70vh, 720px);
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.14);
+}
+
+/* 图片文件：收起文本编辑专属 UI，整幅只留图片预览 */
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-inline-reload-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-inline-save-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-find-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-replace-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-editor-theme-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-editor-language-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-editor-eol-btn,
+body.file-manager-page .file-manager-editor-shell.is-image-file #file-browser-editor-settings-btn {
+  display: none;
+}
+
+body.file-manager-page .file-manager-editor-shell.is-image-file .file-browser-view-switch {
+  display: none;
+}
+
+body.file-manager-page .file-manager-editor-shell.is-image-file .file-browser-editor-pane {
+  display: none !important;
+}
+
+body.file-manager-page .file-manager-editor-shell.is-image-file .file-browser-workspace.mode-edit .file-browser-preview-pane {
+  display: block;
+}
+
+body.file-manager-page .file-manager-editor-shell.is-image-file .file-manager-editor-statusbar {
+  display: none;
+}
+
+body.file-manager-page .file-manager-editor-shell.is-image-file .file-browser-target-summary {
+  display: none;
+}
+
+/* 编辑器浅色主题（主题按钮切换）：基础 textarea 样式带 !important，这里必须同等强度压过 */
+body.file-manager-page .file-manager-editor-shell.editor-theme-light textarea.file-browser-editor {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  caret-color: #111827 !important;
+  -webkit-text-fill-color: #1f2937;
+}
+
+body.file-manager-page .file-manager-editor-shell.editor-theme-light .file-browser-editor-line-gutter,
+body.file-manager-page .file-manager-editor-shell.editor-theme-light .file-browser-editor-line-gutter > span {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280;
+}
+
+body.file-manager-page .file-manager-editor-shell.editor-theme-light .file-browser-preview {
+  background: #f8fafc !important;
+  color: #1f2937 !important;
+}
+
+/* 自动换行开关（基础样式同样带 !important） */
+body.file-manager-page .file-manager-editor-shell:not(.editor-nowrap) textarea.file-browser-editor {
+  white-space: pre-wrap !important;
+}
+
+body.file-manager-page .file-manager-editor-shell.editor-nowrap textarea.file-browser-editor {
+  white-space: pre !important;
+  overflow-x: auto;
+}
+
+/* 行号：关闭 */
+body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browser-editor-line-gutter {
+  display: none;
+}
+
+/* ── 手机版紧凑排版：单行 = 勾选 + 图标名称 + 修改时间 + 更多 ── */
+@media (max-width: 760px) {
+  /* 头部收纳：路径栏 / 工具栏压紧 */
+  body.file-manager-page .file-manager-pathbar {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  body.file-manager-page .file-manager-nav-buttons {
+    gap: 6px;
+  }
+
+  body.file-manager-page .file-manager-nav-buttons .file-manager-icon-btn {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+  }
+
+  body.file-manager-page .file-manager-search-row {
+    gap: 6px;
+  }
+
+  body.file-manager-page .file-manager-search-row input,
+  body.file-manager-page .file-manager-search-row .mini-btn {
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  body.file-manager-page .file-manager-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  body.file-manager-page .file-manager-toolbar > button,
+  body.file-manager-page .file-manager-toolbar > .file-manager-flag,
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-inline,
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-btn {
+    flex: 0 1 auto;
+    min-height: 30px;
+    font-size: 12px;
+    padding: 0 10px;
+    margin-right: 0;
+  }
+
+  /* 复制文件在行内「更多」菜单里就有，手机上隐藏省空间 */
+  body.file-manager-page .file-manager-toolbar > #file-browser-copy-file-btn {
+    display: none;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-inline {
+    flex: 1 1 140px;
+    display: flex;
+    gap: 4px;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-icon-btn {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+  }
+
+  body.file-manager-page .file-manager-table-headline {
+    min-height: 40px;
+    padding: 4px 10px;
+  }
+
+  body.file-manager-page .file-manager-table-actions .file-manager-secondary-btn {
+    min-height: 28px;
+    font-size: 12px;
+    padding: 0 8px;
+  }
+
+  /* 单行文件条目 */
+  body.file-manager-page .file-browser-file-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 4px 10px;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-row-check {
+    flex: none;
+    margin: 0;
+    width: 18px;
+    height: 18px;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-name-cell {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    min-width: 0;
+    grid-column: auto;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-name-cell::before {
+    content: none !important;
+  }
+
+  /* 隐藏 权限/所有者/大小/备注 单元格及其旧标签 */
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(3),
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(4),
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(5),
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(7) {
+    display: none;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(2)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(3)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(4)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(5)::before,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(6)::before {
+    content: none !important;
+  }
+
+  /* 修改时间：右对齐灰色小字 */
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(6) {
+    display: block;
+    flex: none;
+    color: #98a2b3;
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(6)::after {
+    content: none !important;
+  }
+
+  /* 操作列只留「更多」 */
+  body.file-manager-page .file-browser-file-row > .file-browser-row-actions,
+  body.file-manager-page .file-browser-file-row > .file-browser-file-cell:nth-child(8) {
+    grid-column: auto;
+    flex: none;
+    display: flex;
+    gap: 10px;
+    padding: 0 !important;
+  }
+
+  body.file-manager-page .file-browser-file-row .file-browser-row-actions [data-file-row-action="open"],
+  body.file-manager-page .file-browser-file-row .file-browser-row-actions [data-file-row-action="copy"] {
+    display: none;
+  }
+}
+
+/* 手机端页脚：纵向自然排列，修复根目录文字被 grid 行压扁裁切 */
+@media (max-width: 760px) {
+  body.file-manager-page .file-manager-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+    padding: 8px 0;
+  }
+
+  body.file-manager-page .file-manager-footer-left {
+    height: auto;
+    line-height: 20px;
+    max-width: 100%;
+  }
+
+  body.file-manager-page .file-manager-footer-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  body.file-manager-page .file-manager-footer-right .file-manager-footer-stats {
+    flex: 1 1 100%;
+    line-height: 20px;
+    white-space: normal;
+    height: auto;
+  }
+}
+
+/* 手机端：表格最小高度降下来，给页脚留出自然高度（否则页脚被挤出面板裁切） */
+@media (max-width: 760px) {
+  body.file-manager-page .file-manager-table {
+    min-height: 220px;
+  }
+}
+
+/* 手机端标题栏动作按钮：每行 3 个自动换行，不出横向滚动条 */
+@media (max-width: 760px) {
+  body.file-manager-page .file-manager-table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  body.file-manager-page .file-manager-table-actions .file-manager-secondary-btn {
+    flex: 1 1 calc(33.33% - 4px);
+    min-height: 30px;
+    min-width: 0;
+    font-size: 12px;
+    padding: 0 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
   }
 }

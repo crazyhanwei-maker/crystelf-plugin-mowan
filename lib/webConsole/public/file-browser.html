@@ -61,13 +61,20 @@
           </div>
           <div class="file-manager-table-actions">
             <button id="file-browser-root-btn" type="button" class="file-manager-secondary-btn">根目录</button>
-            <button id="file-browser-up-btn" type="button" class="file-manager-secondary-btn">上一级</button>
+            <button id="file-browser-fsroot-btn" type="button" class="file-manager-secondary-btn" title="跳转到文件系统根目录（/）">系统根目录</button>
+            <button id="file-browser-headline-up-btn" type="button" class="file-manager-secondary-btn">上一级</button>
             <button id="file-browser-reload-btn" type="button" class="file-manager-secondary-btn">重载</button>
             <button id="file-browser-rename-btn" type="button" class="file-manager-secondary-btn">重命名</button>
             <button id="file-browser-delete-btn" type="button" class="file-manager-secondary-btn">删除</button>
           </div>
         </div>
         <div id="file-browser-editor-status" class="file-browser-banner hidden"></div>
+        <div id="file-browser-batch-bar" class="file-browser-batch-bar hidden">
+          <span class="file-browser-batch-count">已选 <strong id="file-browser-batch-count">0</strong> 项</span>
+          <button id="file-browser-batch-compress-btn" type="button" class="file-manager-secondary-btn">压缩为 ZIP</button>
+          <button id="file-browser-batch-download-btn" type="button" class="file-manager-secondary-btn">打包下载</button>
+          <button id="file-browser-batch-clear-btn" type="button" class="file-manager-secondary-btn">取消选择</button>
+        </div>
         <div id="file-browser-directory-table" class="file-manager-table"></div>
         <div class="file-manager-footer">
           <div id="file-browser-root-path" class="file-manager-footer-left">根目录：加载中...</div>
@@ -130,10 +137,10 @@
           <button id="file-browser-replace-btn" type="button" class="file-browser-inline-secondary-btn">替换</button>
           <button id="file-browser-copy-path-btn" type="button" class="file-browser-inline-secondary-btn">复制路径</button>
           <button id="file-browser-copy-current-file-btn" type="button" class="file-browser-inline-secondary-btn">复制文件</button>
-          <button id="file-browser-editor-theme-btn" type="button" class="file-browser-inline-secondary-btn" disabled>主题</button>
-          <button id="file-browser-editor-language-btn" type="button" class="file-browser-inline-secondary-btn" disabled>语言</button>
-          <button id="file-browser-editor-eol-btn" type="button" class="file-browser-inline-secondary-btn" disabled>行尾符</button>
-          <button id="file-browser-editor-settings-btn" type="button" class="file-browser-inline-secondary-btn" disabled>设置</button>
+          <button id="file-browser-editor-theme-btn" type="button" class="file-browser-inline-secondary-btn">主题</button>
+          <button id="file-browser-editor-language-btn" type="button" class="file-browser-inline-secondary-btn">语言</button>
+          <button id="file-browser-editor-eol-btn" type="button" class="file-browser-inline-secondary-btn">行尾符</button>
+          <button id="file-browser-editor-settings-btn" type="button" class="file-browser-inline-secondary-btn">设置</button>
         </div>
       </div>
 
@@ -199,11 +206,11 @@
 
       <div class="file-manager-editor-statusbar">
         <span id="file-browser-editor-overlay-status" class="file-manager-editor-message hidden"></span>
-        <span>Visual Studio Dark</span>
+        <span id="file-browser-editor-theme-status">Visual Studio Dark</span>
         <span>LF (Linux)</span>
         <span>历史版本 (0)</span>
         <span id="file-browser-editor-language-status">语言：plaintext</span>
-        <span>自动换行：启用</span>
+        <span id="file-browser-editor-wrap-status">自动换行：启用</span>
         <span>缩略图：启用</span>
       </div>
     </div>
@@ -225,6 +232,7 @@
 
   <div id="file-browser-context-menu" class="file-browser-context-menu hidden"></div>
 
+  <div id="file-browser-editor-menu" class="file-browser-context-menu hidden" style="position: fixed; z-index: 60;"></div>
   <script src="/auth.js"></script>
   <script src="/console-shell.js"></script>
   <script src="/file-browser-state.js"></script>
@@ -233,6 +241,7 @@
   <script src="/file-browser-tree.js"></script>
   <script src="/file-browser-ui.js"></script>
   <script src="/file-browser-conflict.js"></script>
+  <script src="/file-browser-settings.js"></script>
   <script src="/file-browser-preview.js"></script>
   <script src="/file-browser-render.js"></script>
   <script src="/file-browser-io.js"></script>
