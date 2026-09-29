@@ -7715,6 +7715,7 @@ body.flarum-flat .panel h3::before {
 }
 
 body.flarum-flat .panel h2::before {
+  position: static;
   display: inline-block;
   width: auto;
   margin-right: 8px;
@@ -7737,8 +7738,6 @@ body.flarum-flat .panel .section-head .actions .mini-btn {
 
 /* AI 用量中心各面板图标（flarum-flat 作用域下）；
    双标题面板用 h2 + 相邻兄弟 id 精确匹配，避免同面板两个标题抢同一个图标 */
-body.flarum-flat .panel h2:has(+ #refresh-status)::before { content: '◌'; }
-body.flarum-flat .panel h2:has(+ #daily-usage-box)::before { content: '⌂'; }
 body.flarum-flat .panel:has(#usage-summary) h2::before { content: '◈'; }
 body.flarum-flat .panel:has(#free-chat-usage) h2::before { content: '⌁'; }
 body.flarum-flat .panel h2:has(+ #scene-summary-box)::before { content: '◎'; }
