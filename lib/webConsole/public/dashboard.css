@@ -1545,52 +1545,53 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(320px, 0.86fr) minmax(560px, 1.14fr);
-  align-items: stretch;
-  gap: 24px;
-  padding: 28px;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 22px;
 }
 
 .dashboard-page .hero-copy {
   align-content: start;
   min-height: 0;
   max-width: 620px;
-  padding: 8px 0;
+  padding: 0;
 }
 
 .dashboard-page .hero h1 {
-  margin-bottom: 12px;
-  font-size: 46px;
-  line-height: 1.06;
-  letter-spacing: 0;
+  margin-bottom: 8px;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .dashboard-page #plugin-meta {
   max-width: 600px;
-  padding: 12px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.56);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
   color: var(--soft-text);
-  backdrop-filter: blur(12px);
+  font-size: 13px;
+  backdrop-filter: none;
 }
 
 :root[data-theme='dark'] .dashboard-page #plugin-meta {
-  background: rgba(15, 23, 42, 0.52);
-  border-color: rgba(148, 163, 184, 0.16);
+  background: none;
+  border-color: transparent;
 }
 
 .dashboard-page .hero-actions-shell {
   min-width: 0;
-  align-self: stretch;
-  gap: 14px;
+  align-self: center;
+  gap: 10px;
 }
 
 .dashboard-page .hero-action-group {
   display: grid;
   align-content: start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 18px;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
 }
 
 .dashboard-page .hero-action-label {
@@ -1794,7 +1795,7 @@
   }
 
   .dashboard-page .hero-copy {
-    min-height: 188px;
+    min-height: 0;
   }
 
   .dashboard-page .hero-action-group-links .hero-actions-grid {
@@ -2248,7 +2249,7 @@
   }
 
   .dashboard-page #plugin-meta {
-    padding: 10px 12px;
+    padding: 0;
     font-size: 13px;
   }
 
@@ -2346,9 +2347,17 @@
 .dashboard-page .panel h3 {
   padding-left: 0;
   margin-bottom: 8px;
-  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
+}
+
+/* 面板标题与系统设置等页统一：h2 24px 档、h3 18px 档 */
+.dashboard-page .panel h2 {
+  font-size: 24px;
+}
+
+.dashboard-page .panel h3 {
+  font-size: 18px;
 }
 
 .dashboard-page .panel h2::before,
@@ -2434,4 +2443,73 @@
   min-height: 26px;
   padding: 2px 10px;
   font-size: 12px;
+}
+
+/* ===== 总览 hero 紧凑化：strip/banner/按钮组统一收拢 ===== */
+.dashboard-page .dashboard-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.dashboard-page .dashboard-strip-item {
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.dashboard-page .dashboard-strip-label {
+  font-size: 10px;
+}
+
+.dashboard-page .dashboard-strip-value {
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.dashboard-page .dashboard-strip-meta {
+  margin-top: 1px;
+  font-size: 11px;
+}
+
+.dashboard-page .ops-monitor-banner {
+  gap: 8px;
+  margin: 0;
+}
+
+.dashboard-page .ops-monitor-item {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.dashboard-page .hero-action-label {
+  font-size: 11px;
+}
+
+.dashboard-page .hero-actions-grid {
+  gap: 8px;
+}
+
+.dashboard-page .hero-actions-grid > button,
+.dashboard-page .hero-actions-grid > .link-btn {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+/* plugin-meta 信息 chips：轻量 pill，替代原卡片段落实排 */
+.dashboard-page #plugin-meta {
+  gap: 6px;
+}
+
+.dashboard-page #plugin-meta .plugin-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft-bg-strong);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--soft-text);
+  white-space: nowrap;
 }

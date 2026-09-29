@@ -7284,6 +7284,13 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     white-space: nowrap;
   }
 
+  /* 手机抽屉：长导航名（如用户自定义的“运维监控（…）”）允许换行完整显示 */
+  .console-sidebar .console-nav-label {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
   .console-sidebar .console-nav-link {
     grid-template-columns: 30px minmax(0, 1fr);
     justify-items: stretch;
@@ -7689,9 +7696,17 @@ body.flarum-flat .panel h2,
 body.flarum-flat .panel h3 {
   padding-left: 0;
   margin-bottom: 8px;
-  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
+}
+
+/* 面板标题与系统设置等页统一：h2 24px 档、h3 18px 档 */
+body.flarum-flat .panel h2 {
+  font-size: 24px;
+}
+
+body.flarum-flat .panel h3 {
+  font-size: 18px;
 }
 
 body.flarum-flat .panel h2::before,
