@@ -8505,3 +8505,122 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 #free-chat-usage .config-summary-value {
   font-size: 12.5px;
 }
+
+/* ===== FREE CHAT 接口用量：配额进度条 + 悬浮明细 ===== */
+.panel:has(#free-chat-usage) {
+  overflow: visible;
+}
+
+.freechat-meters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.freechat-meter {
+  position: relative;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.freechat-meter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.freechat-meter-percent {
+  font-variant-numeric: tabular-nums;
+  color: var(--soft-text);
+  font-size: 12.5px;
+}
+
+.freechat-meter-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--soft-bg-strong, rgba(148, 163, 184, 0.18));
+  overflow: hidden;
+}
+
+.freechat-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 62%, #22d3ee));
+  transition: width 0.3s ease;
+}
+
+.freechat-meter.is-warn .freechat-meter-fill {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.freechat-meter.is-over .freechat-meter-fill {
+  background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
+
+.freechat-meter.is-over .freechat-meter-percent {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+.freechat-meter-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--muted-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.freechat-meter-hint {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.freechat-meter:hover .freechat-meter-hint {
+  opacity: 1;
+}
+
+.freechat-meter-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 30;
+  min-width: 230px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.freechat-meter:hover .freechat-meter-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.freechat-tip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 3px 0;
+  color: var(--muted-text);
+  font-size: 12px;
+}
+
+.freechat-tip-row strong {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
