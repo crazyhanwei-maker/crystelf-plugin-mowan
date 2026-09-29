@@ -30,7 +30,12 @@
       </div>
     </header>
 
-    <section class="panel">
+    <div class="usage-view-tabs" role="tablist">
+      <button type="button" class="usage-view-tab" data-usage-view="metrics">趋势与指标</button>
+      <button type="button" class="usage-view-tab is-active" data-usage-view="logs">用量日志</button>
+    </div>
+
+    <section class="panel" data-usage-view="metrics">
       <div class="section-head">
         <div>
           <h2>关键指标</h2>
@@ -40,7 +45,7 @@
       <div id="usage-summary" class="config-summary">加载中...</div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-usage-view="metrics">
       <div class="section-head">
         <div>
           <h2>FREE CHAT 接口用量</h2>
@@ -50,7 +55,7 @@
       <div id="free-chat-usage" class="config-summary">加载中...</div>
     </section>
 
-    <section class="panel panel-two">
+    <section class="panel panel-two" data-usage-view="metrics">
       <div>
         <h2>场景分布</h2>
         <pre id="scene-summary-box" class="detail-box">加载中...</pre>
@@ -61,7 +66,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-usage-view="metrics">
       <div class="section-head">
         <div>
           <h2>近 N 天用量趋势</h2>
@@ -75,7 +80,7 @@
       <div id="usage-days-chart" class="chart-box">加载中...</div>
     </section>
 
-    <section class="panel collapsible-panel">
+    <section class="panel collapsible-panel" data-usage-view="logs">
       <div class="section-head">
         <div>
           <h2>AI 用量日志<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>

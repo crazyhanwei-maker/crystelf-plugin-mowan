@@ -8624,3 +8624,43 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
+/* ===== AI 用量日志中心：双视图标签（趋势与指标 / 用量日志） ===== */
+.usage-view-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  width: fit-content;
+}
+
+.usage-view-tab {
+  border: none;
+  background: transparent;
+  padding: 7px 18px;
+  border-radius: 9px;
+  color: var(--soft-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.usage-view-tab:hover:not(.is-active) {
+  color: var(--primary);
+  background: var(--soft-bg);
+}
+
+.usage-view-tab.is-active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+}
+
+.panel[hidden] {
+  display: none !important;
+}
