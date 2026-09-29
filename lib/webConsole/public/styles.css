@@ -8166,3 +8166,220 @@ body:has(#help-diy-save-btn) .hero .actions > .link-btn {
 body:has(#help-diy-save-btn) .hero .toolbar input {
   min-height: 34px;
 }
+
+/* ===== AI 用量日志：NEWAPI 风格状态表格（展开行详情，无计费展示） ===== */
+.usage-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+}
+
+.usage-table thead th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.usage-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--soft-text);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.usage-table tbody tr.usage-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.usage-table tbody tr.usage-row:hover,
+.usage-table tbody tr.usage-row.is-open {
+  background: var(--soft-bg);
+}
+
+.usage-cell-toggle {
+  width: 30px;
+  text-align: center;
+}
+
+.usage-row-arrow {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--muted-text);
+  transition: transform 0.18s ease;
+}
+
+.usage-row.is-open .usage-row-arrow {
+  transform: rotate(90deg);
+}
+
+.usage-cell-time {
+  white-space: nowrap;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.usage-cell-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.usage-cell-detail {
+  max-width: 280px;
+}
+
+.usage-cell-detail .usage-detail-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-cell-detail.is-error .usage-detail-text {
+  color: #b91c1c;
+}
+
+.usage-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.usage-chip-role-primary {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.usage-chip-role-fallback {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.usage-chip-type-success {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+}
+
+.usage-chip-type-error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.usage-chip-model {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(59, 130, 246, 0.10);
+  color: var(--soft-text);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.usage-chip-elapsed {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+}
+
+.usage-chip-scene {
+  margin-left: 6px;
+  background: rgba(147, 51, 234, 0.10);
+  color: #7e22ce;
+}
+
+:root[data-theme='dark'] .usage-chip-role-primary {
+  color: #93c5fd;
+}
+
+:root[data-theme='dark'] .usage-chip-role-fallback {
+  color: #fcd34d;
+}
+
+:root[data-theme='dark'] .usage-chip-type-success,
+:root[data-theme='dark'] .usage-chip-elapsed {
+  color: #4ade80;
+}
+
+:root[data-theme='dark'] .usage-chip-type-error,
+:root[data-theme='dark'] .usage-cell-detail.is-error .usage-detail-text {
+  color: #fca5a5;
+}
+
+:root[data-theme='dark'] .usage-chip-scene {
+  color: #d8b4fe;
+}
+
+.usage-cell-elapsed {
+  white-space: nowrap;
+}
+
+.usage-detail-row td {
+  padding: 0 12px 14px;
+  background: var(--soft-bg);
+}
+
+.usage-detail-grid {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px 14px;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+
+.usage-detail-label {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.usage-detail-value {
+  min-width: 0;
+  color: var(--soft-text);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.usage-detail-value.is-pre {
+  white-space: pre-wrap;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.usage-detail-value.is-error {
+  color: #b91c1c;
+}
+
+.usage-detail-value.is-success {
+  color: #15803d;
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .usage-detail-value.is-error {
+  color: #fca5a5;
+}
+
+:root[data-theme='dark'] .usage-detail-value.is-success {
+  color: #4ade80;
+}
