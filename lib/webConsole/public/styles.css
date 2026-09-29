@@ -8146,3 +8146,23 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
     left: 8px;
   }
 }
+
+/* ===== 帮助 DIY 页 hero 紧凑化 ===== */
+body:has(#help-diy-save-btn) .hero {
+  gap: 14px;
+}
+
+body:has(#help-diy-save-btn) .hero .actions {
+  gap: 6px;
+}
+
+body:has(#help-diy-save-btn) .hero .actions > button,
+body:has(#help-diy-save-btn) .hero .actions > .link-btn {
+  min-height: 30px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+body:has(#help-diy-save-btn) .hero .toolbar input {
+  min-height: 34px;
+}

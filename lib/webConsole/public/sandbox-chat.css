@@ -86,6 +86,14 @@
   align-items: center;
 }
 
+/* 长历史内容（长文本/长 JSON）不再撑破 1fr 轨道 */
+.sandbox-history-row > *,
+.sandbox-memory-row > *,
+.sandbox-group summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .sandbox-history-row button {
   box-shadow: none;
 }

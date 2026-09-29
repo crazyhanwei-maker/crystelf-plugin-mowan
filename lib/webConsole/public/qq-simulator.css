@@ -1053,7 +1053,7 @@
 
 .qq-simulator-session-item {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   min-height: 66px;
@@ -1078,9 +1078,9 @@
 .qq-simulator-session-avatar {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 11px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: #2563eb;
   color: #fff;
   font-weight: 800;
@@ -1110,6 +1110,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 窄会话列表（160px 档）：时间戳改右上角标，标题/摘要列占满剩余宽度 */
+.qq-simulator-session-item {
+  position: relative;
+}
+
+.qq-simulator-session-item time {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  max-width: 72px;
+  font-size: 10px;
+}
+
+.qq-simulator-session-main strong {
+  padding-right: 40px;
 }
 
 .qq-simulator-session-main strong {
@@ -1708,7 +1725,7 @@ body.qq-simulator-page .page {
 }
 
 .qq-simulator-desktop {
-  grid-template-columns: 48px 160px minmax(420px, 1fr) 210px;
+  grid-template-columns: 48px 184px minmax(420px, 1fr) 210px;
   width: 100%;
   height: 100svh;
   min-height: 620px;
@@ -2429,7 +2446,7 @@ body.qq-simulator-page .console-floating-tools {
 
 @media (max-width: 1100px) {
   .qq-simulator-desktop {
-    grid-template-columns: 48px 154px minmax(0, 1fr);
+    grid-template-columns: 48px 176px minmax(0, 1fr);
   }
 
   .qq-simulator-profile-pane {
