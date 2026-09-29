@@ -7501,10 +7501,10 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     width: 100%;
   }
 
-  button,
+  button:not(.plugin-settings-switch),
   .link-btn,
   .mini-btn,
-  .console-app-shell button,
+  .console-app-shell button:not(.plugin-settings-switch),
   .console-app-shell .link-btn {
     min-height: 42px;
     width: 100%;
