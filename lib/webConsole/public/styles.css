@@ -225,7 +225,7 @@ button {
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
+button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
 .link-btn:hover {
   background: var(--primary-hover);
   box-shadow: 0 10px 20px rgba(59, 130, 246, 0.24);
@@ -3014,7 +3014,7 @@ button,
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
 }
 
-button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
+button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
 .link-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, var(--primary-hover) 0%, var(--primary-hover) 100%);
@@ -6785,7 +6785,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   border-radius: 14px;
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn),
+.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn),
 .console-app-shell .link-btn {
   min-height: 38px;
   border-color: rgba(34, 211, 238, 0.22);
@@ -6797,7 +6797,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
+.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
 .console-app-shell .link-btn:hover {
   background:
     linear-gradient(180deg, rgba(103, 232, 249, 0.98), rgba(56, 189, 248, 0.98));
@@ -7508,10 +7508,10 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     width: 100%;
   }
 
-  button:not(.plugin-settings-switch),
+  button:not(.plugin-settings-switch):not(.artd-page-btn),
   .link-btn,
   .mini-btn,
-  .console-app-shell button:not(.plugin-settings-switch),
+  .console-app-shell button:not(.plugin-settings-switch):not(.artd-page-btn),
   .console-app-shell .link-btn {
     min-height: 42px;
     width: 100%;
@@ -8382,4 +8382,98 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 
 :root[data-theme='dark'] .usage-detail-value.is-success {
   color: #4ade80;
+}
+
+/* ===== 分页：ART DESIGN PRO（Element Plus）风格，全站统一 ===== */
+.pagination.artd-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 2px;
+}
+
+.artd-pagination-total {
+  color: var(--muted-text);
+  font-size: 13px;
+}
+
+.artd-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--soft-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.artd-page-btn:hover:not(:disabled):not(.is-active) {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--panel-bg));
+  color: var(--primary);
+}
+
+.artd-page-btn.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+  cursor: default;
+}
+
+.artd-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.artd-page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--muted-text);
+  letter-spacing: 2px;
+}
+
+.artd-pagination-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  color: var(--muted-text);
+  font-size: 13px;
+}
+
+.artd-jump-input {
+  width: 56px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.artd-jump-input::-webkit-outer-spin-button,
+.artd-jump-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.artd-jump-input:focus {
+  border-color: var(--primary);
 }
