@@ -30,15 +30,12 @@
       </div>
     </header>
 
-    <section class="panel panel-two">
-      <div>
-        <h2>页面状态</h2>
+    <section class="panel">
+      <div class="usage-overview-head">
+        <h2>今日概览</h2>
         <div id="refresh-status" class="setting-help">正在准备数据...</div>
       </div>
-      <div>
-        <h2>今日概览</h2>
-        <pre id="daily-usage-box" class="detail-box">加载中...</pre>
-      </div>
+      <pre id="daily-usage-box" class="detail-box usage-overview-box">加载中...</pre>
     </section>
 
     <section class="panel">
@@ -106,7 +103,8 @@
           <button class="mini-btn active" data-usage-scene="">全部场景</button>
           <button class="mini-btn" data-usage-scene="chat">普通对话</button>
           <button class="mini-btn" data-usage-scene="image_monitor_review">图片监控审核</button>
-          <button class="mini-btn" data-usage-scene="poke_image_summary">戳一戳图片摘要</button>
+          <button class="mini-btn" data-usage-scene="poke_image_summary">戳一戳图片摘要</button>          <span class="setting-help">·</span>
+          <button id="usage-log-error-btn" type="button" class="mini-btn">失败</button>
         </div>
         <div id="usage-log-box" class="list log-list">加载中...</div>
         <div id="usage-log-pagination" class="pagination"></div>

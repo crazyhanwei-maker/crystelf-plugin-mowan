@@ -2397,3 +2397,41 @@
 .dashboard-page .panel .section-head .actions .mini-btn {
   background: var(--panel-bg);
 }
+
+/* ===== AI请求数据预览 KPI 卡片压紧 ===== */
+.dashboard-page #overview-cards.dashboard-cards {
+  gap: 10px;
+}
+
+.dashboard-page .overview-card {
+  min-height: 0;
+  padding: 10px 14px;
+  gap: 5px;
+}
+
+.dashboard-page .overview-card .overview-card-head {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.dashboard-page .overview-card .value {
+  font-size: 24px;
+}
+
+.dashboard-page .overview-card .overview-card-value-text {
+  font-size: 20px;
+}
+
+.dashboard-page .overview-card .overview-card-meta {
+  font-size: 12px;
+}
+
+.dashboard-page .overview-card .overview-card-action {
+  margin-top: 2px;
+}
+
+.dashboard-page .overview-card .overview-card-action .link-btn {
+  min-height: 26px;
+  padding: 2px 10px;
+  font-size: 12px;
+}

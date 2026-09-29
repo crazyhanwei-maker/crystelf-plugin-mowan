@@ -566,3 +566,81 @@ button.danger:hover {
     width: 100%;
   }
 }
+
+/* 依赖健康：检查状态 + 依赖摘要 并排，吃满右侧空白 */
+.dependency-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.dependency-top-grid .panel {
+  margin-bottom: 24px;
+}
+
+/* entry-card 是横条布局，这里被当整块内容容器：让子元素吃满宽度 */
+.dependency-top-grid .dashboard-entry-card {
+  display: block;
+  height: 100%;
+}
+
+.dependency-top-grid .dashboard-entry-card > div {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  height: 100%;
+}
+
+@media (max-width: 1100px) {
+  .dependency-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 依赖摘要紧凑统计（单卡五格） */
+.dependency-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 8px;
+}
+
+.dependency-stat {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+  min-width: 0;
+}
+
+.dependency-stat-label {
+  color: var(--muted-text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dependency-stat-value {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.dependency-stat-value.tone-success { color: #16a34a; }
+.dependency-stat-value.tone-error { color: #dc2626; }
+
+.dependency-stat small {
+  color: var(--soft-text);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* 问题依赖 + 当前插件依赖：上下排列（两列在单侧为空时浪费空间） */
+.dependency-stack {
+  display: grid;
+  gap: 16px;
+}

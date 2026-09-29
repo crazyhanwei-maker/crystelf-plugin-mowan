@@ -225,7 +225,7 @@ button {
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:hover,
+button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
 .link-btn:hover {
   background: var(--primary-hover);
   box-shadow: 0 10px 20px rgba(59, 130, 246, 0.24);
@@ -260,6 +260,13 @@ select {
   min-width: 220px;
   width: 100%;
   font: inherit;
+}
+
+/* 原生下拉选项跟随主题配色，避免弹出列表浅字浅底看不清 */
+select option,
+select optgroup {
+  background: var(--panel-bg, #fff);
+  color: var(--text, #1f2937);
 }
 
 input:focus,
@@ -834,6 +841,55 @@ textarea {
 
 .help-diy-grid {
   align-items: start;
+}
+
+#help-diy-template-list {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+#help-diy-template-list .setting-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+#help-diy-template-list .setting-item .kv-label {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+#help-diy-template-list .setting-item .setting-help {
+  flex: 1 1 auto;
+  margin-top: 0;
+  min-width: 0;
+}
+
+#help-diy-template-list .setting-item .actions {
+  flex: 0 0 auto;
+  margin-top: 0;
+}
+
+@media (max-width: 720px) {
+  #help-diy-template-list .setting-item {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  #help-diy-template-list .setting-item .setting-help {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  #help-diy-template-list .setting-item .actions {
+    margin-left: auto;
+  }
 }
 
 .help-diy-toggle-row {
@@ -1580,9 +1636,51 @@ button.help-diy-generate-btn:disabled {
   box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.35) inset;
 }
 
+/* 胶囊滑块开关（对齐开源 UI 的 el-switch）：隐藏文字、圆形滑块，开启时主题色高亮 */
+.plugin-settings-switch {
+  position: relative;
+  width: 42px;
+  min-width: 42px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #c0c4cc;
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.plugin-settings-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: left 0.2s ease;
+}
+
 .plugin-settings-switch.off {
-  background: var(--muted-bg);
-  color: var(--secondary-text);
+  background: #c0c4cc;
+}
+
+.plugin-settings-switch:not(.off) {
+  background: var(--primary);
+}
+
+.plugin-settings-switch:not(.off)::after {
+  left: calc(100% - 20px);
+}
+
+.plugin-settings-switch:hover {
+  filter: brightness(1.08);
 }
 
 .modal-mask {
@@ -2453,6 +2551,153 @@ pre {
   color: var(--text);
 }
 
+/* 插件设置字段卡片整体压缩：更小的内边距、按钮和徽章，提高信息密度 */
+.plugin-settings-page .plugin-settings-field-card {
+  padding: 10px 12px;
+}
+
+.plugin-settings-page .plugin-settings-field-card .tag {
+  padding: 3px 9px;
+  font-size: 11.5px;
+}
+
+.plugin-settings-page .plugin-settings-field-head {
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.plugin-settings-page .plugin-settings-field-head .kv-label {
+  margin-bottom: 0;
+}
+
+.plugin-settings-page .plugin-settings-field-meta {
+  gap: 4px 10px;
+  margin-bottom: 8px;
+}
+
+.plugin-settings-page .plugin-settings-field-tone {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* 开关改为胶囊滑块后，旧的文字按钮内边距规则不再适用 */
+
+.plugin-settings-page .plugin-settings-field-card .setting-help {
+  margin-top: 2px;
+}
+
+/* ===== artd 风格行式设置项（插件设置中心）：左标签右控件 + 细分隔线 ===== */
+.plugin-settings-page #plugin-settings-form {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head control'
+    'meta control'
+    'notice control'
+    'extra control'
+    'help control';
+  column-gap: 24px;
+  row-gap: 6px;
+  align-items: center;
+  padding: 15px 2px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):hover {
+  transform: none;
+  box-shadow: none;
+  background: none;
+}
+
+/* 文本域/多选等大控件：改为标签在上、控件整行 */
+.plugin-settings-page .plugin-settings-field-card:has(> textarea[data-field]),
+.plugin-settings-page .plugin-settings-field-card:has(> select[data-field][multiple]) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'head'
+    'meta'
+    'notice'
+    'control'
+    'extra'
+    'help';
+  align-items: start;
+}
+
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-head { grid-area: head; }
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-meta { grid-area: meta; }
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-notice { grid-area: notice; }
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-tts-refresh-bar { grid-area: extra; }
+.plugin-settings-page .plugin-settings-field-card > .setting-help { grid-area: help; margin-top: 0; }
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-switch,
+.plugin-settings-page .plugin-settings-field-card > input[data-field],
+.plugin-settings-page .plugin-settings-field-card > select[data-field],
+.plugin-settings-page .plugin-settings-field-card > textarea[data-field],
+.plugin-settings-page .plugin-settings-field-card > .inline-field-form { grid-area: control; }
+
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-switch { justify-self: end; }
+
+.plugin-settings-page .plugin-settings-field-card > input[data-field],
+.plugin-settings-page .plugin-settings-field-card > .inline-field-form input[data-field],
+.plugin-settings-page .plugin-settings-field-card > select[data-field] {
+  justify-self: end;
+  width: 260px;
+  max-width: 100%;
+}
+
+.plugin-settings-page .plugin-settings-field-card > .inline-field-form {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.plugin-settings-page .plugin-settings-field-card > textarea[data-field] {
+  width: 100%;
+}
+
+/* 行式布局下隐藏噪音：字段代码、组件类型、字段等级标签；保留“应用推荐”按钮 */
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-meta { display: none; }
+.plugin-settings-page .plugin-settings-field-card .plugin-settings-field-tags .tag:not(.plugin-settings-recommendation-tag) { display: none; }
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-head > .tag { display: none; }
+
+/* 命中推荐配置时以标签色点缀字段名，替代原卡片描边 */
+.plugin-settings-page .plugin-settings-field-card-matched .kv-label {
+  color: var(--primary);
+}
+
+/* 功能状态卡片压缩：去掉 164px 最小高度和多余内边距 */
+.plugin-settings-page #plugin-settings-feature-list > .feature-toggle-card {
+  min-height: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.plugin-settings-page .feature-toggle-head {
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.plugin-settings-page .feature-toggle-name {
+  font-size: 13.5px;
+}
+
+.plugin-settings-page .feature-toggle-state {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.plugin-settings-page .feature-toggle-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
 .plugin-settings-field-notice-danger {
   border-color: rgba(239, 68, 68, 0.28);
   background: rgba(239, 68, 68, 0.08);
@@ -2539,9 +2784,7 @@ pre {
   border-color: var(--success-border);
 }
 
-#plugin-settings-console-box {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
+/* 旧 #plugin-settings-console-box 多列网格规则已随控制台设置迁移删除，系统设置页使用 .console-settings-stack 单列布局 */
 
 #plugin-settings-feature-list {
   display: grid;
@@ -2771,7 +3014,7 @@ button,
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
 }
 
-button:hover,
+button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
 .link-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, var(--primary-hover) 0%, var(--primary-hover) 100%);
@@ -3524,12 +3767,23 @@ pre {
 .plugin-settings-skill-filter-btn {
   min-height: 38px;
   padding-inline: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
 }
 
 .plugin-settings-skill-filter-btn.is-active {
   border-color: color-mix(in srgb, var(--accent) 48%, var(--border) 52%);
   background: color-mix(in srgb, var(--accent-soft) 72%, white 28%);
   color: var(--text);
+}
+
+/* 次级按钮统一为开源 UI 的中性描边样式（面板底 + 边框），替换深灰色块 */
+.feature-manage-btn.feature-manage-btn-secondary {
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border-strong, var(--border));
+  box-shadow: none;
 }
 
 .plugin-settings-skills-grid {
@@ -3752,12 +4006,10 @@ pre {
 }
 
 .plugin-settings-skill-card-actions > .feature-manage-btn-secondary {
-  border: 1px solid color-mix(in srgb, var(--border) 68%, rgba(255, 255, 255, 0.2) 32%);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(148, 163, 184, 0.04)),
-    color-mix(in srgb, #64748b 78%, #94a3b8 22%);
-  color: #eef4ff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border-strong, var(--border));
+  background: var(--panel-bg);
+  color: var(--text);
+  box-shadow: none;
 }
 
 .plugin-settings-skill-card-actions > .feature-manage-btn-secondary:hover:not(:disabled) {
@@ -5056,6 +5308,27 @@ body:not(.login-page) {
   overflow: hidden;
 }
 
+/* 桌面端侧栏贴边贴顶：固定为左侧通栏，不再悬浮留白（对齐 artd.pro） */
+.console-app-shell > .console-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--console-shell-width);
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-right: 1px solid var(--console-sidebar-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 侧栏固定定位后脱离网格流，主列必须显式排到第二列，避免被自动放置挤进侧栏列 */
+.console-app-shell > .console-main {
+  grid-column: 2;
+  min-width: 0;
+}
+
 .console-brand {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
@@ -5125,6 +5398,155 @@ body:not(.login-page) {
   text-transform: uppercase;
 }
 
+/* 分组折叠：标题为菜单行样式（图标 + 名称 + 箭头），点击收起/展开该组链接 */
+.console-nav .console-nav-section {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 10px 8px 9px;
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+.console-nav-section .console-nav-icon {
+  flex: 0 0 auto;
+  width: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  color: var(--soft-text);
+}
+
+.console-nav .console-nav-section-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 侧边栏图标拍平：去掉芯片底色，对齐 artd.pro 的纯描边图标风格 */
+.console-nav .console-nav-icon {
+  background: none;
+  box-shadow: none;
+  border-radius: 6px;
+}
+
+.console-nav .console-nav-section:hover {
+  background: var(--soft-bg);
+}
+
+.console-nav-chevron {
+  flex: 0 0 auto;
+  color: var(--muted-text);
+  transition: transform 0.18s ease;
+}
+
+/* 展开时箭头朝上，收起时朝下 */
+.console-nav-section:not(.is-collapsed) .console-nav-chevron {
+  transform: rotate(180deg);
+}
+
+.console-nav-group {
+  display: grid;
+}
+
+/* 展开收起动画：grid-template-rows 1fr ↔ 0fr 平滑过渡 */
+.console-nav-group-links {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.22s ease;
+}
+
+.console-nav-group-links.is-collapsed {
+  grid-template-rows: 0fr;
+}
+
+.console-nav-group-links-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  gap: 6px;
+  visibility: visible;
+  transition: visibility 0s;
+}
+
+.console-nav-group-links.is-collapsed .console-nav-group-links-inner {
+  visibility: hidden;
+  transition: visibility 0s 0.22s;
+}
+
+/* 二级菜单对齐 artd.pro：无图标、文字缩进到一级标题起点，拉开层级 */
+body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link {
+  grid-template-columns: 1fr;
+  padding-left: 47px;
+}
+
+body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link .console-nav-icon {
+  display: none;
+}
+
+body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link .console-nav-label {
+  font-weight: 400;
+}
+
+/* rail 模式悬浮二级菜单（对齐 Art Design Pro 的 el-menu collapse popper） */
+.console-nav-flyout {
+  position: fixed;
+  z-index: 95;
+  display: none;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+}
+
+.console-nav-flyout.is-open {
+  display: grid;
+  gap: 2px;
+}
+
+.console-nav-flyout .console-flyout-item {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.console-nav-flyout .console-flyout-item:hover {
+  background: var(--soft-bg);
+}
+
+.console-nav-flyout .console-flyout-item.active {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary-hover);
+  font-weight: 600;
+}
+
+.console-nav-flyout .console-flyout-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .console-nav-link {
   position: relative;
   display: grid;
@@ -5176,6 +5598,13 @@ body:not(.login-page) {
   font-size: 14px;
 }
 
+/* 导航内联 SVG 图标（如系统设置的圆圈感叹号）：与 14px 文本图标同视觉尺寸 */
+.console-nav-icon svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
 .console-nav-label {
   min-width: 0;
   overflow: hidden;
@@ -5212,12 +5641,794 @@ body:not(.login-page) {
   backdrop-filter: blur(22px) saturate(1.16);
 }
 
+/* 顶栏贴顶平铺（对齐 artd.pro）：全宽横条无边框无底色，第一个按钮为导航折叠开关；吸顶悬浮。
+   左侧贴紧侧栏：负外边距吃掉网格间隙，仅留 ~10px 呼吸位 */
+.console-app-shell .console-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  grid-template-columns: auto auto minmax(260px, 1fr) auto auto auto;
+  gap: 10px;
+  min-height: 56px;
+  margin: -12px -12px 0 -10px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* 滚动后吸顶态：毛玻璃垫底保证内容可读；页面顶部静止时保持完全透明无框 */
+.console-app-shell .console-topbar.console-topbar-stuck {
+  background: var(--console-topbar-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+/* 顶栏下方不留空隙，页面内容紧贴头部 */
+.console-app-shell .page > .hero:first-child {
+  padding-top: 0;
+}
+
+/* 导航折叠开关：ghost 图标按钮 */
+.console-app-shell .console-topbar .console-sidebar-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  font-size: 17px;
+  color: var(--soft-text);
+  cursor: pointer;
+}
+
+.console-app-shell .console-topbar .console-sidebar-toggle:hover {
+  color: var(--text);
+}
+
+.console-app-shell .console-topbar .console-sidebar-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.console-app-shell .console-global-search-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+/* 顶栏主题设置按钮（图标：Remix Icon settings-3-line） */
+.console-theme-settings-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  color: var(--soft-text);
+  cursor: pointer;
+}
+
+.console-theme-settings-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.console-theme-settings-btn:hover {
+  color: var(--text);
+}
+
+/* 顶栏通知铃铛（图标：Remix Icon notification-3-line） */
+.console-notifications-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  box-shadow: none;
+  color: var(--soft-text);
+  cursor: pointer;
+}
+
+.console-notifications-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.console-notifications-btn:hover {
+  color: var(--text);
+}
+
+.console-notifications-dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid var(--panel-bg);
+}
+
+.console-notifications-dot.hidden {
+  display: none;
+}
+
+/* 通知下拉面板（对齐 artd 通知面板） */
+.console-notifications-panel {
+  position: fixed;
+  z-index: 97;
+  width: 320px;
+  max-height: min(60vh, 460px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.console-notifications-panel.hidden {
+  display: none;
+}
+
+.console-notifications-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.console-notifications-head strong {
+  font-size: 14px;
+}
+
+.console-notifications-read {
+  border: 0;
+  background: none;
+  color: var(--soft-text);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.console-notifications-read:hover {
+  background: var(--soft-bg);
+  color: var(--text);
+}
+
+.console-notifications-list {
+  overflow-y: auto;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  align-content: start;
+}
+
+.console-notifications-empty {
+  padding: 28px 10px;
+  text-align: center;
+  color: var(--muted-text);
+  font-size: 13px;
+}
+
+.console-notification-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 9px;
+}
+
+.console-notification-item:hover {
+  background: var(--soft-bg);
+}
+
+.console-notification-chip {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.console-notification-item.level-error .console-notification-chip {
+  background: rgba(239, 68, 68, 0.14);
+  color: #ef4444;
+}
+
+.console-notification-item.level-warn .console-notification-chip {
+  background: rgba(245, 158, 11, 0.16);
+  color: #d97706;
+}
+
+.console-notification-item.level-info .console-notification-chip {
+  background: rgba(14, 165, 233, 0.14);
+  color: #0ea5e9;
+}
+
+.console-notification-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.console-notification-copy h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.console-notification-copy p {
+  margin: 0;
+  color: var(--soft-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.console-notification-copy time {
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+/* 主题设置抽屉（对齐 Art Design Pro SettingsPanel） */
+.console-settings-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 96;
+  pointer-events: none;
+}
+
+.console-settings-drawer.is-open {
+  pointer-events: auto;
+}
+
+.console-settings-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.28);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.console-settings-drawer.is-open .console-settings-mask {
+  opacity: 1;
+}
+
+.console-settings-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -18px 0 44px rgba(15, 23, 42, 0.16);
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+}
+
+.console-settings-drawer.is-open .console-settings-panel {
+  transform: translateX(0);
+}
+
+.console-settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.console-settings-head strong {
+  font-size: 15px;
+}
+
+.console-settings-close {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--soft-text);
+  cursor: pointer;
+}
+
+.console-settings-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.console-settings-close:hover {
+  background: var(--soft-bg);
+  color: var(--text);
+}
+
+.console-settings-body {
+  overflow-y: auto;
+  padding: 4px 16px 24px;
+}
+
+.console-settings-body h4 {
+  margin: 18px 0 12px;
+  color: var(--soft-text);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.console-settings-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.console-settings-mode-card {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  cursor: pointer;
+}
+
+.console-settings-mode-card:hover {
+  border-color: var(--border-strong);
+}
+
+.console-settings-mode-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.console-mode-preview {
+  display: grid;
+  grid-template-rows: 8px 1fr;
+  width: 46px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.console-mode-preview i {
+  display: block;
+}
+
+.console-mode-preview i:first-child {
+  background: #e2e8f0;
+}
+
+.console-mode-preview i:last-child {
+  margin: 3px 5px;
+  border-radius: 2px;
+  background: #f1f5f9;
+}
+
+.console-mode-preview.mode-dark {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.console-mode-preview.mode-dark i:first-child {
+  background: #1e293b;
+}
+
+.console-mode-preview.mode-dark i:last-child {
+  background: #334155;
+}
+
+.console-mode-preview.mode-system {
+  background: linear-gradient(90deg, #ffffff 50%, #0f172a 50%);
+}
+
+.console-settings-mode-label {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.console-settings-accent-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.console-settings-accent {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.console-settings-accent-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #ffffff;
+}
+
+.console-settings-accent-dot svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+}
+
+.console-settings-accent.active .console-settings-accent-dot svg {
+  opacity: 1;
+}
+
+.console-settings-accent.active {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.console-settings-boxseg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.console-settings-boxseg button {
+  min-height: 38px;
+  border: 0;
+  background: var(--panel-bg);
+  color: var(--soft-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.console-settings-boxseg button + button {
+  border-left: 1px solid var(--border);
+}
+
+.console-settings-boxseg button.active {
+  background: var(--soft-bg);
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* 抽屉设置行（对齐 artd SettingItem：左标签右控件）+ 动作按钮 */
+.console-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px;
+}
+
+.console-settings-row-label {
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ===== artd 风格设置行（系统设置页）：左标签右控件 + 细分隔线 ===== */
+.console-settings-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.console-settings-list {
+  display: grid;
+}
+
+.console-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 15px 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.console-settings-item:last-child {
+  border-bottom: 0;
+}
+
+.console-settings-item-text {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.console-settings-item-label {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.console-settings-item .setting-help {
+  margin: 0;
+}
+
+.console-settings-item-control {
+  display: flex;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+.console-settings-item-control input[type='text'],
+.console-settings-item-control input[type='password'],
+.console-settings-item-control input[type='number'] {
+  width: 260px;
+  max-width: 100%;
+}
+
+.console-settings-item-control textarea {
+  width: min(560px, 100%);
+  min-height: 66px;
+  resize: vertical;
+}
+
+/* 文本域等大控件：标签在上、控件整行铺开 */
+.console-settings-item.console-settings-item-block {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.console-settings-item-control .tag {
+  flex: 0 0 auto;
+}
+
+/* ===== 灵晶设置三级导航：二级分类行 + 三级分组链接（展开态嵌套，artd menu2 风格） ===== */
+.console-nav-subgroup {
+  display: grid;
+}
+
+.console-nav-subsection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px 7px 30px;
+  border: 0;
+  background: none;
+  color: var(--soft-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.console-nav-subsection:hover {
+  color: var(--text);
+}
+
+.console-nav-subsection .console-nav-chevron {
+  transition: transform 0.18s ease;
+}
+
+.console-nav-subsection.is-collapsed .console-nav-chevron {
+  transform: rotate(-90deg);
+}
+
+.console-nav-subgroup-links {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.console-nav-subgroup-links > .console-nav-subgroup-links-inner {
+  overflow: hidden;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+}
+
+.console-nav-subgroup-links.is-collapsed {
+  grid-template-rows: 0fr;
+}
+
+.console-nav-subgroup-links .console-nav-link {
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: 46px;
+}
+
+/* rail 悬浮面板：灵晶分类行 + 第三级分组面板 */
+.console-flyout-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.console-flyout-group-row:hover {
+  background: var(--soft-bg);
+}
+
+.console-flyout-more {
+  color: var(--muted-text);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.console-nav-flyout-sub {
+  min-width: 160px;
+}
+
+/* 插件设置页：抽屉移除后单列布局 + 顶部横向标签行 */
+.plugin-settings-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.plugin-settings-top-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.plugin-settings-top-tabs .plugin-settings-side-btn {
+  width: auto;
+  min-width: 120px;
+}
+
+@media (max-width: 900px) {
+  .console-settings-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .console-settings-item-control {
+    justify-content: flex-start;
+  }
+
+  .console-settings-item-control input[type='text'],
+  .console-settings-item-control input[type='password'],
+  .console-settings-item-control input[type='number'] {
+    width: 100%;
+  }
+}
+
+.console-settings-action-btn {
+  min-width: 74px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--console-control-border, var(--border));
+  border-radius: 8px;
+  background: var(--console-control-bg, var(--soft-bg));
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.console-settings-action-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.console-settings-action-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* 盒子样式变体（flarum-flat 页面生效） */
+body.flarum-flat.box-style-border .console-app-shell .panel {
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+}
+
+body.flarum-flat.box-style-shadow .console-app-shell .panel {
+  background: var(--panel-bg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.10);
+}
+
+/* 搜索框收短并右置（对齐 artd.pro）：固定宽度 + Ctrl K 徽章 */
+.console-app-shell .console-topbar .console-global-search.console-global-search {
+  grid-column: 3;
+  justify-self: end;
+  width: 220px;
+  max-width: 220px;
+  min-height: 36px;
+  border: 1px solid var(--console-glass-border);
+  border-radius: 10px;
+  padding: 0 8px 0 10px;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  background: none;
+  backdrop-filter: none;
+}
+
+.console-app-shell .console-global-search .console-global-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 0;
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.console-app-shell .console-topbar .console-global-search.console-global-search:focus-within {
+  border-color: var(--primary);
+  background: none;
+}
+
+/* 顶栏搜索输入框本身透明，去掉全局/深色主题的 input 填充 */
+.console-app-shell .console-topbar .console-global-search.console-global-search input {
+  background: none;
+}
+
+.console-app-shell .console-global-search .console-search-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border: 1px solid var(--console-glass-border);
+  border-radius: 5px;
+  background: none;
+  color: var(--muted-text);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: inherit;
+}
+
+@media (max-width: 900px) {
+  .console-app-shell .console-global-search .console-search-kbd {
+    display: none;
+  }
+}
+
 .console-sidebar-toggle {
   grid-column: 1;
 }
 
 .console-topbar-tools {
-  grid-column: 4;
+  grid-column: 6;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -5412,7 +6623,14 @@ body:not(.login-page) {
   padding: 18px;
   color: var(--muted-text);
   font-size: 13px;
-  text-align: center;
+  text-align: left;
+}
+
+/* 手机全宽面板下左对齐更自然，标题行保留图标位 */
+@media (max-width: 900px) {
+  .console-global-search-empty {
+    padding: 14px 16px;
+  }
 }
 
 .console-global-search-empty strong {
@@ -5567,7 +6785,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   border-radius: 14px;
 }
 
-.console-app-shell button,
+.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn),
 .console-app-shell .link-btn {
   min-height: 38px;
   border-color: rgba(34, 211, 238, 0.22);
@@ -5579,7 +6797,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
 }
 
-.console-app-shell button:hover,
+.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
 .console-app-shell .link-btn:hover {
   background:
     linear-gradient(180deg, rgba(103, 232, 249, 0.98), rgba(56, 189, 248, 0.98));
@@ -5906,7 +7124,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
 
 @media (max-width: 1180px) {
   .console-app-shell {
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: 76px minmax(0, 1fr);
   }
 
   .console-brand {
@@ -5914,10 +7132,11 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     justify-items: center;
   }
 
+  /* 窄桌面锁定 rail：只藏文字，分组行保持图标可见（悬浮二级菜单依赖它触发） */
   .console-brand-title,
   .console-brand-subtitle,
   .console-nav-label,
-  .console-nav-section {
+  .console-nav-section-label {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -5926,10 +7145,25 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     white-space: nowrap;
   }
 
+  .console-nav-chevron {
+    display: none;
+  }
+
   .console-nav-link {
     grid-template-columns: 1fr;
     justify-items: center;
     padding: 9px;
+  }
+
+  /* 展开态的"子菜单无图标 + 缩进"规则在 76px rail 下会产出空胶囊，恢复图标与居中 */
+  body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link {
+    grid-template-columns: 1fr;
+    padding-left: 9px;
+    justify-items: center;
+  }
+
+  body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link .console-nav-icon {
+    display: grid;
   }
 }
 
@@ -5990,14 +7224,26 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
 
   .console-sidebar {
     position: fixed;
-    left: 12px;
-    top: calc(76px + env(safe-area-inset-top, 0px));
-    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    left: 0;
+    top: 0;
+    bottom: 0;
     z-index: 80;
-    width: min(320px, calc(100vw - 24px));
+    width: min(320px, 86vw);
+    padding-top: max(10px, env(safe-area-inset-top, 0px));
+    border-radius: 0;
+    border: 0;
+    border-right: 1px solid var(--console-sidebar-border);
+    /* body 前缀提权：压住 console-modern.css 后注入的 top/height，保证抽屉始终钉在可视区内（100vh 在手机上大于可视高度） */
     height: auto;
+    max-height: none;
     transform: translateX(calc(-100% - 18px));
     transition: transform 0.22s ease;
+  }
+
+  body .console-sidebar {
+    top: 0;
+    bottom: 0;
+    height: auto;
   }
 
   .console-sidebar-backdrop {
@@ -6053,17 +7299,18 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     place-items: center;
   }
 
-  .console-topbar {
-    top: max(10px, env(safe-area-inset-top, 0px));
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    margin-bottom: 14px;
+  .console-app-shell .console-topbar {
+    top: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    margin: -12px -12px 12px;
     min-height: 54px;
     gap: 10px;
-    padding: 9px 10px;
-    border-radius: 16px;
+    padding: 0 12px;
+    border-radius: 0;
   }
 
-  .console-global-search {
+  /* 覆盖桌面紧凑搜索的定宽规则（更高优先级），搜索框独占第二行 */
+  .console-app-shell .console-topbar .console-global-search.console-global-search {
     grid-column: 1 / -1;
     grid-row: 2;
     width: 100%;
@@ -6076,12 +7323,8 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     width: 100%;
   }
 
-  .console-topbar-status {
-    grid-column: 3;
-  }
-
   .console-topbar-tools {
-    grid-column: 4;
+    grid-column: 5;
   }
 
   .console-app-shell .hero:not(:has(.hero-action-group-data)) {
@@ -6376,13 +7619,34 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     padding: 4px 0 10px;
   }
 
+  /* rail 模式对齐 artd.pro：只显示分组图标，hover 右侧弹出二级悬浮菜单 */
   body.console-sidebar-collapsed .console-nav-section {
-    height: 1px;
-    margin: 8px 6px;
-    padding: 0;
-    overflow: hidden;
-    color: transparent;
-    background: var(--console-sidebar-border);
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  body.console-sidebar-collapsed .console-nav-section .console-nav-section-label,
+  body.console-sidebar-collapsed .console-nav-section .console-nav-chevron {
+    display: none;
+  }
+
+  body.console-sidebar-collapsed .console-nav-section.has-active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+  }
+
+  body.console-sidebar-collapsed .console-nav-section.has-active .console-nav-icon {
+    color: var(--primary-hover);
+  }
+
+  body.console-sidebar-collapsed .console-nav-group-links,
+  body.console-sidebar-collapsed .console-nav-group-links.is-collapsed {
+    grid-template-rows: 0fr;
+  }
+
+  body.console-sidebar-collapsed .console-nav-group-links .console-nav-group-links-inner {
+    visibility: hidden;
+    transition: none;
   }
 
   body.console-sidebar-collapsed .console-nav-link {
@@ -6466,3 +7730,404 @@ body.flarum-flat .panel h2:has(+ #scene-summary-box)::before { content: '◎'; }
 body.flarum-flat .panel h2:has(+ #trend-chart)::before { content: '▥'; }
 body.flarum-flat .panel:has(#usage-days-chart) h2::before { content: '▧'; }
 body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
+
+/* AI 用量中心：今日概览头部合并 + 摘要双栏排版 */
+.usage-overview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.usage-overview-head h2 {
+  margin: 0;
+}
+
+.usage-overview-box {
+  margin: 0;
+  columns: 2;
+  column-gap: 28px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 日志详情：请求信息紧凑多列网格（长值独占整行） */
+#detail-main.kv-grid {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+#detail-main .kv-item {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+#detail-main .kv-label {
+  margin-bottom: 3px;
+  font-size: 12px;
+}
+
+#detail-main .kv-value {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+#detail-main .kv-head .mini-btn {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+#detail-main .kv-item-wide {
+  grid-column: 1 / -1;
+}
+
+#detail-main .kv-value-long {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 日志详情：顶部统计与关联操作紧凑化 */
+#detail-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+#detail-cards .detail-stat {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  min-width: 0;
+}
+
+#detail-cards .detail-stat-label {
+  color: var(--muted-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#detail-cards .detail-stat-value {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+#detail-cards .detail-stat.tone-success .detail-stat-value {
+  color: #16a34a;
+}
+
+#detail-cards .detail-stat.tone-error .detail-stat-value {
+  color: #dc2626;
+}
+
+/* 关联操作 + 画像摘要压扁 */
+#detail-actions {
+  gap: 8px;
+}
+
+#detail-actions .link-btn,
+#detail-actions button {
+  min-height: 30px;
+  font-size: 12px;
+  padding: 0 12px;
+}
+
+#linked-profile-summary {
+  min-height: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+/* 日志详情：短文本预览压成单行“标签: 值”，去掉嵌套卡片框 */
+.preview-section-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin-bottom: 0;
+  border: none;
+  background: none;
+}
+
+.preview-section-compact .preview-head {
+  flex: none;
+  gap: 8px;
+  margin: 0;
+}
+
+.preview-section-compact .preview-head h3 {
+  font-size: 12px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.preview-section-compact .preview-head .mini-btn {
+  min-height: 22px;
+  padding: 0 7px;
+  font-size: 11px;
+}
+
+.preview-section-compact .preview-box-compact {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
+  max-height: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* ===== 总览页空间利用率优化 ===== */
+.dashboard-page .page {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.dashboard-page .page > * {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+/* 三个快捷入口面板并排 */
+.dashboard-page .page > .console-health-overview-panel,
+.dashboard-page .page > .operation-task-center-panel,
+.dashboard-page .page > .public-security-panel {
+  grid-column: auto / span 1;
+}
+
+/* hero 压缩 */
+.dashboard-page .hero {
+  gap: 16px;
+  padding: 0 2px 8px;
+  margin-bottom: 2px;
+}
+
+.dashboard-page .hero-copy {
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.dashboard-page .hero h1 {
+  font-size: 22px;
+}
+
+.dashboard-page .hero-actions-shell {
+  gap: 8px;
+}
+
+.dashboard-page .ops-monitor-banner,
+.dashboard-page .dashboard-strip {
+  margin: 0;
+}
+
+/* 面板与标题密度 */
+.dashboard-page .panel {
+  margin-bottom: 0;
+  padding: 14px 16px;
+}
+
+.dashboard-page .section-head {
+  margin-bottom: 10px;
+}
+
+.dashboard-page .panel h2 {
+  font-size: 18px;
+}
+
+/* 独立工具入口卡片压紧：描述单行截断 */
+.dashboard-page #collection-entry-grid {
+  gap: 12px;
+}
+
+.dashboard-page #collection-entry-grid > .setting-item {
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+.dashboard-page #collection-entry-grid .setting-help {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+/* 并排快捷面板：展开详情时占满整行（三分之一宽塞不下内容网格） */
+.dashboard-page .page > .console-health-overview-panel:not(.collapsed),
+.dashboard-page .page > .operation-task-center-panel:not(.collapsed),
+.dashboard-page .page > .public-security-panel:not(.collapsed) {
+  grid-column: 1 / -1;
+}
+
+/* 并排快捷面板：按钮紧凑化防止换行撑高 */
+.dashboard-page .page > .console-health-overview-panel .section-head,
+.dashboard-page .page > .operation-task-center-panel .section-head,
+.dashboard-page .page > .public-security-panel .section-head {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.dashboard-page .page > .console-health-overview-panel .actions,
+.dashboard-page .page > .operation-task-center-panel .actions,
+.dashboard-page .page > .public-security-panel .actions {
+  gap: 6px;
+}
+
+.dashboard-page .page > .console-health-overview-panel .link-btn,
+.dashboard-page .page > .console-health-overview-panel .mini-btn,
+.dashboard-page .page > .operation-task-center-panel .link-btn,
+.dashboard-page .page > .operation-task-center-panel .mini-btn,
+.dashboard-page .page > .public-security-panel .link-btn,
+.dashboard-page .page > .public-security-panel .mini-btn {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-page .page {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-page .page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+/* ===== 更新日志页（artd 时间线风格） ===== */
+.update-log-timeline {
+  display: grid;
+  gap: 0;
+}
+
+.update-log-version {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 14px;
+  padding-bottom: 22px;
+}
+
+/* 时间线竖线：连接相邻版本的节点 */
+.update-log-version:not(:last-child) .update-log-version-node::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 26px;
+  bottom: -4px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.update-log-version-node {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.update-log-version-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--primary);
+  background: var(--panel-bg);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.update-log-version.is-latest .update-log-version-dot {
+  background: var(--primary);
+}
+
+.update-log-version-body {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  padding: 14px 16px;
+}
+
+.update-log-version-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.update-log-version-head strong {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.update-log-current-tag {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.update-log-items {
+  display: grid;
+  gap: 8px;
+}
+
+.update-log-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--text-soft, var(--text));
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.update-log-chip {
+  flex: 0 0 auto;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  background: var(--soft-bg);
+  color: var(--soft-text);
+}
+
+/* 变更类型配色：沿用语义色调 */
+.update-log-chip-新增 { background: color-mix(in srgb, #10b981 16%, transparent); color: #059669; }
+.update-log-chip-修复 { background: color-mix(in srgb, #ef4444 14%, transparent); color: #dc2626; }
+.update-log-chip-优化 { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
+.update-log-chip-调整 { background: color-mix(in srgb, #f59e0b 16%, transparent); color: #d97706; }
+.update-log-chip-重构 { background: color-mix(in srgb, #8b5cf6 16%, transparent); color: #7c3aed; }
+.update-log-chip-移除 { background: color-mix(in srgb, #64748b 18%, transparent); color: #64748b; }
+.update-log-chip-安全 { background: color-mix(in srgb, #ef4444 14%, transparent); color: #b91c1c; }
+.update-log-chip-性能 { background: color-mix(in srgb, #0ea5e9 14%, transparent); color: #0284c7; }
+.update-log-chip-官网 { background: color-mix(in srgb, #0ea5e9 14%, transparent); color: #0284c7; }
+
+@media (max-width: 900px) {
+  .update-log-version {
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .update-log-version:not(:last-child) .update-log-version-node::after {
+    left: 8px;
+  }
+}

@@ -17,10 +17,10 @@
 .bot-logs-field input[type='search'] {
   min-width: 160px;
   padding: 6px 10px;
-  border: 1px solid var(--border-color, #3a4258);
+  border: 1px solid var(--border-strong, #cbd5e1);
   border-radius: 8px;
-  background: var(--input-bg, rgba(255, 255, 255, 0.04));
-  color: var(--text-primary, #e6eaf2);
+  background: var(--panel-bg, #fff);
+  color: var(--text, #1f2937);
   font-size: 13px;
   outline: none;
 }
@@ -51,7 +51,7 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--text-primary, #e6eaf2);
+  color: var(--text, #1f2937);
   cursor: pointer;
   user-select: none;
 }

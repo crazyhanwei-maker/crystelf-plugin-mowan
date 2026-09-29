@@ -37,6 +37,13 @@
   padding: 12px;
 }
 
+/* 桌面端去掉壳层左内边距：侧栏已固定贴边，主列不再比侧栏多缩进一截（对齐 artd.pro） */
+@media (min-width: 901px) {
+  .console-app-shell {
+    padding-left: 0;
+  }
+}
+
 .console-sidebar {
   top: 12px;
   gap: 10px;
@@ -131,20 +138,6 @@
 
 .console-main {
   padding-bottom: 24px;
-}
-
-.console-topbar {
-  top: 12px;
-  min-height: 56px;
-  margin-bottom: 12px;
-  padding: 8px 10px;
-  border-radius: var(--console-radius-lg);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
-  backdrop-filter: blur(16px) saturate(1.08);
-}
-
-:root[data-theme='dark'] .console-topbar {
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
 }
 
 .console-topbar-eyebrow {
@@ -312,7 +305,7 @@
   letter-spacing: 0;
 }
 
-.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear),
+.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn),
 .console-app-shell .link-btn {
   min-height: 36px;
   border-color: var(--console-control-border);
@@ -322,7 +315,7 @@
   box-shadow: none;
 }
 
-.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):hover,
+.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):hover,
 .console-app-shell .link-btn:hover {
   border-color: var(--console-active-border);
   background: var(--console-control-hover);
@@ -399,6 +392,8 @@
 @media (max-width: 1180px) {
   .console-app-shell {
     grid-template-columns: 76px minmax(0, 1fr);
+    /* 侧栏已固定定位，宽度必须跟随列宽收缩，否则展开态会盖住主列（对齐 artd.pro 窄屏锁定 rail） */
+    --console-shell-width: 76px;
   }
 }
 
@@ -413,12 +408,6 @@
     bottom: max(8px, env(safe-area-inset-bottom, 0px));
     width: min(300px, calc(100vw - 16px));
     border-radius: 10px;
-  }
-
-  .console-topbar {
-    top: max(8px, env(safe-area-inset-top, 0px));
-    margin-bottom: 10px;
-    border-radius: 9px;
   }
 
   .console-app-shell .hero,

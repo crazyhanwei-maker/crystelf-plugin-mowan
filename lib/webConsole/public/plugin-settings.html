@@ -12,18 +12,17 @@
     <header class="hero">
       <div>
         <div class="hero-badge">魔丸控制台</div>
-        <h1>插件设置中心</h1>
-        <p id="plugin-settings-meta">统一管理插件功能、控制台访问和可选工具能力。</p>
+        <h1>灵晶设置</h1>
+        <p id="plugin-settings-meta">分类/分组导航已移至左侧「灵晶设置」菜单；这里集中修改当前分组的配置。</p>
       </div>
       <div class="actions">
         <button id="plugin-settings-save-btn">保存插件设置</button>
-        <button id="plugin-settings-nav-toggle-btn">收起导航</button>
         <a class="link-btn" href="/">返回首页</a>
       </div>
     </header>
 
     <div id="plugin-settings-shell" class="plugin-settings-shell">
-      <aside id="plugin-settings-drawer" class="panel plugin-settings-drawer">
+      <aside id="plugin-settings-drawer" class="panel plugin-settings-drawer" style="display: none;">
         <div class="plugin-settings-sidebar-head">
           <h2>设置导航</h2>
           <div class="setting-status">从左侧选择分类，右侧会显示对应设置。</div>
@@ -40,16 +39,6 @@
           </div>
           <div id="plugin-settings-search-status" class="setting-status">可按设置名称、分类或说明快速定位。</div>
         </div>
-        <div class="plugin-settings-side-section">
-          <div class="kv-label">主导航</div>
-          <div class="plugin-settings-side-nav">
-            <button class="plugin-settings-side-btn active" data-plugin-top-tab="plugin-settings-config-panel">插件配置</button>
-            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
-            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-console-panel">控制台设置</button>
-            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-skills-panel">Skills 设置</button>
-            <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-nav-panel">导航设置</button>
-          </div>
-        </div>
         <div id="plugin-settings-config-nav" class="plugin-settings-side-section">
           <div class="kv-label">分类</div>
           <div id="plugin-settings-category-tabs" class="plugin-settings-side-nav"></div>
@@ -59,6 +48,11 @@
       </aside>
 
       <div class="plugin-settings-main">
+        <div class="plugin-settings-top-tabs">
+          <button class="plugin-settings-side-btn active" data-plugin-top-tab="plugin-settings-config-panel">灵晶设置</button>
+          <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-features-panel">功能状态</button>
+          <button class="plugin-settings-side-btn" data-plugin-top-tab="plugin-settings-skills-panel">Skills 设置</button>
+        </div>
         <div id="plugin-settings-risk" class="risk-box hidden"></div>
 
         <section id="plugin-settings-config-panel" class="panel">
@@ -90,14 +84,7 @@
           <div id="plugin-settings-feature-list" class="tag-list"></div>
         </section>
 
-        <section id="plugin-settings-console-panel" class="panel hidden">
-          <div class="plugin-settings-content-head">
-            <h2>控制台设置</h2>
-            <div class="setting-status">设置控制台访问方式、安全策略、展示数量，以及常用超时和提示文案。</div>
-            <div id="plugin-settings-console-meta" class="plugin-settings-panel-meta"></div>
-          </div>
-          <div id="plugin-settings-console-box" class="settings-grid"></div>
-        </section>
+        <!-- 控制台设置已迁至「系统设置」页（system-settings.html） -->
 
         <section id="plugin-settings-skills-panel" class="panel hidden">
           <div class="plugin-settings-content-head">
@@ -108,28 +95,7 @@
           <div id="plugin-settings-skills-box" class="settings-grid">加载中...</div>
         </section>
 
-        <section id="plugin-settings-nav-panel" class="panel hidden">
-          <div class="plugin-settings-content-head">
-            <h2>导航设置</h2>
-            <div class="setting-status">控制侧边栏显示哪些导航项，并添加自定义外部链接；保存后所有设备生效。</div>
-            <div id="plugin-settings-nav-meta" class="plugin-settings-panel-meta"></div>
-          </div>
-          <div class="settings-grid">
-            <div style="grid-column: 1 / -1;">
-              <div class="kv-label">侧边栏显示项（取消勾选即隐藏；当前页入口会保留以防迷路）</div>
-              <div id="plugin-settings-nav-items" style="display: flex; flex-direction: column; gap: 10px;">加载中...</div>
-            </div>
-            <div style="grid-column: 1 / -1;">
-              <div class="kv-label">自定义链接（最多 30 个，仅支持 http/https，新窗口打开）</div>
-              <div id="plugin-settings-nav-custom-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
-              <button id="plugin-settings-nav-custom-add" type="button" class="mini-btn" style="margin-top: 6px;">＋ 添加链接</button>
-            </div>
-            <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
-              <button id="plugin-settings-nav-save" type="button" class="mini-btn">保存导航设置</button>
-              <span id="plugin-settings-nav-status" class="setting-status"></span>
-            </div>
-          </div>
-        </section>
+        <!-- 导航设置已迁至「系统设置」页（system-settings.html） -->
       </div>
     </div>
   </div>
@@ -141,13 +107,11 @@
 <script src="/plugin-settings-recommendations.js"></script>
 <script src="/plugin-settings-render.js"></script>
 <script src="/plugin-settings-feature-render.js"></script>
-<script src="/plugin-settings-console-render.js"></script>
 <script src="/plugin-settings-skills-panel.js"></script>
 <script src="/plugin-settings-skills-render.js"></script>
 <script src="/plugin-settings-private-safety.js"></script>
 <script src="/plugin-settings-persona-preset.js"></script>
 <script src="/plugin-settings.js"></script>
-  <script src="/plugin-settings-nav.js"></script>
 <script src="/plugin-settings-events.js"></script>
   <script src="/theme.js"></script>
 </body>

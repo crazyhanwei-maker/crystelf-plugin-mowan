@@ -96,12 +96,17 @@
 }
 
 .log-list {
-  gap: 10px;
+  gap: 8px;
 }
 
 .log-entry-card {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+}
+
+/* 标题与时间行：去掉 setting-help 自带的 margin-top，避免和卡片 gap 叠加出双倍空隙 */
+.log-entry-head .setting-help {
+  margin-top: 0;
 }
 
 .log-entry-head {
@@ -112,7 +117,7 @@
 }
 
 .log-entry-head h3 {
-  margin-bottom: 0;
+  margin: 0;
 }
 
 .log-entry-meta {
@@ -135,6 +140,25 @@
 .log-entry-preview {
   display: grid;
   gap: 8px;
+}
+
+/* 审计记录筛选：方法/结果两个下拉框同行平分，不各占一整行 */
+.toolbar .audit-filter-select {
+  flex: 1 1 170px;
+  width: auto;
+  min-width: 130px;
+}
+
+/* 审计记录筛选区控件整体缩小一号 */
+.audit-toolbar input,
+.audit-toolbar select {
+  padding: 6px 10px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.audit-toolbar .compact-field {
+  min-width: 180px;
 }
 
 .audit-detail-grid {
@@ -177,6 +201,19 @@
   line-height: 1.6;
   color: var(--text);
   word-break: break-word;
+}
+
+/* User-Agent 等单行内联字段：标签和值并排，长值自动折行（覆盖 preview 的 grid 布局） */
+.log-entry-inline-line {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.log-entry-inline-line .log-entry-label {
+  margin-right: 4px;
 }
 
 .log-diagnosis-panel .section-head {
@@ -272,3 +309,105 @@
   gap: 8px;
 }
 
+
+/* AI 用量日志：紧凑两行条目 */
+.log-entry-compact {
+  gap: 5px;
+}
+
+.log-entry-compact .log-entry-head {
+  align-items: center;
+}
+
+.log-entry-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.log-entry-title h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.log-entry-time {
+  flex: none;
+  color: var(--soft-text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.log-entry-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.log-entry-prompt,
+.log-entry-response {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-entry-prompt {
+  flex: 1 1 38%;
+  color: var(--soft-text);
+}
+
+.log-entry-arrow {
+  flex: none;
+  color: var(--muted-text);
+}
+
+.log-entry-response {
+  flex: 1 1 55%;
+  color: var(--text);
+}
+
+.log-entry-response-error {
+  color: #dc2626;
+}
+
+.log-entry-detail-link {
+  flex: none;
+  margin-left: auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 日志条目卡片化：与控制台卡片风格一致 */
+.log-entry-compact {
+  padding: 10px 14px;
+  border-radius: 10px;
+  gap: 6px;
+}
+
+.log-entry-compact.tone-error {
+  border-color: color-mix(in srgb, #ef4444 32%, var(--border));
+}
+
+.log-entry-meta-inline {
+  color: var(--muted-text);
+  font-size: 11px;
+}
+
+.log-entry-usage {
+  flex: none;
+  color: var(--muted-text);
+  font-size: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 快捷筛选「失败」激活态：红调 */
+.mini-btn.tone-error.active {
+  border-color: color-mix(in srgb, #ef4444 45%, var(--border));
+  background: color-mix(in srgb, #ef4444 12%, var(--panel-bg));
+  color: #dc2626;
+}

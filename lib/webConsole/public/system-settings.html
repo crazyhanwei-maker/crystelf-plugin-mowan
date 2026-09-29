@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 系统设置</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="system-settings-page auth-guarded-page">
+  <div class="page auth-guarded-content">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">系统维护</div>
+        <h1>系统设置</h1>
+        <p>配置备份、恢复等系统级维护操作集中在这里，不影响机器人运行中的会话。</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">快捷入口</div>
+          <div class="actions hero-actions-grid">
+            <a class="link-btn" href="/index.html">返回总览</a>
+            <a class="link-btn" href="/plugin-settings.html">插件设置</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>配置备份与恢复</h2>
+          <div class="setting-help">“一键备份配置”会导出当前插件配置；“从备份恢复”会覆盖现有配置，恢复前请确认备份来源可信。</div>
+        </div>
+      </div>
+      <div class="actions hero-actions-grid">
+        <button id="sys-backup-btn" type="button">一键备份配置</button>
+        <button id="sys-restore-btn" type="button">从备份恢复</button>
+      </div>
+      <input id="sys-restore-input" class="hidden" type="file" accept="application/json" />
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>本地控制台设置</h2>
+          <div class="setting-help">设置控制台访问方式、安全策略、展示数量，以及常用超时和提示文案。</div>
+        </div>
+      </div>
+      <div id="plugin-settings-console-box" class="console-settings-stack">加载中...</div>
+      <div class="actions" style="margin-top: 14px;">
+        <button id="sys-console-save-btn" type="button">保存控制台设置</button>
+        <span id="sys-console-save-status" class="setting-status"></span>
+      </div>
+    </section>
+
+    <section class="panel" id="plugin-settings-nav-panel">
+      <div class="section-head">
+        <div>
+          <h2>导航设置</h2>
+          <div class="setting-help">控制侧边栏显示哪些导航项，并添加自定义外部链接；保存后所有设备生效。</div>
+        </div>
+      </div>
+      <div class="settings-grid">
+        <div style="grid-column: 1 / -1;">
+          <div class="kv-label">侧边栏显示项（取消勾选即隐藏；当前页入口会保留以防迷路）</div>
+          <div id="plugin-settings-nav-items" style="display: flex; flex-direction: column; gap: 10px;">加载中...</div>
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <div class="kv-label">自定义链接（最多 30 个，仅支持 http/https，新窗口打开）</div>
+          <div id="plugin-settings-nav-custom-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          <button id="plugin-settings-nav-custom-add" type="button" class="mini-btn" style="margin-top: 6px;">＋ 添加链接</button>
+        </div>
+        <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;">
+          <button id="plugin-settings-nav-save" type="button" class="mini-btn">保存导航设置</button>
+          <span id="plugin-settings-nav-status" class="setting-status"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="modal-mask" class="modal-mask hidden">
+    <div class="modal-card">
+      <h3 id="modal-title">提示</h3>
+      <div id="modal-content" class="modal-content"></div>
+      <div class="actions">
+        <button id="modal-cancel-btn">取消</button>
+        <button id="modal-confirm-btn">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script src="/config-backup-shared.js"></script>
+  <script src="/plugin-settings-state.js"></script>
+  <script src="/plugin-settings-nav.js"></script>
+  <script src="/system-settings.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

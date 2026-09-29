@@ -144,6 +144,142 @@
   white-space: pre-wrap;
 }
 
+/* ===== 自定义定时任务 ===== */
+.custom-task-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.custom-task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--soft-bg);
+}
+
+.custom-task-row.is-disabled {
+  opacity: 0.66;
+}
+
+.custom-task-row-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.custom-task-type-badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg, #fff);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--soft-text);
+  white-space: nowrap;
+}
+
+.custom-task-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: start;
+  justify-content: flex-end;
+}
+
+.custom-task-editor {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg, #fff);
+  display: grid;
+  gap: 12px;
+}
+
+.custom-task-editor.hidden {
+  display: none;
+}
+
+.custom-task-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.custom-task-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.custom-task-fields:empty {
+  display: none;
+}
+
+.custom-task-field {
+  display: grid;
+  gap: 5px;
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--soft-text);
+}
+
+.custom-task-field-name {
+  flex: 1 1 200px;
+}
+
+.custom-task-field.custom-task-narrow {
+  flex: 0 1 170px;
+}
+
+.custom-task-field input,
+.custom-task-field select,
+.custom-task-field textarea {
+  width: 100%;
+  min-width: 0;
+  font-weight: 400;
+}
+
+.custom-task-field textarea {
+  resize: vertical;
+}
+
+.custom-task-hint {
+  flex: 1 1 100%;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted-text);
+}
+
+.custom-task-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.custom-task-enabled-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.custom-task-enabled-label input {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+}
+
 @media (max-width: 760px) {
   .task-center-card {
     grid-template-columns: 1fr;
@@ -155,5 +291,17 @@
 
   .task-center-card-actions .next-run {
     white-space: normal;
+  }
+
+  .custom-task-row {
+    grid-template-columns: 1fr;
+  }
+
+  .custom-task-row-actions {
+    justify-content: flex-start;
+  }
+
+  .custom-task-field.custom-task-narrow {
+    flex: 1 1 130px;
   }
 }

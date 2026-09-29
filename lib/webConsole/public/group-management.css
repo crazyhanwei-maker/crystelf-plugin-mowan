@@ -64,14 +64,14 @@ button.group-management-workspace-tab:hover {
 }
 
 button.group-management-workspace-tab.active {
-  border-color: rgba(34, 211, 238, 0.56) !important;
-  color: #a5f3fc !important;
-  background: rgba(34, 211, 238, 0.16) !important;
-  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.12) !important;
+  border-color: transparent !important;
+  color: var(--primary-text) !important;
+  background: var(--primary) !important;
+  box-shadow: none !important;
 }
 
 button.group-management-workspace-tab.active:hover {
-  background: rgba(34, 211, 238, 0.22) !important;
+  background: var(--primary-hover) !important;
 }
 
 .group-management-workspace-hint {
@@ -96,7 +96,7 @@ button.group-management-workspace-tab.active:hover {
   margin-bottom: 14px;
 }
 
-.group-management-toolbar input {
+.group-management-toolbar input:not([type='checkbox']) {
   flex: 1 1 240px;
   min-width: 220px;
 }
@@ -111,19 +111,24 @@ button.group-management-workspace-tab.active:hover {
 }
 
 .group-management-event-toolbar select {
+  width: auto;
   min-width: 150px;
+  flex: 0 0 auto;
 }
 
 .group-management-event-scope {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex: 0 0 auto;
   color: var(--soft-text);
   font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .group-management-event-scope input {
+  flex: 0 0 auto;
   width: 16px;
   min-width: 16px;
   height: 16px;

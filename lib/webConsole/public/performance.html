@@ -67,32 +67,26 @@
       <div id="performance-api-quality-alerts" class="performance-api-quality-alerts">加载中...</div>
       <div id="performance-api-quality-summary" class="performance-api-quality-summary">加载中...</div>
       <div id="performance-api-quality-retention" class="performance-api-quality-retention">加载中...</div>
-      <div id="performance-api-quality-trend" class="performance-api-quality-trend">加载中...</div>
       <div id="performance-api-failure-diagnosis" class="performance-api-failure-diagnosis">加载中...</div>
       <div id="performance-api-circuit-breaker" class="performance-api-circuit-breaker">加载中...</div>
       <div id="performance-api-quality-table" class="performance-table-wrap">加载中...</div>
       <div id="performance-api-fallback-events" class="performance-fallback-events">加载中...</div>
     </section>
 
-    <section class="panel panel-two">
-      <div>
-        <div class="section-head">
-          <div>
-            <h2>AI 近 24 小时趋势</h2>
-            <div class="setting-help">按小时汇总请求数、平均耗时和错误数。</div>
-          </div>
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>请求趋势</h2>
+          <div class="setting-help" id="performance-trend-help">按小时汇总 AI 与生图请求数，双曲线对比；悬停曲线节点可看该小时明细。</div>
         </div>
-        <div id="performance-ai-trend" class="performance-chart">加载中...</div>
-      </div>
-      <div>
-        <div class="section-head">
-          <div>
-            <h2>生图近 24 小时趋势</h2>
-            <div class="setting-help">按小时汇总图片生成请求耗时。</div>
-          </div>
+        <div class="actions performance-trend-tabs">
+          <button type="button" class="tab-btn active" data-trend-view="24h">近 24 小时</button>
+          <button type="button" class="tab-btn" data-trend-view="7d">近 7 天</button>
         </div>
-        <div id="performance-image-trend" class="performance-chart">加载中...</div>
       </div>
+      <div id="performance-trend-summary" class="performance-hourly-peak"></div>
+      <div id="performance-hourly-chart" class="performance-chart">加载中...</div>
+      <div id="performance-api-quality-trend" class="performance-api-quality-trend hidden">加载中...</div>
     </section>
 
     <section class="panel panel-two">

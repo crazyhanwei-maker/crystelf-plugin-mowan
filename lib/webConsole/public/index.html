@@ -21,14 +21,11 @@
         <div class="hero-action-group hero-action-group-data">
           <div class="actions hero-actions-grid">
             <button id="refresh-btn">刷新数据</button>
-            <button id="backup-config-btn">一键备份配置</button>
-            <button id="restore-config-btn">从备份恢复</button>
             <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
           </div>
         </div>
         <div id="ops-monitor-banner" class="ops-monitor-banner"></div>
         <div id="dashboard-strip" class="dashboard-strip"></div>
-        <input id="restore-config-input" class="hidden" type="file" accept="application/json" />
       </div>
     </header>
 
@@ -222,7 +219,7 @@
 
     <section class="panel collapsible-panel collapsed">
       <h2 class="collapsible-head">配置摘要<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
-      <div class="setting-status">“一键备份配置”会导出当前插件配置；“从备份恢复”会覆盖现有配置，恢复前请确认备份来源可信。</div>
+      <div class="setting-status">配置备份与恢复已移至「插件与系统 → 系统设置」页；“一键备份配置”导出当前插件配置，“从备份恢复”会覆盖现有配置。</div>
       <div id="config-box" class="config-summary collapsible-body">加载中...</div>
     </section>
 
@@ -251,6 +248,7 @@
     </div>
   </div>
   <script src="/auth.js"></script>
+  <script src="/config-backup-shared.js"></script>
   <script src="/dashboard-core.js"></script>
   <script src="/dashboard-usage.js"></script>
   <script src="/dashboard-health.js"></script>

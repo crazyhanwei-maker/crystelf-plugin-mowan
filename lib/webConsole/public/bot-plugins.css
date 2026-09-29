@@ -612,3 +612,90 @@
     gap: 6px;
   }
 }
+
+/* 插件市场：悬浮安装条（选中插件后滚过「安装设置」时底部浮现） */
+.plugin-catalog-floating-bar {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+  max-width: min(560px, calc(100vw - 32px));
+}
+
+.plugin-catalog-floating-bar.hidden {
+  display: none;
+}
+
+.plugin-catalog-floating-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.plugin-catalog-floating-name {
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.plugin-catalog-floating-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.plugin-catalog-floating-sub label {
+  color: var(--muted-text);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.plugin-catalog-floating-sub input {
+  width: 150px;
+  min-height: 30px;
+}
+
+.plugin-catalog-floating-install {
+  min-height: 32px;
+  padding: 0 16px;
+  font-weight: 800;
+  flex: none;
+}
+
+.plugin-catalog-floating-close {
+  border: 0;
+  background: none;
+  color: var(--soft-text);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  flex: none;
+}
+
+@media (max-width: 640px) {
+  .plugin-catalog-floating-bar {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+
+  .plugin-catalog-floating-name {
+    max-width: none;
+  }
+}

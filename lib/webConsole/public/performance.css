@@ -304,6 +304,8 @@
 .perf-chart {
   display: block;
   width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
   height: auto;
 }
 
@@ -715,43 +717,62 @@
   background: var(--soft-bg);
 }
 
-.performance-trend-row {
-  display: grid;
-  grid-template-columns: 50px minmax(0, 1fr) 72px 120px;
-  gap: 10px;
+/* ===== 24 小时活跃度双曲线 ===== */
+.performance-hourly-peak {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
   align-items: center;
-  min-height: 30px;
-  color: var(--soft-text);
-  font-size: 12px;
+  font-size: 12.5px;
+  color: var(--muted-text);
+  white-space: nowrap;
 }
 
-.performance-trend-row > span {
-  color: var(--muted-text);
+.performance-hourly-peak b {
+  color: var(--text);
   font-weight: 800;
 }
 
-.performance-trend-row > strong {
-  color: var(--text);
-  text-align: right;
+.performance-hourly-peak .tone-warn {
+  color: #d35d62;
 }
 
-.performance-trend-row > small {
-  color: var(--muted-text);
-  text-align: right;
+.perf-chart-hourly {
+  max-width: none;
+  min-height: 0;
 }
 
-.performance-trend-track {
-  height: 9px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--muted-bg);
+.perf-hourly-area {
+  fill: url(#perf-hourly-grad-ai);
+  stroke: none;
 }
 
-.performance-trend-track i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--primary), #22d3ee);
+.perf-hourly-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.perf-hourly-line-ai {
+  stroke: var(--primary);
+}
+
+.perf-hourly-line-image {
+  stroke: #22d3ee;
+}
+
+.perf-hourly-dot {
+  fill: transparent;
+  stroke: none;
+}
+
+.perf-chart-ylabel-right {
+  fill: #0e9db8;
+}
+
+:root[data-theme='dark'] .perf-chart-ylabel-right {
+  fill: #3fc3dc;
 }
 
 .performance-table-wrap {

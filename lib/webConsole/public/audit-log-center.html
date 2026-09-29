@@ -46,23 +46,23 @@
           <button id="export-audit-logs-btn" class="mini-btn">导出审计日志</button>
         </div>
       </div>
-      <div class="toolbar">
+      <div class="toolbar audit-toolbar">
         <input id="audit-log-search" placeholder="搜索操作、路径、IP、状态码或浏览器信息" />
         <input id="audit-log-action" placeholder="按操作筛选，例如 file_write 或 dependency_install" />
-        <select id="audit-log-method">
+        <select id="audit-log-method" class="audit-filter-select">
           <option value="">全部方法</option>
           <option value="POST">POST</option>
           <option value="PUT">PUT</option>
           <option value="PATCH">PATCH</option>
           <option value="DELETE">DELETE</option>
         </select>
-        <select id="audit-log-result">
+        <select id="audit-log-result" class="audit-filter-select">
           <option value="">全部结果</option>
           <option value="success">仅成功</option>
           <option value="error">仅失败</option>
         </select>
       </div>
-      <div class="toolbar">
+      <div class="toolbar audit-toolbar">
         <label class="compact-field">
           <span>开始时间</span>
           <input id="audit-log-start" type="datetime-local" />
