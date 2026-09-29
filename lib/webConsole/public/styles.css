@@ -8630,11 +8630,11 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .usage-view-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin: 0 0 16px;
-  padding: 5px;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 4px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--panel-bg);
   width: fit-content;
 }
@@ -8644,11 +8644,11 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
   min-height: 0 !important;
   border: none !important;
   background: transparent !important;
-  padding: 10px 26px !important;
-  border-radius: 10px;
+  padding: 6px 18px !important;
+  border-radius: 7px;
   color: var(--soft-text) !important;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow: none !important;
@@ -8663,12 +8663,12 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .usage-view-tab.is-active {
   background: var(--primary) !important;
   color: #fff !important;
-  font-weight: 800;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.32) !important;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28) !important;
 }
 
 :root[data-theme='dark'] .usage-view-tab.is-active {
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.28) !important;
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.24) !important;
 }
 
 .panel[hidden] {
