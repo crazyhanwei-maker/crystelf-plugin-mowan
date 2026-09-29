@@ -7122,7 +7122,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   line-height: 1.4;
 }
 
-@media (max-width: 1180px) {
+@media (min-width: 901px) and (max-width: 1180px) {
   .console-app-shell {
     grid-template-columns: 76px minmax(0, 1fr);
   }

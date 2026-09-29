@@ -389,7 +389,7 @@
   color: var(--soft-text);
 }
 
-@media (max-width: 1180px) {
+@media (min-width: 901px) and (max-width: 1180px) {
   .console-app-shell {
     grid-template-columns: 76px minmax(0, 1fr);
     /* 侧栏已固定定位，宽度必须跟随列宽收缩，否则展开态会盖住主列（对齐 artd.pro 窄屏锁定 rail） */
