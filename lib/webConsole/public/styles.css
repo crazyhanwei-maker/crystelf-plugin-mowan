@@ -8455,6 +8455,7 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 
 .artd-jump-input {
   width: 56px;
+  min-width: 0;
   height: 32px;
   padding: 0 8px;
   border: 1px solid var(--border);
