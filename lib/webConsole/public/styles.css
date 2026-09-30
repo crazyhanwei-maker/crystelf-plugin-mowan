@@ -6265,7 +6265,9 @@ body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link 
   grid-template-rows: 0fr;
 }
 
-/* 三级分组链接比二级分类行再缩进一档，作为层级区分 */
+/* 三级分组链接比二级分类行再缩进一档，作为层级区分
+   特异性需压过 body:not(...) .console-nav-group-links .console-nav-link 的 47px 一级组缩进 */
+body:not(.console-sidebar-collapsed) .console-nav .console-nav-subgroup-links .console-nav-link,
 .console-nav-subgroup-links .console-nav-link {
   grid-template-columns: minmax(0, 1fr);
   padding-left: 64px;
