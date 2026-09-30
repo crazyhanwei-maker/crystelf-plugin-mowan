@@ -8782,3 +8782,26 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
   font-size: 13px;
   line-height: 1.55;
 }
+
+/* ===== 折叠面板机制（原 dashboard.css，全站共用） ===== */
+.collapsible-panel .collapsible-toggle-mark {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--muted-text);
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: -2px;
+  transition: transform 0.18s ease;
+}
+
+.collapsible-panel.collapsed .collapsible-toggle-mark {
+  transform: rotate(-90deg);
+}
+
+.collapsible-panel.collapsed > .collapsible-body {
+  display: none;
+}
+
+.collapsible-panel.collapsed > #overview-cards.collapsible-body {
+  display: none;
+}
