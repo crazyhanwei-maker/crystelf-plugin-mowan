@@ -6228,7 +6228,8 @@ body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link 
   border-radius: 14px;
   background: none;
   color: var(--soft-text);
-  font-size: 1rem;
+  /* px 定值：rem 会跟随浏览器根字号，与子链接的 px 定值链不一致 */
+  font-size: 16px;
   font-weight: 400;
   text-align: left;
   cursor: pointer;
