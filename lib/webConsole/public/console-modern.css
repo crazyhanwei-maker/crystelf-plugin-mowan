@@ -305,7 +305,7 @@
   letter-spacing: 0;
 }
 
-.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn),
+.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection),
 .console-app-shell .link-btn {
   min-height: 36px;
   border-color: var(--console-control-border);
@@ -315,7 +315,7 @@
   box-shadow: none;
 }
 
-.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
+.console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .console-app-shell .link-btn:hover {
   border-color: var(--console-active-border);
   background: var(--console-control-hover);
@@ -441,7 +441,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.plugin-settings-switch):not(.artd-page-btn),
+  .console-app-shell button:not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.plugin-settings-switch):not(.artd-page-btn):not(.console-nav-subsection),
   .console-app-shell .link-btn {
     width: 100%;
   }

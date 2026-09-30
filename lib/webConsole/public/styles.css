@@ -225,7 +225,7 @@ button {
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
+button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .link-btn:hover {
   background: var(--primary-hover);
   box-shadow: 0 10px 20px rgba(59, 130, 246, 0.24);
@@ -3014,7 +3014,7 @@ button,
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
 }
 
-button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
+button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .link-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, var(--primary-hover) 0%, var(--primary-hover) 100%);
@@ -6215,23 +6215,30 @@ body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link 
   display: grid;
 }
 
+/* 灵晶设置分类行：字体/颜色/圆角/hover 对齐子链接（console-nav-link），中间层缩进 */
 .console-nav-subsection {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  padding: 7px 10px 7px 30px;
-  border: 0;
+  min-height: 42px;
+  padding: 9px 12px 9px 30px;
+  border: 1px solid transparent;
+  border-radius: 14px;
   background: none;
   color: var(--soft-text);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 400;
   text-align: left;
   cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .console-nav-subsection:hover {
+  transform: translateX(2px);
+  border-color: var(--console-glass-border);
+  background: rgba(148, 163, 184, 0.08);
   color: var(--text);
 }
 
@@ -6785,7 +6792,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   border-radius: 14px;
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn),
+.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection),
 .console-app-shell .link-btn {
   min-height: 38px;
   border-color: rgba(34, 211, 238, 0.22);
@@ -6797,7 +6804,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):hover,
+.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .console-app-shell .link-btn:hover {
   background:
     linear-gradient(180deg, rgba(103, 232, 249, 0.98), rgba(56, 189, 248, 0.98));
