@@ -1416,7 +1416,7 @@
 .dashboard-page .hero {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(320px, 0.86fr) minmax(560px, 1.14fr);
+  grid-template-columns: 1fr;
   align-items: center;
   gap: 20px;
   padding: 20px 22px;
