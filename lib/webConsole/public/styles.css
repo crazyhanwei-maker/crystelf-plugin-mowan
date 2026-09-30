@@ -8866,3 +8866,20 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
   min-height: 34px;
   padding: 7px 14px;
 }
+
+/* ===== 通知条目可点击跳转 ===== */
+.console-notification-item.has-link {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.console-notification-item.has-link:hover {
+  background: var(--soft-bg);
+}
+
+.console-notification-go {
+  margin-left: auto;
+  align-self: center;
+  color: var(--muted-text);
+  font-size: 14px;
+}
