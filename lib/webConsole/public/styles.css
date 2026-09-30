@@ -8805,3 +8805,64 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .collapsible-panel.collapsed > #overview-cards.collapsible-body {
   display: none;
 }
+
+/* ===== 只读模式警示条（系统设置页） ===== */
+.readonly-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  border-left-width: 4px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.07);
+}
+
+.readonly-banner-text {
+  display: grid;
+  gap: 4px;
+}
+
+.readonly-banner-text strong {
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.readonly-banner-text span {
+  color: var(--soft-text);
+  font-size: 12.5px;
+}
+
+:root[data-theme='dark'] .readonly-banner-text strong {
+  color: #fca5a5;
+}
+
+.readonly-off-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.readonly-off-row input {
+  width: 180px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.readonly-off-row input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.readonly-off-row button {
+  min-height: 34px;
+  padding: 7px 14px;
+}
