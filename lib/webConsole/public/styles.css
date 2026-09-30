@@ -8673,3 +8673,112 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .panel[hidden] {
   display: none !important;
 }
+
+/* ===== 配置变更历史（原 dashboard.css，现系统设置页/首页共用） ===== */
+.config-history-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.config-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.config-history-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+}
+
+.config-history-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.config-history-head h3 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.config-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--soft-text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.config-history-changes {
+  display: grid;
+  gap: 8px;
+}
+
+.config-history-change {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft-bg);
+}
+
+.config-history-change.is-sensitive {
+  border-color: rgba(245, 158, 11, 0.30);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.config-history-change-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-history-change-key span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-bg);
+  color: var(--secondary-text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.config-history-change-key strong {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.config-history-change-values {
+  display: grid;
+  gap: 4px;
+  color: var(--muted-text);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.config-history-empty,
+.config-history-more {
+  padding: 12px 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--soft-bg);
+  color: var(--soft-text);
+  font-size: 13px;
+  line-height: 1.55;
+}

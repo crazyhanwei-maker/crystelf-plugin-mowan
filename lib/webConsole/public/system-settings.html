@@ -40,6 +40,19 @@
       <input id="sys-restore-input" class="hidden" type="file" accept="application/json" />
     </section>
 
+    <section class="panel config-history-panel">
+      <div class="section-head">
+        <div>
+          <h2>配置变更历史</h2>
+          <div class="setting-help">这里记录最近的配置保存动作，遇到设置错误时可以回滚到保存前状态。</div>
+        </div>
+        <div class="actions">
+          <button id="refresh-config-history-btn" class="mini-btn" type="button">刷新历史</button>
+        </div>
+      </div>
+      <div id="config-history-box" class="config-history-list">加载中...</div>
+    </section>
+
     <section class="panel">
       <div class="section-head">
         <div>
@@ -92,6 +105,8 @@
 
   <script src="/auth.js"></script>
   <script src="/config-backup-shared.js"></script>
+  <script src="/dashboard-core.js"></script>
+  <script src="/dashboard-config.js"></script>
   <script src="/plugin-settings-state.js"></script>
   <script src="/plugin-settings-nav.js"></script>
   <script src="/system-settings.js"></script>
