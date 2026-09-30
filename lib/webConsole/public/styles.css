@@ -6232,6 +6232,8 @@ body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link 
   font-weight: 400;
   text-align: left;
   cursor: pointer;
+  /* 全局 button 的蓝色投影在壁纸上会糊成色块，必须显式去除 */
+  box-shadow: none !important;
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
