@@ -6265,9 +6265,10 @@ body:not(.console-sidebar-collapsed) .console-nav-group-links .console-nav-link 
   grid-template-rows: 0fr;
 }
 
+/* 三级分组链接比二级分类行再缩进一档，作为层级区分 */
 .console-nav-subgroup-links .console-nav-link {
   grid-template-columns: minmax(0, 1fr);
-  padding-left: 46px;
+  padding-left: 64px;
 }
 
 /* rail 悬浮面板：灵晶分类行 + 第三级分组面板 */
