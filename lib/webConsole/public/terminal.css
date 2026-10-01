@@ -103,6 +103,31 @@
   margin-top: 12px;
 }
 
+.terminal-completions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.terminal-completion-item {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--soft-bg);
+  color: var(--soft-text);
+  font-size: 12.5px;
+  font-family: ui-monospace, Consolas, monospace;
+  cursor: pointer;
+}
+
+.terminal-completion-item:hover,
+.terminal-completion-item.active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--panel-bg);
+}
+
 .terminal-history-item {
   display: flex;
   align-items: center;

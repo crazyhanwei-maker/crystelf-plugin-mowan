@@ -45,9 +45,10 @@
       <div id="terminal-output" class="terminal-output" aria-live="polite"></div>
       <div class="terminal-input-row">
         <span class="terminal-prompt">$</span>
-        <input id="terminal-command" type="text" autocomplete="off" spellcheck="false" placeholder="输入命令后回车执行（例如：node -v）" />
+        <input id="terminal-command" type="text" autocomplete="off" spellcheck="false" placeholder="输入命令后回车执行（Tab 补全，例如：pi⇥）" />
         <button id="terminal-run-btn" type="button">执行</button>
       </div>
+      <div id="terminal-completions" class="terminal-completions hidden"></div>
       <div id="terminal-history-box" class="terminal-history hidden"></div>
     </section>
   </div>
