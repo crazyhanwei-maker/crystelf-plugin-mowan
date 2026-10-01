@@ -104,28 +104,47 @@
 }
 
 .terminal-completions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  gap: 4px;
   margin-top: 8px;
+  padding: 6px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: var(--panel-bg);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.terminal-completions-hint {
+  padding: 2px 6px 6px;
+  color: var(--muted-text);
+  font-size: 11.5px;
 }
 
 .terminal-completion-item {
-  padding: 5px 12px;
-  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
   border-radius: 6px;
-  background: var(--soft-bg);
+  background: transparent;
   color: var(--soft-text);
-  font-size: 12.5px;
+  font-size: 13px;
   font-family: ui-monospace, Consolas, monospace;
+  text-align: left;
   cursor: pointer;
 }
 
-.terminal-completion-item:hover,
 .terminal-completion-item.active {
   border-color: var(--primary);
   color: var(--primary);
-  background: var(--panel-bg);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.terminal-completion-item:hover {
+  color: var(--primary);
 }
 
 .terminal-history-item {
