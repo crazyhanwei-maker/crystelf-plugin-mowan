@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - Root 终端</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/terminal.css" />
+</head>
+<body class="auth-guarded-page terminal-page">
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <h1>Root 终端</h1>
+        <p id="terminal-status" class="setting-help">正在检查终端状态...</p>
+      </div>
+    </header>
+
+    <section class="panel" id="terminal-lock-panel">
+      <div class="section-head">
+        <div>
+          <h2>解锁终端</h2>
+          <div class="setting-help">在服务器上执行命令属于高危操作，需要输入控制台登录口令解锁（会话 60 分钟）。所有执行的命令都会记录审计日志。</div>
+        </div>
+      </div>
+      <div class="terminal-unlock-row">
+        <input id="terminal-password" type="password" autocomplete="off" placeholder="控制台登录口令" />
+        <button id="terminal-unlock-btn" type="button">解锁</button>
+      </div>
+      <div id="terminal-lock-error" class="setting-error hidden"></div>
+    </section>
+
+    <section class="panel hidden" id="terminal-panel">
+      <div class="section-head">
+        <div>
+          <h2>命令执行</h2>
+          <div class="setting-help" id="terminal-meta">加载中...</div>
+        </div>
+        <div class="actions">
+          <button id="terminal-history-btn" class="mini-btn" type="button">最近命令</button>
+          <button id="terminal-lock-btn" class="mini-btn danger" type="button">锁定终端</button>
+        </div>
+      </div>
+      <div id="terminal-output" class="terminal-output" aria-live="polite"></div>
+      <div class="terminal-input-row">
+        <span class="terminal-prompt">$</span>
+        <input id="terminal-command" type="text" autocomplete="off" spellcheck="false" placeholder="输入命令后回车执行（例如：node -v）" />
+        <button id="terminal-run-btn" type="button">执行</button>
+      </div>
+      <div id="terminal-history-box" class="terminal-history hidden"></div>
+    </section>
+  </div>
+  <script src="/auth.js"></script>
+  <script src="/terminal.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>
