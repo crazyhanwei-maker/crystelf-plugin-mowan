@@ -4417,3 +4417,97 @@ body.agent-lightbox-open { overflow: hidden; }
 .agent-thinking-bar.is-expanded .agent-thinking-full { display: block; }
 .agent-thinking-bar.is-expanded .agent-thinking-text { display: none; }
 .agent-thinking-bar.is-expanded .agent-thinking-head { padding-bottom: 9px; }
+
+/* ===== 会话内容搜索 ===== */
+.agent-chat-header { position: relative; }
+.agent-content-search-bar {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 20px;
+  right: 20px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 10px;
+  background: var(--agent-surface);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+.agent-content-search-bar.hidden { display: none; }
+.agent-content-search-bar input {
+  flex: 1;
+  min-width: 0;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface-soft);
+  color: var(--agent-ink);
+  font-size: 12.5px;
+}
+.agent-content-search-count { flex: 0 0 auto; color: var(--agent-muted); font-size: 11.5px; white-space: nowrap; }
+.agent-quiet-btn.is-active { border-color: var(--agent-accent); color: var(--agent-accent); background: var(--agent-accent-soft); }
+mark.agent-search-hit { background: var(--agent-accent-soft); color: inherit; border-radius: 2px; padding: 0 1px; }
+mark.agent-search-hit.is-active { background: var(--agent-accent); color: #ffffff; }
+
+/* ===== 顶栏活跃任务条 ===== */
+.agent-active-strip { display: inline-flex; align-items: center; gap: 6px; }
+.agent-active-strip.hidden { display: none; }
+.agent-active-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  padding: 4px 10px;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 999px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 11px;
+  cursor: pointer;
+}
+.agent-active-chip:hover { border-color: var(--agent-accent); }
+.agent-active-chip small { flex: 0 0 auto; color: var(--agent-muted); font-size: 10px; }
+.agent-active-dot { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--agent-line-strong); }
+.agent-active-chip.is-running .agent-active-dot { background: var(--agent-added); animation: agent-todo-pulse 1.2s ease-in-out infinite; }
+.agent-active-chip.is-queued .agent-active-dot { background: #f59e0b; }
+.agent-active-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ===== 工具输入/输出卡 ===== */
+.agent-tool-io { margin-top: 8px; }
+.agent-tool-io-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px 4px;
+}
+.agent-tool-io-head > span:first-child { color: var(--agent-muted); font-size: 10.5px; font-weight: 700; }
+.agent-tool-io-actions { display: inline-flex; gap: 6px; }
+.agent-tool-io-actions button {
+  min-height: 20px;
+  padding: 2px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 5px;
+  background: var(--agent-surface);
+  color: var(--agent-muted);
+  font-size: 10px;
+  cursor: pointer;
+}
+.agent-tool-io-actions button:hover { border-color: var(--agent-accent); color: var(--agent-accent); }
+.agent-tool-io pre {
+  max-height: 300px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  overflow: auto;
+  background: var(--agent-code);
+  color: var(--agent-code-ink);
+  font: 11px/1.6 ui-monospace, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agent-tool-io.is-expanded pre { max-height: none; }

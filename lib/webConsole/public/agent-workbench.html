@@ -21,6 +21,7 @@
       <div class="agent-topbar-meta">
         <span id="agent-master-state" class="agent-state-badge tone-warn">读取中</span>
         <span id="agent-workbench-meta">正在探测本地 Agent CLI...</span>
+        <div id="agent-active-strip" class="agent-active-strip hidden" aria-label="活跃任务"></div>
       </div>
       <div class="agent-topbar-actions">
         <button id="agent-native-toggle" type="button" class="agent-quiet-btn" title="OpenCode 控制中心" aria-label="OpenCode 控制中心">OpenCode</button>
@@ -103,12 +104,21 @@
           </div>
           <div class="agent-chat-actions">
             <span id="agent-chat-status-badge" class="agent-state-badge tone-neutral">未开始</span>
+            <button id="agent-content-search-toggle" type="button" class="agent-quiet-btn" title="搜索会话内容（当前会话消息）" aria-label="搜索会话内容" aria-expanded="false">搜索</button>
             <button id="agent-resume-btn" type="button" class="agent-quiet-btn hidden">继续任务</button>
             <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
             <button id="agent-history-load-btn" type="button" class="agent-quiet-btn hidden">加载完整历史</button>
             <button id="agent-export-btn" type="button" class="agent-quiet-btn hidden">导出</button>
             <button id="agent-delete-btn" type="button" class="agent-quiet-btn agent-delete-btn hidden">删除</button>
           </div>
+
+          <section id="agent-content-search-bar" class="agent-content-search-bar hidden" aria-label="会话内容搜索">
+            <input id="agent-content-search-input" type="search" maxlength="120" placeholder="搜索当前会话内容…" aria-label="搜索会话内容" />
+            <span id="agent-content-search-count" class="agent-content-search-count">输入至少 2 个字符</span>
+            <button type="button" id="agent-content-search-prev" class="agent-mini-btn" title="上一个匹配" aria-label="上一个匹配">↑</button>
+            <button type="button" id="agent-content-search-next" class="agent-mini-btn" title="下一个匹配" aria-label="下一个匹配">↓</button>
+            <button type="button" id="agent-content-search-close" class="agent-mini-btn" title="关闭搜索" aria-label="关闭搜索">✕</button>
+          </section>
         </header>
 
         <div id="agent-output-alert" class="agent-output-alert hidden"></div>
