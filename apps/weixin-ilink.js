@@ -24,6 +24,9 @@ import {
   setBridgePendingQuestion,
   getBridgePendingQuestion,
   clearBridgePendingQuestion,
+  setBridgePendingPermission,
+  getBridgePendingPermission,
+  clearBridgePendingPermission,
   setBridgeModel,
   setBridgeVariant,
 } from '../lib/agent/agentChatBridge.js';
@@ -35,6 +38,17 @@ const bridgeAttachmentStash = new Map();
 const bridgeFailedPromptCache = new Map();
 const bridgeFullTextCache = new Map();
 let bridgeTaskSwitchChoices = new Map();
+// 对话式跟进窗口：任务结论推送后 10 分钟内，直接发消息即在同一会话里继续（QQ 私聊 / 微信通用）
+const bridgeFollowupWindows = new Map();
+
+// 审批回复归一化：1/批准 → once，2/总是 → always，3/拒绝 → reject（空串表示不是审批回复）
+function normalizePermissionChoice(text = '') {
+  const value = String(text || '').trim().toLowerCase();
+  if (['1', '批准', '同意', '允许', 'ok', 'yes', 'y'].includes(value)) return 'once';
+  if (['2', '总是', '总是批准', 'always'].includes(value)) return 'always';
+  if (['3', '拒绝', '不允许', 'reject', 'no', 'n'].includes(value)) return 'reject';
+  return '';
+}
 
 const logger = globalThis.logger || console;
 
@@ -113,6 +127,8 @@ export class weixinIlink extends plugin {
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
         { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|新建会话|会话重置|重置会话|取消|退出)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
+        // QQ 私聊对话式跟进：任务执行中 / 结论窗口期内的纯文本消息并入当前会话（放最后，不抢具体指令）
+        { reg: '^(?!#|/|／).+', fnc: 'qqFollowUp', permission: 'master' },
       ],
     });
     // 延迟启动轮询：Yunzai 装载完成后自起
@@ -295,6 +311,12 @@ export class weixinIlink extends plugin {
 
     // ── 任务模式（/新建任务 进入，黏性）：除 / 指令与 # 指令外的消息都作为当前任务指令 ──
     if (this.taskModeUsers?.has(senderId) && !trimmed.startsWith('#') && !trimmed.startsWith('/')) {
+      await this.handleTaskMessage(senderId, trimmed, token);
+      return;
+    }
+
+    // ── 对话式跟进窗口：刚结束的任务 10 分钟内，普通消息直接在同一会话里继续 ──
+    if (this.takeFollowupWindow(senderId) && !trimmed.startsWith('#') && !trimmed.startsWith('/')) {
       await this.handleTaskMessage(senderId, trimmed, token);
       return;
     }
@@ -634,6 +656,11 @@ export class weixinIlink extends plugin {
       '   /新建会话（或 /会话重置）—— 丢弃上下文：下一条任务从全新会话开始',
       '⑦ /恢复 —— 继续服务重启时被中断的任务 · /压缩 —— 手动压缩上下文',
       '',
+      '⑧ 对话式（QQ/微信通用）：任务结论推送后 10 分钟内直接发消息，',
+      '   就在同一会话里继续（QQ 私聊无需再加 #agent 前缀）；',
+      '   回复「执行」把上面的方案落地为实际修改；「看全文」取回长文原文；',
+      '   终端命令待审批时回复 1 批准 / 2 总是批准 / 3 拒绝（QQ 侧用 #回答 1/2/3）',
+      '',
       '说明：任务以全权限模式在服务器上真实执行，可修改文件、联网、执行命令，请谨慎描述任务。',
       '同一时间只执行一个任务；执行中的进展会分段推送，结束时给出结论。',
     ].join('\n');
@@ -676,6 +703,61 @@ export class weixinIlink extends plugin {
   clearPendingQuestion(senderId) {
     this.pendingQuestions?.delete(senderId);
     clearBridgePendingQuestion(senderId);
+  }
+
+  // ── 对话式跟进窗口 ──
+  // 任务结论推送后 10 分钟内：QQ 私聊/微信直接发消息即在同一会话里继续（回复「执行」把方案落地）
+  rememberFollowupWindow(senderId, taskId = '') {
+    bridgeFollowupWindows.set(senderId, { taskId: String(taskId || ''), at: Date.now() });
+  }
+
+  takeFollowupWindow(senderId) {
+    const entry = bridgeFollowupWindows.get(senderId) || null;
+    if (!entry) return null;
+    if (Date.now() - entry.at > 10 * 60 * 1000) {
+      bridgeFollowupWindows.delete(senderId);
+      return null;
+    }
+    return entry;
+  }
+
+  clearFollowupWindow(senderId) {
+    bridgeFollowupWindows.delete(senderId);
+  }
+
+  // ── 权限审批待答状态（终端命令等）──
+  // 生命周期与模型提问一致：轮询发现时建立 → 用户回复 1/2/3 → 提交 → 清除；超时 10 分钟失效
+  rememberPendingPermission(senderId, entry) {
+    if (!this.pendingPermissions) this.pendingPermissions = new Map();
+    const stored = { askedAt: Date.now(), ...entry };
+    this.pendingPermissions.set(senderId, stored);
+    // 同步到桥状态文件：bot 重启后仍可 #回答 审批
+    setBridgePendingPermission(senderId, stored);
+  }
+
+  takePendingPermission(senderId) {
+    let entry = this.pendingPermissions?.get(senderId) || getBridgePendingPermission(senderId);
+    if (!entry) return null;
+    if (Date.now() - (entry.askedAt || 0) > 10 * 60 * 1000) {
+      this.pendingPermissions?.delete(senderId);
+      clearBridgePendingPermission(senderId);
+      return null;
+    }
+    return entry;
+  }
+
+  clearPendingPermission(senderId) {
+    this.pendingPermissions?.delete(senderId);
+    clearBridgePendingPermission(senderId);
+  }
+
+  // 待审批请求的可读标题（OpenCode permission 字段不定形，逐个取值兜底）
+  formatPermission(request = {}) {
+    const parts = [
+      String(request.title || '').trim(),
+      String(request.action || request.pattern || request.command || request.type || '').trim(),
+    ].filter(Boolean);
+    return parts.join(' · ').slice(0, 200) || 'Agent 请求执行受控操作';
   }
 
   // 把模型的提问渲染成编号选择清单（微信没有点选卡片，用数字回复）
@@ -737,6 +819,28 @@ export class weixinIlink extends plugin {
       return;
     }
 
+    // 权限审批待答：1/2/3 = 批准本次/总是批准/拒绝；其他文字不拦截，继续按任务消息处理
+    if (!pending) {
+      const pendingPermission = this.takePendingPermission(senderId);
+      if (pendingPermission) {
+        const choice = normalizePermissionChoice(text);
+        if (choice) {
+          try {
+            await bridge.replyPermission(pendingPermission.taskId, pendingPermission.requestId, choice);
+            this.clearPendingPermission(senderId);
+            const label = { once: '已批准本次', always: '已批准并记住', reject: '已拒绝' }[choice];
+            await this.sendTo(senderId, `${label}：${pendingPermission.title || '受控操作'}`, token);
+          } catch (error) {
+            this.clearPendingPermission(senderId);
+            await this.sendTo(senderId, `审批提交失败：${error.message}`, token);
+          }
+          return;
+        }
+        // 不是审批回复：保留待审批状态，让消息继续走任务流程
+        this.rememberPendingPermission(senderId, pendingPermission);
+      }
+    }
+
     if (progress.running) {
       if (/^停止$/.test(text)) {
         const stopped = await bridge.cancelActive();
@@ -752,6 +856,11 @@ export class weixinIlink extends plugin {
         ? `已加入队列（第 ${res.position} 条）：本轮结束后立即在同一会话里执行，结论会单独推送。`
         : '当前轮次刚好结束，已作为新一轮任务提交。', token);
       if (!res?.queued) await this.dispatchAgent(senderId, text, token, attachments);
+      return;
+    }
+    // 「执行」：把最近一次结论里的方案/计划直接落地为实际修改（同一会话内提交执行指令）
+    if (/^(执行|执行吧|按计划执行|开始执行|继续执行|go)$/i.test(text.trim())) {
+      await this.dispatchAgent(senderId, '请按照你上面给出的方案/计划直接开始执行实际修改，无需重复计划内容；执行过程中需要确认时再提问。', token, attachments);
       return;
     }
     await this.dispatchAgent(senderId, text, token, attachments);
@@ -779,10 +888,22 @@ export class weixinIlink extends plugin {
           if (notice?.type === 'cancel-external') this.sendTo(senderId, 'ℹ 检测到任务在控制台被取消，即将停止跟踪。', token).catch(() => { });
           if (notice?.type === 'compacted') this.sendTo(senderId, 'ℹ 会话上下文已达阈值，已自动压缩：模型可能遗忘早期细节；本轮结束后可 /会话重置 或切换任务。', token).catch(() => { });
         },
-        // 每一轮（含排队执行的后续指令）单独推送结论；失败轮缓存 prompt 供「重试」
+        // 每一轮（含排队执行的后续指令）单独推送结论；失败轮缓存 prompt 供「重试」；
+        // 成功后打开对话式跟进窗口（QQ/微信 10 分钟内直接发消息继续）
         onResultReply: (result, meta) => {
           if (result?.ok === false && meta?.prompt) this.stashFailedPrompt(senderId, meta.prompt);
-          return this.sendReport(senderId, result, token).catch(() => { });
+          if (result?.ok === true) this.rememberFollowupWindow(senderId, bridge.getProgress?.().taskId || '');
+          const reported = this.sendReport(senderId, result, token).catch(() => { });
+          if (result?.ok === true && !this.taskModeUsers?.has(senderId)) {
+            reported.then(() => this.sendTo(senderId, '💬 10 分钟内直接回复消息可继续此任务；回复「执行」把上面的方案落地为实际修改。', token).catch(() => { }));
+          }
+          return reported;
+        },
+        // 权限审批（终端命令等）：转成 1/2/3 数字审批，与「跳过」式提问同一套作答入口
+        onPermissionReply: ({ taskId, request }) => {
+          const title = this.formatPermission(request);
+          this.rememberPendingPermission(senderId, { taskId, requestId: request?.id || '', title });
+          this.sendTo(senderId, `🔐 待审批：${title}\n回复「1」批准本次 /「2」总是批准 /「3」拒绝`, token).catch(() => { });
         },
         // 模型提问：微信里没有点选卡片，转成编号清单等用户回复
         onQuestionReply: ({ taskId, request }) => {
@@ -905,8 +1026,10 @@ export class weixinIlink extends plugin {
   }
 
   async sendTo(userId, text, tokenOverride = '') {
-    // QQ 斜杠指令执行期间（qqSlashCommand 注册了 sink）：回复改道 e.reply，不进微信发送通道
-    const sink = this.qqReplySinks?.get(userId);
+    // QQ 斜杠指令/对话式跟进执行期间（注册了 sink）：回复改道 e.reply，不进微信发送通道。
+    // sink 带 40 分钟时效（>单任务 30 分钟上限），异常残留不会永久劫持发送
+    const sinkEntry = this.qqReplySinks?.get(userId);
+    const sink = sinkEntry && Date.now() - (sinkEntry.at || 0) <= 40 * 60 * 1000 ? sinkEntry.fn : null;
     if (sink) {
       await sink(text);
       return;
@@ -1069,8 +1192,8 @@ export class weixinIlink extends plugin {
     }
     const senderKey = `qq:${e.user_id}`;
     if (!this.qqReplySinks) this.qqReplySinks = new Map();
-    // sendReport 等路径可能用裸 user_id 寻址，两个键都挂上 sink
-    const sink = async replyText => { await e.reply(String(replyText || '')); };
+    // sendReport 等路径可能用裸 user_id 寻址，两个键都挂上 sink（包装成 {fn, at}，带时效防泄漏）
+    const sink = { fn: async replyText => { await e.reply(String(replyText || '')); }, at: Date.now() };
     this.qqReplySinks.set(senderKey, sink);
     this.qqReplySinks.set(String(e.user_id), sink);
     try {
@@ -1078,8 +1201,56 @@ export class weixinIlink extends plugin {
     } catch (error) {
       await e.reply(`指令执行失败：${error.message}`).catch(() => { });
     } finally {
-      this.qqReplySinks.delete(senderKey);
-      this.qqReplySinks.delete(String(e.user_id));
+      // 身份校验后再摘除：不误删对话式任务正在使用的 sink
+      if (this.qqReplySinks?.get(senderKey) === sink) this.qqReplySinks.delete(senderKey);
+      if (this.qqReplySinks?.get(String(e.user_id)) === sink) this.qqReplySinks.delete(String(e.user_id));
+    }
+    return true;
+  }
+
+  // QQ 私聊对话式跟进：任务执行中 / 结论窗口期（10 分钟）内的纯文本消息并入当前会话。
+  // 群聊不接管；窗口外返回 false 把消息交还给其他插件
+  async qqFollowUp(e) {
+    if (e?.isGroup) return false;
+    const senderKey = `qq:${e.user_id}`;
+    const text = String(e.msg || '').trim();
+    if (!text) return false;
+    const bridge = this.getBridge(senderKey);
+    const running = await bridge.isBusy();
+    const inWindow = Boolean(this.takeFollowupWindow(senderKey));
+    if (!running && !inWindow) return false;
+    if (/^(看全文|全文)$/.test(text)) {
+      const fullText = this.takeFullText(senderKey);
+      if (!fullText) {
+        await e.reply('暂无可查看的长文。长结论任务完成后 10 分钟内回复「看全文」有效。');
+        return true;
+      }
+      for (const chunk of splitTextChunks(fullText, 1000)) await e.reply(chunk);
+      return true;
+    }
+    if (/^(退出对话|结束对话)$/.test(text)) {
+      this.clearFollowupWindow(senderKey);
+      await e.reply('已退出对话式跟进：之后的消息不再自动并入任务，需要时再发 #agent <任务>。');
+      return true;
+    }
+    if (!this.qqReplySinks) this.qqReplySinks = new Map();
+    // 任务执行期间保持 sink（进展/结论/审批都经它改道 e.reply）；结束/失败后摘除
+    const sink = { fn: async replyText => { await e.reply(String(replyText || '')); }, at: Date.now() };
+    this.qqReplySinks.set(senderKey, sink);
+    this.qqReplySinks.set(String(e.user_id), sink);
+    try {
+      await this.handleTaskMessage(senderKey, text, '');
+    } catch (error) {
+      await e.reply(`指令执行失败：${error.message}`).catch(() => { });
+    } finally {
+      let stillBusy = false;
+      try {
+        stillBusy = await this.getBridge(senderKey).isBusy();
+      } catch { }
+      if (!stillBusy) {
+        if (this.qqReplySinks?.get(senderKey) === sink) this.qqReplySinks.delete(senderKey);
+        if (this.qqReplySinks?.get(String(e.user_id)) === sink) this.qqReplySinks.delete(String(e.user_id));
+      }
     }
     return true;
   }
@@ -1092,6 +1263,24 @@ export class weixinIlink extends plugin {
     const text = isSkip ? '跳过' : raw.replace(/^#回答\s*/i, '').trim();
     const pending = this.takePendingQuestion(senderKey);
     if (!pending) {
+      // 无待答问题时尝试权限审批：#回答 1/2/3 = 批准本次/总是批准/拒绝
+      const pendingPermission = this.takePendingPermission(senderKey);
+      if (pendingPermission) {
+        const choice = normalizePermissionChoice(text);
+        if (choice) {
+          try {
+            await this.getBridge(senderKey).replyPermission(pendingPermission.taskId, pendingPermission.requestId, choice);
+            this.clearPendingPermission(senderKey);
+            const label = { once: '已批准本次', always: '已批准并记住', reject: '已拒绝' }[choice];
+            await e.reply(`${label}：${pendingPermission.title || '受控操作'}`);
+          } catch (error) {
+            this.clearPendingPermission(senderKey);
+            await e.reply(`审批提交失败：${error.message}`);
+          }
+          return true;
+        }
+        this.rememberPendingPermission(senderKey, pendingPermission);
+      }
       await e.reply('当前没有待回答的问题。').catch(() => { });
       return true;
     }
@@ -1166,10 +1355,23 @@ export class weixinIlink extends plugin {
           const header = firstQuestion.header ? `【${firstQuestion.header}】\n` : '';
           e.reply(`❓ ${header}${this.formatQuestion(this.takePendingQuestion(senderKey))}\n（回复 #回答 编号 或 #回答 你的答案；#回答 跳过 让模型自行决定）`).catch(() => { });
         },
-        // 与微信侧一致：长结论渲染成图、失败缓存供「重试」
+        // 与微信侧一致：长结论渲染成图、失败缓存供「重试」；成功后开对话式跟进窗口（QQ 私聊直接发消息续聊）
         onResultReply: (result, meta) => {
-          if (result?.ok === false && meta?.prompt) this.stashFailedPrompt(`qq:${e.user_id}`, meta.prompt);
-          return this.sendReport(e.user_id, result, '', { qqEvent: e }).catch(error => logger.warn(`[weixin-ilink] QQ 侧结论推送失败：${error.message}`));
+          const senderKey = `qq:${e.user_id}`;
+          if (result?.ok === false && meta?.prompt) this.stashFailedPrompt(senderKey, meta.prompt);
+          if (result?.ok === true) this.rememberFollowupWindow(senderKey, this.getBridge(senderKey).getProgress?.().taskId || '');
+          const reported = this.sendReport(e.user_id, result, '', { qqEvent: e }).catch(error => logger.warn(`[weixin-ilink] QQ 侧结论推送失败：${error.message}`));
+          if (result?.ok === true) {
+            reported.then(() => e.reply('💬 10 分钟内直接发消息可继续此任务；回复「执行」把上面的方案落地为实际修改。').catch(() => { }));
+          }
+          return reported;
+        },
+        // 权限审批（终端命令等）：转成 #回答 1/2/3 数字审批
+        onPermissionReply: ({ taskId, request }) => {
+          const senderKey = `qq:${e.user_id}`;
+          const title = this.formatPermission(request);
+          this.rememberPendingPermission(senderKey, { taskId, requestId: request?.id || '', title });
+          e.reply(`🔐 待审批：${title}\n回复 #回答 1 批准本次 / #回答 2 总是批准 / #回答 3 拒绝`).catch(() => { });
         },
         onEventNotice: notice => {
           if (notice?.type === 'cancel-external') e.reply('ℹ 检测到任务在控制台被取消，即将停止跟踪。').catch(() => { });

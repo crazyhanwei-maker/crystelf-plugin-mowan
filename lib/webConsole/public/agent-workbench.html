@@ -122,6 +122,15 @@
         </div>
 
         <form id="agent-composer-form" class="agent-composer" autocomplete="off">
+          <section id="agent-thinking-bar" class="agent-thinking-bar hidden" title="点击展开或收起思考过程">
+            <div class="agent-thinking-head">
+              <span class="agent-thinking-spinner" aria-hidden="true"></span>
+              <span class="agent-thinking-label">正在思考</span>
+              <span class="agent-thinking-sep" aria-hidden="true">·</span>
+              <span id="agent-thinking-text" class="agent-thinking-text"></span>
+            </div>
+            <pre id="agent-thinking-full" class="agent-thinking-full"></pre>
+          </section>
           <div id="agent-action-dock" class="agent-action-dock hidden">
             <section id="agent-permission-section" class="agent-dock-section hidden" aria-live="polite">
               <button type="button" id="agent-permission-dock-toggle" class="agent-dock-head" aria-expanded="true">
@@ -575,8 +584,20 @@
     </section>
   </div>
 
+  <div id="agent-lightbox" class="agent-lightbox hidden" role="dialog" aria-modal="true" aria-label="图片预览">
+    <button type="button" class="agent-lightbox-close" data-lightbox-action="close" aria-label="关闭">×</button>
+    <button type="button" class="agent-lightbox-nav is-prev" data-lightbox-action="prev" aria-label="上一张">‹</button>
+    <figure class="agent-lightbox-figure">
+      <img id="agent-lightbox-img" alt="预览图片" referrerpolicy="no-referrer" />
+      <figcaption><span id="agent-lightbox-caption"></span><span id="agent-lightbox-counter"></span></figcaption>
+    </figure>
+    <button type="button" class="agent-lightbox-nav is-next" data-lightbox-action="next" aria-label="下一张">›</button>
+    <div class="agent-lightbox-help">点击图片放大 · ←→ 切换 · Esc 关闭</div>
+  </div>
+
   <script src="/auth.js"></script>
   <script src="/vendor/markdown-it.min.js"></script>
+  <script src="/vendor/highlight.min.js" defer></script>
   <script src="/agent-workbench.js"></script>
   <script src="/theme.js"></script>
 </body>

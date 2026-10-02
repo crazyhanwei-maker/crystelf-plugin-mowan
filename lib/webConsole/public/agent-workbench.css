@@ -3079,10 +3079,50 @@
 .agent-change-badge.is-deleted { color: var(--agent-deleted); background: var(--agent-deleted-soft); }
 .agent-change-badge.is-modified { color: var(--agent-accent); background: var(--agent-accent-soft); }
 .agent-diff-output { overflow: auto; }
-.agent-diff-line { display: block; min-height: 1.55em; }
-.agent-diff-line.is-added { color: #86efac; background: rgba(34, 197, 94, 0.14); }
-.agent-diff-line.is-deleted { color: #fca5a5; background: rgba(239, 68, 68, 0.14); }
-.agent-diff-line.is-meta { color: #93c5fd; }
+
+/* ===== 行内结构化 Diff（文件改动卡 / 能力中心 Diff 共用）===== */
+.agent-diff-view { display: grid; gap: 10px; }
+.agent-diff-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--agent-line);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: var(--agent-surface-strong);
+  font: 11px/1.4 ui-monospace, Consolas, monospace;
+}
+.agent-diff-file-name { min-width: 0; overflow: hidden; color: var(--agent-ink); text-overflow: ellipsis; white-space: nowrap; }
+.agent-diff-body {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--agent-line);
+  border-radius: 0 0 8px 8px;
+  background: var(--agent-surface);
+  font: 11.5px/1.6 ui-monospace, Consolas, monospace;
+}
+.agent-diff-row { display: grid; grid-template-columns: 44px 44px minmax(0, 1fr); }
+.agent-diff-row.is-hunk { grid-template-columns: minmax(0, 1fr); }
+.agent-diff-ln {
+  padding: 0 7px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  text-align: right;
+  user-select: none;
+  background: var(--agent-surface-soft);
+  border-right: 1px solid var(--agent-line);
+}
+.agent-diff-code { padding: 0 10px; overflow-wrap: anywhere; white-space: pre-wrap; color: var(--agent-ink); }
+.agent-diff-row.is-added { background: var(--agent-added-soft); }
+.agent-diff-row.is-added .agent-diff-ln { color: var(--agent-added); background: var(--agent-added-soft); }
+.agent-diff-row.is-added .agent-diff-code { color: var(--agent-added); }
+.agent-diff-row.is-deleted { background: var(--agent-deleted-soft); }
+.agent-diff-row.is-deleted .agent-diff-ln { color: var(--agent-deleted); background: var(--agent-deleted-soft); }
+.agent-diff-row.is-deleted .agent-diff-code { color: var(--agent-deleted); text-decoration: line-through; text-decoration-color: rgba(185, 28, 28, 0.4); }
+.agent-diff-row.is-hunk { padding: 3px 10px; color: var(--agent-accent); background: var(--agent-accent-soft); font-size: 10.5px; }
+.agent-diff-row.is-meta { padding: 1px 10px; color: var(--agent-muted); font-size: 10.5px; }
+.agent-diff-note { margin-top: 6px; color: var(--agent-muted); font-size: 11px; }
 .agent-native-git-section { display: grid; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--agent-line); }
 .agent-native-git-toolbar,
 .agent-native-git-actions { display: grid; grid-template-columns: minmax(100px, .7fr) auto minmax(130px, 1fr) auto auto; gap: 6px; align-items: center; }
@@ -4048,3 +4088,332 @@ body.agent-settings-modal-open { overflow: hidden; }
   color: var(--agent-muted);
   font-size: 9.5px;
 }
+
+/* ===== 代码块语法高亮（highlight.js，随主题切换两套配色）===== */
+.agent-message-code .hljs-keyword, .agent-message-code .hljs-selector-tag, .agent-message-code .hljs-literal,
+.agent-message-code .hljs-section, .agent-message-code .hljs-doctag, .agent-message-code .hljs-type,
+.agent-message-code .hljs-name, .agent-message-code .hljs-strong { color: #a626a4; font-weight: 600; }
+.agent-message-code .hljs-string, .agent-message-code .hljs-regexp, .agent-message-code .hljs-addition,
+.agent-message-code .hljs-attribute, .agent-message-code .hljs-meta .hljs-string { color: #50a14f; }
+.agent-message-code .hljs-number, .agent-message-code .hljs-symbol, .agent-message-code .hljs-bullet,
+.agent-message-code .hljs-link, .agent-message-code .hljs-deletion { color: #986801; }
+.agent-message-code .hljs-title, .agent-message-code .hljs-title.class_, .agent-message-code .hljs-title.function_,
+.agent-message-code .hljs-built_in, .agent-message-code .hljs-class .hljs-title { color: #4078f2; }
+.agent-message-code .hljs-comment, .agent-message-code .hljs-quote { color: #a0a1a7; font-style: italic; }
+.agent-message-code .hljs-variable, .agent-message-code .hljs-template-variable, .agent-message-code .hljs-attr,
+.agent-message-code .hljs-property, .agent-message-code .hljs-selector-attr, .agent-message-code .hljs-selector-class { color: #c18401; }
+.agent-message-code .hljs-emphasis { font-style: italic; }
+:root[data-theme='dark'] .agent-message-code .hljs-keyword, :root[data-theme='dark'] .agent-message-code .hljs-selector-tag,
+:root[data-theme='dark'] .agent-message-code .hljs-literal, :root[data-theme='dark'] .agent-message-code .hljs-section,
+:root[data-theme='dark'] .agent-message-code .hljs-doctag, :root[data-theme='dark'] .agent-message-code .hljs-type,
+:root[data-theme='dark'] .agent-message-code .hljs-name { color: #c678dd; }
+:root[data-theme='dark'] .agent-message-code .hljs-string, :root[data-theme='dark'] .agent-message-code .hljs-regexp,
+:root[data-theme='dark'] .agent-message-code .hljs-addition, :root[data-theme='dark'] .agent-message-code .hljs-attribute { color: #98c379; }
+:root[data-theme='dark'] .agent-message-code .hljs-number, :root[data-theme='dark'] .agent-message-code .hljs-symbol,
+:root[data-theme='dark'] .agent-message-code .hljs-bullet, :root[data-theme='dark'] .agent-message-code .hljs-link,
+:root[data-theme='dark'] .agent-message-code .hljs-deletion { color: #d19a66; }
+:root[data-theme='dark'] .agent-message-code .hljs-title, :root[data-theme='dark'] .agent-message-code .hljs-title.class_,
+:root[data-theme='dark'] .agent-message-code .hljs-title.function_, :root[data-theme='dark'] .agent-message-code .hljs-built_in { color: #61afef; }
+:root[data-theme='dark'] .agent-message-code .hljs-comment, :root[data-theme='dark'] .agent-message-code .hljs-quote { color: #7f848e; }
+:root[data-theme='dark'] .agent-message-code .hljs-variable, :root[data-theme='dark'] .agent-message-code .hljs-template-variable,
+:root[data-theme='dark'] .agent-message-code .hljs-attr, :root[data-theme='dark'] .agent-message-code .hljs-property { color: #e5c07b; }
+
+/* ===== Mermaid 图块 ===== */
+.agent-message-code.agent-mermaid-block { padding: 10px; }
+.agent-mermaid {
+  display: flex;
+  justify-content: center;
+  padding: 10px 6px;
+  border-radius: 8px;
+  background: var(--agent-surface);
+  overflow: auto;
+}
+.agent-mermaid svg { max-width: 100%; height: auto; }
+.agent-mermaid-note { color: var(--agent-muted); font-size: 11.5px; padding: 6px 2px; }
+.agent-mermaid-note.is-error { color: var(--agent-deleted); }
+.agent-mermaid-source summary { color: var(--agent-muted); font-size: 11px; cursor: pointer; padding: 6px 2px 0; }
+.agent-mermaid-source pre {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow: auto;
+  background: var(--agent-code);
+  color: var(--agent-code-ink);
+  font: 11.5px/1.6 ui-monospace, Consolas, monospace;
+}
+
+/* ===== 计划确认卡 ===== */
+.agent-plan-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 12px;
+  background: var(--agent-accent-soft);
+}
+.agent-plan-confirm-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.agent-plan-confirm-icon { font-size: 20px; }
+.agent-plan-confirm-head div { display: grid; gap: 2px; min-width: 0; }
+.agent-plan-confirm-head strong { color: var(--agent-ink); font-size: 13px; }
+.agent-plan-confirm-head span { color: var(--agent-muted); font-size: 11.5px; }
+.agent-plan-confirm-actions { display: inline-flex; gap: 8px; flex: 0 0 auto; }
+.agent-plan-confirm-actions button {
+  min-height: 32px;
+  padding: 6px 16px;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 8px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.agent-plan-confirm-actions button:hover { border-color: var(--agent-accent); color: var(--agent-accent); }
+.agent-plan-confirm-actions button.is-primary {
+  border-color: var(--agent-accent);
+  background: var(--agent-accent);
+  color: #ffffff;
+}
+.agent-plan-confirm-actions button.is-primary:hover { filter: brightness(1.08); color: #ffffff; }
+
+/* ===== 图片灯箱 ===== */
+.agent-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 72px;
+  background: rgba(8, 10, 14, 0.86);
+  backdrop-filter: blur(4px);
+}
+.agent-lightbox.hidden { display: none; }
+.agent-lightbox-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+.agent-lightbox-figure img {
+  max-width: 100%;
+  max-height: calc(100vh - 160px);
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+  cursor: zoom-in;
+}
+.agent-lightbox.is-zoomed { overflow: auto; }
+.agent-lightbox.is-zoomed .agent-lightbox-figure img { max-width: none; max-height: none; cursor: zoom-out; }
+.agent-lightbox-figure figcaption {
+  display: inline-flex;
+  gap: 12px;
+  max-width: 90vw;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+}
+.agent-lightbox-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+}
+.agent-lightbox-close:hover { background: rgba(255, 255, 255, 0.22); }
+.agent-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.agent-lightbox-nav:hover { background: rgba(255, 255, 255, 0.24); }
+.agent-lightbox-nav.is-prev { left: 16px; }
+.agent-lightbox-nav.is-next { right: 16px; }
+.agent-lightbox-nav[hidden] { display: none; }
+.agent-lightbox-help {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+body.agent-lightbox-open { overflow: hidden; }
+
+/* ===== 检查点回滚按钮（消息悬浮操作行）===== */
+.agent-native-message-actions button.is-checkpoint { color: var(--agent-accent); }
+.agent-native-message-actions button.is-checkpoint:hover { border-color: var(--agent-accent); background: var(--agent-accent-soft); }
+
+/* ===== TODO 计划卡（运行中实时区 / 完成后报告）===== */
+.agent-todo-card {
+  margin: 8px 0 2px;
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  background: var(--agent-surface-soft);
+  overflow: hidden;
+}
+.agent-todo-card summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--agent-muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  list-style: none;
+}
+.agent-todo-card summary::-webkit-details-marker { display: none; }
+.agent-todo-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--agent-accent-soft);
+  color: var(--agent-accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+.agent-todo-list { display: grid; gap: 2px; padding: 2px 10px 10px; }
+.agent-todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--agent-ink);
+}
+.agent-todo-item:hover { background: var(--agent-surface); }
+.agent-todo-icon { flex: 0 0 14px; text-align: center; color: var(--agent-muted); font-size: 12px; }
+.agent-todo-item.is-active { background: var(--agent-accent-soft); }
+.agent-todo-item.is-active .agent-todo-icon { color: var(--agent-accent); animation: agent-todo-pulse 1.2s ease-in-out infinite; }
+.agent-todo-item.is-done { color: var(--agent-muted); }
+.agent-todo-item.is-done .agent-todo-text { text-decoration: line-through; text-decoration-color: var(--agent-line-strong); }
+.agent-todo-item.is-done .agent-todo-icon { color: var(--agent-added); }
+.agent-todo-item.is-skip { color: var(--agent-muted); }
+.agent-todo-item.is-skip .agent-todo-icon { color: var(--agent-deleted); }
+@keyframes agent-todo-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* ===== 排队可视化 ===== */
+.agent-queue-card {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--agent-line);
+  border-left: 3px solid var(--agent-accent);
+  border-radius: 10px;
+  background: var(--agent-surface-soft);
+  font-size: 12px;
+}
+.agent-queue-card strong { color: var(--agent-ink); font-size: 12px; }
+.agent-queue-list { display: grid; gap: 4px; }
+.agent-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--agent-muted);
+}
+.agent-queue-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-queue-item small { flex: 0 0 auto; font-size: 10.5px; }
+.agent-queue-dot { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--agent-line-strong); }
+.agent-queue-item.is-running .agent-queue-dot { background: var(--agent-added); animation: agent-todo-pulse 1.2s ease-in-out infinite; }
+.agent-queue-empty { color: var(--agent-muted); font-size: 11.5px; }
+
+/* ===== 运行中追加消息提示 ===== */
+.agent-live-followups {
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--agent-accent-soft);
+  color: var(--agent-accent);
+  font-size: 11.5px;
+  width: fit-content;
+}
+
+/* ===== 悬浮思考条（输入框上方单行滚动 + 点击展开）===== */
+/* 绝对定位悬浮在输入卡片正上方：不占布局、不撑高输入框，与 ZCode 形态一致 */
+.agent-thinking-bar {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 10px;
+  background: var(--agent-surface);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+.agent-thinking-bar.hidden { display: none; }
+.agent-thinking-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.agent-thinking-spinner {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--agent-line-strong);
+  border-top-color: var(--agent-accent);
+  border-radius: 50%;
+  animation: agent-think-spin 0.8s linear infinite;
+}
+@keyframes agent-think-spin { to { transform: rotate(360deg); } }
+.agent-thinking-label {
+  flex: 0 0 auto;
+  color: var(--agent-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+.agent-thinking-sep { flex: 0 0 auto; color: var(--agent-muted); }
+.agent-thinking-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-thinking-full {
+  display: none;
+  max-height: 240px;
+  margin: 0;
+  padding: 10px 14px 12px;
+  border-top: 1px dashed var(--agent-line);
+  overflow: auto;
+  color: var(--agent-muted);
+  font: 11.5px/1.7 inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agent-thinking-bar.is-expanded .agent-thinking-full { display: block; }
+.agent-thinking-bar.is-expanded .agent-thinking-text { display: none; }
+.agent-thinking-bar.is-expanded .agent-thinking-head { padding-bottom: 9px; }
