@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 适配器数据流</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/dataflow.css" />
+</head>
+<body class="auth-guarded-page dataflow-page">
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <h1>适配器数据流</h1>
+        <p id="dataflow-status" class="setting-help">实时观察 Bot 收发消息与适配器事件（来自进程日志）。</p>
+      </div>
+      <div class="hero-actions">
+        <button id="dataflow-pause-btn" class="mini-btn" type="button" aria-pressed="false">暂停</button>
+        <button id="dataflow-refresh-btn" class="mini-btn" type="button">刷新日志源</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>过滤器</h2>
+          <div class="setting-help">按事件类型着色；关键词为空时显示全部日志行。</div>
+        </div>
+        <div class="actions">
+          <label class="dataflow-toggle"><input type="checkbox" data-flow-filter="message" checked /> 消息</label>
+          <label class="dataflow-toggle"><input type="checkbox" data-flow-filter="notice" checked /> 通知</label>
+          <label class="dataflow-toggle"><input type="checkbox" data-flow-filter="request" checked /> 请求</label>
+          <label class="dataflow-toggle"><input type="checkbox" data-flow-filter="error" checked /> 错误</label>
+          <label class="dataflow-toggle"><input type="checkbox" data-flow-filter="other" checked /> 其它</label>
+        </div>
+      </div>
+      <div class="dataflow-search-row">
+        <input id="dataflow-keyword" type="search" maxlength="120" placeholder="关键词过滤（可填 QQ 号 / 群号 / 插件名）" />
+        <label class="dataflow-toggle"><input id="dataflow-autoscroll" type="checkbox" checked /> 自动滚动</label>
+        <span id="dataflow-meta" class="dataflow-meta">日志源：检测中…</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div id="dataflow-stream" class="dataflow-stream" aria-live="polite">等待数据…</div>
+    </section>
+  </div>
+  <script src="/auth.js"></script>
+  <script src="/dataflow.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

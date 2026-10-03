@@ -16,6 +16,10 @@
       <div class="hero-copy">
         <h1>魔丸控制台</h1>
       </div>
+      <div class="hero-actions">
+        <button id="dashboard-customize-btn" class="mini-btn" type="button" aria-expanded="false" aria-controls="dashboard-layout-popover">自定义模块</button>
+        <section id="dashboard-layout-popover" class="dashboard-layout-popover hidden" aria-label="模块自定义"></section>
+      </div>
     </header>
 
     <section class="mobile-sticky-bar">
@@ -24,7 +28,30 @@
       <button id="mobile-theme-toggle-btn" class="mini-btn" data-theme-toggle>深色主题</button>
     </section>
 
-    <section id="operation-task-center-panel" class="panel operation-task-center-panel collapsible-panel collapsed">
+    <section class="panel kpi-band-panel" data-module-id="kpi" aria-label="数据汇总">
+      <div id="dashboard-kpi-band" class="kpi-band"><div class="kpi-placeholder">数据加载中...</div></div>
+    </section>
+
+    <section class="panel resource-strip-panel" data-module-id="resource" aria-label="系统资源">
+      <div id="dashboard-resource-strip" class="resource-strip"><div class="kpi-placeholder">资源数据加载中...</div></div>
+    </section>
+
+    <section class="panel" data-module-id="opsrows" aria-label="运维速览">
+      <div class="section-head">
+        <div>
+          <h2>运维速览<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
+          <div class="setting-help">审计日志、API 质量、配置备份与微信桥状态，随刷新自动更新。</div>
+        </div>
+      </div>
+      <div id="dashboard-opsrows" class="ops-rows-grid collapsible-body">
+        <div class="ops-row" id="opsrow-audit"><div class="ops-row-title">审计日志</div><div class="ops-row-body">加载中...</div></div>
+        <div class="ops-row" id="opsrow-api"><div class="ops-row-title">API 质量</div><div class="ops-row-body">加载中...</div></div>
+        <div class="ops-row" id="opsrow-backup"><div class="ops-row-title">配置备份</div><div class="ops-row-body">加载中...</div></div>
+        <div class="ops-row" id="opsrow-bridge"><div class="ops-row-title">微信桥</div><div class="ops-row-body">加载中...</div></div>
+      </div>
+    </section>
+
+    <section class="panel operation-task-center-panel collapsible-panel collapsed" data-module-id="tasks">
       <div class="section-head">
         <div>
           <h2>操作任务中心<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
@@ -38,7 +65,7 @@
       <div id="operation-task-center" class="operation-task-center collapsible-body">加载中...</div>
     </section>
 
-    <section class="panel public-security-panel collapsible-panel collapsed">
+    <section class="panel public-security-panel collapsible-panel collapsed" data-module-id="security">
       <div class="section-head">
         <div>
           <h2>公网访问安全<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
@@ -52,7 +79,7 @@
       <div id="public-security-overview" class="public-security-overview collapsible-body">加载中...</div>
     </section>
 
-    <section class="panel dashboard-control-panel collapsible-panel collapsed">
+    <section class="panel dashboard-control-panel collapsible-panel collapsed" data-module-id="pagestatus">
       <div class="dashboard-control-head">
         <div>
           <h2>页面状态<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
@@ -65,11 +92,14 @@
       </div>
     </section>
 
-    <section class="panel collapsible-panel collapsed">
+    <section class="panel collapsible-panel collapsed" data-module-id="aidata">
       <div class="section-head">
         <div>
           <h2>AI请求数据预览<span class="collapsible-toggle-mark" aria-hidden="true">▾</span></h2>
           <div class="setting-help">汇总 AI 请求、图片监控用量、好感度日志与会话、消息、画像等核心数据。</div>
+        </div>
+        <div class="actions">
+          <a class="link-btn" href="/usage-center.html">AI 用量日志中心</a>
         </div>
       </div>
       <div id="overview-cards" class="grid cards dashboard-cards collapsible-body"></div>
@@ -91,28 +121,21 @@
           <div id="trend-chart" class="chart-box">加载中...</div>
         </div>
       </div>
-      <div class="dashboard-entry-card collapsible-body">
-        <div>
-          <h2>AI 用量日志中心</h2>
-          <div class="setting-help">查看请求次数、失败记录、消耗趋势和单条请求详情。</div>
-        </div>
-        <div class="actions">
-          <a class="link-btn" href="/usage-center.html">打开 AI 用量日志中心</a>
-        </div>
-      </div>
-      <div class="collapsible-body">
-        <h2>好感度日志</h2>
-        <div class="toolbar">
-          <input id="affinity-log-search" placeholder="搜索群号 / 用户 / 原因 / 文本" />
-          <input id="affinity-log-group" placeholder="按群号筛选" />
-          <button id="export-affinity-logs-btn">导出日志</button>
-        </div>
-        <div id="affinity-log-box" class="list log-list">加载中...</div>
-        <div id="affinity-log-pagination" class="pagination"></div>
+      <div class="collapsible-body aidata-affinity-details-wrap">
+        <details class="aidata-affinity-details">
+          <summary>好感度日志<span class="setting-help">按群号/用户搜索，支持导出</span></summary>
+          <div class="toolbar">
+            <input id="affinity-log-search" placeholder="搜索群号 / 用户 / 原因 / 文本" />
+            <input id="affinity-log-group" placeholder="按群号筛选" />
+            <button id="export-affinity-logs-btn">导出日志</button>
+          </div>
+          <div id="affinity-log-box" class="list log-list">加载中...</div>
+          <div id="affinity-log-pagination" class="pagination"></div>
+        </details>
       </div>
     </section>
 
-    <section class="panel log-diagnosis-panel">
+    <section class="panel log-diagnosis-panel" data-module-id="logdiag">
       <div class="section-head">
         <div>
           <h2>日志排查</h2>
@@ -135,7 +158,7 @@
       <div id="log-diagnosis-result" class="log-diagnosis-result detail-box">等待开始排查。</div>
     </section>
 
-    <section class="panel support-bundle-panel">
+    <section class="panel support-bundle-panel" data-module-id="support">
       <div class="section-head">
         <div>
           <h2>页面巡检与脱敏排障包</h2>
@@ -149,7 +172,7 @@
       <div id="console-page-check-result" class="console-page-check-result detail-box">等待开始巡检。</div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-module-id="tools">
       <div class="section-head">
         <div>
           <h2>独立工具入口</h2>
@@ -186,6 +209,8 @@
   <script src="/dashboard-support.js"></script>
   <script src="/app.js"></script>
   <script src="/dashboard-events.js"></script>
+  <script src="/dashboard-kpi.js"></script>
+  <script src="/dashboard-ops.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

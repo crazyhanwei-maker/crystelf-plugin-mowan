@@ -1,0 +1,54 @@
+/* 适配器数据流页面 */
+.dataflow-page .hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.dataflow-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dataflow-toggle input { accent-color: var(--primary, #3a6df0); }
+.dataflow-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.dataflow-search-row input[type="search"] {
+  flex: 1;
+  min-width: 200px;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+}
+.dataflow-meta { font-size: 11.5px; color: var(--muted-text); white-space: nowrap; }
+
+.dataflow-stream {
+  height: 62vh;
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0d1117;
+  color: #c9d1d9;
+  font: 11.5px/1.7 ui-monospace, Consolas, "SFMono-Regular", Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dataflow-stream.is-paused { opacity: 0.75; }
+.dataflow-row { padding: 1px 4px; border-radius: 3px; }
+.dataflow-row.type-message { color: #a5d6ff; }
+.dataflow-row.type-notice { color: #d2a8ff; }
+.dataflow-row.type-request { color: #ffa657; }
+.dataflow-row.type-error { color: #ff7b72; background: rgba(248, 81, 73, 0.08); }
+.dataflow-row.type-debug { color: #8b949e; }
+.dataflow-row.type-other { color: #c9d1d9; }
+
+:root[data-theme='dark'] .dataflow-stream { border-color: rgba(255, 255, 255, 0.1); }
