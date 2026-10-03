@@ -127,8 +127,10 @@ export class weixinIlink extends plugin {
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
         { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|新建会话|会话重置|重置会话|取消|退出)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
-        // QQ 私聊对话式跟进：任务执行中 / 结论窗口期内的纯文本消息并入当前会话（放最后，不抢具体指令）
-        { reg: '^(?!#|/|／).+', fnc: 'qqFollowUp', permission: 'master' },
+        // QQ 私聊对话式跟进：任务执行中 / 结论窗口期内的纯文本消息并入当前会话（放最后，不抢具体指令）。
+        // 注意：兜底正则能匹配所有群消息，绝不能声明 permission: 'master'——内核 loader 会对每条
+        // 匹配的非主人消息回复“暂无权限”并中断全部分发（群里就是轰炸+吞消息），权限在 qqFollowUp 内自判
+        { reg: '^(?!#|/|／).+', fnc: 'qqFollowUp' },
       ],
     });
     // 延迟启动轮询：Yunzai 装载完成后自起
@@ -1209,8 +1211,10 @@ export class weixinIlink extends plugin {
   }
 
   // QQ 私聊对话式跟进：任务执行中 / 结论窗口期（10 分钟）内的纯文本消息并入当前会话。
-  // 群聊不接管；窗口外返回 false 把消息交还给其他插件
+  // 群聊与主人校验都在函数内完成（规则是 catch-all，不能交给内核 permission 判定）；
+  // 窗口外返回 false 把消息交还给其他插件
   async qqFollowUp(e) {
+    if (!e.isMaster) return false;
     if (e?.isGroup) return false;
     const senderKey = `qq:${e.user_id}`;
     const text = String(e.msg || '').trim();
