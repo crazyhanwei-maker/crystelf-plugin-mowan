@@ -6,7 +6,7 @@
   <title>魔丸控制台 - 用户帮助 DIY</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="auth-guarded-page">
+<body class="help-diy-page auth-guarded-page">
   <div class="page auth-guarded-content">
     <header class="hero">
       <div class="hero-copy">
@@ -14,12 +14,10 @@
         <p>在这里编辑用户发送 #灵晶帮助 时看到的内容，支持总帮助和分类帮助。</p>
       </div>
       <div class="actions">
-        <button id="help-diy-save-btn">保存帮助内容</button>
-        <button id="help-diy-reset-btn">恢复已保存</button>
-        <button id="help-diy-export-btn">导出模板</button>
-        <button id="help-diy-import-btn">导入模板</button>
-        <button id="theme-toggle-btn">深色主题</button>
-        <a class="link-btn" href="/">返回首页</a>
+        <button id="help-diy-save-btn" class="mini-btn" type="button">保存帮助内容</button>
+        <button id="help-diy-reset-btn" class="mini-btn" type="button">恢复已保存</button>
+        <button id="help-diy-export-btn" class="mini-btn" type="button">导出模板</button>
+        <button id="help-diy-import-btn" class="mini-btn" type="button">导入模板</button>
         <input id="help-diy-import-input" class="hidden" type="file" accept="application/json" />
       </div>
       <div class="toolbar">
@@ -187,6 +185,7 @@
     </section>
   </div>
 <script src="/auth.js"></script>
+<script src="/console-shell.js"></script>
 <script src="/help-diy.js"></script>
   <script src="/theme.js"></script>
 </body>

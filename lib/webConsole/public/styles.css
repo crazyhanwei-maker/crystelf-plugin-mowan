@@ -8891,3 +8891,79 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
   color: var(--muted-text);
   font-size: 14px;
 }
+
+/* ===== 帮助 DIY：Art Design Pro 风格 ===== */
+.help-diy-page .panel {
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.08)) !important;
+  border-radius: 12px !important;
+  background: var(--dash-card-bg, var(--panel-bg, #fff));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+  padding: 18px 20px;
+}
+.help-diy-page .panel h2 { font-size: 14px; margin: 0 0 10px; }
+.help-diy-page .hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.help-diy-page .hero .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.help-diy-page .hero .toolbar { margin: 10px 0 0; }
+.help-diy-page .hero .toolbar input {
+  min-height: 30px; padding: 5px 12px;
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.1)); border-radius: 8px;
+  background: var(--panel-bg, #fff); color: var(--text); font-size: 12.5px; width: 320px; max-width: 100%;
+}
+.help-diy-page .mini-btn, .help-diy-page .toolbar button, .help-diy-page .actions button {
+  min-height: 30px; padding: 5px 14px;
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 8px;
+  background: var(--panel-bg, #fff); color: var(--text);
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.help-diy-page .mini-btn:hover, .help-diy-page .toolbar button:hover, .help-diy-page .actions button:hover {
+  border-color: var(--primary, #3a6df0); color: var(--primary, #3a6df0);
+}
+.help-diy-page #help-diy-save-btn {
+  border-color: var(--primary, #3a6df0); background: var(--primary, #3a6df0); color: #fff;
+}
+.help-diy-page #help-diy-save-btn:hover { filter: brightness(1.08); color: #fff; }
+.help-diy-page .help-diy-text-input {
+  width: 100%; box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.1)); border-radius: 8px;
+  background: var(--panel-bg, #fff); color: var(--text);
+  font-size: 12.5px; line-height: 1.6; resize: vertical;
+}
+.help-diy-page .help-diy-text-input:focus { outline: none; border-color: var(--primary, #3a6df0); }
+.help-diy-page .help-diy-mode-toolbar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.help-diy-page .help-diy-mode-toolbar select, .help-diy-page .help-diy-mode-toolbar input {
+  min-height: 30px; padding: 5px 10px;
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.1)); border-radius: 8px;
+  background: var(--panel-bg, #fff); color: var(--text); font-size: 12.5px;
+}
+.help-diy-page .help-diy-image-input { flex: 1; min-width: 160px; }
+.help-diy-page .detail-box {
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.06)); border-radius: 8px;
+  background: var(--soft-bg, rgba(0, 0, 0, 0.02));
+  font-size: 12px; line-height: 1.7; padding: 10px 12px;
+}
+.help-diy-page .help-diy-preview-shell {
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.06)); border-radius: 10px;
+  background: var(--soft-bg, rgba(0, 0, 0, 0.02)); padding: 12px;
+}
+.help-diy-page .tab-btn {
+  min-height: 28px; padding: 4px 14px;
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.1)); border-radius: 999px;
+  background: var(--panel-bg, #fff); color: var(--muted-text, #889);
+  font-size: 12px; cursor: pointer;
+}
+.help-diy-page .tab-btn.active {
+  border-color: var(--primary, #3a6df0); background: rgba(58, 109, 240, 0.08); color: var(--primary, #3a6df0);
+}
+.help-diy-page .toolbar input:not(.help-diy-image-input) {
+  min-height: 30px; padding: 5px 10px;
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.1)); border-radius: 8px;
+  background: var(--panel-bg, #fff); color: var(--text); font-size: 12.5px;
+}
+.help-diy-page .setting-item {
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.08)); border-radius: 10px;
+}
+:root[data-theme='dark'] .help-diy-page .panel { background: var(--panel-bg, #17191c); border-color: rgba(148, 163, 184, 0.16); }
