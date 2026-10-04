@@ -4826,20 +4826,31 @@ body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browse
 .file-browser-drop-overlay-card strong { color: var(--primary, #3a6df0); font-size: 15px; }
 .file-browser-drop-overlay-card span { color: var(--muted-text, #889); font-size: 12px; }
 
-/* ===== 属性对话框 ===== */
-.file-properties-dialog {
-  width: min(440px, 92vw);
+/* ===== 属性对话框（沿用页面 modal 约定：head + body + foot 三段）===== */
+.file-properties-body {
+  display: grid;
+  gap: 14px;
+  padding: 14px 16px;
+  overflow: auto;
 }
 .file-properties-grid {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px 14px;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 7px 14px;
+  margin: 0;
   font-size: 12.5px;
   align-items: center;
 }
 .file-properties-grid dt { color: var(--muted-text, #889); }
 .file-properties-grid dd { margin: 0; color: var(--text); word-break: break-all; }
-.file-properties-mode-row { display: flex; align-items: center; gap: 8px; }
+.file-properties-mode-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border, rgba(13, 13, 13, 0.1));
+}
+.file-properties-mode-label { font-size: 12.5px; font-weight: 700; color: var(--text); }
 .file-properties-mode-input {
   width: 90px;
   padding: 5px 8px;
@@ -4848,5 +4859,12 @@ body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browse
   font-family: ui-monospace, Consolas, monospace;
 }
 .file-properties-mode-hint { font-size: 11px; color: var(--muted-text, #889); }
+.file-properties-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--border, rgba(13, 13, 13, 0.06));
+}
 
 body.file-manager-page .file-manager-table-panel { position: relative; }

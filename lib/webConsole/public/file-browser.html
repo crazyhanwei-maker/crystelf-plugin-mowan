@@ -85,21 +85,26 @@
         </div>
         <div id="file-properties-mask" class="modal-mask hidden">
           <div class="modal-card file-properties-dialog">
-            <h3 id="file-properties-title">属性</h3>
-            <dl class="file-properties-grid">
-              <dt>路径</dt><dd id="file-properties-path">-</dd>
-              <dt>类型</dt><dd id="file-properties-type">-</dd>
-              <dt>大小</dt><dd id="file-properties-size">-</dd>
-              <dt>修改时间</dt><dd id="file-properties-mtime">-</dd>
-              <dt>属主 / 组</dt><dd id="file-properties-owner">-</dd>
-            </dl>
-            <div class="file-properties-mode-row">
-              <span>权限（八进制）</span>
-              <input id="file-properties-mode-input" type="text" maxlength="4" placeholder="644" />
-              <span id="file-properties-mode-hint" class="file-properties-mode-hint">Linux 权限位；Windows 仅支持只读位</span>
+            <div class="file-manager-modal-head">
+              <h3 id="file-properties-title">属性</h3>
+              <button id="file-properties-close-btn" type="button" class="file-manager-icon-btn" aria-label="关闭">✕</button>
             </div>
-            <div id="file-properties-error" class="setting-error hidden"></div>
-            <div class="actions">
+            <div class="file-properties-body">
+              <dl class="file-properties-grid">
+                <dt>路径</dt><dd id="file-properties-path">-</dd>
+                <dt>类型</dt><dd id="file-properties-type">-</dd>
+                <dt>大小</dt><dd id="file-properties-size">-</dd>
+                <dt>修改时间</dt><dd id="file-properties-mtime">-</dd>
+                <dt>属主 / 组</dt><dd id="file-properties-owner">-</dd>
+              </dl>
+              <div class="file-properties-mode-row">
+                <span class="file-properties-mode-label">权限（八进制）</span>
+                <input id="file-properties-mode-input" type="text" maxlength="4" placeholder="644" />
+                <span id="file-properties-mode-hint" class="file-properties-mode-hint">Linux 权限位；Windows 仅支持只读位</span>
+              </div>
+              <div id="file-properties-error" class="setting-error hidden"></div>
+            </div>
+            <div class="file-properties-foot">
               <button id="file-properties-cancel-btn" type="button" class="mini-btn">取消</button>
               <button id="file-properties-save-btn" type="button" class="mini-btn">保存权限</button>
             </div>
