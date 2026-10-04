@@ -4798,3 +4798,55 @@ body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browse
     text-align: center;
   }
 }
+
+/* ===== 拖拽上传遮罩 ===== */
+.file-browser-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--primary, #3a6df0);
+  border-radius: 12px;
+  background: rgba(58, 109, 240, 0.08);
+  backdrop-filter: blur(1px);
+  pointer-events: none;
+}
+.file-browser-drop-overlay.hidden { display: none; }
+.file-browser-drop-overlay-card {
+  display: grid;
+  gap: 4px;
+  padding: 16px 26px;
+  border-radius: 12px;
+  background: var(--card-bg, #fff);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+.file-browser-drop-overlay-card strong { color: var(--primary, #3a6df0); font-size: 15px; }
+.file-browser-drop-overlay-card span { color: var(--muted-text, #889); font-size: 12px; }
+
+/* ===== 属性对话框 ===== */
+.file-properties-dialog {
+  width: min(440px, 92vw);
+}
+.file-properties-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 14px;
+  font-size: 12.5px;
+  align-items: center;
+}
+.file-properties-grid dt { color: var(--muted-text, #889); }
+.file-properties-grid dd { margin: 0; color: var(--text); word-break: break-all; }
+.file-properties-mode-row { display: flex; align-items: center; gap: 8px; }
+.file-properties-mode-input {
+  width: 90px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.file-properties-mode-hint { font-size: 11px; color: var(--muted-text, #889); }
+
+body.file-manager-page .file-manager-table-panel { position: relative; }

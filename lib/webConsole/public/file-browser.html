@@ -66,6 +66,7 @@
             <button id="file-browser-reload-btn" type="button" class="file-manager-secondary-btn">重载</button>
             <button id="file-browser-rename-btn" type="button" class="file-manager-secondary-btn">重命名</button>
             <button id="file-browser-delete-btn" type="button" class="file-manager-secondary-btn">删除</button>
+            <button id="file-browser-properties-btn" type="button" class="file-manager-secondary-btn">属性</button>
           </div>
         </div>
         <div id="file-browser-editor-status" class="file-browser-banner hidden"></div>
@@ -76,6 +77,34 @@
           <button id="file-browser-batch-clear-btn" type="button" class="file-manager-secondary-btn">取消选择</button>
         </div>
         <div id="file-browser-directory-table" class="file-manager-table"></div>
+        <div id="file-browser-drop-overlay" class="file-browser-drop-overlay hidden">
+          <div class="file-browser-drop-overlay-card">
+            <strong>松开即上传</strong>
+            <span>文件将上传到当前目录，文件夹会保留目录结构</span>
+          </div>
+        </div>
+        <div id="file-properties-mask" class="modal-mask hidden">
+          <div class="modal-card file-properties-dialog">
+            <h3 id="file-properties-title">属性</h3>
+            <dl class="file-properties-grid">
+              <dt>路径</dt><dd id="file-properties-path">-</dd>
+              <dt>类型</dt><dd id="file-properties-type">-</dd>
+              <dt>大小</dt><dd id="file-properties-size">-</dd>
+              <dt>修改时间</dt><dd id="file-properties-mtime">-</dd>
+              <dt>属主 / 组</dt><dd id="file-properties-owner">-</dd>
+            </dl>
+            <div class="file-properties-mode-row">
+              <span>权限（八进制）</span>
+              <input id="file-properties-mode-input" type="text" maxlength="4" placeholder="644" />
+              <span id="file-properties-mode-hint" class="file-properties-mode-hint">Linux 权限位；Windows 仅支持只读位</span>
+            </div>
+            <div id="file-properties-error" class="setting-error hidden"></div>
+            <div class="actions">
+              <button id="file-properties-cancel-btn" type="button" class="mini-btn">取消</button>
+              <button id="file-properties-save-btn" type="button" class="mini-btn">保存权限</button>
+            </div>
+          </div>
+        </div>
         <div class="file-manager-footer">
           <div id="file-browser-root-path" class="file-manager-footer-left">根目录：加载中...</div>
           <div class="file-manager-footer-right">
