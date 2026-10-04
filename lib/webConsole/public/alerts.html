@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 告警中心</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/alerts.css" />
+</head>
+<body class="auth-guarded-page alerts-page">
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <h1>告警中心</h1>
+        <p id="alerts-status" class="setting-help">聚合健康巡检、QQ 看门狗与版本更新告警；历史记录保存在本浏览器。</p>
+      </div>
+      <div class="hero-actions">
+        <button id="alerts-refresh-btn" class="mini-btn" type="button">立即刷新</button>
+        <button id="alerts-readall-btn" class="mini-btn" type="button">全部已读</button>
+        <button id="alerts-clear-btn" class="mini-btn danger" type="button">清空历史</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="alerts-toolbar">
+        <div class="alerts-filters">
+          <button type="button" class="mini-btn is-active" data-alerts-filter="all">全部 <span data-alerts-count="all"></span></button>
+          <button type="button" class="mini-btn" data-alerts-filter="error">错误 <span data-alerts-count="error"></span></button>
+          <button type="button" class="mini-btn" data-alerts-filter="warn">警告 <span data-alerts-count="warn"></span></button>
+          <button type="button" class="mini-btn" data-alerts-filter="info">信息 <span data-alerts-count="info"></span></button>
+          <button type="button" class="mini-btn" data-alerts-filter="unread">未读 <span data-alerts-count="unread"></span></button>
+        </div>
+        <div class="alerts-mute-row">
+          <span>静音规则：</span>
+          <label class="alerts-toggle"><input type="checkbox" data-mute-prefix="health-" /> 健康巡检</label>
+          <label class="alerts-toggle"><input type="checkbox" data-mute-prefix="watchdog-" /> QQ 看门狗</label>
+          <label class="alerts-toggle"><input type="checkbox" data-mute-prefix="version-" /> 版本更新</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div id="alerts-list" class="alerts-list">加载中...</div>
+    </section>
+  </div>
+  <script src="/auth.js"></script>
+  <script src="/alerts.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>
