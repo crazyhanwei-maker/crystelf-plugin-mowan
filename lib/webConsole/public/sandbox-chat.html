@@ -7,18 +7,16 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/sandbox-chat.css" />
 </head>
-<body>
-  <div class="page">
+<body class="sandbox-chat-page auth-guarded-page">
+  <div class="page auth-guarded-content">
     <header class="hero">
       <div>
-        <div class="hero-badge">魔丸控制台</div>
+        <div class="hero-badge">模拟调试</div>
         <h1>网页对话测试</h1>
         <p>在网页里测试机器人回复，不会发送到群，也不会写入真实会话。</p>
       </div>
       <div class="actions">
-        <button id="sandbox-clear-btn">清空对话</button>
-        <button id="theme-toggle-btn">深色主题</button>
-        <a class="link-btn" href="/">返回首页</a>
+        <button id="sandbox-clear-btn" class="mini-btn" type="button">清空对话</button>
       </div>
     </header>
 
@@ -255,6 +253,7 @@
     </div>
   </div>
 <script src="/auth.js"></script>
+<script src="/console-shell.js"></script>
 <script src="/sandbox-core.js"></script>
 <script src="/sandbox-state.js"></script>
 <script src="/sandbox-library.js"></script>
