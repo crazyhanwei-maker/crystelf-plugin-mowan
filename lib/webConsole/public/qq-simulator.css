@@ -2553,3 +2553,129 @@ body.qq-simulator-page .console-floating-tools {
     margin: 8px;
   }
 }
+
+/* ===== UI 打磨：对齐控制台 Art Design Pro 视觉语言（覆盖追加，不动结构）===== */
+
+/* 会话列表：内缩圆角项 + 选中主色条，替代贴边直角 */
+.qq-simulator-session-pane {
+  background: #f7f8fb;
+  padding: 6px 8px;
+}
+.qq-simulator-session-item {
+  border-radius: 10px;
+  margin-bottom: 2px;
+}
+.qq-simulator-session-item:hover {
+  background: rgba(58, 109, 240, 0.06);
+}
+.qq-simulator-session-item.is-active {
+  background: rgba(58, 109, 240, 0.10);
+}
+.qq-simulator-session-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--primary, #3a6df0);
+}
+/* 头像渐变与 rail-avatar 同语言，圆角统一 12px */
+.qq-simulator-session-avatar,
+.qq-simulator-chat-card .qq-simulator-group-avatar {
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
+}
+.qq-simulator-session-avatar {
+  background: linear-gradient(135deg, #5b8cff, #8b5cf6);
+}
+.qq-simulator-session-avatar.request { background: linear-gradient(135deg, #fb923c, #f97316); }
+.qq-simulator-session-avatar.join { background: linear-gradient(135deg, #34d399, #16a34a); }
+.qq-simulator-session-avatar.poke { background: linear-gradient(135deg, #a78bfa, #7c3aed); }
+.qq-simulator-session-avatar.private { background: linear-gradient(135deg, #38bdf8, #2563eb); }
+
+/* 会话面板背景与待办卡 */
+.qq-simulator-todo-row {
+  border-radius: 10px;
+}
+
+/* 顶栏按钮：白底描边 pill，hover 主色 */
+.qq-simulator-pill {
+  border-radius: 8px;
+  background: var(--dash-card-bg, #fff);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.qq-simulator-pill:hover {
+  border-color: var(--primary, #3a6df0);
+  color: var(--primary, #3a6df0);
+  background: rgba(58, 109, 240, 0.06);
+}
+
+/* 聊天窗头部与气泡圆角 */
+.qq-simulator-chat-card .qq-simulator-window-head {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.qq-simulator-chat-flow .sandbox-bubble {
+  border-radius: 12px;
+}
+
+/* 右侧栏：白卡 + 分隔标题，卡片圆角统一 */
+.qq-simulator-profile-pane {
+  gap: 12px;
+}
+.qq-simulator-side-card,
+.qq-simulator-profile-card {
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+.qq-simulator-side-card .qq-simulator-panel-title h2 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.qq-simulator-side-box {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 8px 10px;
+}
+:root[data-theme='dark'] .qq-simulator-side-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+/* 输入区工具链接：hover 主色 */
+.qq-simulator-composer-tools button:hover {
+  color: var(--primary, #3a6df0);
+  background: rgba(58, 109, 240, 0.06);
+}
+
+/* 空状态居中淡色 */
+.qq-simulator-chat-flow .chat-empty,
+.qq-simulator-chat-flow .empty-tip {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--muted-text, #889);
+}
+
+:root[data-theme='dark'] .qq-simulator-session-pane { background: #131720; }
+:root[data-theme='dark'] .qq-simulator-session-item.is-active { background: rgba(99, 140, 255, 0.12); }
+:root[data-theme='dark'] .qq-simulator-session-item:hover { background: rgba(99, 140, 255, 0.07); }
+:root[data-theme='dark'] .qq-simulator-pill { background: rgba(255, 255, 255, 0.04); }
+
+/* 空状态居中 */
+.qq-simulator-chat-flow .qq-simulator-chat-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  height: 100%;
+  gap: 6px;
+  color: var(--muted-text, #889);
+}
+.qq-simulator-chat-flow .qq-simulator-chat-empty strong { color: var(--text); font-size: 15px; }
+.qq-simulator-chat-flow .qq-simulator-chat-empty span { font-size: 12px; }
+/* 会话标题截断放宽一点 */
+.qq-simulator-session-main strong { font-size: 13px; padding-right: 34px; }
