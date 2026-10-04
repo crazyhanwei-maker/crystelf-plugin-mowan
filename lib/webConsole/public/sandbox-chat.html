@@ -23,10 +23,22 @@
     <div class="sandbox-workbench">
       <section class="panel sandbox-left-panel">
         <div class="sandbox-panel-head">
-          <h2>测试输入</h2>
-          <div class="setting-status">左侧填写测试条件，右侧查看回复、调用记录和结果。</div>
+          <h2>对话测试</h2>
         </div>
-        <details class="sandbox-group" open>
+        <div class="sandbox-core-area">
+          <textarea id="sandbox-input" class="sandbox-input sandbox-core-input" placeholder="输入你想测试的话"></textarea>
+          <div class="actions sandbox-core-actions">
+            <button id="sandbox-send-btn">发送到沙箱</button>
+            <button id="sandbox-copy-last-btn">复制回复</button>
+            <button id="sandbox-copy-prompt-btn">复制提示词</button>
+            <button id="sandbox-export-btn">导出会话</button>
+          </div>
+          <div id="sandbox-note" class="risk-box">不会发送到真实群，也不会写入真实会话数据。</div>
+        </div>
+        <details class="sandbox-advanced">
+        <summary>高级选项 <small>模板 · 身份参数 · 上下文 · 提示词覆盖 · 知识库</small></summary>
+        <div class="sandbox-advanced-body">
+          <details class="sandbox-group" open>
           <summary>模板与快捷场景</summary>
           <div class="sandbox-group-body">
             <div class="toolbar" id="sandbox-template-toolbar">
@@ -103,14 +115,6 @@
           </div>
         </details>
 
-        <details class="sandbox-group">
-          <summary>覆盖提示词与输入内容</summary>
-          <div class="sandbox-group-body">
-            <textarea id="sandbox-system-prompt" class="sandbox-input sandbox-system-prompt" placeholder="可选：覆盖系统提示词，留空则使用当前默认提示词"></textarea>
-            <textarea id="sandbox-input" class="sandbox-input" placeholder="输入你想测试的话"></textarea>
-          </div>
-        </details>
-
         <details class="sandbox-group" open>
           <summary>沙箱知识库</summary>
           <div class="sandbox-group-body">
@@ -144,31 +148,29 @@
           </div>
         </details>
 
-        <details class="sandbox-group">
-          <summary>网页阅读测试</summary>
+        
+          <details class="sandbox-group">
+          <summary>提示词覆盖</summary>
           <div class="sandbox-group-body">
-            <div class="toolbar">
-              <input id="sandbox-web-read-url" placeholder="输入要读取的网页 URL" />
-              <input id="sandbox-web-read-max-length" placeholder="正文最大长度，默认 12000" />
-              <button id="sandbox-web-read-btn">读取网页正文</button>
-              <button id="sandbox-web-read-inject-btn">注入当前对话</button>
-            </div>
-            <div id="sandbox-web-read-status" class="setting-status">这里可以单独测试网页读取是否能正常返回正文。</div>
+            <textarea id="sandbox-system-prompt" class="sandbox-input sandbox-system-prompt" placeholder="可选：覆盖系统提示词，留空则使用当前默认提示词"></textarea>
+            <textarea id="sandbox-system-prompt" class="sandbox-input sandbox-system-prompt" placeholder="可选：覆盖系统提示词，留空则使用当前默认提示词"></textarea>
           </div>
         </details>
 
-        <div class="actions">
-          <button id="sandbox-send-btn">发送到沙箱</button>
-          <button id="sandbox-copy-last-btn">复制最后回复</button>
-          <button id="sandbox-copy-prompt-btn">复制最终提示词</button>
-          <button id="sandbox-export-btn">导出当前会话</button>
+        
         </div>
-
-        <div id="sandbox-note" class="risk-box">当前模式不会向真实群发送消息，也不会写入真实聊天、画像、好感或学习数据。</div>
+      </details>
       </section>
 
       <section class="sandbox-right-column">
-        <section class="panel sandbox-top-status-panel">
+        <nav class="sandbox-right-tabs" role="tablist">
+          <button type="button" class="is-active" data-right-tab="chat">对话</button>
+          <button type="button" data-right-tab="debug">调试</button>
+          <button type="button" data-right-tab="webread">网页阅读</button>
+          <button type="button" data-right-tab="compare">模型对比</button>
+        </nav>
+        <div class="sandbox-right-view" data-right-view="chat">
+          <section class="panel sandbox-top-status-panel">
           <div class="panel-two">
             <div class="panel-inner">
               <h2>请求摘要</h2>
@@ -180,21 +182,32 @@
             </div>
           </div>
         </section>
-
-        <section class="panel sandbox-history-panel">
+          <section class="panel sandbox-top-status-panel">
+          <div class="panel-two">
+            <div class="panel-inner">
+              <h2>请求摘要</h2>
+              <div id="sandbox-summary" class="detail-box">尚未发送请求</div>
+            </div>
+            <div class="panel-inner">
+              <h2>AI 配置状态</h2>
+              <div id="sandbox-config-status" class="detail-box">正在读取...</div>
+            </div>
+          </div>
+        </section>
+          <section class="panel sandbox-history-panel">
           <div class="sandbox-panel-head">
             <h2>对话记录</h2>
             <div class="setting-status">发送后结果会优先出现在这里。</div>
           </div>
           <div id="sandbox-history" class="list sandbox-scroll-list"></div>
         </section>
-
-        <section class="panel sandbox-raw-panel">
+          <section class="panel sandbox-raw-panel">
           <h2>媒体结果</h2>
           <div id="sandbox-media-result" class="list">当前尚无表情包或语音结果</div>
         </section>
-
-        <section class="panel sandbox-prompt-panel">
+        </div>
+        <div class="sandbox-right-view hidden" data-right-view="debug">
+          <section class="panel sandbox-prompt-panel">
           <div class="sandbox-panel-head">
             <h2>最终系统提示词</h2>
             <div class="actions">
@@ -203,33 +216,39 @@
           </div>
           <pre id="sandbox-system-prompt-preview" class="detail-box sandbox-scroll-box">正在生成...</pre>
         </section>
-
-        <section class="panel sandbox-raw-panel">
+          <section class="panel sandbox-raw-panel">
           <h2>原始响应</h2>
           <pre id="sandbox-raw" class="detail-box sandbox-scroll-box">尚无原始响应</pre>
         </section>
-
-        <section class="panel sandbox-raw-panel">
-          <h2>网页正文</h2>
-          <pre id="sandbox-web-read-result" class="detail-box sandbox-scroll-box">尚未读取网页</pre>
-        </section>
-
-        <section class="panel sandbox-raw-panel">
+          <section class="panel sandbox-raw-panel">
           <h2>工具调用详情</h2>
           <div id="sandbox-tool-calls" class="list">尚未触发工具调用</div>
         </section>
-
-        <section class="panel sandbox-raw-panel">
+          <section class="panel sandbox-raw-panel">
           <h2>知识库命中结果</h2>
           <div id="sandbox-rag-matches" class="list">当前尚未进行知识库召回</div>
         </section>
-
-        <section class="panel sandbox-raw-panel">
+          <section class="panel sandbox-raw-panel">
           <h2>知识库排查数据</h2>
           <pre id="sandbox-rag-debug" class="detail-box sandbox-scroll-box">当前尚无知识库排查数据</pre>
         </section>
-
-        <section class="panel sandbox-compare-panel">
+        </div>
+        <div class="sandbox-right-view hidden" data-right-view="webread">
+          <section class="panel">
+          <h2>网页阅读测试</h2>
+          
+            <div class="toolbar">
+              <input id="sandbox-web-read-url" placeholder="输入要读取的网页 URL" />
+              <input id="sandbox-web-read-max-length" placeholder="正文最大长度，默认 12000" />
+              <button id="sandbox-web-read-btn">读取网页正文</button>
+              <button id="sandbox-web-read-inject-btn">注入当前对话</button>
+            </div>
+            <div id="sandbox-web-read-status" class="setting-status">这里可以单独测试网页读取是否能正常返回正文。</div>
+          
+        </section>
+        </div>
+        <div class="sandbox-right-view hidden" data-right-view="compare">
+          <section class="panel sandbox-compare-panel">
           <h2>请求对比</h2>
           <div class="toolbar">
             <input id="sandbox-compare-model-a" placeholder="对比模型 A，可留空" />
@@ -249,6 +268,7 @@
             <pre class="detail-box">尚未运行对比</pre>
           </div>
         </section>
+        </div>
       </section>
     </div>
   </div>
