@@ -322,7 +322,7 @@ export default class CrystelfHelp extends plugin {
         const imagePath = await this.renderMiaoHelpImage(block.text);
         return await e.reply(segment.image(imagePath));
       } catch (error) {
-        logger.warn(`[help] 喵喵帮助图渲染失败，回退静态图或文本: ${error.message}`);
+        logger.warn(`[help] 帮助卡片渲染失败，回退静态图或文本: ${error.message}`);
       }
     }
     if (block?.mode === 'image' && block?.image) {
