@@ -9016,3 +9016,13 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .miao-style-thumb { width: 44px; height: 30px; object-fit: cover; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 6px; display: inline-block; }
 .miao-style-thumb.is-default { display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-muted, #8a94a3); background: #eef3f8; }
 .miao-style-align { width: auto; min-width: 48px; padding: 2px 4px; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 6px; background: var(--panel-bg, #fff); color: inherit; }
+
+/*喵喵图标弹层：双 tab + ART PRO 格子*/
+.miao-icon-picker-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.miao-icon-tab { padding: 5px 14px; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 8px; background: var(--panel-bg, #fff); color: inherit; cursor: pointer; font-size: 13px; }
+.miao-icon-tab.active { border-color: #3a6df0; color: #3a6df0; font-weight: 700; }
+.miao-icon-cell-artd { color: #5b6b80; }
+.miao-icon-cell-artd svg { width: 26px; height: 26px; }
+.miao-icon-cell-artd:hover { color: #3a6df0; }
+.miao-item-icon-artd { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #4a5a6d; }
+.miao-item-icon-artd svg { width: 34px; height: 34px; }
