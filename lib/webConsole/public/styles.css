@@ -8967,3 +8967,42 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
   border: 1px solid var(--border, rgba(13, 13, 13, 0.08)); border-radius: 10px;
 }
 :root[data-theme='dark'] .help-diy-page .panel { background: var(--panel-bg, #17191c); border-color: rgba(148, 163, 184, 0.16); }
+
+/*——————喵喵帮助卡片结构化编辑器——————*/
+.miao-editor {
+  border: 1px solid var(--border, rgba(13, 13, 13, 0.08));
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--panel-bg, #fff);
+}
+.help-diy-page .miao-editor .mini-btn { border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); background: var(--panel-bg, #fff); color: inherit; }
+.help-diy-page .miao-editor .mini-btn.danger { color: #c2452d; border-color: rgba(194, 69, 45, 0.4); }
+:root[data-theme='dark'] .miao-editor { background: var(--panel-bg, #17191c); }
+.miao-editor-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.miao-editor-label { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.miao-card-title { flex: 1; }
+.miao-editor-groups { display: flex; flex-direction: column; gap: 12px; }
+.miao-editor-group { border: 1px solid var(--border, rgba(13, 13, 13, 0.1)); border-radius: 10px; padding: 10px; }
+.miao-editor-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.miao-group-name { font-weight: 700; flex: 1; }
+.miao-group-ops, .miao-item-ops { display: inline-flex; gap: 4px; white-space: nowrap; }
+.miao-editor-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.miao-editor-item { display: flex; align-items: center; gap: 8px; }
+.miao-item-icon { width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 8px; background: #eef3f8; padding: 1px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.miao-item-icon:hover { border-color: #7fa5c9; }
+.miao-item-icon-img { width: 40px; height: 40px; display: block; background: url('/assets/miao-icon.png') no-repeat; background-size: 500px auto; transform: scale(0.85); }
+.miao-item-title { flex: 0 0 34%; min-width: 140px; }
+.miao-item-desc { flex: 1; min-width: 120px; }
+.miao-editor-empty { margin: 4px 0 8px; color: var(--text-muted, #8a94a3); font-size: 13px; }
+.miao-editor-hint { margin: 10px 0 0; color: var(--text-muted, #8a94a3); font-size: 12px; }
+
+/*图标选择弹层（挂 body）*/
+#miao-icon-picker { position: fixed; inset: 0; z-index: 3000; background: rgba(13, 20, 30, 0.35); }
+.miao-icon-picker-panel { position: absolute; width: 400px; max-width: calc(100vw - 16px); background: var(--panel-bg, #fff); border: 1px solid var(--border, rgba(13, 13, 13, 0.15)); border-radius: 12px; padding: 12px; box-shadow: 0 16px 40px rgba(10, 20, 35, 0.25); }
+.miao-icon-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.miao-icon-picker-actions { display: inline-flex; gap: 6px; }
+.miao-icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; max-height: 46vh; overflow: auto; }
+.miao-icon-cell { height: 46px; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 8px; background: #eef3f8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 1px; }
+.miao-icon-cell:hover { border-color: #7fa5c9; background: #e2edf7; }
+.miao-icon-cell.active { border-color: #3a6df0; box-shadow: 0 0 0 2px rgba(58, 109, 240, 0.35); }
+:root[data-theme='dark'] #miao-icon-picker .miao-icon-picker-panel { background: var(--panel-bg, #17191c); }
