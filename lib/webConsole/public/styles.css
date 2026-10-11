@@ -9006,3 +9006,10 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .miao-icon-cell:hover { border-color: #7fa5c9; background: #e2edf7; }
 .miao-icon-cell.active { border-color: #3a6df0; box-shadow: 0 0 0 2px rgba(58, 109, 240, 0.35); }
 :root[data-theme='dark'] #miao-icon-picker .miao-icon-picker-panel { background: var(--panel-bg, #17191c); }
+
+/*喵喵卡片样式行（副标题+颜色）*/
+.miao-editor-style-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.miao-card-subtitle { flex: 1; min-width: 200px; }
+.miao-style-color-item { display: inline-flex; align-items: center; gap: 4px; }
+.miao-style-color-label { font-size: 12px; color: var(--text-muted, #8a94a3); white-space: nowrap; }
+.miao-style-color-item input[type="color"] { width: 34px; height: 28px; padding: 1px; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 6px; background: none; cursor: pointer; }

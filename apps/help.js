@@ -335,10 +335,11 @@ export default class CrystelfHelp extends plugin {
   }
 
   async renderMiaoHelpImage(text = '') {
+    const diyConfig = ConfigControl.get('help-diy') || {};
     const outputDir = path.join(process.cwd(), 'temp', 'crystelf-plugin', 'help-miao');
     await fs.promises.mkdir(outputDir, { recursive: true });
     const outputPath = path.join(outputDir, `help-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`);
-    await renderMiaoHelpCard(text, { outputPath });
+    await renderMiaoHelpCard(text, { outputPath, style: diyConfig?.miaoStyle || null });
     return outputPath;
   }
 
