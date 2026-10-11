@@ -8987,12 +8987,19 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .miao-group-name { font-weight: 700; flex: 1; }
 .miao-group-ops, .miao-item-ops { display: inline-flex; gap: 4px; white-space: nowrap; }
 .miao-editor-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-.miao-editor-item { display: flex; align-items: center; gap: 8px; }
+.miao-editor-item { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .miao-item-icon { width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid var(--border, rgba(13, 13, 13, 0.12)); border-radius: 8px; background: #eef3f8; padding: 1px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .miao-item-icon:hover { border-color: #7fa5c9; }
 .miao-item-icon-img { width: 40px; height: 40px; display: block; background: url('/assets/miao-icon.png') no-repeat; background-size: 500px auto; transform: scale(0.85); }
-.miao-item-title { flex: 0 0 34%; min-width: 140px; }
-.miao-item-desc { flex: 1; min-width: 120px; }
+.miao-item-title { flex: 1 1 150px; min-width: 0; }
+.miao-item-desc { flex: 1 1 130px; min-width: 0; }
+.miao-item-ops { display: inline-flex; gap: 4px; white-space: nowrap; margin-left: auto; }
+.miao-editor .mini-btn { white-space: nowrap; }
+.miao-editor input[type="text"], .miao-editor select { min-width: 0; }
+.miao-editor-group-head { flex-wrap: nowrap; }
+.miao-editor-title-row { flex-wrap: nowrap; }
+.miao-card-title { min-width: 0; }
+.miao-group-name { min-width: 0; }
 .miao-editor-empty { margin: 4px 0 8px; color: var(--text-muted, #8a94a3); font-size: 13px; }
 .miao-editor-hint { margin: 10px 0 0; color: var(--text-muted, #8a94a3); font-size: 12px; }
 
