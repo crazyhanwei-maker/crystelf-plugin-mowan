@@ -1,4 +1,5 @@
 import ConfigControl from '../lib/config/configControl.js';
+import { renderMiaoHelpCard } from '../lib/help/miaoHelpRenderer.js';
 import fs from 'fs';
 import path from 'path';
 import Path from '../constants/path.js';
@@ -316,6 +317,14 @@ export default class CrystelfHelp extends plugin {
   }
 
   async replyHelpBlock(e, block) {
+    if (block?.mode === 'miao' && String(block?.text || '').trim()) {
+      try {
+        const imagePath = await this.renderMiaoHelpImage(block.text);
+        return await e.reply(segment.image(imagePath));
+      } catch (error) {
+        logger.warn(`[help] 喵喵帮助图渲染失败，回退静态图或文本: ${error.message}`);
+      }
+    }
     if (block?.mode === 'image' && block?.image) {
       const imageSource = resolveHelpDiyImageSource(block.image);
       if (imageSource) {
@@ -325,16 +334,26 @@ export default class CrystelfHelp extends plugin {
     return e.reply(block?.text || '未找到帮助内容。', true);
   }
 
+  async renderMiaoHelpImage(text = '') {
+    const outputDir = path.join(process.cwd(), 'temp', 'crystelf-plugin', 'help-miao');
+    await fs.promises.mkdir(outputDir, { recursive: true });
+    const outputPath = path.join(outputDir, `help-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`);
+    await renderMiaoHelpCard(text, { outputPath });
+    return outputPath;
+  }
+
   normalizeHelpBlock(block, fallbackText = '') {
     if (typeof block === 'string') {
       return { mode: 'text', text: block || fallbackText, image: '' };
     }
     const image = sanitizeHelpDiyImageValue(block?.image);
-    return {
-      mode: block?.mode === 'image' && image ? 'image' : 'text',
-      text: String(block?.text || fallbackText || '').trim(),
-      image,
-    };
+    const text = String(block?.text || fallbackText || '').trim();
+    let mode = ['image', 'miao'].includes(block?.mode) ? block.mode : 'text';
+    //喵喵卡片必须有文本可渲染，否则回退静态图或文本
+    if (mode === 'miao' && !text) {
+      mode = image ? 'image' : 'text';
+    }
+    return { mode, text, image };
   }
 
   getHelpContent() {
