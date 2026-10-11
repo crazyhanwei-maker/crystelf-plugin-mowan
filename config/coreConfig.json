@@ -62,6 +62,17 @@
         "failureThreshold": 2,
         "?cooldownMs": "备用优先持续时间",
         "cooldownMs": 300000
+      },
+      "?openReach": "OpenReach 公共服务（免 Key）：主/备接口失败时兜底搜索与网页读取，并提供图搜、公开接口读取两个新工具",
+      "openReach": {
+        "?enabled": "是否启用 OpenReach 兜底与新工具（关闭后 search_web/fetch_web_markdown 恢复原有主备链路，image_search/read_public_api 下线）",
+        "enabled": true,
+        "?baseUrl": "OpenReach 服务地址，可用官方公共服务或自部署实例",
+        "baseUrl": "http://openreach.changlu.cloud",
+        "?timeoutMs": "OpenReach 请求超时时间(毫秒)",
+        "timeoutMs": 30000,
+        "?searchRegion": "搜索区域：auto/CN/GLOBAL 或具体地区如 US",
+        "searchRegion": "auto"
       }
     },
     "?webAgent": "群聊网页 Agent 增强工具；默认关闭，仅提供受限公网文件下载，不开放文件修改、终端或全目录权限",

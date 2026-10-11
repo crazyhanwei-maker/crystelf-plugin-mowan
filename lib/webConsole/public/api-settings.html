@@ -86,6 +86,7 @@
             <button class="mini-btn" data-api-test-target="image-monitor" data-api-test-role="fallback">图片监控 · 备用接口</button>
             <button class="mini-btn" data-api-test-target="search" data-api-test-role="primary">搜索工具 · 主接口</button>
             <button class="mini-btn" data-api-test-target="search" data-api-test-role="fallback">搜索工具 · 备用接口</button>
+            <button class="mini-btn" data-api-test-target="openreach" data-api-test-role="primary">搜索工具 · OpenReach</button>
             <button class="mini-btn" data-api-test-target="meme" data-api-test-role="primary">表情包 · 主接口</button>
             <button class="mini-btn" data-api-test-target="meme" data-api-test-role="fallback">表情包 · 备用接口</button>
           </div>
@@ -987,6 +988,37 @@
                   <div class="kv-label">冷却时间（毫秒）</div>
                   <input type="number" id="search-fallback-cooldownMs" min="30000" max="1800000" step="30000" placeholder="300000" />
                   <div class="setting-help">冷却结束后会重新尝试主搜索/网页读取接口。</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="api-settings-subgroup">
+              <div class="api-settings-subgroup-head">
+                <div>
+                  <h3>OpenReach 公共服务</h3>
+                  <p>免 Key 公共实例：主/备接口失败或未配置时兜底搜索与网页读取，同时提供图搜和公开接口读取两个新工具。</p>
+                </div>
+              </div>
+              <div class="settings-grid">
+                <div class="setting-item">
+                  <div class="kv-label">启用 OpenReach</div>
+                  <button class="plugin-settings-switch off" id="search-openreach-enabled">已关闭</button>
+                  <div class="setting-help">开启后主/备接口不可用时自动兜底，并为 Agent 新增 image_search、read_public_api 工具；关闭后恢复原有主备链路。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">服务地址</div>
+                  <input type="text" id="search-openreach-baseUrl" placeholder="http://openreach.changlu.cloud" />
+                  <div class="setting-help">官方公共服务或自部署 OpenReach 实例地址。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">搜索区域</div>
+                  <input type="text" id="search-openreach-searchRegion" placeholder="auto" />
+                  <div class="setting-help">auto / CN / GLOBAL 或具体地区（如 US），默认 auto（CN 路由）。</div>
+                </div>
+                <div class="setting-item">
+                  <div class="kv-label">请求超时（毫秒）</div>
+                  <input type="number" id="search-openreach-timeoutMs" min="5000" max="90000" step="1000" placeholder="30000" />
+                  <div class="setting-help">OpenReach 兜底请求的最长等待时间，默认 30 秒。</div>
                 </div>
               </div>
             </section>
