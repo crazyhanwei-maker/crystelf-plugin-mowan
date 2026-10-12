@@ -1,5 +1,5 @@
 import ConfigControl from '../lib/config/configControl.js';
-import { renderMiaoHelpCard } from '../lib/help/miaoHelpRenderer.js';
+import { renderMiaoHelpCard, normalizeMiaoStyle, resolveHelpDiyImageSource } from '../lib/help/miaoHelpRenderer.js';
 import fs from 'fs';
 import path from 'path';
 import Path from '../constants/path.js';
@@ -10,59 +10,9 @@ const WEB_CONSOLE_PUBLIC_DIR = path.join(Path.lib, 'webConsole', 'public');
 const HELP_DIY_UPLOAD_DIR = path.join(WEB_CONSOLE_PUBLIC_DIR, 'uploads', 'help-diy');
 const DEFAULT_HELP_IMAGE = '/uploads/help-diy/default-help-navigation.png';
 
-function normalizePathForComparison(value = '') {
-  const normalized = path.resolve(String(value || ''));
-  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
-}
-
-function isPathInsideRoot(targetPath, rootPath) {
-  const normalizedTarget = normalizePathForComparison(targetPath);
-  const normalizedRoot = normalizePathForComparison(rootPath);
-  return normalizedTarget === normalizedRoot || normalizedTarget.startsWith(`${normalizedRoot}${path.sep}`);
-}
-
-function getRealPathSafe(targetPath) {
-  try {
-    if (typeof fs.realpathSync.native === 'function') {
-      return fs.realpathSync.native(targetPath);
-    }
-    return fs.realpathSync(targetPath);
-  } catch {
-    return null;
-  }
-}
-
-function resolveHelpDiyImageSource(value = '') {
-  const raw = String(value || '').trim();
-  if (!raw.startsWith('/uploads/help-diy/')) {
-    return '';
-  }
-
-  const relativeUploadPath = path.posix.normalize(`/${raw.slice('/uploads/help-diy/'.length)}`).replace(/^\/+/, '');
-  if (!relativeUploadPath || relativeUploadPath.startsWith('..')) {
-    return '';
-  }
-
-  const uploadRoot = getRealPathSafe(HELP_DIY_UPLOAD_DIR) || path.resolve(HELP_DIY_UPLOAD_DIR);
-  const targetPath = path.resolve(HELP_DIY_UPLOAD_DIR, relativeUploadPath.split('/').join(path.sep));
-  if (!isPathInsideRoot(targetPath, HELP_DIY_UPLOAD_DIR)) {
-    return '';
-  }
-  if (!fs.existsSync(targetPath)) {
-    return '';
-  }
-
-  const targetRealPath = getRealPathSafe(targetPath) || targetPath;
-  if (!isPathInsideRoot(targetRealPath, uploadRoot)) {
-    return '';
-  }
-
-  return targetRealPath;
-}
-
 function sanitizeHelpDiyImageValue(value = '') {
   const raw = String(value || '').trim();
-  return resolveHelpDiyImageSource(raw) ? raw : '';
+  return resolveHelpDiyImageSource(raw, HELP_DIY_UPLOAD_DIR) ? raw : '';
 }
 
 function getWebConsoleDisplayUrl() {
@@ -310,23 +260,23 @@ export default class CrystelfHelp extends plugin {
     const content = this.getHelpContent();
 
     if (category) {
-      return this.replyHelpBlock(e, this.buildCategoryHelp(category, content));
+      return this.replyHelpBlock(e, this.buildCategoryHelp(category, content), content.miaoStyle);
     }
 
-    return this.replyHelpBlock(e, content.home);
+    return this.replyHelpBlock(e, content.home, content.miaoStyle);
   }
 
-  async replyHelpBlock(e, block) {
+  async replyHelpBlock(e, block, style) {
     if (block?.mode === 'miao' && String(block?.text || '').trim()) {
       try {
-        const imagePath = await this.renderMiaoHelpImage(block.text);
+        const imagePath = await this.renderMiaoHelpImage(block.text, style);
         return await e.reply(segment.image(imagePath));
       } catch (error) {
         logger.warn(`[help] 帮助卡片渲染失败，回退静态图或文本: ${error.message}`);
       }
     }
     if (block?.mode === 'image' && block?.image) {
-      const imageSource = resolveHelpDiyImageSource(block.image);
+      const imageSource = resolveHelpDiyImageSource(block.image, HELP_DIY_UPLOAD_DIR);
       if (imageSource) {
         return e.reply(segment.image(imageSource));
       }
@@ -334,12 +284,11 @@ export default class CrystelfHelp extends plugin {
     return e.reply(block?.text || '未找到帮助内容。', true);
   }
 
-  async renderMiaoHelpImage(text = '') {
-    const diyConfig = ConfigControl.get('help-diy') || {};
+  async renderMiaoHelpImage(text = '', style = this.getHelpContent().miaoStyle) {
     const outputDir = path.join(process.cwd(), 'temp', 'crystelf-plugin', 'help-miao');
     await fs.promises.mkdir(outputDir, { recursive: true });
     const outputPath = path.join(outputDir, `help-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`);
-    await renderMiaoHelpCard(text, { outputPath, style: diyConfig?.miaoStyle || null });
+    await renderMiaoHelpCard(text, { outputPath, style, uploadDir: HELP_DIY_UPLOAD_DIR });
     return outputPath;
   }
 
@@ -367,6 +316,7 @@ export default class CrystelfHelp extends plugin {
       return defaults;
     }
     return {
+      miaoStyle: normalizeMiaoStyle(custom.miaoStyle),
       home: this.normalizeHelpBlock(custom.home, defaults.home.text),
       categories: {
         ai: this.normalizeHelpBlock(custom?.categories?.ai, defaults.categories.ai.text),

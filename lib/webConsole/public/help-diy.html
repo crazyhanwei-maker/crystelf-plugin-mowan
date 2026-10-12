@@ -5,203 +5,369 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>魔丸控制台 - 用户帮助 DIY</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/help-diy-workbench.css" />
 </head>
-<body id="help-diy-page" class="help-diy-page auth-guarded-page">
-  <div class="page auth-guarded-content">
-    <header class="hero">
-      <div class="hero-copy">
-        <h1>用户帮助 DIY</h1>
-        <p>在这里编辑用户发送 #灵晶帮助 时看到的内容，支持总帮助和分类帮助。</p>
-      </div>
-      <div class="actions">
-        <button id="help-diy-save-btn" class="mini-btn" type="button">保存帮助内容</button>
-        <button id="help-diy-reset-btn" class="mini-btn" type="button">恢复已保存</button>
-        <button id="help-diy-export-btn" class="mini-btn" type="button">导出模板</button>
-        <button id="help-diy-import-btn" class="mini-btn" type="button">导入模板</button>
-        <input id="help-diy-import-input" class="hidden" type="file" accept="application/json" />
-      </div>
-      <div class="toolbar">
-        <input id="help-diy-history-note" placeholder="保存备注，可选，例如：活动版帮助、管理版帮助" />
-      </div>
+<body id="help-diy-page" class="help-diy-page auth-guarded-page" data-help-view="edit">
+  <main class="page auth-guarded-content help-workbench-page">
+    <header class="help-page-header">
+      <h1>用户帮助 DIY</h1>
+      <p>编辑用户发送 <code>#灵晶帮助</code> 时看到的内容，按分类设计帮助，并实时查看效果。</p>
     </header>
 
-    <section class="panel panel-two help-diy-grid">
-      <div class="panel-inner">
-        <h2>使用说明</h2>
-        <div class="detail-box">1. 开启后，用户发送 #灵晶帮助 会优先看到这里保存的内容。
-2. 分类固定为 AI、管理、娱乐和调试。
-3. 关闭后会继续使用系统内置帮助。
-4. 文本可以换行，会按这里填写的内容发送。
-5. 有未保存修改时，离开页面前会提醒你。</div>
-        <div class="actions">
-          <label class="help-diy-toggle-row">
-            <input id="help-diy-enabled" type="checkbox" />
-            <span>启用帮助 DIY</span>
-          </label>
+    <div class="help-workbench-bar" aria-label="帮助设计工具栏">
+      <div class="help-workbench-actions">
+        <label class="help-diy-toggle-row">
+          <input id="help-diy-enabled" type="checkbox" />
+          <span>启用帮助 DIY</span>
+        </label>
+        <span id="help-diy-dirty-status" class="help-dirty-status" aria-live="polite">当前状态：正在加载</span>
+        <div class="help-save-actions" role="group" aria-label="保存与编辑操作">
+          <button id="help-diy-undo-btn" class="help-button help-icon-button" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12" /></svg>
+            <span>撤销</span>
+          </button>
+          <button id="help-diy-redo-btn" class="help-button help-icon-button" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 4 5 5-5 5m5-5H10a6 6 0 0 0 0 12" /></svg>
+            <span>重做</span>
+          </button>
+          <button id="help-diy-reset-btn" class="help-button" type="button">恢复已保存</button>
+          <button id="help-diy-save-btn" class="help-button help-button-primary" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h12l4 4v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h1Zm2 0v6h10V3M7 21v-8h10v8" /></svg>
+            <span>保存帮助内容</span>
+          </button>
         </div>
-        <div id="help-diy-dirty-status" class="setting-status">当前状态：正在加载</div>
-        <div id="help-diy-status" class="setting-status">正在加载帮助内容...</div>
       </div>
-      <div class="panel-inner">
-        <h2>内置模板</h2>
-        <div id="help-diy-template-list" class="settings-grid"></div>
+      <div class="help-workbench-navigation">
+        <div class="help-category-toolbar" role="group" aria-label="帮助分类">
+          <button class="help-category-button tab-btn active" type="button" data-help-preview="home" aria-pressed="true" aria-controls="help-diy-home-panel">总帮助</button>
+          <button class="help-category-button tab-btn" type="button" data-help-preview="ai" aria-pressed="false" aria-controls="help-diy-ai-panel">AI</button>
+          <button class="help-category-button tab-btn" type="button" data-help-preview="manage" aria-pressed="false" aria-controls="help-diy-manage-panel">管理</button>
+          <button class="help-category-button tab-btn" type="button" data-help-preview="fun" aria-pressed="false" aria-controls="help-diy-fun-panel">娱乐</button>
+          <button class="help-category-button tab-btn" type="button" data-help-preview="debug" aria-pressed="false" aria-controls="help-diy-debug-panel">调试</button>
+        </div>
+        <div class="help-view-toggle" role="group" aria-label="工作台视图">
+          <button class="help-view-button active" type="button" data-help-view="edit" aria-pressed="true" aria-controls="help-diy-edit-pane">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5M4 20l4-1L21 6l-3-3L5 16l-1 4Z" /></svg>
+            <span>编辑</span>
+          </button>
+          <button class="help-view-button" type="button" data-help-view="preview" aria-pressed="false" aria-controls="help-diy-preview-pane">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+            <span>预览</span>
+          </button>
+        </div>
       </div>
-    </section>
+    </div>
+    <p id="help-diy-status" class="help-workbench-status" role="status" aria-live="polite">正在加载帮助内容...</p>
 
-    <section class="panel panel-two help-diy-grid">
-      <div class="panel-inner">
-        <h2>预览</h2>
-        <div class="toolbar">
-          <button class="tab-btn active" data-help-preview="home">总帮助</button>
-          <button class="tab-btn" data-help-preview="ai">AI</button>
-          <button class="tab-btn" data-help-preview="manage">管理</button>
-          <button class="tab-btn" data-help-preview="fun">娱乐</button>
-          <button class="tab-btn" data-help-preview="debug">调试</button>
+    <div class="help-workbench">
+      <div id="help-diy-edit-pane" class="help-edit-pane">
+        <section id="help-diy-home-panel" class="help-slot-panel" data-help-slot="home" aria-labelledby="help-diy-home-heading">
+          <div class="help-slot-heading">
+            <h2 id="help-diy-home-heading">总帮助内容</h2>
+            <span class="help-slot-command">#灵晶帮助</span>
+          </div>
+          <div class="toolbar help-diy-mode-toolbar">
+            <label class="help-mode-field" for="help-diy-home-mode">
+              <span>发送方式</span>
+              <select id="help-diy-home-mode" aria-label="总帮助发送方式" aria-describedby="help-diy-home-mode-description">
+                <option value="text">文字发送</option>
+                <option value="image">图片发送</option>
+                <option value="miao">帮助卡片</option>
+              </select>
+            </label>
+            <div class="help-image-tools">
+              <label class="help-sr-only" for="help-diy-home-image">总帮助图片地址</label>
+              <input id="help-diy-home-image" class="help-diy-image-input" type="text" inputmode="url" placeholder="上传图片后会自动填入地址" />
+              <button type="button" class="help-button help-diy-upload-btn" data-help-upload="home">上传图片</button>
+              <button type="button" class="help-button help-diy-clear-btn" data-help-clear="home">清除图片</button>
+            </div>
+            <div class="help-context-tools" role="group" aria-label="总帮助图片工具">
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate="home">文字生成图片</button>
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate-miao="home">生成静态卡片</button>
+            </div>
+            <input id="help-diy-home-upload" class="hidden" type="file" accept="image/*" aria-label="上传总帮助图片" />
+          </div>
+          <p id="help-diy-home-mode-description" class="help-mode-description" data-help-mode-description="home">按原文发送，保留换行；也可以将文字生成图片，或切换到帮助卡片编辑。</p>
+          <label class="help-sr-only" for="help-diy-home">总帮助文字内容</label>
+          <textarea id="help-diy-home" class="help-diy-text-input" rows="14" placeholder="填写用户发送 #灵晶帮助 时看到的总帮助内容"></textarea>
+          <div id="help-diy-home-miao-editor" class="miao-editor hidden" role="region" aria-label="总帮助卡片编辑器"></div>
+        </section>
+
+        <section id="help-diy-ai-panel" class="help-slot-panel hidden" data-help-slot="ai" aria-labelledby="help-diy-ai-heading">
+          <div class="help-slot-heading">
+            <h2 id="help-diy-ai-heading">AI 分类帮助</h2>
+            <span class="help-slot-command">#灵晶帮助 AI</span>
+          </div>
+          <div class="toolbar help-diy-mode-toolbar">
+            <label class="help-mode-field" for="help-diy-ai-mode">
+              <span>发送方式</span>
+              <select id="help-diy-ai-mode" aria-label="AI 分类发送方式" aria-describedby="help-diy-ai-mode-description">
+                <option value="text">文字发送</option>
+                <option value="image">图片发送</option>
+                <option value="miao">帮助卡片</option>
+              </select>
+            </label>
+            <div class="help-image-tools">
+              <label class="help-sr-only" for="help-diy-ai-image">AI 分类图片地址</label>
+              <input id="help-diy-ai-image" class="help-diy-image-input" type="text" inputmode="url" placeholder="上传图片后会自动填入地址" />
+              <button type="button" class="help-button help-diy-upload-btn" data-help-upload="ai">上传图片</button>
+              <button type="button" class="help-button help-diy-clear-btn" data-help-clear="ai">清除图片</button>
+            </div>
+            <div class="help-context-tools" role="group" aria-label="AI 分类图片工具">
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate="ai">文字生成图片</button>
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate-miao="ai">生成静态卡片</button>
+            </div>
+            <input id="help-diy-ai-upload" class="hidden" type="file" accept="image/*" aria-label="上传 AI 分类图片" />
+          </div>
+          <p id="help-diy-ai-mode-description" class="help-mode-description" data-help-mode-description="ai">按原文发送，保留换行；也可以将文字生成图片，或切换到帮助卡片编辑。</p>
+          <label class="help-sr-only" for="help-diy-ai">AI 分类文字内容</label>
+          <textarea id="help-diy-ai" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 AI 返回内容"></textarea>
+          <div id="help-diy-ai-miao-editor" class="miao-editor hidden" role="region" aria-label="AI 分类卡片编辑器"></div>
+        </section>
+
+        <section id="help-diy-manage-panel" class="help-slot-panel hidden" data-help-slot="manage" aria-labelledby="help-diy-manage-heading">
+          <div class="help-slot-heading">
+            <h2 id="help-diy-manage-heading">管理分类帮助</h2>
+            <span class="help-slot-command">#灵晶帮助 管理</span>
+          </div>
+          <div class="toolbar help-diy-mode-toolbar">
+            <label class="help-mode-field" for="help-diy-manage-mode">
+              <span>发送方式</span>
+              <select id="help-diy-manage-mode" aria-label="管理分类发送方式" aria-describedby="help-diy-manage-mode-description">
+                <option value="text">文字发送</option>
+                <option value="image">图片发送</option>
+                <option value="miao">帮助卡片</option>
+              </select>
+            </label>
+            <div class="help-image-tools">
+              <label class="help-sr-only" for="help-diy-manage-image">管理分类图片地址</label>
+              <input id="help-diy-manage-image" class="help-diy-image-input" type="text" inputmode="url" placeholder="上传图片后会自动填入地址" />
+              <button type="button" class="help-button help-diy-upload-btn" data-help-upload="manage">上传图片</button>
+              <button type="button" class="help-button help-diy-clear-btn" data-help-clear="manage">清除图片</button>
+            </div>
+            <div class="help-context-tools" role="group" aria-label="管理分类图片工具">
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate="manage">文字生成图片</button>
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate-miao="manage">生成静态卡片</button>
+            </div>
+            <input id="help-diy-manage-upload" class="hidden" type="file" accept="image/*" aria-label="上传管理分类图片" />
+          </div>
+          <p id="help-diy-manage-mode-description" class="help-mode-description" data-help-mode-description="manage">按原文发送，保留换行；也可以将文字生成图片，或切换到帮助卡片编辑。</p>
+          <label class="help-sr-only" for="help-diy-manage">管理分类文字内容</label>
+          <textarea id="help-diy-manage" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 管理 返回内容"></textarea>
+          <div id="help-diy-manage-miao-editor" class="miao-editor hidden" role="region" aria-label="管理分类卡片编辑器"></div>
+        </section>
+
+        <section id="help-diy-fun-panel" class="help-slot-panel hidden" data-help-slot="fun" aria-labelledby="help-diy-fun-heading">
+          <div class="help-slot-heading">
+            <h2 id="help-diy-fun-heading">娱乐分类帮助</h2>
+            <span class="help-slot-command">#灵晶帮助 娱乐</span>
+          </div>
+          <div class="toolbar help-diy-mode-toolbar">
+            <label class="help-mode-field" for="help-diy-fun-mode">
+              <span>发送方式</span>
+              <select id="help-diy-fun-mode" aria-label="娱乐分类发送方式" aria-describedby="help-diy-fun-mode-description">
+                <option value="text">文字发送</option>
+                <option value="image">图片发送</option>
+                <option value="miao">帮助卡片</option>
+              </select>
+            </label>
+            <div class="help-image-tools">
+              <label class="help-sr-only" for="help-diy-fun-image">娱乐分类图片地址</label>
+              <input id="help-diy-fun-image" class="help-diy-image-input" type="text" inputmode="url" placeholder="上传图片后会自动填入地址" />
+              <button type="button" class="help-button help-diy-upload-btn" data-help-upload="fun">上传图片</button>
+              <button type="button" class="help-button help-diy-clear-btn" data-help-clear="fun">清除图片</button>
+            </div>
+            <div class="help-context-tools" role="group" aria-label="娱乐分类图片工具">
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate="fun">文字生成图片</button>
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate-miao="fun">生成静态卡片</button>
+            </div>
+            <input id="help-diy-fun-upload" class="hidden" type="file" accept="image/*" aria-label="上传娱乐分类图片" />
+          </div>
+          <p id="help-diy-fun-mode-description" class="help-mode-description" data-help-mode-description="fun">按原文发送，保留换行；也可以将文字生成图片，或切换到帮助卡片编辑。</p>
+          <label class="help-sr-only" for="help-diy-fun">娱乐分类文字内容</label>
+          <textarea id="help-diy-fun" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 娱乐 返回内容"></textarea>
+          <div id="help-diy-fun-miao-editor" class="miao-editor hidden" role="region" aria-label="娱乐分类卡片编辑器"></div>
+        </section>
+
+        <section id="help-diy-debug-panel" class="help-slot-panel hidden" data-help-slot="debug" aria-labelledby="help-diy-debug-heading">
+          <div class="help-slot-heading">
+            <h2 id="help-diy-debug-heading">调试分类帮助</h2>
+            <span class="help-slot-command">#灵晶帮助 调试</span>
+          </div>
+          <div class="toolbar help-diy-mode-toolbar">
+            <label class="help-mode-field" for="help-diy-debug-mode">
+              <span>发送方式</span>
+              <select id="help-diy-debug-mode" aria-label="调试分类发送方式" aria-describedby="help-diy-debug-mode-description">
+                <option value="text">文字发送</option>
+                <option value="image">图片发送</option>
+                <option value="miao">帮助卡片</option>
+              </select>
+            </label>
+            <div class="help-image-tools">
+              <label class="help-sr-only" for="help-diy-debug-image">调试分类图片地址</label>
+              <input id="help-diy-debug-image" class="help-diy-image-input" type="text" inputmode="url" placeholder="上传图片后会自动填入地址" />
+              <button type="button" class="help-button help-diy-upload-btn" data-help-upload="debug">上传图片</button>
+              <button type="button" class="help-button help-diy-clear-btn" data-help-clear="debug">清除图片</button>
+            </div>
+            <div class="help-context-tools" role="group" aria-label="调试分类图片工具">
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate="debug">文字生成图片</button>
+              <button type="button" class="help-button help-diy-generate-btn" data-help-generate-miao="debug">生成静态卡片</button>
+            </div>
+            <input id="help-diy-debug-upload" class="hidden" type="file" accept="image/*" aria-label="上传调试分类图片" />
+          </div>
+          <p id="help-diy-debug-mode-description" class="help-mode-description" data-help-mode-description="debug">按原文发送，保留换行；也可以将文字生成图片，或切换到帮助卡片编辑。</p>
+          <label class="help-sr-only" for="help-diy-debug">调试分类文字内容</label>
+          <textarea id="help-diy-debug" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 调试 返回内容"></textarea>
+          <div id="help-diy-debug-miao-editor" class="miao-editor hidden" role="region" aria-label="调试分类卡片编辑器"></div>
+        </section>
+
+        <details class="help-global-style" open>
+          <summary><span>全局外观</span><small>应用于所有帮助卡片</small></summary>
+          <div class="help-disclosure-content">
+            <p class="help-section-description">颜色预设仅调整文字颜色，请搭配对应的主题图与背景图使用。</p>
+            <div id="help-diy-global-style" class="miao-editor" role="region" aria-label="全局外观设置"></div>
+          </div>
+        </details>
+      </div>
+
+      <aside id="help-diy-preview-pane" class="help-preview-pane" aria-labelledby="help-diy-preview-heading">
+        <div class="help-preview-heading">
+          <h2 id="help-diy-preview-heading">实时预览</h2>
+          <span id="help-diy-preview-slot" class="help-preview-slot">总帮助</span>
         </div>
+        <div class="toolbar help-preview-toolbar">
+          <label class="help-zoom-field" for="help-diy-preview-zoom">
+            <span>预览缩放</span>
+            <select id="help-diy-preview-zoom" aria-label="预览缩放">
+              <option value="fit">适应宽度</option>
+              <option value="1">100%</option>
+              <option value="1.5">150%</option>
+              <option value="2">200%</option>
+            </select>
+          </label>
+          <div class="help-preview-actions">
+            <button id="help-diy-preview-retry" class="help-button hidden" type="button">重新渲染</button>
+            <button id="help-diy-preview-expand" class="help-button" type="button" aria-haspopup="dialog" aria-controls="help-diy-preview-dialog">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5M8 8 3 3m13 5 5-5M8 16l-5 5m13-5 5 5" /></svg>
+              <span>放大查看</span>
+            </button>
+            <a id="help-diy-preview-download" class="help-button" download aria-disabled="true" tabindex="-1">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" /></svg>
+              <span>下载图片</span>
+            </a>
+          </div>
+        </div>
+        <p id="help-diy-preview-size" class="help-preview-size" aria-live="polite">图片尺寸将在生成后显示</p>
         <div id="help-diy-preview-shell" class="help-diy-preview-shell">
           <pre id="help-diy-preview" class="detail-box">暂无预览</pre>
           <div id="help-diy-image-preview-wrap" class="help-diy-image-preview-wrap hidden">
-            <div class="help-diy-image-preview-stage">
-              <img id="help-diy-image-preview" class="help-diy-image-preview" alt="帮助图片预览" />
+            <div id="help-diy-preview-stage" class="help-diy-image-preview-stage">
+              <img id="help-diy-image-preview" class="help-diy-image-preview" alt="帮助图片预览" role="button" tabindex="0" aria-label="放大帮助图片预览" aria-haspopup="dialog" aria-controls="help-diy-preview-dialog" />
             </div>
           </div>
         </div>
-      </div>
-    </section>
+        <p class="help-preview-hint">编辑后自动更新。点击图片可放大查看细节，保存后才会应用到群聊。</p>
+      </aside>
+    </div>
 
-    <section class="panel">
-      <h2>历史版本</h2>
-      <div class="actions">
-        <button id="help-diy-history-clear-btn">清空历史版本</button>
-      </div>
-      <div id="help-diy-history-list" class="settings-grid"></div>
-    </section>
+    <div class="help-support-sections">
+      <details class="help-disclosure">
+        <summary>使用说明</summary>
+        <div class="help-disclosure-content help-instructions">
+          <ol>
+            <li>开启帮助 DIY 后，用户发送 <code>#灵晶帮助</code> 会优先看到这里保存的内容；关闭后使用系统内置帮助。</li>
+            <li>选择总帮助、AI、管理、娱乐或调试分类，分别设置文字、图片或帮助卡片发送方式。</li>
+            <li>文字支持换行；图片发送仅支持本地上传图片，上传后自动填入地址；帮助卡片支持编辑命令分组和全局外观。</li>
+            <li>「生成静态卡片」会生成当前卡片图片。全局外观设置会应用于所有帮助卡片。</li>
+            <li>完成后点击「保存帮助内容」。有未保存修改时，离开页面前会提醒你。</li>
+          </ol>
+        </div>
+      </details>
+      <details class="help-disclosure">
+        <summary>内置模板</summary>
+        <div class="help-disclosure-content">
+          <p class="help-section-description">选择内置模板开始编辑，或导入 JSON 模板。导出草稿会包含当前编辑内容，无需先保存。</p>
+          <div class="help-template-actions">
+            <button id="help-diy-export-btn" class="help-button" type="button">导出草稿</button>
+            <button id="help-diy-import-btn" class="help-button" type="button">导入模板</button>
+            <input id="help-diy-import-input" class="hidden" type="file" accept="application/json" aria-label="导入帮助 JSON 模板" />
+          </div>
+          <div id="help-diy-template-list" class="settings-grid help-template-list"></div>
+        </div>
+      </details>
+      <details class="help-disclosure">
+        <summary>历史版本</summary>
+        <div class="help-disclosure-content">
+          <label class="help-history-note-field" for="help-diy-history-note">
+            <span>保存备注（可选）</span>
+            <input id="help-diy-history-note" type="text" placeholder="例如：活动版帮助、管理版帮助" />
+          </label>
+          <div class="help-history-actions">
+            <p class="help-section-description">保存时可附上备注，方便查找和恢复历史内容。</p>
+            <button id="help-diy-history-clear-btn" class="help-button help-button-danger" type="button">清空历史版本</button>
+          </div>
+          <div id="help-diy-history-list" class="settings-grid help-history-list"></div>
+        </div>
+      </details>
+      <details class="help-disclosure">
+        <summary>HTML 转图片</summary>
+        <div class="help-disclosure-content">
+          <p class="help-section-description">粘贴自定义 HTML，支持内联 style 与外链图片。默认 720px 宽白底，也可使用完整 HTML 文档自定义样式；生成后记得保存。</p>
+          <div class="toolbar help-html-toolbar">
+            <label class="help-html-slot-field" for="help-diy-html-slot">
+              <span>图片填入板块</span>
+              <select id="help-diy-html-slot" aria-label="图片填入板块">
+                <option value="home">总帮助</option>
+                <option value="ai">AI 分类</option>
+                <option value="manage">管理分类</option>
+                <option value="fun">娱乐分类</option>
+                <option value="debug">调试分类</option>
+              </select>
+            </label>
+            <button type="button" id="help-diy-html-generate-btn" class="help-button help-diy-generate-btn">生成图片</button>
+          </div>
+          <div class="help-html-templates" role="group" aria-label="HTML 内置模板">
+            <span>内置模板</span>
+            <button type="button" class="help-button mini-btn" data-help-html-template="home">总览导航</button>
+            <button type="button" class="help-button mini-btn" data-help-html-template="ai">AI 对话</button>
+            <button type="button" class="help-button mini-btn" data-help-html-template="manage">群管理</button>
+            <button type="button" class="help-button mini-btn" data-help-html-template="fun">内容娱乐</button>
+            <button type="button" class="help-button mini-btn" data-help-html-template="debug">调试排查</button>
+          </div>
+          <label class="help-sr-only" for="help-diy-html-source">自定义 HTML 源码</label>
+          <textarea id="help-diy-html-source" class="help-diy-text-input help-html-source" rows="12" spellcheck="false" placeholder="粘贴自定义 HTML，或选择上方内置模板；也可写完整 &lt;html&gt; 文档自定义样式"></textarea>
+        </div>
+      </details>
+    </div>
+  </main>
 
-    <section class="panel">
-      <h2>总帮助内容</h2>
-      <div class="toolbar help-diy-mode-toolbar">
-        <select id="help-diy-home-mode">
-          <option value="text">文字发送</option>
-          <option value="image">图片发送</option>
-            <option value="miao">帮助卡片</option>
-        </select>
-        <input id="help-diy-home-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
-        <button type="button" class="help-diy-upload-btn" data-help-upload="home">上传图片</button>
-        <button type="button" class="help-diy-generate-btn" data-help-generate="home">生成图片</button>
-        <button type="button" class="help-diy-generate-btn" data-help-generate-miao="home">生成帮助卡片</button>
-        <button type="button" class="help-diy-clear-btn" data-help-clear="home">清除图片</button>
-        <input id="help-diy-home-upload" class="hidden" type="file" accept="image/*" />
-      </div>
-      <textarea id="help-diy-home" class="help-diy-text-input" rows="14" placeholder="填写用户发送 #灵晶帮助 时看到的总帮助内容"></textarea>
-    <div id="help-diy-home-miao-editor" class="miao-editor hidden"></div>
-    </section>
-
-    <section class="panel panel-two help-diy-grid">
-      <div>
-        <h2>AI 分类帮助</h2>
-        <div class="toolbar help-diy-mode-toolbar">
-          <select id="help-diy-ai-mode">
-            <option value="text">文字发送</option>
-            <option value="image">图片发送</option>
-            <option value="miao">帮助卡片</option>
+  <dialog id="help-diy-preview-dialog" class="help-preview-dialog" aria-labelledby="help-diy-dialog-title">
+    <div class="help-dialog-header">
+      <h2 id="help-diy-dialog-title">帮助图片预览</h2>
+      <div class="help-dialog-actions">
+        <label class="help-dialog-zoom-field" for="help-diy-dialog-zoom">
+          <span>预览缩放</span>
+          <select id="help-diy-dialog-zoom" aria-label="放大预览缩放">
+            <option value="fit">适应宽度</option>
+            <option value="1">100%</option>
+            <option value="1.5">150%</option>
+            <option value="2">200%</option>
           </select>
-          <input id="help-diy-ai-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
-          <button type="button" class="help-diy-upload-btn" data-help-upload="ai">上传图片</button>
-          <button type="button" class="help-diy-generate-btn" data-help-generate="ai">生成图片</button>
-        <button type="button" class="help-diy-generate-btn" data-help-generate-miao="ai">生成帮助卡片</button>
-          <button type="button" class="help-diy-clear-btn" data-help-clear="ai">清除图片</button>
-          <input id="help-diy-ai-upload" class="hidden" type="file" accept="image/*" />
-        </div>
-        <textarea id="help-diy-ai" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 AI 返回内容"></textarea>
-    <div id="help-diy-ai-miao-editor" class="miao-editor hidden"></div>
+        </label>
+        <button id="help-diy-preview-close" class="help-button" type="button" aria-label="关闭放大预览" autofocus>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6" /></svg>
+          <span>关闭放大预览</span>
+        </button>
       </div>
-      <div>
-        <h2>管理分类帮助</h2>
-        <div class="toolbar help-diy-mode-toolbar">
-          <select id="help-diy-manage-mode">
-            <option value="text">文字发送</option>
-            <option value="image">图片发送</option>
-            <option value="miao">帮助卡片</option>
-          </select>
-          <input id="help-diy-manage-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
-          <button type="button" class="help-diy-upload-btn" data-help-upload="manage">上传图片</button>
-          <button type="button" class="help-diy-generate-btn" data-help-generate="manage">生成图片</button>
-        <button type="button" class="help-diy-generate-btn" data-help-generate-miao="manage">生成帮助卡片</button>
-          <button type="button" class="help-diy-clear-btn" data-help-clear="manage">清除图片</button>
-          <input id="help-diy-manage-upload" class="hidden" type="file" accept="image/*" />
-        </div>
-        <textarea id="help-diy-manage" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 管理 返回内容"></textarea>
-    <div id="help-diy-manage-miao-editor" class="miao-editor hidden"></div>
-      </div>
-      <div>
-        <h2>娱乐分类帮助</h2>
-        <div class="toolbar help-diy-mode-toolbar">
-          <select id="help-diy-fun-mode">
-            <option value="text">文字发送</option>
-            <option value="image">图片发送</option>
-            <option value="miao">帮助卡片</option>
-          </select>
-          <input id="help-diy-fun-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
-          <button type="button" class="help-diy-upload-btn" data-help-upload="fun">上传图片</button>
-          <button type="button" class="help-diy-generate-btn" data-help-generate="fun">生成图片</button>
-        <button type="button" class="help-diy-generate-btn" data-help-generate-miao="fun">生成帮助卡片</button>
-          <button type="button" class="help-diy-clear-btn" data-help-clear="fun">清除图片</button>
-          <input id="help-diy-fun-upload" class="hidden" type="file" accept="image/*" />
-        </div>
-        <textarea id="help-diy-fun" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 娱乐 返回内容"></textarea>
-    <div id="help-diy-fun-miao-editor" class="miao-editor hidden"></div>
-      </div>
-      <div>
-        <h2>调试分类帮助</h2>
-        <div class="toolbar help-diy-mode-toolbar">
-          <select id="help-diy-debug-mode">
-            <option value="text">文字发送</option>
-            <option value="image">图片发送</option>
-            <option value="miao">帮助卡片</option>
-          </select>
-          <input id="help-diy-debug-image" class="help-diy-image-input" placeholder="上传图片后会自动填入地址" />
-          <button type="button" class="help-diy-upload-btn" data-help-upload="debug">上传图片</button>
-          <button type="button" class="help-diy-generate-btn" data-help-generate="debug">生成图片</button>
-        <button type="button" class="help-diy-generate-btn" data-help-generate-miao="debug">生成帮助卡片</button>
-          <button type="button" class="help-diy-clear-btn" data-help-clear="debug">清除图片</button>
-          <input id="help-diy-debug-upload" class="hidden" type="file" accept="image/*" />
-        </div>
-        <textarea id="help-diy-debug" class="help-diy-text-input" rows="14" placeholder="填写 #灵晶帮助 调试 返回内容"></textarea>
-    <div id="help-diy-debug-miao-editor" class="miao-editor hidden"></div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="section-head">
-        <div>
-          <h2>HTML 转图片</h2>
-          <div class="setting-help">粘贴自定义 HTML（支持内联 style 与外链图片），渲染成图片并填入所选板块；生成后记得保存。默认 720px 宽白底，可写完整 &lt;html&gt; 文档自定义全部样式。</div>
-        </div>
-        <div class="actions">
-          <select id="help-diy-html-slot" aria-label="图片填入板块">
-            <option value="home">总帮助</option>
-            <option value="ai">AI 分类</option>
-            <option value="manage">管理分类</option>
-            <option value="fun">娱乐分类</option>
-            <option value="debug">调试分类</option>
-          </select>
-          <button type="button" id="help-diy-html-generate-btn" class="help-diy-generate-btn">生成图片</button>
-        </div>
-      </div>
-      <div class="toolbar">
-        <span class="setting-help">内置模板</span>
-        <button type="button" class="mini-btn" data-help-html-template="home">总览导航</button>
-        <button type="button" class="mini-btn" data-help-html-template="ai">AI 对话</button>
-        <button type="button" class="mini-btn" data-help-html-template="manage">群管理</button>
-        <button type="button" class="mini-btn" data-help-html-template="fun">内容娱乐</button>
-        <button type="button" class="mini-btn" data-help-html-template="debug">调试排查</button>
-      </div>
-      <textarea id="help-diy-html-source" class="help-diy-text-input" rows="12" spellcheck="false" placeholder="在此粘贴自定义 HTML，或点击上方内置模板一键填入；也可写完整 &lt;html&gt; 文档自定义全部样式"></textarea>
-    </section>
-  </div>
-<script src="/auth.js"></script>
-<script src="/console-shell.js"></script>
-<script src="/help-diy.js"></script>
+    </div>
+    <div id="help-diy-dialog-stage" class="help-dialog-stage">
+      <img id="help-diy-dialog-image" class="help-dialog-image" alt="放大帮助图片" />
+    </div>
+  </dialog>
+  <script src="/auth.js"></script>
+  <script src="/console-shell.js"></script>
+  <script src="/help-diy-icons.js"></script>
+  <script src="/help-diy.js"></script>
   <script src="/theme.js"></script>
 </body>
 </html>

@@ -1,0 +1,1478 @@
+/* Help DIY workbench. Page-ID scope also wins over late console-modern.css. */
+#help-diy-page {
+  --help-surface: var(--panel-bg);
+  --help-surface-muted: var(--soft-bg);
+  --help-control-bg: var(--panel-bg);
+  --help-hover-bg: var(--console-control-hover, var(--soft-bg));
+  --help-border: var(--border);
+  --help-border-strong: var(--border-strong);
+  --help-text: var(--text);
+  --help-text-secondary: var(--soft-text);
+  --help-text-muted: var(--muted-text);
+  --help-accent: var(--primary);
+  --help-accent-hover: var(--primary-hover);
+  --help-accent-text: var(--primary-text);
+  --help-selection-bg: color-mix(in srgb, var(--primary) 10%, var(--panel-bg));
+  --help-radius: var(--console-radius-lg, 10px);
+  --help-control-radius: var(--console-radius-md, 8px);
+  --help-gap: 16px;
+  --help-panel-padding: 20px;
+  --help-topbar-height: 56px;
+  --help-bar-height: 100px;
+  --help-preview-top: calc(var(--help-topbar-height) + var(--help-bar-height) + 12px);
+  --help-control-height: 36px;
+  --help-item-ops-width: 184px;
+  --help-group-ops-width: 146px;
+  --help-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+  --help-scrim: rgba(0, 0, 0, .56);
+  background: var(--bg);
+  color: var(--help-text);
+}
+
+#help-diy-page::before,
+#help-diy-page::after {
+  display: none;
+}
+
+#help-diy-page .help-workbench-page {
+  min-width: 0;
+  max-width: 1640px;
+  margin-inline: auto;
+  padding: 20px 20px 32px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#help-diy-page .console-app-shell .help-workbench-page {
+  padding: 12px 8px 32px;
+}
+
+#help-diy-page .help-page-header {
+  margin-bottom: 20px;
+}
+
+#help-diy-page .help-page-header h1 {
+  margin: 0 0 6px;
+  color: var(--help-text);
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+}
+
+#help-diy-page .help-page-header p {
+  max-width: 780px;
+  margin: 0;
+  color: var(--help-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-workbench-page code {
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: .95em;
+}
+
+#help-diy-page .help-workbench-bar {
+  position: sticky;
+  top: var(--help-topbar-height);
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-radius);
+  background: var(--help-surface);
+  box-shadow: var(--help-shadow);
+}
+
+#help-diy-page .help-workbench-actions,
+#help-diy-page .help-workbench-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+#help-diy-page .help-save-actions,
+#help-diy-page .help-category-toolbar,
+#help-diy-page .help-template-actions,
+#help-diy-page .help-preview-actions,
+#help-diy-page .help-dialog-actions,
+#help-diy-page .help-html-templates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+#help-diy-page .help-save-actions {
+  margin-left: auto;
+}
+
+#help-diy-page .help-diy-toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--help-control-height);
+  padding: 0;
+  color: var(--help-text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#help-diy-page #help-diy-enabled {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--help-accent);
+  cursor: pointer;
+}
+
+#help-diy-page .help-dirty-status {
+  color: var(--help-text-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-workbench-status {
+  min-height: 20px;
+  margin: 8px 2px 12px;
+  color: var(--help-text-secondary);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-button,
+#help-diy-page .help-category-button,
+#help-diy-page .help-view-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  min-height: var(--help-control-height);
+  padding: 7px 12px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-control-bg);
+  color: var(--help-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#help-diy-page .help-button:hover,
+#help-diy-page .help-category-button:hover,
+#help-diy-page .help-view-button:hover {
+  border-color: var(--help-border-strong);
+  background: var(--help-hover-bg);
+  color: var(--help-text);
+  box-shadow: none;
+  transform: none;
+}
+
+#help-diy-page .help-button:active,
+#help-diy-page .help-category-button:active,
+#help-diy-page .help-view-button:active {
+  background: var(--help-surface-muted);
+}
+
+#help-diy-page #help-diy-save-btn {
+  border-color: var(--help-accent);
+  background: var(--help-accent);
+  color: var(--help-accent-text);
+  font-weight: 600;
+}
+
+#help-diy-page #help-diy-save-btn:hover {
+  border-color: var(--help-accent-hover);
+  background: var(--help-accent-hover);
+  color: var(--help-accent-text);
+  filter: none;
+}
+
+#help-diy-page .help-button-danger {
+  border-color: var(--error-border);
+  background: var(--error-bg);
+  color: var(--risk-text);
+}
+
+#help-diy-page .help-button-danger:hover {
+  border-color: var(--risk-text);
+  background: var(--error-bg);
+  color: var(--risk-text);
+}
+
+#help-diy-page .help-button:disabled,
+#help-diy-page .help-button:disabled:hover,
+#help-diy-page .help-button[aria-disabled="true"],
+#help-diy-page .help-button[aria-disabled="true"]:hover {
+  border-color: var(--help-border);
+  background: var(--help-surface-muted);
+  color: var(--help-text-muted);
+  opacity: .55;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow: none;
+  transform: none;
+}
+
+#help-diy-page a.help-button[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+#help-diy-page .help-button svg,
+#help-diy-page .help-view-button svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#help-diy-page .help-category-toolbar {
+  gap: 4px;
+}
+
+#help-diy-page .help-category-button {
+  padding-inline: 14px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--help-text-muted);
+}
+
+#help-diy-page .help-category-button.active,
+#help-diy-page .help-category-button[aria-pressed="true"],
+#help-diy-page .help-view-button.active,
+#help-diy-page .help-view-button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--help-accent) 35%, var(--help-border));
+  background: var(--help-selection-bg);
+  color: var(--help-accent);
+  font-weight: 600;
+}
+
+#help-diy-page .help-view-toggle {
+  display: none;
+  gap: 4px;
+  margin-left: auto;
+  padding: 3px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-surface-muted);
+}
+
+#help-diy-page .help-view-button {
+  padding-inline: 10px;
+  border-color: transparent;
+  background: transparent;
+}
+
+#help-diy-page .help-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+  align-items: start;
+  gap: var(--help-gap);
+}
+
+#help-diy-page .help-edit-pane {
+  display: grid;
+  gap: var(--help-gap);
+  min-width: 0;
+}
+
+#help-diy-page .help-slot-panel,
+#help-diy-page .help-preview-pane,
+#help-diy-page .help-global-style,
+#help-diy-page .help-disclosure {
+  min-width: 0;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-radius);
+  background: var(--help-surface);
+  box-shadow: var(--help-shadow);
+}
+
+#help-diy-page .help-slot-panel {
+  padding: var(--help-panel-padding);
+  scroll-margin-top: calc(var(--help-preview-top) + 12px);
+}
+
+#help-diy-page .help-slot-heading,
+#help-diy-page .help-preview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 16px;
+}
+
+#help-diy-page .help-slot-heading h2,
+#help-diy-page .help-preview-heading h2,
+#help-diy-page .help-dialog-header h2 {
+  margin: 0;
+  color: var(--help-text);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+#help-diy-page .help-slot-command {
+  color: var(--help-text-muted);
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-diy-mode-toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+#help-diy-page .help-mode-field,
+#help-diy-page .help-zoom-field,
+#help-diy-page .help-dialog-zoom-field,
+#help-diy-page .help-history-note-field,
+#help-diy-page .help-html-slot-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--help-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#help-diy-page .help-mode-field {
+  flex: 0 1 160px;
+}
+
+#help-diy-page .help-workbench-page input:not([type="checkbox"]):not([type="file"]):not([type="color"]),
+#help-diy-page .help-workbench-page select,
+#help-diy-page .help-preview-dialog select {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--help-control-height);
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-control-bg);
+  color: var(--help-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: none;
+}
+
+#help-diy-page .help-diy-mode-toolbar select {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  font-weight: 500;
+}
+
+#help-diy-page .help-workbench-page input::placeholder,
+#help-diy-page .help-workbench-page textarea::placeholder {
+  color: var(--help-text-muted);
+  opacity: 1;
+}
+
+#help-diy-page .help-image-tools {
+  display: flex;
+  align-items: center;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+#help-diy-page .help-image-tools .help-diy-image-input {
+  flex: 1 1 100%;
+  min-width: 0;
+  font-family: Consolas, "SFMono-Regular", monospace;
+}
+
+#help-diy-page .help-context-tools {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Mode-dependent tools follow the selected option without a second JS state. */
+#help-diy-page .help-diy-mode-toolbar:has(select option[value="text"]:checked) .help-image-tools,
+#help-diy-page .help-diy-mode-toolbar:has(select option[value="text"]:checked) [data-help-generate-miao],
+#help-diy-page .help-diy-mode-toolbar:has(select option[value="image"]:checked) .help-context-tools,
+#help-diy-page .help-diy-mode-toolbar:has(select option[value="miao"]:checked) .help-image-tools,
+#help-diy-page .help-diy-mode-toolbar:has(select option[value="miao"]:checked) [data-help-generate] {
+  display: none;
+}
+
+#help-diy-page .help-diy-mode-toolbar .help-diy-upload-btn {
+  margin-left: 0;
+}
+
+#help-diy-page .help-mode-description,
+#help-diy-page .help-section-description,
+#help-diy-page .help-preview-hint {
+  margin: 12px 0;
+  color: var(--help-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-diy-text-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 320px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-control-bg);
+  color: var(--help-text);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  resize: vertical;
+  box-shadow: none;
+}
+
+#help-diy-page .help-diy-text-input.is-image-mode {
+  min-height: 160px;
+  background: var(--help-surface-muted);
+  color: var(--help-text-secondary);
+}
+
+#help-diy-page .help-button:focus-visible,
+#help-diy-page .help-category-button:focus-visible,
+#help-diy-page .help-view-button:focus-visible,
+#help-diy-page .help-workbench-page input:focus-visible,
+#help-diy-page .help-workbench-page select:focus-visible,
+#help-diy-page .help-workbench-page textarea:focus-visible,
+#help-diy-page .help-preview-dialog select:focus-visible,
+#help-diy-page .help-global-style > summary:focus-visible,
+#help-diy-page .help-disclosure > summary:focus-visible,
+#help-diy-page .help-diy-image-preview:focus-visible {
+  outline: 2px solid var(--help-accent);
+  outline-offset: 3px;
+  border-color: var(--help-accent);
+  box-shadow: none;
+}
+
+#help-diy-page .help-preview-pane {
+  position: sticky;
+  top: var(--help-preview-top);
+  align-self: start;
+  padding: 16px;
+}
+
+#help-diy-page .help-preview-slot {
+  padding: 3px 8px;
+  border: 1px solid var(--help-border);
+  border-radius: 6px;
+  background: var(--help-surface-muted);
+  color: var(--help-text-secondary);
+  font-size: 12px;
+}
+
+#help-diy-page .help-preview-toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+#help-diy-page .help-zoom-field {
+  flex: 1 1 100%;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+#help-diy-page .help-preview-actions {
+  flex: 1 1 100%;
+}
+
+#help-diy-page .help-preview-actions .help-button {
+  flex: 1 1 auto;
+}
+
+#help-diy-page .help-preview-size {
+  min-height: 18px;
+  margin: 10px 0;
+  color: var(--help-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-diy-preview-shell {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-surface-muted);
+}
+
+#help-diy-page .help-diy-preview-shell.is-image-empty {
+  border-style: dashed;
+}
+
+#help-diy-page #help-diy-preview {
+  min-height: 240px;
+  max-height: max(240px, calc(100vh - var(--help-preview-top) - 240px));
+  max-height: max(240px, calc(100dvh - var(--help-preview-top) - 240px));
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--help-text-secondary);
+  font-family: Consolas, "SFMono-Regular", "Microsoft YaHei", monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-diy-preview-shell.is-image-mode #help-diy-preview {
+  min-height: 0;
+  max-height: 100px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--help-border);
+  color: var(--help-text-muted);
+  font-size: 12px;
+}
+
+#help-diy-page .help-diy-image-preview-wrap {
+  min-width: 0;
+  padding: 0;
+  background: var(--help-surface-muted);
+}
+
+#help-diy-page #help-diy-preview-stage {
+  display: block;
+  min-width: 0;
+  min-height: 240px;
+  max-height: max(240px, calc(100vh - var(--help-preview-top) - 252px));
+  max-height: max(240px, calc(100dvh - var(--help-preview-top) - 252px));
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: 0;
+  background: var(--help-surface-muted);
+  scrollbar-width: thin;
+}
+
+/* JS owns pixel width for fit / 100% / 150% / 200%; never cap image height. */
+#help-diy-page #help-diy-image-preview,
+#help-diy-page #help-diy-dialog-image {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  object-fit: contain;
+  box-shadow: none;
+}
+
+#help-diy-page #help-diy-image-preview {
+  cursor: zoom-in;
+}
+
+#help-diy-page .help-preview-hint {
+  margin-bottom: 0;
+}
+
+#help-diy-page .help-global-style > summary,
+#help-diy-page .help-disclosure > summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 52px;
+  padding: 14px var(--help-panel-padding);
+  color: var(--help-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  list-style: none;
+  cursor: pointer;
+}
+
+#help-diy-page .help-global-style > summary::-webkit-details-marker,
+#help-diy-page .help-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+#help-diy-page .help-global-style > summary::before,
+#help-diy-page .help-disclosure > summary::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+#help-diy-page .help-global-style[open] > summary::before,
+#help-diy-page .help-disclosure[open] > summary::before {
+  transform: rotate(45deg) translateY(-2px);
+}
+
+#help-diy-page .help-global-style > summary small {
+  margin-left: auto;
+  color: var(--help-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+#help-diy-page .help-global-style[open] > summary,
+#help-diy-page .help-disclosure[open] > summary {
+  border-bottom: 1px solid var(--help-border);
+}
+
+#help-diy-page .help-disclosure-content {
+  min-width: 0;
+  padding: var(--help-panel-padding);
+}
+
+#help-diy-page .help-disclosure-content > .help-section-description:first-child {
+  margin-top: 0;
+}
+
+#help-diy-page .help-support-sections {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+#help-diy-page .help-instructions ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--help-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+#help-diy-page .help-template-actions {
+  margin-bottom: 16px;
+}
+
+#help-diy-page .help-template-list,
+#help-diy-page .help-history-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+}
+
+#help-diy-page .help-template-list .setting-item,
+#help-diy-page .help-history-list .setting-item {
+  min-width: 0;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-surface-muted);
+  box-shadow: none;
+  overflow-wrap: anywhere;
+}
+
+#help-diy-page .help-template-list .mini-btn,
+#help-diy-page .help-history-list .mini-btn {
+  width: auto;
+  min-height: var(--help-control-height);
+  padding: 7px 12px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-control-bg);
+  color: var(--help-text-secondary);
+  font-size: 13px;
+  box-shadow: none;
+  transform: none;
+}
+
+#help-diy-page .help-history-note-field {
+  max-width: 680px;
+}
+
+#help-diy-page .help-history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0 16px;
+}
+
+#help-diy-page .help-history-actions .help-section-description {
+  margin: 0;
+}
+
+#help-diy-page .help-html-toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+#help-diy-page .help-html-slot-field {
+  flex: 0 1 220px;
+}
+
+#help-diy-page .help-html-templates {
+  margin-bottom: 16px;
+}
+
+#help-diy-page .help-html-templates > span {
+  color: var(--help-text-muted);
+  font-size: 12px;
+}
+
+#help-diy-page .help-html-source {
+  min-height: 260px;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 13px;
+}
+
+#help-diy-page .help-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Preserve existing editor visuals; reserve the new drag/copy action columns. */
+#help-diy-page .miao-editor .miao-editor-columns,
+#help-diy-page .miao-editor .miao-editor-item {
+  grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) var(--help-item-ops-width);
+  column-gap: 8px;
+}
+
+#help-diy-page .miao-editor .miao-group-ops,
+#help-diy-page .miao-editor .miao-item-ops {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: none;
+  min-width: 0;
+}
+
+#help-diy-page .miao-editor .miao-item-ops {
+  width: var(--help-item-ops-width);
+}
+
+#help-diy-page .miao-editor .miao-group-ops {
+  width: var(--help-group-ops-width);
+}
+
+#help-diy-page .miao-editor .miao-editor-group-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#help-diy-page .miao-editor .miao-group-index {
+  display: none;
+}
+
+#help-diy-page .miao-editor .miao-group-name {
+  flex: 1 1 140px;
+  width: auto;
+  min-width: 0;
+}
+
+#help-diy-page .miao-editor .miao-group-count {
+  display: inline-flex;
+  color: var(--help-text-muted);
+  white-space: nowrap;
+}
+
+#help-diy-page .miao-editor .miao-editor-section-head,
+#help-diy-page .miao-editor .miao-editor-section-head > div {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+#help-diy-page .miao-editor .miao-action-btn {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+
+#help-diy-page .miao-editor .miao-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--help-control-radius);
+  background: transparent;
+  color: var(--help-text-muted);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+#help-diy-page .miao-editor .miao-drag-handle:hover {
+  background: var(--help-surface-muted);
+  color: var(--help-text);
+}
+
+#help-diy-page .miao-editor .miao-drag-handle:active {
+  cursor: grabbing;
+}
+
+#help-diy-page .miao-editor .miao-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+#help-diy-page .miao-editor .miao-editor-group.is-dragging,
+#help-diy-page .miao-editor .miao-editor-item.is-dragging {
+  opacity: .4;
+}
+
+#help-diy-page .miao-editor .miao-editor-group.is-drop-target,
+#help-diy-page .miao-editor .miao-editor-item.is-drop-target {
+  outline: 2px solid var(--help-accent);
+  outline-offset: -2px;
+  background: var(--help-selection-bg);
+}
+
+#help-diy-page .miao-editor .miao-group-body.hidden {
+  display: none !important;
+}
+
+#help-diy-page .miao-editor .miao-editor-group:has(.miao-group-body.hidden) .miao-editor-group-head {
+  border-bottom: 0;
+  border-radius: var(--help-radius);
+}
+
+#help-diy-page #help-diy-global-style .miao-editor-settings {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+#help-diy-page #help-diy-global-style .miao-editor-fields {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+}
+
+#help-diy-page #help-diy-global-style .miao-editor-label {
+  white-space: normal;
+}
+
+#help-diy-page #help-diy-global-style .help-color-presets {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#help-diy-page #help-diy-global-style .miao-style-positions {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+}
+
+#help-diy-page #help-diy-global-style .miao-style-positions .miao-style-color-item {
+  flex: 1 1 140px;
+}
+
+#help-diy-page #help-diy-global-style .miao-style-align {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+#help-diy-page .miao-editor .miao-editor-settings,
+#help-diy-page .miao-editor .miao-editor-group {
+  background: var(--help-surface-muted);
+}
+
+#help-diy-page .miao-editor .miao-editor-group-head {
+  background: var(--help-surface-muted);
+}
+
+/* Picker is mounted to body, outside the edit pane. */
+#help-diy-page #miao-icon-picker {
+  background: var(--help-scrim);
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-picker-panel {
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  background: var(--help-surface);
+  color: var(--help-text);
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-artd-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-category,
+#help-diy-page #miao-icon-picker .miao-icon-search {
+  flex: 1 1 150px;
+  width: auto;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-control-radius);
+  background: var(--help-control-bg);
+  color: var(--help-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-category:focus-visible {
+  outline: 2px solid var(--help-accent);
+  outline-offset: 2px;
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-count {
+  color: var(--help-text-muted);
+  font-size: 12px;
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-more {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 36px;
+  margin-top: 8px;
+  border-style: dashed;
+  background: var(--help-surface-muted);
+}
+
+#help-diy-page #miao-icon-picker .miao-icon-grid {
+  max-height: 42vh;
+  max-height: 42dvh;
+  overscroll-behavior: contain;
+}
+
+#help-diy-page #help-diy-preview-dialog {
+  width: 90vw;
+  max-width: 1440px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-radius);
+  background: var(--help-surface);
+  color: var(--help-text);
+  box-shadow: var(--shadow);
+}
+
+#help-diy-page #help-diy-preview-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+#help-diy-page #help-diy-preview-dialog::backdrop {
+  background: var(--help-scrim);
+}
+
+#help-diy-page .help-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--help-border);
+}
+
+#help-diy-page .help-dialog-zoom-field {
+  grid-template-columns: auto minmax(0, 150px);
+  align-items: center;
+}
+
+#help-diy-page #help-diy-dialog-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: calc(90vh - 100px);
+  max-height: calc(90dvh - 100px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--help-surface-muted);
+}
+
+/* Narrow editor containers include desktop layouts with the sidebar expanded. */
+@container miao-editor (max-width: 600px) {
+  #help-diy-page .miao-editor .miao-editor-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #help-diy-page .miao-editor .miao-editor-columns {
+    display: none;
+  }
+
+  #help-diy-page .miao-editor .miao-editor-item {
+    grid-template-columns: 44px minmax(0, 1fr);
+    row-gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--help-border);
+  }
+
+  #help-diy-page .miao-editor .miao-editor-item:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  #help-diy-page .miao-editor .miao-item-icon {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  #help-diy-page .miao-editor .miao-item-title {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  #help-diy-page .miao-editor .miao-item-desc {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  #help-diy-page .miao-editor .miao-item-ops {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: end;
+    max-width: 100%;
+  }
+
+  #help-diy-page .miao-editor .miao-editor-group-head .miao-group-name {
+    flex: 1 1 calc(100% - 96px);
+  }
+
+  #help-diy-page .miao-editor .miao-editor-group-head .miao-group-count {
+    margin-left: 0;
+    margin-right: auto;
+  }
+
+  #help-diy-page .miao-editor .miao-editor-group-head .miao-group-ops {
+    margin-left: auto;
+  }
+}
+
+@container miao-editor (max-width: 380px) {
+  #help-diy-page .miao-editor .miao-editor-settings {
+    padding: 12px;
+  }
+
+  #help-diy-page .miao-editor .miao-item-ops {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  #help-diy-page .miao-editor .miao-group-count {
+    display: inline-flex;
+  }
+
+  #help-diy-page .miao-editor .miao-editor-items {
+    padding: 10px;
+  }
+
+  #help-diy-page .miao-editor .miao-editor-group-head {
+    padding: 10px;
+  }
+}
+
+@media (min-width: 961px) and (max-width: 1180px) {
+  #help-diy-page {
+    --help-bar-height: 144px;
+  }
+
+  #help-diy-page .help-save-actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 960px) {
+  #help-diy-page {
+    --help-bar-height: 164px;
+    --help-control-height: 40px;
+    --help-item-ops-width: 224px;
+    --help-group-ops-width: 178px;
+  }
+
+  #help-diy-page .help-workbench-page,
+  #help-diy-page .console-app-shell .help-workbench-page {
+    padding-inline: 4px;
+  }
+
+  #help-diy-page .help-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #help-diy-page .help-view-toggle {
+    display: inline-flex;
+  }
+
+  #help-diy-page .help-preview-pane {
+    position: static;
+  }
+
+  #help-diy-page[data-help-view="preview"] .help-edit-pane,
+  #help-diy-page[data-help-view="edit"] .help-preview-pane {
+    display: none;
+  }
+
+  #help-diy-page .help-save-actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+
+  #help-diy-page .help-preview-actions {
+    flex: 0 1 auto;
+  }
+
+  #help-diy-page .help-zoom-field {
+    flex: 1 1 200px;
+  }
+
+  #help-diy-page .help-workbench-page input:not([type="checkbox"]):not([type="file"]):not([type="color"]),
+  #help-diy-page .help-workbench-page select,
+  #help-diy-page .help-preview-dialog select {
+    min-height: 40px;
+    height: auto;
+    font-size: 16px;
+  }
+
+  #help-diy-page .help-diy-text-input {
+    font-size: 16px;
+  }
+
+  #help-diy-page .miao-editor .miao-action-btn,
+  #help-diy-page .miao-editor .miao-drag-handle {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  #help-diy-page #help-diy-preview-stage,
+  #help-diy-page #help-diy-preview {
+    max-height: max(260px, calc(100dvh - 300px));
+  }
+}
+
+@media (max-width: 900px) {
+  #help-diy-page {
+    /* The console topbar gains a search row below 900px. */
+    --help-topbar-height: calc(104px + env(safe-area-inset-top, 0px));
+  }
+}
+
+@media (max-width: 600px) {
+  #help-diy-page {
+    --help-panel-padding: 14px;
+    --help-gap: 12px;
+    --help-bar-height: 206px;
+    --help-control-height: 44px;
+  }
+
+  #help-diy-page .help-page-header {
+    margin-bottom: 16px;
+  }
+
+  #help-diy-page .help-page-header h1 {
+    font-size: 23px;
+  }
+
+  #help-diy-page .help-workbench-bar {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  #help-diy-page .help-workbench-actions {
+    column-gap: 8px;
+  }
+
+  #help-diy-page .help-dirty-status {
+    margin-left: auto;
+    font-size: 11px;
+  }
+
+  #help-diy-page .help-save-actions {
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) minmax(0, .8fr) minmax(0, 1.3fr) minmax(0, 1.7fr);
+    gap: 6px;
+  }
+
+  #help-diy-page .help-save-actions .help-button {
+    width: 100%;
+    padding-inline: 4px;
+    font-size: 12px;
+  }
+
+  #help-diy-page .help-save-actions .help-icon-button {
+    gap: 3px;
+  }
+
+  #help-diy-page #help-diy-save-btn svg {
+    display: none;
+  }
+
+  #help-diy-page .help-workbench-navigation {
+    gap: 8px;
+  }
+
+  #help-diy-page .help-category-toolbar {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  #help-diy-page .help-category-button {
+    width: 100%;
+    padding-inline: 4px;
+  }
+
+  #help-diy-page .help-view-toggle {
+    flex: 1 1 100%;
+    margin-left: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  #help-diy-page .help-view-button {
+    flex: 1 1 0;
+    border-color: var(--help-border);
+  }
+
+  #help-diy-page .help-view-button.active,
+  #help-diy-page .help-view-button[aria-pressed="true"] {
+    border-color: var(--help-accent);
+  }
+
+  #help-diy-page .help-mode-field {
+    flex-basis: 100%;
+  }
+
+  #help-diy-page .help-context-tools {
+    flex-basis: 100%;
+  }
+
+  #help-diy-page .help-image-tools .help-button,
+  #help-diy-page .help-context-tools .help-button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #help-diy-page .help-diy-text-input {
+    min-height: 260px;
+    font-size: 16px;
+  }
+
+  #help-diy-page .help-workbench-page input:not([type="checkbox"]):not([type="file"]):not([type="color"]),
+  #help-diy-page .help-workbench-page select,
+  #help-diy-page .help-preview-dialog select {
+    min-height: 44px;
+    height: auto;
+    font-size: 16px;
+  }
+
+  #help-diy-page .help-slot-command {
+    font-size: 11px;
+  }
+
+  #help-diy-page .help-global-style > summary small {
+    font-size: 11px;
+  }
+
+  #help-diy-page .help-preview-toolbar,
+  #help-diy-page .help-preview-actions {
+    width: 100%;
+  }
+
+  #help-diy-page .help-preview-actions .help-button {
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  #help-diy-page .help-preview-pane {
+    padding: 14px;
+  }
+
+  #help-diy-page .help-support-sections {
+    margin-top: 16px;
+  }
+
+  #help-diy-page .help-history-actions .help-button {
+    width: 100%;
+  }
+
+  #help-diy-page .help-html-templates > span {
+    flex-basis: 100%;
+  }
+
+  #help-diy-page .help-html-templates .help-button {
+    flex: 1 1 100px;
+    min-width: 0;
+  }
+
+  #help-diy-page .help-html-toolbar .help-html-slot-field,
+  #help-diy-page .help-html-toolbar > .help-button {
+    flex: 1 1 100%;
+  }
+
+  #help-diy-page .miao-editor .miao-editor-settings {
+    padding: 12px;
+  }
+
+  #help-diy-page .miao-editor .mini-btn:not(.miao-action-btn) {
+    min-height: 44px;
+    height: 44px;
+  }
+
+  #help-diy-page .miao-editor .miao-style-color-item input[type="color"] {
+    flex-basis: 44px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    min-height: 44px;
+    height: 44px;
+  }
+
+  #help-diy-page .miao-editor .miao-action-btn,
+  #help-diy-page .miao-editor .miao-drag-handle {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  #help-diy-page #miao-icon-picker button,
+  #help-diy-page #miao-icon-picker .miao-icon-category,
+  #help-diy-page #miao-icon-picker .miao-icon-search {
+    min-height: 44px;
+    height: auto;
+  }
+
+  #help-diy-page #miao-icon-picker .miao-icon-grid {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 8px;
+  }
+
+  #help-diy-page #miao-icon-picker .miao-icon-cell {
+    height: 46px;
+  }
+
+  #help-diy-page #miao-icon-picker .miao-icon-artd-toolbar {
+    align-items: stretch;
+  }
+
+  #help-diy-page #miao-icon-picker .miao-icon-category,
+  #help-diy-page #miao-icon-picker .miao-icon-search {
+    flex-basis: 100%;
+    font-size: 16px;
+  }
+
+  #help-diy-page #help-diy-preview-dialog {
+    width: 90vw;
+  }
+
+  #help-diy-page .help-dialog-header {
+    padding: 12px;
+  }
+
+  #help-diy-page .help-dialog-actions {
+    width: 100%;
+  }
+
+  #help-diy-page .help-dialog-zoom-field,
+  #help-diy-page #help-diy-preview-close {
+    width: 100%;
+  }
+
+  #help-diy-page .help-dialog-zoom-field {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  #help-diy-page #help-diy-dialog-stage {
+    max-height: calc(90dvh - 188px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #help-diy-page .help-button,
+  #help-diy-page .help-category-button,
+  #help-diy-page .help-view-button,
+  #help-diy-page .miao-editor button {
+    transition: none;
+  }
+}
