@@ -1,0 +1,32 @@
+{
+  "product": "crystelf-bundled-zcode",
+  "version": "3.14.3",
+  "tag": "v3.14.3",
+  "upstreamUrl": "https://github.com/zai-org/ZCode.git",
+  "commit": "29628c9acdb81b703bbd4080c207a0e7ce5e276e",
+  "platform": "win32-x64",
+  "nodeRequirement": ">=22",
+  "builtAt": "2026-10-14T17:43:39.612Z",
+  "files": [
+    {
+      "path": "runtime\\zcode.cjs",
+      "sha256": "6587622d9cd763b484fa790c19971dbf6170e7cc7b5eac5bba87651c1a48ef64",
+      "size": 31172651
+    },
+    {
+      "path": "runtime\\zcode.cjs.map",
+      "sha256": "db7c9a26e7bbab9b4e23f2ca053a2a417f9582c5a36a67a690085f5e3720d0b0",
+      "size": 52551769
+    },
+    {
+      "path": "runtime\\THIRD-PARTY-NOTICES.md",
+      "sha256": "874bf7c10bdcadd0df0b50fc782f39f077669c6e41bbdbccd868409cd714dec3",
+      "size": 1978939
+    },
+    {
+      "path": "runtime\\provider\\zcode-builtin.json",
+      "sha256": "c239da43e00e3e212ca874fe48a13ebbb3896ebc59ebeb28e003bd29856e38f9",
+      "size": 186892
+    }
+  ]
+}

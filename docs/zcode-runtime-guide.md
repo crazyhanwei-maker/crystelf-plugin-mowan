@@ -7,7 +7,9 @@
 ## 1. 产物目录结构
 
 ```
-<Path.data>/agent-cli-runtime/zcode/       ← 运行时根（Yunzai 数据目录，仓库外，天然不进 git）
+<Path.data>/agent-cli-runtime/zcode/       ← 运行时根（Yunzai 数据目录，优先级更高：不换插件即可更新产物）
+resources/zcode-runtime/                   ← 仓库内置副本（随 git 分发，clone 即用；已剔除 zcode.cjs.map 调试映射）
+                                            解析优先级：数据目录副本存在则用之，否则回退仓库内置副本
   manifest.json                             ← 版本 + sha256 清单（resolveBundledZcodeCommand 消费）
   runtime/
     zcode.cjs                               ← CLI bundle（入口）
