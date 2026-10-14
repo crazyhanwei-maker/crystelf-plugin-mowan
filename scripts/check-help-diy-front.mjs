@@ -155,6 +155,30 @@ assert.equal(run('getDraft().home.text'), '帮助\n', 'undo keeps original white
 run('restoreDraftHistory(1)');
 assert.equal(run('getDraft().home.text'), '帮助\n新内容', 'redo survives whitespace-preserving restoration');
 
+context.Image = class {
+  set src(value) {
+    this.naturalWidth = 4000;
+    this.naturalHeight = 3000;
+    setImmediate(() => this.onload());
+  }
+};
+document.createElement = tag => {
+  assert.equal(tag, 'canvas');
+  return { width: 0, height: 0, getContext: () => ({ drawImage() {} }), toDataURL: (type, quality) => { context.__canvasArgs = [type, quality]; return 'data:image/jpeg;base64,' + 'A'.repeat(400); } };
+};
+run('readFileAsDataUrl = async file => `data:image/png;base64,RAW-${file.name}`');
+const smallPrepared = await run('compressHelpImageFile({size: 1000, type: "image/png", name: "small.png"})');
+assert.equal(smallPrepared.dataUrl, 'data:image/png;base64,RAW-small.png', 'small images upload unchanged');
+assert.equal(smallPrepared.note, '');
+const bigPrepared = await run('compressHelpImageFile({size: 6 * 1024 * 1024, type: "image/png", name: "big.png"})');
+assert.equal(bigPrepared.dataUrl.startsWith('data:image/jpeg;base64,'), true, 'oversized images must be recompressed');
+assert.deepEqual(context.__canvasArgs, ['image/jpeg', 0.85]);
+assert.match(bigPrepared.note, /2400×1800/);
+const gifPrepared = await run('compressHelpImageFile({size: 6 * 1024 * 1024, type: "image/gif", name: "anim.gif"})');
+assert.equal(gifPrepared.dataUrl, 'data:image/png;base64,RAW-anim.gif', 'animated gif must skip recompression');
+document.createElement = () => ({ width: 0, height: 0, getContext: () => ({ drawImage() {} }), toDataURL: () => 'data:image/jpeg;base64,' + 'A'.repeat(8 * 1024 * 1024) });
+await assert.rejects(run('compressHelpImageFile({size: 6 * 1024 * 1024, type: "image/png", name: "huge.png"})'), /仍超过 5MB/, 'uncompressible images keep the size guard');
+
 const viewButtons = ['edit', 'preview'].map(helpView => ({
   dataset: { helpView },
   classList: { toggle(name, state) { this[name] = state; } },
