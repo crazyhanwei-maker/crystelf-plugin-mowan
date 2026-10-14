@@ -381,12 +381,13 @@
               <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-all-directories" type="checkbox" /><span><strong>允许访问全目录</strong><small>允许访问当前工作目录以外的文件和目录</small></span></label>
               <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-terminal" type="checkbox" /><span><strong>允许受控终端</strong><small>仅实际修改模式可用，每条命令必须在审批卡中批准</small></span></label>
               <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span><strong>允许 OpenCode</strong><small>启用内置 OpenCode Agent</small></span></label>
+              <label class="agent-setting-check"><input id="agent-provider-zcode" type="checkbox" /><span><strong>允许 ZCode</strong><small>启用内置 ZCode Agent（一次性子进程，默认关闭）</small></span></label>
               <label class="agent-setting-check"><input id="agent-output-images" type="checkbox" /><span><strong>允许回复中显示图片</strong><small>开启后直接加载模型回复里的图片链接：图片服务器能获取你的 IP 与访问时间，图片内容也不经过任何审核，请自行权衡风险后决定</small></span></label>
               <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugin" type="checkbox" /><span><strong>允许修改灵晶插件</strong></span></label>
               <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugins" type="checkbox" /><span><strong>允许修改 Bot 插件目录</strong></span></label>
               <label class="agent-setting-check agent-write-scope"><input id="agent-write-yunzai" type="checkbox" /><span><strong>允许修改 Yunzai 根目录</strong></span></label>
               <div class="agent-settings-inline-grid">
-                <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option></select></label>
+                <label class="agent-compact-field"><span>默认 Agent</span><select id="agent-default-provider"><option value="opencode">OpenCode</option><option value="zcode">ZCode</option></select></label>
                 <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
                 <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
                 <label class="agent-compact-field"><span>运行时上限</span><select id="agent-max-runtimes"><option value="1">1 个 OpenCode</option><option value="2">2 个 OpenCode</option><option value="3">3 个 OpenCode</option><option value="4">4 个 OpenCode</option></select></label>
