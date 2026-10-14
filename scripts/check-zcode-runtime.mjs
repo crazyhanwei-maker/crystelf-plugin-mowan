@@ -78,6 +78,7 @@ if (dump) {
     mode: modeAt >= 0 ? args[modeAt + 1] : null,
     disallowedTools: dtIndex >= 0 ? args.slice(dtIndex + 1).filter((v, i, arr) => !v.startsWith('--')) : [],
     cwd: args[args.indexOf('--cwd') + 1] || null,
+    resume: args.includes('--resume') ? args[args.indexOf('--resume') + 1] || '' : null,
   }), 'utf8');
 }
 const send = obj => process.stdout.write(JSON.stringify(obj) + '\\n');
@@ -305,6 +306,22 @@ async function main() {
     assert.ok(dumped.disallowedTools.includes('WebFetch'));
     assert.ok(dumped.disallowedTools.includes('Agent') && dumped.disallowedTools.includes('Task'));
     assert.equal(dumped.cwd, path.resolve(workspace));
+    assert.equal(dumped.resume, null, '无 resumeSessionId 时不得注入 --resume');
+  });
+
+  const keepRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'keep', keepStateOnSuccess: true });
+  check('keepStateOnSuccess：成功任务保留状态目录供会话续接', () => {
+    assert.equal(keepRun.ok, true, keepRun.error);
+    assert.ok(fs.existsSync(path.join(PathStub.data, 'agent-cli-runtime', 'zcode-state', 'tasks', keepRun.taskId)), 'keepStateOnSuccess 保留状态目录');
+  });
+
+  const resumeRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'resume turn', resumeSessionId: 'sess-resume-1', taskId: keepRun.taskId, keepStateOnSuccess: true });
+  check('续接：--resume 注入且复用父任务状态目录', () => {
+    assert.equal(resumeRun.ok, true, resumeRun.error);
+    assert.equal(resumeRun.taskId, keepRun.taskId, '续接必须复用父任务状态目录');
+    const dumped = JSON.parse(fs.readFileSync(envForTask.FAKE_ARGS_FILE, 'utf8'));
+    assert.equal(dumped.resume, 'sess-resume-1', `resume args=${JSON.stringify(dumped)}`);
+    assert.ok(fs.existsSync(path.join(PathStub.data, 'agent-cli-runtime', 'zcode-state', 'tasks', keepRun.taskId)), '续接运行保留会话库');
   });
 
   const buildRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'hello', permissionMode: 'build', timeoutMs: 30000 });
