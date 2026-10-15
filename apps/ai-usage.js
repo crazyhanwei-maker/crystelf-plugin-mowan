@@ -87,6 +87,7 @@ const SCENE_LABELS = {
   affinity: '好感度',
   meme: '表情包',
   voice: '语音',
+  agent_task: 'Agent 任务',
 };
 
 function getSceneLabel(scene = '') {
