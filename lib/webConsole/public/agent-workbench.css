@@ -751,8 +751,19 @@
 }
 
 .agent-chat-actions {
+  position: relative;
   flex: 0 0 auto;
   gap: 8px;
+}
+
+.agent-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-actions-toggle {
+  display: none;
 }
 
 .agent-cancel-btn {
@@ -3179,7 +3190,9 @@
   .agent-native-mask { padding: 8px; }
   .agent-native-dialog { height: 95vh; }
   .agent-native-head { padding: 11px 12px; }
-  .agent-native-tabs button { min-width: 68px; }
+  .agent-native-head > div { flex: 1 1 auto; }
+  .agent-workbench-page .agent-native-head .agent-icon-btn { flex: 0 0 44px; width: 44px !important; min-width: 44px; max-width: 44px; height: 44px; min-height: 44px; padding: 0; }
+  .agent-workbench-page .agent-native-tabs button { flex: 0 0 auto; width: auto !important; min-width: 68px; max-width: 120px; min-height: 44px; }
   .agent-native-view { padding: 11px; }
   .agent-native-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .agent-native-tool-grid { grid-template-columns: 1fr; }
@@ -3748,14 +3761,34 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-task-list { max-height: 190px; }
   .agent-sidebar-safety { margin-top: 14px; }
   .agent-chat-header { align-items: center; width: 100%; min-height: 54px; padding: 8px 14px; }
-  .agent-chat-heading { max-width: calc(100% - 104px); }
+  .agent-chat-heading { flex: 1 1 auto; flex-direction: column; align-items: stretch; gap: 0; }
   .agent-chat-heading .agent-eyebrow { display: none; }
   .agent-chat-heading h2 { margin: 0 0 3px; font-size: 14px; font-weight: 750; }
-  .agent-chat-meta { font-size: 9px; }
-  .agent-chat-actions { gap: 5px; }
-  .agent-chat-actions .agent-quiet-btn { display: none; }
+  .agent-chat-meta { font-size: 11px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
+  .agent-chat-actions { gap: 8px; }
+  .agent-chat-actions .agent-actions-toggle { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 6px; font-size: 22px; }
   .agent-chat-actions .agent-state-badge { padding: 3px 6px; font-size: 9px; }
   .agent-chat-actions .agent-cancel-btn { min-height: 27px; padding: 4px 7px; border: 0; font-size: 10px; }
+  .agent-task-actions { display: none; }
+  .agent-chat-actions.is-open .agent-task-actions {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 45;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 160px;
+    max-height: min(60dvh, 360px);
+    overflow-y: auto;
+    padding: 6px;
+    background: var(--agent-surface);
+    border: 1px solid var(--agent-line);
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  }
+  .agent-task-actions > .agent-quiet-btn { min-height: 44px; text-align: left; }
   .agent-chat-stream { padding: 20px 18px 30px; }
   .agent-message { gap: 0; margin-bottom: 26px; }
   .agent-message-body { max-width: 88%; }

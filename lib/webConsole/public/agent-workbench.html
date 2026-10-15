@@ -104,12 +104,16 @@
           </div>
           <div class="agent-chat-actions">
             <span id="agent-chat-status-badge" class="agent-state-badge tone-neutral">未开始</span>
-            <button id="agent-content-search-toggle" type="button" class="agent-quiet-btn" title="搜索会话内容（当前会话消息）" aria-label="搜索会话内容" aria-expanded="false">搜索</button>
-            <button id="agent-resume-btn" type="button" class="agent-quiet-btn hidden">继续任务</button>
-            <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
-            <button id="agent-history-load-btn" type="button" class="agent-quiet-btn hidden">加载完整历史</button>
-            <button id="agent-export-btn" type="button" class="agent-quiet-btn hidden">导出</button>
-            <button id="agent-delete-btn" type="button" class="agent-quiet-btn agent-delete-btn hidden">删除</button>
+            <button id="agent-actions-toggle" type="button" class="agent-quiet-btn agent-actions-toggle" title="更多操作" aria-label="更多操作" aria-controls="agent-task-actions" aria-expanded="false">⋮</button>
+            <div id="agent-task-actions" class="agent-task-actions" role="group" aria-label="会话操作">
+              <button id="agent-content-search-toggle" type="button" class="agent-quiet-btn" title="搜索会话内容（当前会话消息）" aria-label="搜索会话内容" aria-expanded="false">搜索</button>
+              <button id="agent-resume-btn" type="button" class="agent-quiet-btn hidden">继续任务</button>
+              <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
+              <button id="agent-undo-btn" type="button" class="agent-quiet-btn hidden" title="把本任务改动的文件恢复为任务开始时的内容（agent 新建的文件会被删除）">回滚改动</button>
+              <button id="agent-history-load-btn" type="button" class="agent-quiet-btn hidden">加载完整历史</button>
+              <button id="agent-export-btn" type="button" class="agent-quiet-btn hidden">导出</button>
+              <button id="agent-delete-btn" type="button" class="agent-quiet-btn agent-delete-btn hidden">删除</button>
+            </div>
           </div>
 
           <section id="agent-content-search-bar" class="agent-content-search-bar hidden" aria-label="会话内容搜索">
@@ -391,10 +395,15 @@
                 <label class="agent-compact-field"><span>最大并发</span><select id="agent-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option></select></label>
                 <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
                 <label class="agent-compact-field"><span>运行时上限</span><select id="agent-max-runtimes"><option value="1">1 个 OpenCode</option><option value="2">2 个 OpenCode</option><option value="3">3 个 OpenCode</option><option value="4">4 个 OpenCode</option></select></label>
+                <label class="agent-compact-field"><span>ZCode 并发</span><select id="agent-zcode-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option><option value="3">3 个任务</option></select></label>
                 <label class="agent-compact-field"><span>空闲回收</span><select id="agent-runtime-idle"><option value="60000">1 分钟</option><option value="120000">2 分钟</option><option value="300000">5 分钟</option><option value="600000">10 分钟</option></select></label>
                 <label class="agent-compact-field"><span>ZCode 会话缓存</span><button id="agent-zcode-cleanup-btn" type="button" class="agent-quiet-btn" title="删除全部 ZCode 会话状态目录；旧任务将无法继续追问">清理会话状态</button></label>
               </div>
               <small class="agent-settings-note">ZCode 状态目录用于多轮对话续接上下文；启动时会自动回收 7 天以上的孤儿目录，一般无需手动清理。手动清理后旧任务记录保留，但不能再续接追问。</small>
+              <div class="agent-settings-group-head"><strong>ZCode 能力配置</strong><span>自定义指令与 MCP 服务器，对所有 ZCode 任务生效</span></div>
+              <label class="agent-compact-field"><span>自定义指令（用户级 AGENTS.md，所有 ZCode 任务可见）</span><textarea id="agent-zcode-instructions" rows="4" spellcheck="false" placeholder="例如：回复使用中文；遵循仓库现有代码风格；不要主动提交 git"></textarea></label>
+              <label class="agent-compact-field"><span>MCP 服务器（JSON，任务期写入工作区 .mcp.json，结束自动清理）</span><textarea id="agent-zcode-mcp" rows="4" spellcheck="false" placeholder='{"mcpServers":{"server-name":{"type":"stdio","command":"npx","args":["-y","some-mcp-server"]}}}'></textarea></label>
+              <label class="agent-compact-field"><span>自定义工作区（每行：名称|目录，只读档，最多 5 个）</span><textarea id="agent-custom-workspaces" rows="3" spellcheck="false" placeholder="我的项目|D:/projects/my-app&#10;文档库|/srv/docs"></textarea></label>
               <div class="agent-settings-subgroup">
                 <div class="agent-settings-group-head"><strong>上下文管理</strong><span>接近 OpenCode 上下文上限时，发送下一轮消息前自动压缩</span></div>
                 <label class="agent-setting-check"><input id="agent-auto-compact-enabled" type="checkbox" /><span><strong>自动压缩上下文</strong><small>压缩失败不会阻断当前任务</small></span></label>
@@ -503,25 +512,28 @@
       <div class="agent-native-body">
         <section class="agent-native-view" data-native-panel="session">
           <div class="agent-native-section-head"><strong>当前会话</strong><span id="agent-native-session-status">未选择</span></div>
+          <div id="agent-native-provider-note" class="agent-context-empty hidden">该会话由 ZCode 执行：会话管理、Todo、子 Agent 与原生 Diff 仅适用于 OpenCode 会话；ZCode 会话的重命名/删除请在会话列表操作，Git 工作流仍可用。</div>
           <label class="agent-native-field"><span>会话名称</span><input id="agent-native-session-title" type="text" maxlength="80" /></label>
-          <label class="agent-native-field"><span>Agent</span><select id="agent-native-agent"><option value="plan">plan</option><option value="build">build</option></select></label>
-          <label class="agent-native-field"><span>模型</span><input id="agent-native-model" type="text" maxlength="160" placeholder="默认模型" /></label>
-          <div class="agent-native-action-grid">
-            <button type="button" data-session-action="rename">重命名</button>
-            <button type="button" data-session-action="fork">创建分支</button>
-            <button type="button" data-session-action="summarize">压缩上下文</button>
-            <button id="agent-native-history-load" type="button">加载完整历史</button>
-            <button type="button" data-session-action="revert">撤销最近一轮</button>
-            <button type="button" data-session-action="unrevert">恢复撤销</button>
-            <button type="button" data-session-action="background">子 Agent 转后台</button>
-            <button type="button" class="is-danger" data-session-action="delete">删除会话</button>
+          <label class="agent-native-field" data-opencode-only><span>Agent</span><select id="agent-native-agent"><option value="plan">plan</option><option value="build">build</option></select></label>
+          <label class="agent-native-field" data-opencode-only><span>模型</span><input id="agent-native-model" type="text" maxlength="160" placeholder="默认模型" /></label>
+          <div class="agent-native-action-grid" data-opencode-only>
+            <button type="button" data-session-action="rename" data-opencode-only>重命名</button>
+            <button type="button" data-session-action="fork" data-opencode-only>创建分支</button>
+            <button type="button" data-session-action="summarize" data-opencode-only>压缩上下文</button>
+            <button id="agent-native-history-load" type="button" data-opencode-only>加载完整历史</button>
+            <button type="button" data-session-action="revert" data-opencode-only>撤销最近一轮</button>
+            <button type="button" data-session-action="unrevert" data-opencode-only>恢复撤销</button>
+            <button type="button" data-session-action="background" data-opencode-only>子 Agent 转后台</button>
+            <button type="button" class="is-danger" data-session-action="delete" data-opencode-only>删除会话</button>
           </div>
-          <div class="agent-native-session-grid">
+          <div class="agent-native-session-grid" data-opencode-only>
             <section><div class="agent-native-section-head"><strong>Todo</strong><span id="agent-native-todo-count">0</span></div><div id="agent-native-todo-list" class="agent-native-list"></div></section>
             <section><div class="agent-native-section-head"><strong>子 Agent</strong><span id="agent-native-child-count">0</span></div><div id="agent-native-child-list" class="agent-native-list"></div></section>
           </div>
-          <div class="agent-native-section-head"><strong>原生 Diff</strong><span id="agent-native-diff-summary"></span><button id="agent-native-diff-refresh" type="button" class="agent-mini-btn">刷新</button></div>
-          <div id="agent-native-diff-list" class="agent-native-list"><span class="agent-context-empty">选择会话后读取 OpenCode Diff。</span></div>
+          <div data-opencode-only>
+            <div class="agent-native-section-head"><strong>原生 Diff</strong><span id="agent-native-diff-summary"></span><button id="agent-native-diff-refresh" type="button" class="agent-mini-btn">刷新</button></div>
+            <div id="agent-native-diff-list" class="agent-native-list"><span class="agent-context-empty">选择会话后读取 OpenCode Diff。</span></div>
+          </div>
           <section class="agent-native-git-section">
             <div class="agent-native-section-head"><strong>Git 工作流</strong><span id="agent-native-git-status">读取中...</span></div>
             <div class="agent-native-git-toolbar">
