@@ -162,7 +162,9 @@ const copyFile = (source, relativeTarget) => {
   copied.push(relativeTarget);
 };
 copyFile(path.join(distDir, 'zcode.cjs'), 'zcode.cjs');
-for (const relative of ['zcode.cjs.map', 'THIRD-PARTY-NOTICES.md']) {
+// 调试 map 约 51MB：默认不收集（清单同步排除），需要排障时用 --include-map 显式带上
+const includeMap = hasFlag('--include-map');
+for (const relative of ['THIRD-PARTY-NOTICES.md', ...(includeMap ? ['zcode.cjs.map'] : [])]) {
   if (fs.existsSync(path.join(distDir, relative))) copyFile(path.join(distDir, relative), relative);
 }
 const builtinSource = path.join(distDir, 'provider', 'zcode-builtin.json')

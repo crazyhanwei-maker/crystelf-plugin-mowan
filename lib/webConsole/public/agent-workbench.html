@@ -24,8 +24,8 @@
         <div id="agent-active-strip" class="agent-active-strip hidden" aria-label="活跃任务"></div>
       </div>
       <div class="agent-topbar-actions">
-        <button id="agent-native-toggle" type="button" class="agent-quiet-btn" title="OpenCode 控制中心" aria-label="OpenCode 控制中心">OpenCode</button>
-        <button id="agent-close-opencode-btn" type="button" class="agent-quiet-btn agent-close-opencode-btn" title="关闭本插件启动的 OpenCode 后台服务">关闭 OpenCode</button>
+        <button id="agent-native-toggle" type="button" class="agent-quiet-btn" title="OpenCode 能力中心（终端 / Diff / 运行时）" aria-label="OpenCode 能力中心">能力中心</button>
+        <button id="agent-close-opencode-btn" type="button" class="agent-quiet-btn agent-close-opencode-btn" title="关闭本插件启动的 OpenCode 后台服务并取消 OpenCode 任务（ZCode 任务为一次性子进程，无需常驻服务）">关闭服务</button>
         <button id="agent-mobile-sessions" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="sessions" title="会话" aria-label="会话" aria-expanded="false">会话</button>
         <button id="agent-mobile-context" type="button" class="agent-quiet-btn agent-mobile-panel-btn" data-mobile-panel="context" title="任务上下文" aria-label="任务上下文" aria-expanded="false">上下文</button>
         <button id="agent-settings-toggle" type="button" class="agent-quiet-btn" title="Agent 设置" aria-label="Agent 设置" aria-haspopup="dialog" aria-controls="agent-settings-mask" aria-expanded="false">设置</button>
@@ -366,7 +366,7 @@
         <div>
           <span class="agent-eyebrow">AGENT PREFERENCES</span>
           <strong id="agent-settings-title">工作台设置</strong>
-          <span>管理运行权限、模型接口与 OpenCode 能力。</span>
+          <span>管理运行权限、模型接口与 Agent 能力。</span>
         </div>
         <button id="agent-settings-close" type="button" class="agent-icon-btn" title="关闭设置" aria-label="关闭设置">×</button>
       </header>
@@ -381,7 +381,7 @@
               <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-all-directories" type="checkbox" /><span><strong>允许访问全目录</strong><small>允许访问当前工作目录以外的文件和目录</small></span></label>
               <label class="agent-setting-check agent-privilege-check"><input id="agent-allow-terminal" type="checkbox" /><span><strong>允许受控终端</strong><small>仅实际修改模式可用，每条命令必须在审批卡中批准</small></span></label>
               <label class="agent-setting-check"><input id="agent-provider-opencode" type="checkbox" /><span><strong>允许 OpenCode</strong><small>启用内置 OpenCode Agent</small></span></label>
-              <label class="agent-setting-check"><input id="agent-provider-zcode" type="checkbox" /><span><strong>允许 ZCode</strong><small>启用内置 ZCode Agent（一次性子进程，默认关闭）</small></span></label>
+              <label class="agent-setting-check"><input id="agent-provider-zcode" type="checkbox" /><span><strong>允许 ZCode</strong><small>启用内置 ZCode Agent（一次性子进程，默认关闭）</small><small id="agent-zcode-status" class="hidden"></small></span></label>
               <label class="agent-setting-check"><input id="agent-output-images" type="checkbox" /><span><strong>允许回复中显示图片</strong><small>开启后直接加载模型回复里的图片链接：图片服务器能获取你的 IP 与访问时间，图片内容也不经过任何审核，请自行权衡风险后决定</small></span></label>
               <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugin" type="checkbox" /><span><strong>允许修改灵晶插件</strong></span></label>
               <label class="agent-setting-check agent-write-scope"><input id="agent-write-plugins" type="checkbox" /><span><strong>允许修改 Bot 插件目录</strong></span></label>
@@ -392,7 +392,9 @@
                 <label class="agent-compact-field"><span>任务超时</span><select id="agent-timeout-ms"><option value="300000">5 分钟</option><option value="900000">15 分钟</option><option value="1800000">30 分钟</option><option value="3600000">60 分钟</option><option value="7200000">120 分钟</option></select></label>
                 <label class="agent-compact-field"><span>运行时上限</span><select id="agent-max-runtimes"><option value="1">1 个 OpenCode</option><option value="2">2 个 OpenCode</option><option value="3">3 个 OpenCode</option><option value="4">4 个 OpenCode</option></select></label>
                 <label class="agent-compact-field"><span>空闲回收</span><select id="agent-runtime-idle"><option value="60000">1 分钟</option><option value="120000">2 分钟</option><option value="300000">5 分钟</option><option value="600000">10 分钟</option></select></label>
+                <label class="agent-compact-field"><span>ZCode 会话缓存</span><button id="agent-zcode-cleanup-btn" type="button" class="agent-quiet-btn" title="删除全部 ZCode 会话状态目录；旧任务将无法继续追问">清理会话状态</button></label>
               </div>
+              <small class="agent-settings-note">ZCode 状态目录用于多轮对话续接上下文；启动时会自动回收 7 天以上的孤儿目录，一般无需手动清理。手动清理后旧任务记录保留，但不能再续接追问。</small>
               <div class="agent-settings-subgroup">
                 <div class="agent-settings-group-head"><strong>上下文管理</strong><span>接近 OpenCode 上下文上限时，发送下一轮消息前自动压缩</span></div>
                 <label class="agent-setting-check"><input id="agent-auto-compact-enabled" type="checkbox" /><span><strong>自动压缩上下文</strong><small>压缩失败不会阻断当前任务</small></span></label>

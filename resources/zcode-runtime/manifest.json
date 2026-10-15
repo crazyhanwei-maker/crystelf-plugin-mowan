@@ -14,11 +14,6 @@
       "size": 31172651
     },
     {
-      "path": "runtime\\zcode.cjs.map",
-      "sha256": "db7c9a26e7bbab9b4e23f2ca053a2a417f9582c5a36a67a690085f5e3720d0b0",
-      "size": 52551769
-    },
-    {
       "path": "runtime\\THIRD-PARTY-NOTICES.md",
       "sha256": "874bf7c10bdcadd0df0b50fc782f39f077669c6e41bbdbccd868409cd714dec3",
       "size": 1978939

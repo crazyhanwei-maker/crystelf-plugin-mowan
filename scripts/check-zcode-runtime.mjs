@@ -390,6 +390,42 @@ async function main() {
     assert.ok(Date.now() - timeoutStart < 15000, '超时强杀应在数秒内完成');
   });
 
+  // ---- cleanupZcodeStateDirs：孤儿/全量清理 ----
+  await checkAsync('状态目录清理：orphans 模式保留被引用与未超龄目录，只删超龄孤儿', async () => {
+    const stateRoot = path.join(scratch, 'state-cleanup');
+    const tasksDir = path.join(stateRoot, 'tasks');
+    for (const name of ['zcode-kept', 'zcode-fresh', 'zcode-stale']) fs.mkdirSync(path.join(tasksDir, name), { recursive: true });
+    fs.writeFileSync(path.join(tasksDir, 'zcode-stale', 'sessions.sqlite'), 'x');
+    // zcode-stale 人为设为 8 天前；zcode-fresh 保持当前时间
+    const old = new Date(Date.now() - 8 * 86400000);
+    fs.utimesSync(path.join(tasksDir, 'zcode-stale'), old, old);
+    const cleaned = await zcode.cleanupZcodeStateDirs({
+      stateRoot,
+      keepTaskIds: ['zcode-kept'],
+      maxAgeDays: 7,
+    });
+    // 返回值来自 vm realm，经 JSON 往返后再比较
+    assert.deepEqual(plain(cleaned.removed), ['zcode-stale']);
+    assert.equal(plain(cleaned.failed).length, 0);
+    assert.ok(fs.existsSync(path.join(tasksDir, 'zcode-kept')), '被任务引用的目录保留');
+    assert.ok(fs.existsSync(path.join(tasksDir, 'zcode-fresh')), '未超龄的孤儿保留');
+    assert.equal(fs.existsSync(path.join(tasksDir, 'zcode-stale')), false);
+    // 非目录条目跳过不报错
+    fs.writeFileSync(path.join(tasksDir, 'a-file.txt'), 'x');
+    const again = await zcode.cleanupZcodeStateDirs({ stateRoot, keepTaskIds: [], maxAgeDays: 0 });
+    assert.deepEqual(plain(again.removed).sort(), ['zcode-fresh', 'zcode-kept']);
+    assert.equal(fs.existsSync(path.join(tasksDir, 'a-file.txt')), true, '文件条目不动');
+  });
+  await checkAsync('状态目录清理：all 模式无视引用与年龄全删，不存在的根返回空', async () => {
+    const stateRoot = path.join(scratch, 'state-cleanup-all');
+    const tasksDir = path.join(stateRoot, 'tasks');
+    fs.mkdirSync(path.join(tasksDir, 'zcode-any'), { recursive: true });
+    const cleaned = await zcode.cleanupZcodeStateDirs({ stateRoot, mode: 'all', keepTaskIds: ['zcode-any'] });
+    assert.deepEqual(plain(cleaned.removed), ['zcode-any']);
+    assert.equal(fs.existsSync(tasksDir), true, 'tasks 目录本身保留');
+    const empty = await zcode.cleanupZcodeStateDirs({ stateRoot: path.join(scratch, 'no-such-state') });
+    assert.deepEqual(plain(empty), { removed: [], failed: [] });
+  });
 
   console.log(JSON.stringify({ ok: true, results, scratch }, null, 2));
 }
