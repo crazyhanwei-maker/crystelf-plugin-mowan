@@ -309,6 +309,29 @@ async function main() {
     assert.equal(dumped.resume, null, '无 resumeSessionId 时不得注入 --resume');
   });
 
+  const capRun = await zcode.runZcodeTask({
+    ...baseOptions,
+    prompt: 'hello',
+    keepStateOnSuccess: true,
+    zcodeInstructions: '回复使用中文',
+    zcodeMcpServers: JSON.stringify({ mcpServers: { srv: { type: 'stdio', command: 'node', args: ['x.js'] } } }),
+  });
+  check('能力配置：AGENTS.md 写入运行时 HOME、.mcp.json 任务期创建且结束清理、result 回传 contextWindow', () => {
+    assert.equal(capRun.ok, true, capRun.error);
+    const agentsFile = path.join(PathStub.data, 'agent-cli-runtime', 'zcode-state', 'tasks', capRun.taskId, 'home', '.zcode', 'AGENTS.md');
+    assert.equal(fs.readFileSync(agentsFile, 'utf8').includes('回复使用中文'), true, 'AGENTS.md 应写入运行时 HOME');
+    assert.equal(fs.existsSync(path.join(workspace, '.mcp.json')), false, '.mcp.json 任务结束应清理');
+    assert.equal(capRun.contextWindow, 200000, 'result 应回传默认上下文窗口');
+  });
+  await checkAsync('能力配置：工作区已有 .mcp.json 时不覆盖也不删除', async () => {
+    const preExisting = path.join(workspace, '.mcp.json');
+    fs.writeFileSync(preExisting, JSON.stringify({ mcpServers: { keep: { type: 'stdio', command: 'node' } } }), 'utf8');
+    const run = await zcode.runZcodeTask({ ...baseOptions, prompt: 'hello', zcodeMcpServers: JSON.stringify({ mcpServers: { intruder: {} } }) });
+    assert.equal(run.ok, true, run.error);
+    assert.equal(JSON.parse(fs.readFileSync(preExisting, 'utf8')).mcpServers.keep !== undefined, true, '用户已有 .mcp.json 不得被覆盖');
+    assert.equal(fs.existsSync(preExisting), true, '非我们创建的 .mcp.json 不得删除');
+  });
+
   const keepRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'keep', keepStateOnSuccess: true });
   check('keepStateOnSuccess：成功任务保留状态目录供会话续接', () => {
     assert.equal(keepRun.ok, true, keepRun.error);
@@ -363,16 +386,49 @@ async function main() {
   });
   fs.rmSync(preExistingEnv, { force: true });
 
-  const hangTaskId = zcode.createBundledZcodeTaskId();
-  const hangPromise = zcode.runZcodeTask({ ...baseOptions, prompt: 'HANG', taskId: hangTaskId, timeoutMs: 60000 });
+  // 并发池三连测：默认并发 1 → 可配池放行与拒绝 → abort 中止。每个用例自备任务、结束即清池，互不依赖
+  const poolProbeId = zcode.createBundledZcodeTaskId();
+  const poolProbe = zcode.runZcodeTask({ ...baseOptions, prompt: 'HANG', taskId: poolProbeId });
   await new Promise(resolve => setTimeout(resolve, 800));
   await checkAsync('并发上限 1：第二个任务直接拒绝', async () => {
     await assert.rejects(zcode.runZcodeTask({ ...baseOptions, prompt: 'x' }), error => error.code === 'AGENT_ZCODE_TASK_BUSY');
   });
+  await zcode.abortZcodeTask(poolProbeId);
+  await poolProbe.catch(() => { });
+  // finishTask 清池在子进程 exit 回调里异步完成，轮询等它落地
+  for (let i = 0; i < 10 && zcode.listActiveZcodeTaskIds().length; i += 1) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+  }
+  assert.deepEqual(plain(zcode.listActiveZcodeTaskIds()), [], '探针中止后池应为空');
+
+  await checkAsync('并发池可配：maxConcurrent 2 时双任务并存，第三个拒绝', async () => {
+    const idA = zcode.createBundledZcodeTaskId();
+    const idB = zcode.createBundledZcodeTaskId();
+    const runA = zcode.runZcodeTask({ ...baseOptions, prompt: 'HANG', taskId: idA, maxConcurrent: 2 });
+    const runB = zcode.runZcodeTask({ ...baseOptions, prompt: 'HANG', taskId: idB, maxConcurrent: 2 });
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    assert.equal(zcode.listActiveZcodeTaskIds().filter(id => id === idA || id === idB).length, 2, '两个任务应同时存活');
+    await assert.rejects(
+      zcode.runZcodeTask({ ...baseOptions, prompt: 'x', maxConcurrent: 2 }),
+      error => error.code === 'AGENT_ZCODE_TASK_BUSY',
+    );
+    await zcode.abortZcodeTask(idA);
+    await runA.catch(() => { });
+    await zcode.abortZcodeTask(idB);
+    await runB.catch(() => { });
+    for (let i = 0; i < 10 && zcode.listActiveZcodeTaskIds().length; i += 1) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    assert.deepEqual(plain(zcode.listActiveZcodeTaskIds()), [], '用例收尾后池应为空');
+  });
+
   const abortStart = Date.now();
+  const abortTargetId = zcode.createBundledZcodeTaskId();
+  const abortTarget = zcode.runZcodeTask({ ...baseOptions, prompt: 'HANG', taskId: abortTargetId });
+  await new Promise(resolve => setTimeout(resolve, 800));
   const abortedTask = await (async () => {
-    const abortPromise = zcode.abortZcodeTask(hangTaskId);
-    return await hangPromise.then(result => ({ result, aborted: abortPromise }));
+    const abortPromise = zcode.abortZcodeTask(abortTargetId);
+    return await abortTarget.then(result => ({ result, aborted: abortPromise }));
   })();
   await checkAsync('abortZcodeTask：中止任务并返回 ok=false', async () => {
     assert.equal(await abortedTask.aborted, true);
