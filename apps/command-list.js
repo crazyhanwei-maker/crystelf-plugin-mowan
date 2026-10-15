@@ -25,6 +25,18 @@ function getCommandCategories() {
       ],
     },
     {
+      title: 'ZCode Agent',
+      subtitle: '主人聊天侧的完整 Agent（需控制台开启 ZCode 与写入授权）',
+      tone: 'blue',
+      commands: [
+        { cmd: '#zcode 任务描述', desc: '完整 Agent：可改文件/联网/执行命令（仅主人）' },
+        { cmd: '#zcode只读 任务描述', desc: '只读分析档：不改文件不联网（仅主人）' },
+        { cmd: '#zcode状态', desc: '查看当前 ZCode 任务进展（仅主人）' },
+        { cmd: '#zcode停止', desc: '中断当前 ZCode 任务（仅主人）' },
+        { cmd: '#zcode新会话', desc: '丢弃上下文，下一条从新会话开始（仅主人）' },
+      ],
+    },
+    {
       title: '群管理',
       subtitle: '群管开关、入群验证、欢迎与头衔',
       tone: 'green',
