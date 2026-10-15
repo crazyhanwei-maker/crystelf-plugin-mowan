@@ -19,7 +19,10 @@ import {
 import {
   createAgentChatBridge,
   getBridgeState,
+  getBridgeProvider,
   setBridgeEnabled,
+  setBridgeProvider,
+  getSharedBridgeConsole,
   listAvailableModels,
   setBridgePendingQuestion,
   getBridgePendingQuestion,
@@ -120,6 +123,7 @@ export class weixinIlink extends plugin {
         { reg: '^#微信机器人状态$', fnc: 'bridgeStatus', permission: 'master' },
         { reg: '^#微信机器人诊断$', fnc: 'diagnose', permission: 'master' },
         { reg: '^#agent开关$', fnc: 'toggleAgent', permission: 'master' },
+        { reg: '^#切换agent(?:\\s+(opencode|zcode))?$', fnc: 'switchAgentProvider', permission: 'master' },
         { reg: '^#agent停止$', fnc: 'stopAgent', permission: 'master' },
         { reg: '^#agent (.+)$', fnc: 'runAgentTask', permission: 'master' },
         // 模型提问转发到 QQ 后的作答/跳过入口
@@ -416,6 +420,7 @@ export class weixinIlink extends plugin {
       const state = getBridgeState();
       await this.sendTo(senderId, [
         '当前配置',
+        `Agent 后端：${getBridgeProvider() === 'zcode' ? 'ZCode（一次性子进程，无逐条审批）' : 'OpenCode（常驻服务，审批卡）'}`,
         `模型：${state.model || '默认（服务端决定）'}`,
         `思考等级：${state.variant || '默认'}`,
         `Agent 桥：${state.enabled ? '开启' : '关闭'}`,
@@ -651,6 +656,9 @@ export class weixinIlink extends plugin {
       '③ #agent停止 或 /停止 —— 中断当前任务',
       '',
       '④ /模型 · /思考等级 · /当前配置 —— 选择模型与思考深度',
+      '',
+      '④-2 #切换agent opencode / #切换agent zcode —— 切换 #agent 后端',
+      '   （不带参数 = 两后端互切；切换后上下文清零，下一条任务从全新会话开始）',
       '',
       '⑤ #灵晶状态 或 /状态 —— 查看插件运行状态',
       '',
@@ -1316,6 +1324,39 @@ export class weixinIlink extends plugin {
     setBridgeEnabled(next);
     await e.reply(`Agent 桥已${next ? '开启' : '关闭'}。`);
     return true;
+  }
+
+  // 切换 #agent 后端（OpenCode ↔ ZCode）：共享桥状态全局生效，会话锚点随切换清零（两后端会话互不兼容）
+  async switchAgentProvider(e) {
+    try {
+      const rest = String(e.msg || '').replace(/^#切换agent/i, '').trim().toLowerCase();
+      const current = getBridgeProvider();
+      const next = rest === 'opencode' ? 'opencode' : rest === 'zcode' ? 'zcode' : (current === 'zcode' ? 'opencode' : 'zcode');
+      const label = value => value === 'zcode' ? 'ZCode' : 'OpenCode';
+      if (next === current) {
+        await e.reply(`#agent 后端已经是 ${label(current)}，无需切换。用法：#切换agent opencode 或 #切换agent zcode。`);
+        return true;
+      }
+      // 可用性前置检查：切到不可用的后端会让下一条 #agent 任务直接失败，提前拦截
+      const probe = await getSharedBridgeConsole().probeProvider(next);
+      if (!probe?.available) {
+        await e.reply(`无法切换：${label(next)} 当前不可用（${probe?.error || '未知原因'}）。`);
+        return true;
+      }
+      setBridgeProvider(next);
+      const notes = next === 'zcode'
+        ? 'ZCode：一次性子进程（可改文件/联网/执行命令），无逐条审批，改动在控制台看 Git 差异。'
+        : 'OpenCode：常驻服务，终端命令逐项审批，支持上下文压缩与 Diff 面板。';
+      await e.reply([
+        `已切换 #agent 后端 → ${label(next)}（版本 ${probe.version || '未知'}）`,
+        notes,
+        '⚠ 两后端的会话互不兼容：所有通道的上下文已清零，下一条任务从全新会话开始。',
+      ].join('\n'));
+      return true;
+    } catch (error) {
+      await e.reply(`切换失败：${String(error.message || error).slice(0, 200)}`);
+      return true;
+    }
   }
 
   async stopAgent(e) {
