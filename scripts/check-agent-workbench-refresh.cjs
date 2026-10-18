@@ -145,6 +145,7 @@ function harness({ search = '?task=A', taskItems = null, synchronousFetchError =
     isWriteMode: mode => mode === 'build' || mode === 'full',
     getModeLabel: mode => mode, getVariantLabel: value => value,
     formatDuration: value => String(value || 0), formatTime: value => String(value || ''),
+    buildTaskMetaText: () => '',
     updateThinkingBar() {}, captureConversationDetails: () => ({}),
     restoreConversationDetails() {}, upgradeMermaidCodeBlocks() {},
     applyContentSearchHighlights() {}, scrollConversationToBottom() {},

@@ -1011,6 +1011,44 @@
   margin: 0;
 }
 
+/* 运行中工具进度：显示当前读取/搜索/写入/命令，证明 Agent 在执行而不是卡住 */
+.agent-live-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--agent-accent-soft);
+  color: var(--muted-text, #667);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.agent-live-progress.hidden {
+  display: none;
+}
+
+.agent-live-progress-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.agent-live-progress-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--agent-accent);
+  animation: agent-live-progress-pulse 1s ease-in-out infinite;
+}
+
+@keyframes agent-live-progress-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
 /* 思考链单行滚动条：展示推理尾部，证明 Agent 活着；点击展开全文 */
 .agent-reasoning-ticker {
   max-width: 100%;
