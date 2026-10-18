@@ -666,6 +666,9 @@ button.danger:hover {
   font-size: 13px;
   font-weight: 700;
   color: var(--text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .dependency-compact-main h3 small {
   font-size: 11px;

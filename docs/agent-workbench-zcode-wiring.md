@@ -1,6 +1,7 @@
 # Agent 工作台接入 ZCode 运行时——接线方案
 
-> 适用仓库：crystelf-plugin（快照版本 3.0.1，行号基于只读勘察，应用前请重新核对锚点）。
+> 适用仓库：crystelf-plugin（设计快照版本 3.0.1，行号基于只读勘察）。
+> **状态：已落地（3.0.2）**。正文为原始接线方案存档；落地偏差见文末「附：落地偏差与后续扩展」。
 > 前置阅读：`zcode-upstream-research.md`（§5 权限映射、§8 偏差清单）。
 > 本文件只描述"怎么接"，运行时模块本身见 `lib/webConsole/bundledZcodeRuntime.js`（接口契约与规格一致）。
 
@@ -9,7 +10,7 @@
 OpenCode 路径：`runTask` → `spawnAttachedOpenCodeServer`（常驻 HTTP）→ REST 调用 → 池化管理（`workspaceRuntimes`）。
 ZCode 路径：`runTask` → `runZcodeTask`（一次性 `-p --output-format stream-json` 子进程）→ 事件回调直通工作台 → 进程自动退出。
 
-ZCode 不进入 OpenCode 的运行时池（`AGENT_SHARED_RUNTIME_KEY` / `getAgentRuntimeProfile` 是 OpenCode 进程复用的池键，ZCode 每任务一个新进程，无需池化），并发上限 1 由运行时模块兜底（`AGENT_ZCODE_TASK_BUSY`），工作台侧再叠一层任务队列/拒绝提示。
+ZCode 不进入 OpenCode 的运行时池（`AGENT_SHARED_RUNTIME_KEY` / `getAgentRuntimeProfile` 是 OpenCode 进程复用的池键，ZCode 每任务一个新进程，无需池化），并发由运行时模块的 `activeZcodeTasks` 池兜底（上限 `zcodeMaxConcurrent` 1-3，默认 1，满员抛 `AGENT_ZCODE_TASK_BUSY`），工作台侧再叠一层任务队列/拒绝提示。
 
 ## 1. 引入运行时模块
 
@@ -152,7 +153,18 @@ if (task.providerId === 'zcode' && task.taskId) {
 
 ## 8. 验收清单（对照规格）
 
-1. `node --experimental-vm-modules scripts/check-zcode-runtime.mjs` 全绿（21 项，含中止/超时/并发/清理）。
-2. 真实冒烟：测试 key + 真实产物，plan 任务出事件流、build 任务真实改文件，全程审计可查。
-3. OpenCode 回归：`PROVIDER_DEFINITIONS` 增加条目与 runTask 早分支不影响 opencode 路径；跑 `npm run check:webconsole`。
-4. `npm run check:js` 通过。
+1. `npm run check:zcode`（等价 `node --experimental-vm-modules scripts/check-zcode-runtime.mjs`）全绿（28 项，含中止/超时/并发池/能力配置/续接/清理）。
+2. `npm run check:agent-refresh` 全绿（25 项，会话列表刷新竞态：并发合并、过期响应守卫、失效会话回退）。
+3. 真实冒烟：测试 key + 真实产物，plan 任务出事件流、build 任务真实改文件，全程审计可查。
+4. OpenCode 回归：`PROVIDER_DEFINITIONS` 增加条目与 runTask 早分支不影响 opencode 路径；跑 `npm run check:webconsole`。
+5. `npm run check:js` 通过。
+
+## 附：落地偏差与后续扩展（相对原始方案）
+
+- **权限档**：落地为 `plan`（只读）/ `build`（映射 edit，受控写入）/ `full`（映射 yolo，完全访问）三档，另在聊天侧暴露 `#zcode只读` 安全档；三个档统一追加禁用 `AskUserQuestion`（无头无 permission client）。
+- **会话续接**：`runZcodeTask` 支持 `resumeSessionId` → 注入 `--resume` 并复用父任务状态目录；首回合写下的 `zcodeTaskId`/`zcodeSessionId` 续接轮次不覆盖（修复 Session not found）。成功任务按 `keepStateOnSuccess` 保留会话库。
+- **Git 安全网**：写模式执行前对插件工作区做 plumbing 快照（临时 index，不碰工作树），支持按任务基线一键回滚；运行中禁止回滚。
+- **能力配置**：任务级 `zcodeInstructions`（写运行时 HOME/.zcode/AGENTS.md）、`zcodeMcpServers`（工作区 .mcp.json 不覆盖原则）、自定义工作区（≤5 个）、上下文 usage/contextWindow 回传与 80% 提醒。
+- **定时巡检**：`lib/agent/agentInspection.js` 模板巡检（node-schedule + 防重叠），Bot 群/私聊推送。
+- **用量**：`reportAgentTaskUsage` 按 provider 拆分场景（`agent_task:opencode` / `agent_task:zcode`）。
+- **聊天侧锚点**：`#zcode` 会话锚点（内存态）带预检与删除兜底——锚定任务被删除/不可续接时自动开新会话，不再报 404/409 卡死。

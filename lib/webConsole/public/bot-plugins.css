@@ -205,6 +205,12 @@
   gap: 12px;
 }
 
+@media (max-width: 640px) {
+  .plugin-catalog-install-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .plugin-catalog-field {
   display: grid;
   gap: 8px;
@@ -697,5 +703,14 @@
 
   .plugin-catalog-floating-name {
     max-width: none;
+  }
+
+  /* styles.css 560px 规则会把 button 拉成 100% 宽，浮动条内必须恢复内容宽度避免溢出。
+     选择器需带上 .plugin-catalog-floating-bar 以提高优先级，覆盖 button:not(...) */
+  .plugin-catalog-floating-bar button.plugin-catalog-floating-install,
+  .plugin-catalog-floating-bar button.plugin-catalog-floating-close {
+    width: auto;
+    min-width: 0;
+    flex: none;
   }
 }

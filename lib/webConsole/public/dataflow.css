@@ -29,6 +29,10 @@
   font-size: 13px;
 }
 .dataflow-meta { font-size: 11.5px; color: var(--muted-text); white-space: nowrap; }
+/* 长日志源名称/文件路径在窄屏可换行，避免撑破页面 */
+@media (max-width: 760px) {
+  .dataflow-meta { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+}
 
 .dataflow-stream {
   height: 62vh;

@@ -4,3 +4,12 @@
 /.idea/
 *.log
 /.zcode/
+# 本地私有文件，防止误提交
+/.env
+/.zcodeignore
+/cat.png
+/neko.jpg
+/neko2.jpg
+/neko-girl.png
+# 帮助 DIY 上传目录：已跟踪的默认素材保持入库，运行时新增上传不再进入 git 状态
+/lib/webConsole/public/uploads/help-diy/*

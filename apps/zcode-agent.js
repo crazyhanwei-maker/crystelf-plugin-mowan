@@ -206,24 +206,50 @@ function limitReplyText(text) {
 async function runChatTask(e, taskText, mode = 'full') {
   const consoleApi = getConsole();
   const senderKey = senderKeyOf(e);
-  const sessionId = sessionBySender.get(senderKey) || '';
-  const task = await consoleApi.createTask({
+  let sessionId = sessionBySender.get(senderKey) || '';
+  let anchorDropped = false;
+  if (sessionId) {
+    // 锚点预检：任务被控制台删除、未产生 ZCode 会话标识或仍在运行时都不能续接，
+    // 直接丢弃锚点按新会话提交，避免整轮 #zcode 报 404/409 后卡死
+    const anchorTask = findTask(consoleApi, sessionId);
+    const resumable = anchorTask
+      && anchorTask.zcodeSessionId
+      && !['pending', 'running', 'queued'].includes(anchorTask.status);
+    if (!resumable) {
+      sessionBySender.delete(senderKey);
+      sessionId = '';
+      anchorDropped = true;
+    }
+  }
+  const buildPayload = sid => ({
     providerId: 'zcode',
     mode,
     // 完全访问档：主人指令即授权（与微信桥 #agent 同一信任模型），允许联网
     ...(mode === 'full' ? { writeConfirmed: true, allowNetwork: true } : { allowNetwork: false }),
     workspaceId: 'plugin',
-    ...(sessionId ? { sessionId } : {}),
+    ...(sid ? { sessionId: sid } : {}),
     prompt: taskText,
     title: `${CHAT_TITLE_PREFIX}${senderKey} ${taskText.slice(0, 24)}`.slice(0, 80),
   });
+  let task;
+  try {
+    task = await consoleApi.createTask(buildPayload(sessionId));
+  } catch (error) {
+    // 预检之后任务仍可能被并行删除（控制台操作）：兜底清锚点，按新会话重试一次
+    const notFound = /AGENT_TASK_NOT_FOUND|未找到需要继续/.test(`${error.code || ''} ${error.message || ''}`);
+    if (!sessionId || !notFound) throw error;
+    sessionBySender.delete(senderKey);
+    anchorDropped = true;
+    task = await consoleApi.createTask(buildPayload(''));
+  }
   activeBySender.set(senderKey, { taskId: task.id });
   // 锚点切到本任务：下一轮 #zcode 自动接着这个会话（--resume 续接上下文）
   sessionBySender.set(senderKey, task.id);
   const modeNote = mode === 'full'
     ? '完全访问档（可改文件/联网/执行命令，无逐条审批，改动可在控制台看 Git 差异）'
     : '只读档（不改文件、不联网）';
-  await e.reply(`已提交 ZCode 任务（${task.id}，${modeNote}），完成后回到这里；期间 #zcode状态 查看进展，#zcode停止 可中断。`, true);
+  const anchorNote = anchorDropped ? '（原会话锚点已失效，本轮起按新会话开始）' : '';
+  await e.reply(`已提交 ZCode 任务（${task.id}，${modeNote}${anchorNote}），完成后回到这里；期间 #zcode状态 查看进展，#zcode停止 可中断。`, true);
   const startedAt = Date.now();
   let finalTask = null;
   while (Date.now() - startedAt < TRACK_TIMEOUT_MS) {

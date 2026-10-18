@@ -15,6 +15,19 @@
   align-items: start;
 }
 
+/* 手机宽度：左右工作区改为单列，左栏取消吸顶与内部滚动 */
+@media (max-width: 760px) {
+  .sandbox-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sandbox-left-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
 .sandbox-left-panel {
   position: sticky;
   top: 18px;

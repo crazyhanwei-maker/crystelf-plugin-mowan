@@ -1308,6 +1308,28 @@ button.help-diy-generate-btn:disabled {
   line-height: 1.5;
 }
 
+/* 系统设置「保存导航设置」行：保存按钮与状态同行，小屏允许换行且按钮恢复内容宽度 */
+.plugin-settings-nav-save-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.plugin-settings-nav-save-row .setting-status {
+  margin-top: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  /* 全局 button:not(...) 规则的优先级是 0,2,1，这里用 ID 选择器确保覆盖成内容宽度 */
+  .plugin-settings-nav-save-row #plugin-settings-nav-save {
+    width: auto;
+    flex: 0 0 auto;
+  }
+}
+
 .setting-error {
   margin-top: 8px;
   color: #fecaca;

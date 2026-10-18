@@ -679,34 +679,24 @@ async function main() {
   ]));
   const dashboardIndexHtml = await readText('lib/webConsole/public/index.html');
   const dashboardHealthJs = await readText('lib/webConsole/public/dashboard-health.js');
+  const dashboardOpsJs = await readText('lib/webConsole/public/dashboard-ops.js');
   const dashboardTasksJs = await readText('lib/webConsole/public/dashboard-tasks.js');
   const dashboardSecurityJs = await readText('lib/webConsole/public/dashboard-security.js');
   const dashboardAppJs = await readText('lib/webConsole/public/app.js');
   const dashboardCss = await readText('lib/webConsole/public/dashboard.css');
-  addCheck('dashboard console health overview UI', includesAll(overviewConsole, [
-    'webConsoleSecurity',
-    'startupSelfCheck',
-    'staticAssets',
-    'htmlResourceVersioning',
+  // 总览页健康总览模块已移除（异常走通知，明细在各独立页/运维速览行）；断言当前设计：
+  // 审计明细走 dashboard-ops.js 的运维速览行，健康渲染函数与数据接线保留
+  addCheck('dashboard console health overview UI', includesAll(dashboardOpsJs, [
+    '#opsrow-audit',
+    'renderAudit',
+    'auditLogs',
   ]) && includesAll(dashboardIndexHtml, [
-    'console-health-overview',
-    '控制台健康总览',
-    '需要优先处理的问题',
-    '查看审计日志',
-  ]) && includesAll(dashboardHealthJs, [
-    'renderConsoleHealthOverview',
-    'buildStartupSelfCheckHealthCard',
-    'buildStaticCacheHealthCard',
-    'buildSecurityHealthCard',
-    'buildAuditHealthCard',
+    'opsrow-audit',
+    '审计日志',
   ]) && includesAll(dashboardAppJs, [
-    '/api/logs/audit?pageSize=1',
+    '/api/logs/audit?pageSize=5',
     'renderConsoleHealthOverview(overview, health, null, auditLogs, performance)',
     'renderConsoleHealthOverview(overview, health, result, auditLogs, performance)',
-  ]) && includesAll(dashboardCss, [
-    'console-health-overview-grid',
-    'console-health-card',
-    'tone-warning',
   ]));
   addCheck('dashboard operation task center UI', includesAll(webConsoleRoutes, [
     '/api/tasks',
@@ -855,7 +845,7 @@ async function main() {
   addCheck('image api mode conditional fields', includesAll(apiSettingsHtml, [
     'data-image-mode-scope="primary"',
     'data-image-mode-scope="fallback"',
-    'data-image-modes="openai ark-agent-plan chat"',
+    'data-image-modes="openai ark-agent-plan sensenova chat"',
     'data-image-modes="ark-agent-plan"',
     'data-image-modes="jimeng"',
     'data-image-modes="sd-webui"',
@@ -1211,6 +1201,7 @@ async function main() {
     'console-global-search',
     'task-oriented',
   ]));
+  // 群总结诊断页已从侧边栏与全局搜索隐藏（页面保留、可直达 URL），入口断言相应移除
   addCheck('group summary diagnostics page', includesAll(webConsoleSurface, [
     'createGroupSummaryDiagnosticsConsole',
     'groupSummaryDiagnosticsConsole',
@@ -1221,13 +1212,6 @@ async function main() {
     'readDailyGroupSummaryResults',
     'listDailyGroupSummaryLocks',
     'buildRecommendations',
-  ]) && includesAll(consoleShellJs, [
-    '/group-summary-diagnostics.html',
-    '群总结诊断',
-  ]) && includesAll(globalSearchConsole, [
-    'page:group-summary-diagnostics',
-    '/group-summary-diagnostics.html',
-    '重复发送',
   ]) && includesAll(groupSummaryDiagnosticsHtml, [
     '群总结诊断',
     'group-summary-diagnostics.js',

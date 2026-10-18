@@ -13,7 +13,8 @@ const shouldRunMobile = !cliArgs.has('--desktop-only');
 
 const pages = [
   { path: '/index.html', label: '总览', text: '魔丸控制台' },
-  { path: '/plugin-settings.html', label: '插件设置', text: '插件设置中心' },
+  { path: '/plugin-settings.html', label: '插件设置', text: '灵晶设置' },
+  { path: '/system-settings.html', label: '系统设置', text: '系统设置' },
   { path: '/api-settings.html', label: 'API 接口', text: 'API' },
   { path: '/config-diagnostics.html', label: '配置诊断', text: '配置来源诊断' },
   { path: '/frontend-diagnostics.html', label: '前端诊断', text: '前端错误诊断' },
@@ -26,6 +27,8 @@ const pages = [
   { path: '/file-browser.html', label: '文件编辑', text: '文件管理' },
   { path: '/bot-plugins.html', label: '插件管理', text: '机器人插件管理' },
   { path: '/dependency-check.html', label: '依赖健康', text: '依赖健康面板' },
+  { path: '/sandbox-chat.html', label: '对话测试', text: '网页对话测试' },
+  { path: '/dataflow.html', label: '适配器数据流', text: '适配器数据流' },
 ];
 
 const mobileViewports = [
@@ -160,7 +163,8 @@ async function ensureLoggedIn(page, baseUrl, token) {
   const loginUrl = new URL('/login.html', baseUrl).href;
   await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
   await page.waitForSelector('body', { timeout: pageTimeoutMs });
-  const loginText = await page.evaluate(() => document.body?.innerText || '');
+  // 登录页品牌在桌面宽度由 CSS 隐藏，innerText 取不到；用 textContent 判断 DOM 文案
+  const loginText = await page.evaluate(() => document.body?.textContent || '');
   if (!loginText.includes('魔丸控制台') || !loginText.includes('登录口令')) {
     fail('/login.html 未找到登录页关键文案');
   }
@@ -283,6 +287,71 @@ async function readFrontendErrors(page) {
     recentCount: 1,
     recentItems: [{ kind: 'e2e', message: error.message || String(error) }],
   }));
+}
+
+// 本轮移动端修复的针对性断言：仅在窄屏（<=760px）生效，避免横屏误报。
+// 元素不存在时跳过（面板/浮动条按页面状态懒渲染）。
+async function readMobileFixProbes(page) {
+  return await page.evaluate(() => {
+    if (window.innerWidth > 760) return [];
+    const checks = [];
+    const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+    const path = location.pathname;
+
+    if (path.endsWith('/bot-plugins.html')) {
+      const grid = document.querySelector('.plugin-catalog-install-grid');
+      if (grid) {
+        const columns = getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).filter(Boolean);
+        push('插件安装表单小屏单列', columns.length === 1, `columns=${columns.join(' ')}`);
+      }
+      const bar = document.querySelector('.plugin-catalog-floating-bar');
+      const install = document.querySelector('.plugin-catalog-floating-install');
+      const close = document.querySelector('.plugin-catalog-floating-close');
+      if (bar && getComputedStyle(bar).display !== 'none') {
+        const barWidth = bar.getBoundingClientRect().width;
+        for (const [label, button] of [['浮动安装按钮', install], ['浮动关闭按钮', close]]) {
+          if (!button) continue;
+          const width = button.getBoundingClientRect().width;
+          push(`${label}未被拉伸`, width < barWidth * 0.5, `button=${Math.round(width)} bar=${Math.round(barWidth)}`);
+        }
+      }
+    }
+
+    if (path.endsWith('/system-settings.html')) {
+      const row = document.querySelector('.plugin-settings-nav-save-row');
+      const button = document.querySelector('#plugin-settings-nav-save');
+      if (row && button) {
+        const rowWidth = row.getBoundingClientRect().width;
+        const buttonWidth = button.getBoundingClientRect().width;
+        push('保存导航设置行可换行', getComputedStyle(row).flexWrap === 'wrap', `flexWrap=${getComputedStyle(row).flexWrap}`);
+        push('保存按钮不被拉满整行', buttonWidth < rowWidth - 8, `button=${Math.round(buttonWidth)} row=${Math.round(rowWidth)}`);
+      }
+    }
+
+    if (path.endsWith('/dependency-check.html')) {
+      const title = document.querySelector('.dependency-compact-main h3');
+      if (title) {
+        push('依赖包名可断行', getComputedStyle(title).overflowWrap === 'anywhere', `overflowWrap=${getComputedStyle(title).overflowWrap}`);
+      }
+    }
+
+    if (path.endsWith('/sandbox-chat.html')) {
+      const workbench = document.querySelector('.sandbox-workbench');
+      if (workbench) {
+        const columns = getComputedStyle(workbench).gridTemplateColumns.trim().split(/\s+/).filter(Boolean);
+        push('对话测试工作区小屏单列', columns.length === 1, `columns=${columns.join(' ')}`);
+      }
+    }
+
+    if (path.endsWith('/dataflow.html')) {
+      const meta = document.querySelector('.dataflow-meta');
+      if (meta) {
+        push('数据流元信息可换行', getComputedStyle(meta).whiteSpace === 'normal', `whiteSpace=${getComputedStyle(meta).whiteSpace}`);
+      }
+    }
+
+    return checks;
+  });
 }
 
 async function readMobileLayoutDiagnostics(page) {
@@ -942,6 +1011,8 @@ async function inspectPage(page, baseUrl, item, runtimeErrors, options = {}) {
         if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) === 0) {
           return false;
         }
+        // 通知面板未展开时保留“加载中...”占位，属于懒加载常态，不算页面卡住
+        if (element.closest('.console-notifications-panel')) return false;
         const value = String(element.innerText || element.textContent || '').trim();
         return value === '加载中...' || value === '正在加载...';
       })
@@ -956,7 +1027,11 @@ async function inspectPage(page, baseUrl, item, runtimeErrors, options = {}) {
     return {
       bodyText: text,
       hasExpectedText: text.includes(expectedTextValue),
-      hasSettingError: Boolean(document.querySelector('.setting-error')),
+      hasSettingError: Array.from(document.querySelectorAll('.setting-error')).some(element => {
+        const style = window.getComputedStyle(element);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) === 0) return false;
+        return Boolean(String(element.innerText || element.textContent || '').trim());
+      }),
       loadingTexts,
       frontendErrors: {
         recentCount: Number(frontendErrors.recentCount || 0),
@@ -989,6 +1064,11 @@ async function inspectPage(page, baseUrl, item, runtimeErrors, options = {}) {
     result.layout = await readMobileLayoutDiagnostics(page);
     if (!result.layout.hasViewportMeta) {
       result.errors.push('缺少移动端 viewport 元标签');
+    }
+    const fixProbes = await readMobileFixProbes(page);
+    result.mobileFixProbes = fixProbes;
+    for (const probe of fixProbes) {
+      if (!probe.ok) result.errors.push(`移动端样式回退：${probe.label}（${probe.detail}）`);
     }
     if (result.layout.overflowX > 12) {
       const offenders = result.layout.wideElements
@@ -1116,9 +1196,15 @@ async function main() {
       process.exitCode = 1;
     }
   } finally {
-    await closeSharedPuppeteerBrowser().catch(() => {});
-    await cleanupIsolatedWebConsole(isolated);
+    // Windows 上偶发 Chromium close 不返回，限制等待时间后继续清理，避免 CI/手动执行永久挂起
+    await Promise.race([
+      closeSharedPuppeteerBrowser().catch(() => {}),
+      new Promise(resolve => setTimeout(resolve, 8000)),
+    ]);
+    await cleanupIsolatedWebConsole(isolated).catch(() => {});
   }
+  // 浏览器句柄可能残留导致事件循环不退出；报告已输出，显式结束进程
+  process.exit(process.exitCode || 0);
 }
 
 main().catch(error => {

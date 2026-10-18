@@ -20,7 +20,7 @@ import { evaluateSpamMessageWindow } from '../lib/groupManagement/contentModerat
 import { buildChatCompletionMessages, resolveChatModel, runChat } from '../lib/ai/chatEngine.js';
 import { getBuiltinTools } from '../lib/ai/toolRegistry.js';
 import AiCaller from '../lib/ai/aiCaller.js';
-import { MemoryRetrieval } from '../lib/humanize/memoryRetrieval.js';
+import { MemoryDistiller } from '../lib/humanize/memoryDistiller.js';
 import {
   buildSdWebUiApiUrl,
   buildSdWebUiRequest,
@@ -219,7 +219,7 @@ function checkAgentWorkbenchSafety() {
   assert(config.writeEnabled === false, 'Agent 实际修改默认值不是关闭');
   assert(config.allowNetwork === false && config.allowAllDirectories === false && config.allowTerminal === false, 'Agent 高权限默认值不是关闭');
   assert(config.maxConcurrentTasks === 1, 'Agent 工作台默认并发不是 1');
-  assert(config.maxOpenCodeRuntimes === 2 && config.runtimeIdleTimeoutMs === 120000, 'Agent OpenCode 运行时回收默认配置错误');
+  assert(config.maxOpenCodeRuntimes === 2 && config.runtimeIdleTimeoutMs === 300000, 'Agent OpenCode 运行时回收默认配置错误');
   assert(config.autoCompactEnabled === true && config.autoCompactThreshold === 80, 'Agent 自动上下文压缩默认配置错误');
   assert(config.compactModel === '' && config.compactProviderId === '', 'Agent 压缩模型默认应回退当前或默认模型');
   assert(config.writableWorkspaces.plugin === true && config.writableWorkspaces.plugins === false && config.writableWorkspaces.yunzai === false, 'Agent 写入目录默认授权范围错误');
@@ -374,15 +374,19 @@ function checkAgentWorkbenchSafety() {
     writeMode: true,
     runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'write-runtime'),
   });
-  assert(writableRuntime.config.permission.edit === 'allow' && writableRuntime.config.permission.write === 'allow', '实际修改 Agent 没有开放文件编辑权限');
-  assert(writableRuntime.config.permission.bash === 'deny' && writableRuntime.config.permission.external_directory === 'deny', '实际修改 Agent 没有禁用终端或外部目录');
+  // 权限模型已重构：顶层 permission 恒为 deny 基线，实际权限在 agent 档位上定义
+  assert(writableRuntime.config.permission.edit === 'deny' && writableRuntime.config.permission.write === 'deny', '顶层权限基线应为 deny，防止逃逸调用拿到过大权限');
+  const writeTier = writableRuntime.config.agent['crystelf-write'];
+  assert(writeTier?.permission?.edit === 'allow', '实际修改 Agent 没有在 crystelf-write 档开放文件编辑权限');
+  assert(writeTier?.permission?.bash === 'deny', '实际修改 Agent 未授权终端时应在 crystelf-write 档禁用 bash');
   const fullRuntime = buildBundledOpenCodeEnvironment({
     aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
     writeMode: true,
     fullAccess: true,
     runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'full-runtime'),
   });
-  assert(Object.values(fullRuntime.config.permission).every(value => value === 'allow'), '完全访问 Agent 没有开放全部声明的工具权限');
+  const fullTier = fullRuntime.config.agent['crystelf-full'];
+  assert(fullTier?.permission?.bash === 'allow' && fullTier?.permission?.edit === 'allow', '完全访问 Agent 没有在 crystelf-full 档开放编辑与终端权限');
   const privilegedRuntime = buildBundledOpenCodeEnvironment({
     aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
     writeMode: true,
@@ -390,17 +394,17 @@ function checkAgentWorkbenchSafety() {
     allowAllDirectories: true,
     runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'privileged-runtime'),
   });
-  assert(privilegedRuntime.config.permission.webfetch === 'allow' && privilegedRuntime.config.permission.websearch === 'allow', 'Agent 联网权限没有开放网页工具');
-  assert(privilegedRuntime.config.permission.external_directory === 'allow', 'Agent 全目录权限没有开放外部目录');
-  assert(privilegedRuntime.config.permission.bash === 'deny', 'Agent 高权限配置意外开放了终端命令');
+  assert(privilegedRuntime.config.agent['crystelf-write']?.permission?.webfetch === 'allow', 'Agent 联网权限没有在写入档开放网页工具');
+  assert(privilegedRuntime.config.agent['crystelf-write']?.permission?.external_directory === 'allow', 'Agent 全目录权限没有在写入档开放外部目录');
+  assert(privilegedRuntime.config.agent['crystelf-write']?.permission?.bash === 'deny', 'Agent 高权限配置意外开放了终端命令');
   const terminalRuntime = buildBundledOpenCodeEnvironment({
     aiConfig: { baseApi: 'https://chat.example.com/v1', apiKey: 'test-key', modelType: 'gpt-5.4-mini' },
     writeMode: true,
     allowTerminal: true,
     runtimeRoot: path.join(root, 'temp', 'agent-workbench-smoke', 'terminal-runtime'),
   });
-  assert(terminalRuntime.config.permission.bash === 'ask', '受控终端没有设置为逐项审批');
-  assert(terminalRuntime.config.permission.edit === 'allow', '受控终端不应关闭文件编辑权限');
+  assert(terminalRuntime.config.agent['crystelf-write']?.permission?.bash === 'ask', '受控终端没有设置为逐项审批');
+  assert(terminalRuntime.config.agent['crystelf-write']?.permission?.edit === 'allow', '受控终端不应关闭文件编辑权限');
   const configuredSummaryModel = buildAgentDefaultModelSelection({
     aiConfig: { modelType: 'gpt-5.4-mini' },
   });
@@ -425,13 +429,13 @@ async function checkAgentWorkbenchSlashCommands() {
   const runTaskStart = script.indexOf('async function runTask');
   const slashDispatch = script.indexOf('const slashCommand = parseSlashCommand(prompt);', runTaskStart);
   const normalTaskRequest = script.indexOf("postJson('/api/agent-workbench/tasks'", runTaskStart);
-  assert(html.includes('id="agent-slash-menu"') && html.includes('id="agent-slash-btn"'), 'Agent 输入区没有斜杠命令入口');
+  assert(html.includes('id="agent-slash-menu"') && html.includes('data-plus-action="slash"'), 'Agent 输入区没有斜杠命令入口');
   assert(css.includes('.agent-slash-menu') && css.includes('.agent-slash-item.is-active'), 'Agent 斜杠命令菜单缺少桌面或键盘选中样式');
   assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');
-  assert(consoleSource.includes('const body = modelSelection') && consoleSource.includes('{ auto: true }'), 'Agent 上下文压缩没有在未选择模型时使用默认模型');
+  assert(consoleSource.includes('body: modelSelection') && consoleSource.includes(': { auto: true }'), 'Agent 上下文压缩没有在未选择模型时使用默认模型');
   assert(script.includes("name: 'undo'") && script.includes("name: 'redo'") && script.includes("name: 'fork'"), 'Agent 会话管理斜杠命令不完整');
   assert(script.includes("name: 'archive'") && script.includes("name: 'delete'") && script.includes("name: 'export'") && script.includes("name: 'terminal'"), 'Agent 工作台功能没有完整接入斜杠命令');
-  assert(html.includes('id="agent-delete-btn"') && script.includes('data-task-delete=') && script.includes('async function deleteAgentTask'), 'Agent 会话删除入口或处理逻辑缺失');
+  assert(html.includes('id="agent-delete-btn"') && script.includes('async function deleteAgentTask') && html.includes('id="agent-actions-toggle"'), 'Agent 会话删除入口或处理逻辑缺失');
   assert(html.includes('id="agent-settings-mask"') && html.includes('class="agent-settings-dialog"') && script.includes('function setSettingsModalOpen'), 'Agent 工作台设置没有使用独立弹窗');
   assert(css.includes('.agent-settings-mask') && css.includes('.agent-settings-grid') && css.includes('.agent-settings-footer'), 'Agent 工作台设置弹窗缺少响应式布局');
   assert(script.includes("command.kind === 'native'") && script.includes('runNativeCommand(command.nativeCommand'), 'OpenCode 自定义 Command 没有接入输入框');
@@ -449,7 +453,8 @@ async function checkAgentWorkbenchSlashCommands() {
   ], previousAssistantIds), 'Agent 多轮等待没有识别本轮已完成的助手回复');
   assert(consoleSource.includes('completionCheck: async () =>') && consoleSource.includes('hasCompletedOpenCodeAssistantTurn(messages, previousOpenCodeMessageIds)'), 'Agent 异步等待没有校验本轮新助手消息');
   assert(consoleSource.includes('/api/session/${encodeURIComponent(task.opencodeSessionId)}/prompt') && consoleSource.includes('delivery: normalizeAgentDelivery') && consoleSource.includes('scheduleTaskFollowUpFlush'), 'Agent 运行中跟进没有接入 OpenCode 原生队列与 Steering');
-  assert(html.includes('id="agent-followup-control"') && html.includes('data-agent-followup="queue"') && html.includes('data-agent-followup="steer"') && script.includes('followUpDelivery'), 'Agent 工作台缺少排队跟进与立即调整入口');
+  // 跟进投递 UI 已简化：默认 steer 立即调整，不再有 queue/steer 切换控件；投递标签仍区分展示
+  assert(script.includes('followUpDelivery') && script.includes("delivery: 'steer'") && script.includes('agent-followup-label'), 'Agent 工作台缺少运行中跟进投递与状态标签');
   assert(consoleSource.includes('async function getSessionHistory') && routesSource.includes('/history$/'), 'OpenCode 原生会话历史接口缺失');
   assert(html.includes('id="agent-history-load-btn"') && html.includes('id="agent-native-history-load"') && script.includes('nativeHistoryByTask'), 'OpenCode 完整历史缺少桌面或移动端入口');
   assert(routesSource.includes('delete-message') && script.includes("data-native-message-action=\"delete-message\""), 'OpenCode 原生消息删除没有接入');
@@ -705,81 +710,65 @@ async function checkWebAgentDownloadToolSafety() {
   logPass('群聊网页 Agent 下载默认关闭且具备安全边界');
 }
 
-async function checkMemoryRetrievalUserMessageCompatibility() {
-  const requests = [];
-  let completionIndex = 0;
-  const ai = {
-    complete: async options => {
-      requests.push({
-        ...options,
-        messages: structuredClone(options.messages),
-      });
-      completionIndex += 1;
-      if (completionIndex === 1) {
-        return {
-          content: '',
-          toolCalls: [{
-            id: 'call-search',
-            name: 'search_chat_history',
-            arguments: JSON.stringify({ keyword: '测试记录' }),
-          }],
-          raw: {
-            role: 'assistant',
-            content: '',
-            tool_calls: [{
-              id: 'call-search',
-              type: 'function',
-              function: {
-                name: 'search_chat_history',
-                arguments: JSON.stringify({ keyword: '测试记录' }),
-              },
-            }],
-          },
-        };
-      }
-      return {
-        content: '',
-        toolCalls: [{
-          id: 'call-finish',
-          name: 'found_answer',
-          arguments: JSON.stringify({ answer: '找到测试记录', found: true }),
-        }],
-        raw: {
-          role: 'assistant',
-          content: '',
-          tool_calls: [{
-            id: 'call-finish',
-            type: 'function',
-            function: {
-              name: 'found_answer',
-              arguments: JSON.stringify({ answer: '找到测试记录', found: true }),
-            },
-          }],
-        },
-      };
+async function checkMemoryDistillerBatching() {
+  const makeMessages = count => Array.from({ length: count }, (_, index) => ({
+    id: index + 1,
+    timestamp: Date.now() - (count - index) * 60000,
+    userName: `用户${index % 5}`,
+    content: `第${index + 1}条测试消息，约定明天一起测试`,
+  }));
+  let messages = makeMessages(100);
+  const db = {
+    getMessages: (sessionId, limit) => messages.slice(-limit),
+    getMemoryCursor: () => 0,
+    saveMemories: (sessionId, entries, cursor) => {
+      savedEntries.push(...entries);
+      savedCursor = cursor;
     },
   };
-  const db = {
-    searchMessages: () => [{
-      timestamp: Date.now(),
-      userName: '测试用户',
-      content: '这是需要找到的测试记录',
-    }],
-    getMessagesByUser: () => [],
+  const savedEntries = [];
+  let savedCursor = 0;
+  let generateCalls = 0;
+  const ai = {
+    // 与 apps/ai.js 的 humanizeAiAdapter 一致：generateText 返回纯文本
+    generateText: async () => {
+      generateCalls += 1;
+      return '{"memories":["用户约定明天一起测试","群内正在做功能验收"]}';
+    },
   };
-  const retrieval = new MemoryRetrieval(ai, {
+  const distiller = new MemoryDistiller(ai, {
+    memory: { enabled: true, extractBatchSize: 40 },
+    chatHistory: 30,
     modelType: 'test-model',
-    memory: { enabled: true, maxIterations: 3, timeoutMs: 5000 },
   }, db);
 
-  const answer = await retrieval.reactSearch('group:10001', '之前的测试记录是什么？');
-  assert(answer === '找到测试记录', '记忆检索工具循环没有返回预期结果');
-  assert(requests.length === 2, '记忆检索工具循环请求次数错误');
-  assert(requests[0].messages.some(message => message.role === 'user' && String(message.content || '').includes('之前的测试记录')), '记忆检索首轮缺少有效 user 消息');
-  assert(requests[1].messages.some(message => message.role === 'assistant' && Array.isArray(message.tool_calls)), '记忆检索续轮缺少 assistant 工具调用消息');
-  assert(requests[1].messages.some(message => message.role === 'tool' && message.tool_call_id === 'call-search'), '记忆检索续轮缺少工具结果消息');
-  assert(!requests[1].messages.some(message => message.role === 'assistant' && !String(message.content || '').trim() && !message.tool_calls?.length), '记忆检索续轮包含无效空 assistant 消息');
-  logPass('记忆检索 user 消息兼容保护正常');
+  // 消息不足（distillable < batchSize/2）时不触发 LLM
+  messages = makeMessages(45);
+  distiller.onMessage('group:20001');
+  assert(generateCalls === 0, `消息不足不应触发提炼请求，actual=${generateCalls}`);
+
+  // 达到阈值：一次异步提炼，进行中（未 await 完成前）同会话不重复触发
+  messages = makeMessages(100);
+  distiller.onMessage('group:20002');
+  assert(generateCalls === 1, `达到阈值应触发一次提炼，actual=${generateCalls}`);
+  distiller.onMessage('group:20002');
+  assert(generateCalls === 1, '提炼进行中同会话不应重复触发');
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert(savedEntries.length === 2, `提炼条目应解析为 2 条，actual=${savedEntries.length}`);
+  assert(savedCursor === 70, `游标应记账到第 70 条，actual=${savedCursor}`);
+  assert(savedEntries.every(entry => entry.content && entry.createdAt > 0), '提炼条目缺少内容或时间戳');
+
+  // 打分注入：命中关键词的记忆被选中；无命中时靠新近度兜底（近期记忆作为背景注入）
+  db.getMemories = () => savedEntries;
+  const hit = distiller.getMemoryContext('group:20002', '之前的约定是什么来着？', '测试用户');
+  assert(hit.includes('用户约定明天一起测试'), '关键词命中的记忆应被注入');
+  const miss = distiller.getMemoryContext('group:20002', 'zzqq xxjj', '测试用户');
+  assert(miss.includes('Long-term Memory') && miss.includes('群内正在做功能验收'), '无命中时应按新近度注入近期记忆兜底');
+  // 旧记忆无命中且新近度衰减为 0：不注入任何内容
+  db.getMemories = () => savedEntries.map(entry => ({ ...entry, createdAt: Date.now() - 40 * 24 * 3600 * 1000 }));
+  const old = distiller.getMemoryContext('group:20003', 'zzqq xxjj', '测试用户');
+  assert(old === '', '过期且无命中的记忆不应注入');
+  logPass('长期记忆蒸馏器攒批与打分注入正常');
 }
 
 async function checkIsolatedGroupSpamListener() {
@@ -1692,7 +1681,7 @@ async function main() {
     await checkChatEngineMultimodalRouting();
     await checkAiImageMessageParsing();
     await checkWebAgentDownloadToolSafety();
-    await checkMemoryRetrievalUserMessageCompatibility();
+    await checkMemoryDistillerBatching();
     await checkIsolatedGroupSpamListener();
     await checkPrivateSimulatorPreview();
     await checkPrivateAccessLists();

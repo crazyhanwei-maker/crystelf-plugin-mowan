@@ -305,6 +305,7 @@ async function main() {
     assert.equal(dumped.mode, 'plan');
     assert.ok(dumped.disallowedTools.includes('WebFetch'));
     assert.ok(dumped.disallowedTools.includes('Agent') && dumped.disallowedTools.includes('Task'));
+    assert.ok(dumped.disallowedTools.includes('AskUserQuestion'), '无头运行必须禁用交互提问工具');
     assert.equal(dumped.cwd, path.resolve(workspace));
     assert.equal(dumped.resume, null, '无 resumeSessionId 时不得注入 --resume');
   });
@@ -352,7 +353,7 @@ async function main() {
     assert.equal(buildRun.ok, true, buildRun.error);
     const dumped = JSON.parse(fs.readFileSync(envForTask.FAKE_ARGS_FILE, 'utf8'));
     assert.equal(dumped.mode, 'edit');
-    assert.deepEqual(dumped.disallowedTools, ['Bash', 'WebFetch', 'WebSearch']);
+    assert.deepEqual(dumped.disallowedTools, ['AskUserQuestion', 'Bash', 'WebFetch', 'WebSearch']);
   });
 
   const relativeRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'RELATIVE' });
@@ -486,7 +487,135 @@ async function main() {
   console.log(JSON.stringify({ ok: true, results, scratch }, null, 2));
 }
 
-main().catch(error => {
+// #zcode 聊天锚点生命周期：apps/zcode-agent.js 只依赖 6 个模块，这里用合成依赖加载真实模块，
+// 用假控制台验证“锚点被删除/无会话标识/仍在运行/创建时 404”都会安全退回新会话。
+async function runChatAnchorChecks() {
+  const anchorResults = [];
+  const anchorCheck = (label, callback) => { callback(); anchorResults.push(label); };
+  const anchorCheckAsync = async (label, callback) => { await callback(); anchorResults.push(label); };
+  const replies = [];
+  const payloads = [];
+  let taskStore = [];
+  let precheckProbeError = '';
+  let anchorSeed = '';
+  let sequence = 0;
+  const consoleApi = {
+    listTasks: ({ taskId = '' } = {}) => ({ tasks: taskId ? taskStore.filter(task => task.id === taskId) : taskStore.slice() }),
+    createTask: async payload => {
+      if (payload.sessionId === 'AGENT_NOT_FOUND') {
+        const error = new Error('未找到需要继续的任务');
+        error.code = 'AGENT_TASK_NOT_FOUND';
+        throw error;
+      }
+      if (payload.sessionId === 'FAIL_ON_RESUME') throw new Error('模拟续接失败');
+      const task = { ...payload, id: `task-${++sequence}`, status: 'success', zcodeSessionId: `sess-${sequence}` };
+      payloads.push(payload);
+      taskStore.push(task);
+      queueMicrotask(() => { const item = taskStore.find(entry => entry.id === task.id); if (item) item.status = 'success'; });
+      return task;
+    },
+    cancelTask: async () => ({ canceled: false }),
+    probeProvider: async () => ({ available: !precheckProbeError, error: precheckProbeError || undefined }),
+  };
+  const chatApp = await loadModule('apps/zcode-agent.js', {
+    '../lib/config/configControl.js': { default: { get: () => ({ tools: { agentWorkbench: { enabled: true, writeEnabled: true, writableWorkspaces: { plugin: true }, providers: { zcode: true } } } }), set: async () => {} } },
+    '../constants/path.js': { default: PathStub },
+    '../lib/webConsole/workbenchSingleton.js': { getOrCreateWorkbenchConsole: () => consoleApi },
+    '../lib/webConsole/agentWorkbenchConsole.js': { normalizeAgentWorkbenchConfig: config => config },
+    '../lib/agent/agentChatBridge.js': {
+      formatTaskResult: task => ({ ok: true, text: String(task.prompt || '完成') }),
+      pickResultText: task => String(task.prompt || ''),
+    },
+    '../lib/agent/agentInspection.js': {
+      AGENT_TEMPLATES: [],
+      findAgentTemplate: () => null,
+      initAgentScheduleRunner: () => ({ rebuild: () => {}, runScheduleNow: async () => {} }),
+      formatPushReport: () => '',
+    },
+  }, { plugin: class {} });
+  const chatEvent = { isGroup: false, user_id: 10001, msg: '#zcode 回复一句话', reply: async text => { replies.push(String(text)); return true; } };
+  const seedAnchor = anchorId => {
+    anchorSeed = anchorId;
+    // 模块内部 sessionBySender 是私有 Map，无法直接注入；先用一条消息建立锚点，再替换任务记录。
+    return chatApp.CrystelfZcodeAgent.prototype.runWithMode.call({}, chatEvent, 'full');
+  };
+
+  await seedAnchor('');
+  const firstTaskId = taskStore[0]?.id;
+  anchorCheck('初始任务建立聊天锚点', () => {
+    assert.equal(taskStore.length, 1);
+    assert.equal(payloads.length, 1);
+    assert.ok(String(payloads[0].title || '').startsWith('[ZCode聊]'));
+    replies.length = 0;
+  });
+
+  // 任务被控制台删除：预检应清锚点，本轮直接新建会话并提示原因
+  taskStore = [];
+  await chatApp.CrystelfZcodeAgent.prototype.runWithMode.call({}, chatEvent, 'full');
+  anchorCheckAsync('锚点任务被删除：清锚点并按新会话提交', async () => {
+    assert.equal(taskStore.length, 1);
+    assert.equal(payloads.at(-1).sessionId, undefined, '不得携带旧 sessionId');
+    assert.ok(replies.some(text => text.includes('原会话锚点已失效')), `replies=${JSON.stringify(replies)}`);
+    replies.length = 0;
+  });
+
+  // 任务仍在运行：不能续接到运行中的状态目录
+  taskStore[0].status = 'running';
+  await chatApp.CrystelfZcodeAgent.prototype.runWithMode.call({}, chatEvent, 'full');
+  anchorCheckAsync('锚点任务运行中：丢弃运行中锚点并新建', async () => {
+    assert.equal(taskStore.length, 2, `tasks=${JSON.stringify(taskStore)}`);
+    assert.equal(payloads.at(-1).sessionId, undefined);
+    assert.ok(replies.some(text => text.includes('原会话锚点已失效')));
+    replies.length = 0;
+  });
+
+  // 任务已完成但没有 zcodeSessionId：旧版本/失败任务不能当上下文锚点
+  taskStore[1].status = 'success';
+  delete taskStore[1].zcodeSessionId;
+  await chatApp.CrystelfZcodeAgent.prototype.runWithMode.call({}, chatEvent, 'full');
+  anchorCheckAsync('锚点缺少 ZCode 会话标识：退回新会话', async () => {
+    assert.equal(taskStore.length, 3);
+    assert.equal(payloads.at(-1).sessionId, undefined);
+    assert.ok(replies.some(text => text.includes('原会话锚点已失效')));
+    replies.length = 0;
+  });
+
+  // 正常终态任务：锚点应作为 sessionId 续接，不提示失效
+  const resumableId = taskStore[2].id;
+  await chatApp.CrystelfZcodeAgent.prototype.runWithMode.call({}, chatEvent, 'full');
+  anchorCheckAsync('正常终态任务：锚点按原会话续接', async () => {
+    assert.equal(taskStore.length, 4);
+    assert.equal(payloads.at(-1).sessionId, resumableId, `payload=${JSON.stringify(payloads.at(-1))}`);
+    assert.ok(!replies.some(text => text.includes('原会话锚点已失效')), `replies=${JSON.stringify(replies)}`);
+    replies.length = 0;
+  });
+
+  // 预检之后任务被并行删除：任务仍在列表可见（预检通过），仅创建续接时抛 404，清锚点重试一次
+  const lastId = taskStore.at(-1).id;
+  const originalCreate = consoleApi.createTask;
+  let resumeAttempts = 0;
+  consoleApi.createTask = async payload => {
+    if (payload.sessionId === lastId) {
+      resumeAttempts += 1;
+      const error = new Error('未找到需要继续的任务');
+      error.code = 'AGENT_TASK_NOT_FOUND';
+      throw error;
+    }
+    return originalCreate(payload);
+  };
+  await chatApp.CrystelfZcodeAgent.prototype.runWithMode.call({}, chatEvent, 'full');
+  await anchorCheckAsync('创建时并行删除：404 后清锚点重试一次', async () => {
+    assert.equal(resumeAttempts, 1, `续接请求只应尝试一次，actual=${resumeAttempts}`);
+    assert.equal(payloads.at(-1).sessionId, undefined, '重试必须是新会话');
+    assert.ok(replies.some(text => text.includes('原会话锚点已失效')), `replies=${JSON.stringify(replies)}`);
+    replies.length = 0;
+  });
+  consoleApi.createTask = originalCreate;
+
+  console.log(JSON.stringify({ ok: true, anchorResults }, null, 2));
+}
+
+main().then(runChatAnchorChecks).catch(error => {
   console.error('CHECK FAILED:', error);
   process.exit(1);
 });

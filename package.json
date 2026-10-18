@@ -1,6 +1,6 @@
 {
   "name": "crystelf-plugin",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "魔改灵晶成魔丸：Yunzai Bot AI Agent 与综合运维插件",
   "main": "index.js",
   "type": "module",
@@ -18,8 +18,10 @@
     "check:webconsole:mobile": "node ./scripts/check-webconsole-e2e.mjs --mobile-only",
     "prepare:opencode": "node ./scripts/prepare-opencode-runtime.mjs",
     "postinstall": "node ./scripts/prepare-opencode-runtime.mjs",
+    "check:zcode": "node --experimental-vm-modules ./scripts/check-zcode-runtime.mjs",
+    "check:agent-refresh": "node ./scripts/check-agent-workbench-refresh.cjs",
     "check:quick": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js",
-    "check": "npm run check:quick && npm run check:functional && npm run check:render && npm run check:webconsole"
+    "check": "npm run check:quick && npm run check:functional && npm run check:render && npm run check:webconsole && npm run check:zcode && npm run check:agent-refresh"
   },
   "repository": {
     "type": "git",
