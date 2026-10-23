@@ -36,6 +36,7 @@ import {
   buildAgentProcessEnv,
   buildAgentDefaultModelSelection,
   buildAgentRunCommand,
+  buildOpenCodeModelSelection,
   extractAgentJsonError,
   extractOpenCodeSessionId,
   getAgentWorkspaceOptions,
@@ -522,6 +523,18 @@ async function checkAgentWorkbenchSlashCommands() {
     { requestedProviderId: '旧渠道', modelProviders: routeProviders, writeMode: false },
   );
   assert(Boolean(byNameConfig.provider?.[providerIdOf('旧渠道')]), '按供应商名称选择时无法命中渠道（历史任务兼容）');
+  // 会话请求体里的模型引用：commandModel 已经带了 `provider/model` 前缀，
+  // 再单独传 providerId 曾拼成 `provider/provider/model`，OpenCode 直接报
+  // ProviderModelNotFoundError: Model not found: custom-x/custom-x/deepseek-...
+  const prefixedSelection = buildOpenCodeModelSelection(`${newProviderId}/probe-new`, newProviderId);
+  assert(prefixedSelection.providerID === newProviderId && prefixedSelection.modelID === 'probe-new',
+    `已带供应商前缀的模型被重复拼接：${JSON.stringify(prefixedSelection)}`);
+  const bareSelection = buildOpenCodeModelSelection('probe-new', newProviderId);
+  assert(bareSelection.providerID === newProviderId && bareSelection.modelID === 'probe-new',
+    `裸模型名没有按所选渠道组装：${JSON.stringify(bareSelection)}`);
+  const legacyRefSelection = buildOpenCodeModelSelection('crystelf-chat/probe-new');
+  assert(legacyRefSelection.providerID === 'crystelf-chat' && legacyRefSelection.modelID === 'probe-new',
+    `无 providerId 时没有从模型引用里拆出供应商：${JSON.stringify(legacyRefSelection)}`);
   logPass('Agent 斜杠命令、会话动作与 OpenCode Command 分流正常');
 }
 
