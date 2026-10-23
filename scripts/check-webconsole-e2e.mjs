@@ -1961,7 +1961,69 @@ async function inspectMobilePages(page, baseUrl, runtimeErrors, profile) {
   results.push(await inspectMobileModelRows(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileFileChangeRows(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileDashboardDensity(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileApiOverview(page, baseUrl, runtimeErrors, profile));
   return results;
+}
+
+// API 设置「配置摘要」窄屏：卡片不被同行等高原图撑高，标签保持胶囊（不被拉成椭圆）
+async function inspectMobileApiOverview(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'API 设置配置摘要',
+    path: '/api-settings.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/api-settings.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('.api-settings-overview-item', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      const items = [...document.querySelectorAll('.api-settings-overview-item')];
+      if (!items.length) { push('配置摘要卡片存在', false); return checks; }
+      items.forEach((item, index) => {
+        const title = item.querySelector('h4')?.textContent?.trim() || `#${index + 1}`;
+        const tags = [...item.querySelectorAll('.api-settings-overview-tag')];
+        // 胶囊高度必须贴住内容：被 grid stretch 拉开时会明显高于字号行高
+        const stretched = tags.filter(tag => {
+          const rect = tag.getBoundingClientRect();
+          const lineHeight = parseFloat(getComputedStyle(tag).lineHeight) || 16;
+          return rect.height > lineHeight + 14;
+        });
+        push(`${title} 标签未被拉伸`, stretched.length === 0,
+          stretched.map(tag => `${tag.textContent.trim().slice(0, 8)}:${Math.round(tag.getBoundingClientRect().height)}px`).join(','));
+      });
+      // 卡片本身也不该被同行撑高：高度应贴近内部内容
+      const cardHeights = items.map(item => Math.round(item.getBoundingClientRect().height));
+      push('卡片未被同行等高拉伸', new Set(cardHeights).size > 1 || cardHeights.length <= 1, `heights=${cardHeights.join('/')}`);
+      push('页面无横向溢出', document.documentElement.scrollWidth <= viewportWidth + 1, `scrollW=${document.documentElement.scrollWidth}`);
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'API 设置配置摘要.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.evaluate(() => document.querySelector('.api-settings-overview-panel')?.scrollIntoView({ block: 'start' }));
+    await new Promise(resolve => setTimeout(resolve, 300));
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`API 设置配置摘要（${profile.label}）正常`);
+  return result;
 }
 
 // 首页总览窄屏信息密度：标题区收起、操作条单行、KPI/资源双列，首屏必须露出数据

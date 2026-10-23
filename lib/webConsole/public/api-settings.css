@@ -395,6 +395,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 14px;
+  /* 同一行里各卡片内容多少不同：默认 stretch 会等高原图，
+     卡片被撑高后其内部 grid 行再把多余高度分给标签行，标签就被拉成椭圆 */
+  align-items: start;
 }
 
 .api-settings-overview-item {
@@ -404,6 +407,8 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--soft-bg);
+  /* 行按内容高度排布，多余空间不摊给标签行 */
+  align-content: start;
 }
 
 .api-settings-overview-item[data-section] {
@@ -489,6 +494,8 @@
 .api-settings-overview-tags {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
   gap: 8px;
 }
 
@@ -1158,6 +1165,7 @@
     gap: 7px;
     padding: 9px 10px;
     border-radius: 10px;
+    align-content: start;
   }
 
   body.api-settings-page .api-settings-overview-head {
@@ -1183,6 +1191,8 @@
   /* 标签：小号胶囊，允许收缩到半行宽 */
   body.api-settings-page .api-settings-overview-tags {
     gap: 4px;
+    align-items: flex-start;
+    align-content: flex-start;
   }
 
   body.api-settings-page .api-settings-overview-tag {
