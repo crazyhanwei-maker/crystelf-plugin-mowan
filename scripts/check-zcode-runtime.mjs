@@ -134,6 +134,8 @@ async function main() {
       child_process: { spawn },
       '../../constants/path.js': { default: PathStub },
       '../../modules/openai/protocolAdapter.js': { normalizeAiProtocol },
+      // 上下文窗口查表（models.dev 缓存）：沙箱里没有缓存文件，返回 0 走默认兜底
+      '../ai/modelCatalog.js': { lookupModelContextLimit: () => 0 },
     });
   } catch (error) {
     console.error('模块加载失败（需 node --experimental-vm-modules）:', error.message);
@@ -141,6 +143,40 @@ async function main() {
   }
 
   // ---- buildZcodeConfig：纯函数行为 ----
+  check('自定义渠道选择：defaultModelSelection 指向所选渠道而非主供应商', () => {
+    const providers = [
+      { name: '旧渠道', baseApi: 'https://old.example.com/v1', apiKey: 'k-old', apiProtocol: 'anthropic', models: [{ name: 'probe-old' }] },
+      { name: '新渠道', baseApi: 'https://new.example.com/v1', apiKey: 'k-new', apiProtocol: 'openai', models: [{ name: 'probe-new' }] },
+    ];
+    const providerIdOf = name => {
+      const slug = String(name).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      let hash = 5381;
+      for (const ch of String(name)) hash = ((hash << 5) + hash + ch.codePointAt(0)) >>> 0;
+      return `custom-${slug || 'p'}-${hash.toString(36)}`;
+    };
+    const newId = providerIdOf('新渠道');
+    const config = zcode.buildZcodeConfig(aiConfig, 'probe-new', {
+      requestedProviderId: newId,
+      modelProviders: providers,
+    });
+    assert.equal(config.config.defaultModelSelection.providerId, newId, '默认模型没有指向选中的渠道（仍回落主供应商）');
+    assert.equal(config.config.defaultModelSelection.modelId, 'probe-new');
+    // vm 沙箱里的数组原型与宿主不同，deepStrictEqual 会失败，改为比较序列化结果
+    assert.equal(JSON.stringify(config.config.providerOrder), JSON.stringify([newId]), 'providerOrder 没有把选中渠道排到首位');
+    // 两个渠道都要声明且互不覆盖
+    const rules = config.config.providerConfigRules.providerRules;
+    const newRule = rules.find(rule => rule.providerId === newId);
+    const oldRule = rules.find(rule => rule.providerId === providerIdOf('旧渠道'));
+    assert.ok(newRule, '选中渠道没有写入 providerRules');
+    assert.equal(newRule.config.api.baseUrl, 'https://new.example.com/v1');
+    assert.equal(newRule.config.api.type, 'openai-chat-completions');
+    assert.ok(oldRule, '未选中的渠道丢失声明');
+    assert.equal(oldRule.config.api.type, 'anthropic-messages', '渠道协议串味');
+    // 按名称选择同样要命中（历史任务兼容）
+    const byName = zcode.buildZcodeConfig(aiConfig, 'probe-old', { requestedProviderId: '旧渠道', modelProviders: providers });
+    assert.equal(byName.config.defaultModelSelection.providerId, providerIdOf('旧渠道'), '按供应商名称选择无法命中渠道');
+  });
+
   check('openai 协议配置：供应商规则、模型选择与 key 位置', () => {
     const config = zcode.buildZcodeConfig(aiConfig, 'GLM-5.3-Flash/试验::v1', {});
     assert.equal(config.schemaVersion, 1);
