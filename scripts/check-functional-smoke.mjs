@@ -43,9 +43,11 @@ import {
   normalizeAgentWorkbenchConfig,
   normalizeUsage,
   parseAgentProviderModelList,
+  resolveTaskContextLimit,
 } from '../lib/webConsole/agentWorkbenchConsole.js';
 import {
   buildBundledOpenCodeEnvironment,
+  buildOpenCodeConfig,
   isBundledOpenCodeBootstrapError,
   resolveBundledOpenCodeBootstrapCommand,
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
@@ -479,6 +481,47 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(rawUsage.input === 1000 && rawUsage.cacheRead === 900, 'normalizeUsage 没有把缓存折入 input 或丢失分项');
   const twiceUsage = normalizeUsage(rawUsage);
   assert(twiceUsage.input === 1000 && twiceUsage.cacheRead === 900, 'normalizeUsage 对已归一化对象二次累加，input 会翻倍');
+  // 上下文窗口以模型表为准：查得到时覆盖任务里的旧值，查不到时保留记录值。
+  // 模型表来自运行时数据目录，测试环境可能没有，因此只断言「记录值能被正确保留」这条确定路径
+  assert(resolveTaskContextLimit({ model: 'unknown-model-xyz', contextLimit: 200000 }) === 200000, '模型表查不到时应保留任务记录的窗口');
+  assert(resolveTaskContextLimit({ model: '', contextLimit: 0 }) === 0, '无模型无记录时应返回 0');
+  assert(resolveTaskContextLimit({ model: '', contextLimit: 12345 }) === 12345, '无模型时应回退到记录值');
+  // 自定义供应商路由：前端传的是 custom-<slug>-<hash>，后端必须能按同一规则匹配到渠道。
+  // 曾经用 name 比对导致恒不命中，表现为「切到新渠道但仍走主供应商」
+  const routeProviders = [
+    { name: '旧渠道', baseApi: 'https://old.example.com/v1', apiKey: 'k-old', apiProtocol: 'anthropic', models: [{ name: 'probe-old' }] },
+    { name: '新渠道', baseApi: 'https://new.example.com/v1', apiKey: 'k-new', apiProtocol: 'openai', models: [{ name: 'probe-new' }] },
+  ];
+  const providerIdOf = name => {
+    const slug = String(name).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    let hash = 5381;
+    for (const ch of String(name)) hash = ((hash << 5) + hash + ch.codePointAt(0)) >>> 0;
+    return `custom-${slug || 'p'}-${hash.toString(36)}`;
+  };
+  const newProviderId = providerIdOf('新渠道');
+  const routeConfig = buildOpenCodeConfig(
+    { baseApi: 'https://main.example.com/v1', apiKey: 'main-key', apiProtocol: 'openai', modelType: 'main-model' },
+    'probe-new',
+    { requestedProviderId: newProviderId, modelProviders: routeProviders, writeMode: false },
+  );
+  const routedEntry = routeConfig.provider?.[newProviderId];
+  assert(Boolean(routedEntry), '前端 custom-* 形式的供应商 ID 无法在后端命中（选中新渠道仍走主供应商）');
+  // 顶层默认模型必须指向被选中的渠道，否则 OpenCode 会按主供应商起会话
+  assert(routeConfig.model === `${newProviderId}/probe-new`, `默认模型没有指向选中的渠道：${routeConfig.model}`);
+  assert(routeConfig.small_model === routeConfig.model, 'small_model 与默认模型不一致，子任务会落到主供应商');
+  assert(routedEntry.options?.baseURL === 'https://new.example.com/v1', '选中的渠道 baseURL 不对应，可能串用了其它渠道');
+  assert(routedEntry.npm === '@ai-sdk/openai-compatible', '渠道协议没有生效（openai 协议应为 openai-compatible SDK）');
+  assert(Boolean(routedEntry.models?.['probe-new']), '选中渠道的模型没有注册');
+  // 旧渠道仍应独立声明（不得被新渠道覆盖）
+  const oldEntry = routeConfig.provider?.[providerIdOf('旧渠道')];
+  assert(oldEntry?.options?.baseURL === 'https://old.example.com/v1' && oldEntry.npm === '@ai-sdk/anthropic', '多个自定义渠道的声明互相覆盖或协议串味');
+  // 名称形式也应能命中，兼容历史任务里存的供应商名
+  const byNameConfig = buildOpenCodeConfig(
+    { baseApi: 'https://main.example.com/v1', apiKey: 'main-key', apiProtocol: 'openai', modelType: 'main-model' },
+    'probe-old',
+    { requestedProviderId: '旧渠道', modelProviders: routeProviders, writeMode: false },
+  );
+  assert(Boolean(byNameConfig.provider?.[providerIdOf('旧渠道')]), '按供应商名称选择时无法命中渠道（历史任务兼容）');
   logPass('Agent 斜杠命令、会话动作与 OpenCode Command 分流正常');
 }
 

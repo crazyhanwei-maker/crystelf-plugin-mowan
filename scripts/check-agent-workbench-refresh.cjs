@@ -61,6 +61,8 @@ const backendSupport = {
   normalizeAgentPriority: (value = '') => value || 'normal',
   normalizeAgentDelivery: (value = '') => value || 'steer',
   redactAgentText: (value = '') => String(value),
+  // 上下文窗口查表依赖运行时模型库缓存，刷新顺序测试不涉及该行为，直接返回记录值
+  resolveTaskContextLimit: (task = {}) => Math.max(0, Number(task?.contextLimit || 0)),
 };
 const constants = {};
 for (const name of ['AGENT_TASK_LIMIT', 'AGENT_MESSAGE_LIMIT', 'AGENT_MESSAGE_TOOL_LIMIT', 'AGENT_EVENT_LIMIT', 'AGENT_PERMISSION_LIMIT', 'AGENT_QUESTION_LIMIT', 'AGENT_ATTACHMENT_LIMIT', 'AGENT_FOLLOW_UP_LIMIT']) {
