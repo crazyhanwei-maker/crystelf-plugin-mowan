@@ -3303,6 +3303,26 @@
   50% { opacity: 1; }
 }
 
+/* 轮次分隔：第 2 轮起在回复上方标出边界，长对话里避免多轮内容连成一片 */
+.agent-turn-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 980px;
+  margin: 4px auto 18px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.agent-turn-divider::before,
+.agent-turn-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--agent-line);
+}
+
 .agent-file-nav {
   display: flex;
   align-items: center;
