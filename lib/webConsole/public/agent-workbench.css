@@ -3175,6 +3175,14 @@
 /* 管理模型模态 */
 .agent-model-manager-body { display: grid; gap: 12px; align-content: start; }
 .agent-model-manager-hint { margin: 0; color: var(--agent-muted); font-size: 11px; }
+/* 手机端说明文字与上方模型列表拉开距离并加分隔线，避免紧贴最后一行 */
+@media (max-width: 760px) {
+  .agent-model-manager-hint {
+    padding-top: 10px;
+    border-top: 1px solid var(--agent-line);
+    line-height: 1.55;
+  }
+}
 
 /* 空状态：图标 + 标题 + 说明 + 主操作，替代原来一句干瘪提示 */
 .agent-manager-empty {
@@ -4643,6 +4651,17 @@ body.agent-settings-modal-open { overflow: hidden; }
   background: var(--agent-surface-soft);
 }
 .agent-manager-model-row strong { flex: 0 1 auto; overflow: hidden; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+/* 名称按钮（行内第一个）吃掉剩余宽度；否则模型名会被压成图标尺寸 */
+.agent-workbench-page .agent-manager-model-row > .agent-manager-model-edit:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-start;
+}
+.agent-workbench-page .agent-manager-model-row > .agent-manager-model-edit:first-child strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .agent-manager-model-row .agent-manager-model-name { flex: 1 1 30%; min-width: 90px; }
 .agent-workbench-page .agent-model-form-dialog { width: min(480px, 100%); height: auto; max-height: min(640px, 90dvh); }
 .agent-manager-models-actions { display: flex; align-items: center; gap: 6px; }
@@ -4727,13 +4746,23 @@ body.agent-settings-modal-open { overflow: hidden; }
 }
 .agent-workbench-page .agent-manager-model-edit:hover { background: var(--agent-surface-soft); }
 .agent-workbench-page .agent-manager-model-edit svg { width: 14px; height: 14px; }
+/* 编辑/删除图标按钮：固定内容尺寸，不参与剩余空间分配 */
+.agent-workbench-page .agent-manager-model-row > .agent-manager-model-edit:not(:first-child) {
+  flex: 0 0 auto;
+}
+.agent-workbench-page .agent-manager-model-row > .agent-manager-model-remove {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-left: 0;
+}
 .agent-manager-model-row .agent-manager-model-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  margin-left: auto;
+  margin-left: 0;
   padding: 0;
   border: 0;
   border-radius: 7px;
@@ -5197,7 +5226,16 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
 /* 管理模型（手机端）：左栏改为横向滑动的供应商标签，编辑区独占整宽。
    必须放在文件末尾：与双栏基础规则同优先级，靠后写才能覆盖。 */
 @media (max-width: 760px) {
-  .agent-model-manager-layout { flex-direction: column; gap: 10px; }
+  /* 手机端纵向排布：高度交给内容自然撑开，
+     否则 min-height:0 + flex 会让编辑区溢出并盖住下方的说明文字 */
+  /* 手机端用普通流式布局：grid 的 auto auto 会让「编辑区」和「说明文字」争抢同一块高度，
+     编辑器内容一多就把 hint 压到最后一行模型上 */
+  .agent-model-manager-body {
+    display: block;
+  }
+  .agent-model-manager-layout { flex-direction: column; gap: 10px; min-height: 0; height: auto; }
+  .agent-model-manager-editor { max-height: none; margin-bottom: 12px; }
+  .agent-model-manager-hint { position: static; display: block; }
   .agent-model-manager-rail {
     flex: 0 0 auto;
     display: flex;
@@ -5229,8 +5267,34 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
   }
   .agent-model-manager-editor { overflow: visible; padding-left: 0; }
   .agent-manager-field-grid { grid-template-columns: 1fr; }
-  .agent-manager-model-row { flex-wrap: wrap; row-gap: 6px; }
-  .agent-manager-model-badges { justify-content: flex-start; }
+  /* 模型行：基础规则已保证名称占剩余宽度、图标固定尺寸，这里只做窄屏紧凑化 */
+  .agent-manager-model-row {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .agent-workbench-page .agent-manager-model-row > .agent-manager-model-edit:first-child {
+    height: 30px;
+    min-height: 30px !important;
+    padding: 0 4px !important;
+  }
+  .agent-manager-model-badges {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    overflow: hidden;
+  }
+  /* 图标按钮恢复内容尺寸，不被全局移动端 100% 规则拉满（排除名称按钮） */
+  .agent-workbench-page .agent-manager-model-row > .agent-manager-model-edit:not(:first-child),
+  .agent-workbench-page .agent-manager-model-row > .agent-manager-model-remove {
+    flex: 0 0 auto;
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px;
+    min-height: 30px !important;
+    padding: 0 !important;
+    margin-left: 0;
+  }
   .agent-manager-empty { padding: 26px 16px; }
   .agent-manager-empty .agent-quiet-btn.is-primary { width: auto !important; min-width: 160px; }
 }

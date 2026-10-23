@@ -1732,6 +1732,7 @@ async function inspectMobilePages(page, baseUrl, runtimeErrors, profile) {
   results.push(await inspectMobileSlashMenu(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileModelMenuCard(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileProviderModels(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileModelRows(page, baseUrl, runtimeErrors, profile));
   return results;
 }
 
@@ -2020,6 +2021,96 @@ async function inspectMobileProviderModels(page, baseUrl, runtimeErrors, profile
   result.ok = result.errors.length === 0;
   if (result.ok) logPass(`Agent 获取模型弹窗（${profile.label}）正常`);
   await clickAndWait(page, '#agent-provider-models-close', 150).catch(() => {});
+  return result;
+}
+
+// 管理模型 · 已添加模型列表窄屏：一行一个、模型名不被压缩、说明文字不压住列表
+async function inspectMobileModelRows(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'Agent 已添加模型列表',
+    path: '/agent-workbench.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/agent-workbench.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('#agent-model-btn', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 900));
+    await openModelManagerFromComposerMenu(page);
+    await page.waitForSelector('.agent-manager-model-row', { timeout: pageTimeoutMs }).catch(() => null);
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const rows = [...document.querySelectorAll('.agent-manager-model-row')];
+      const hasProvider = Boolean(document.querySelector('.agent-model-manager-provider'));
+      if (!rows.length) {
+        // 隔离控制台默认没有配置供应商：这种情况跳过，不算失败
+        if (!hasProvider) return [];
+        push('模型列表有内容', false, '有供应商但没有渲染出模型行');
+        return checks;
+      }
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      // 每行四个元素（名称/徽章/编辑/删除）必须在同一行
+      const first = rows[0];
+      const tops = [...first.children].map(child => Math.round(child.getBoundingClientRect().top));
+      push('模型行单行排布', Math.max(...tops) - Math.min(...tops) <= 12, `tops=${tops.join(',')}`);
+
+      // 模型名按钮必须占剩余空间，不能被压成图标大小
+      const nameBtn = first.querySelector('.agent-manager-model-edit');
+      const nameWidth = nameBtn ? Math.round(nameBtn.getBoundingClientRect().width) : 0;
+      const rowWidth = Math.round(first.getBoundingClientRect().width);
+      push('模型名占据剩余宽度', nameWidth > rowWidth * 0.35, `name=${nameWidth} row=${rowWidth}`);
+
+      // 图标按钮保持内容尺寸，不被全局移动端 100% 规则拉满
+      const iconBtns = [...first.querySelectorAll('.agent-manager-model-edit, .agent-manager-model-remove')].slice(1);
+      for (const btn of iconBtns) {
+        const width = btn.getBoundingClientRect().width;
+        push(`图标按钮（${btn.getAttribute('aria-label') || '编辑'}）未被拉满`, width <= 40, `width=${Math.round(width)}`);
+      }
+
+      // 行高紧凑：单行约 44px，不能变成多行大方块
+      const rowHeight = Math.round(first.getBoundingClientRect().height);
+      push('模型行高度紧凑', rowHeight <= 60, `h=${rowHeight}`);
+
+      // 说明文字不得与最后一行模型重叠
+      const hint = document.querySelector('.agent-model-manager-hint');
+      const last = rows[rows.length - 1];
+      if (hint && last) {
+        const lr = last.getBoundingClientRect();
+        const hr = hint.getBoundingClientRect();
+        const overlap = Math.max(0, Math.min(lr.bottom, hr.bottom) - Math.max(lr.top, hr.top));
+        push('说明文字未压住模型列表', overlap <= 1, `overlap=${Math.round(overlap)}`);
+      }
+      push('页面无横向溢出', document.documentElement.scrollWidth <= viewportWidth + 1, `scrollW=${document.documentElement.scrollWidth}`);
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'Agent 已添加模型列表.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.evaluate(() => {
+      const body = document.querySelector('.agent-model-manager-body');
+      if (body) body.scrollTop = body.scrollHeight;
+    });
+    await new Promise(resolve => setTimeout(resolve, 250));
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+    await clickAndWait(page, '#agent-model-manager-close', 200).catch(() => {});
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`Agent 已添加模型列表（${profile.label}）正常`);
   return result;
 }
 
