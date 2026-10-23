@@ -2823,3 +2823,109 @@
   color: var(--primary, #3a6df0);
   opacity: 0.85;
 }
+
+/* ===== 手机端总览：压缩装饰、提高信息密度 =====
+   窄屏下 h1 与顶栏面包屑重复、首屏只剩标题和三颗大按钮，
+   因此收起标题区、把操作条收成一行，并把指标卡改为双列。
+   横屏（宽≤920 且高≤520，视口太矮）套用同一套紧凑布局。 */
+@media (max-width: 700px), (max-width: 920px) and (max-height: 520px) {
+  /* 标题与顶栏「魔丸控制台 / 总览」重复：整块收起，只留右侧「自定义模块」 */
+  .dashboard-page .console-app-shell .hero {
+    align-items: center;
+    min-height: 0;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .dashboard-page .console-app-shell .hero .hero-copy { display: none; }
+
+  .dashboard-page .console-app-shell .hero-actions {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin: 0;
+  }
+
+  .dashboard-page .console-app-shell .hero-actions .mini-btn {
+    width: auto !important;
+    min-height: 28px !important;
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+
+  /* 操作条：三颗按钮并排一行，不再各占一格 */
+  .dashboard-page .console-app-shell .mobile-sticky-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 5px 6px;
+    border-radius: 10px;
+  }
+
+  .dashboard-page .console-app-shell .mobile-sticky-bar button {
+    flex: 1 1 0;
+    width: auto !important;
+    min-height: 30px !important;
+    padding: 4px 6px !important;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  /* KPI：双列紧凑卡（9 张卡从 1100px 收到约 520px） */
+  .dashboard-page .kpi-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dashboard-page .kpi-card {
+    gap: 8px;
+    padding: 10px 11px;
+    border-radius: 10px;
+  }
+
+  .dashboard-page .kpi-main { gap: 1px; }
+  .dashboard-page .kpi-label { font-size: 11px; }
+  /* 长数值（如「外部设备可访问」）允许换行，不在半列宽里截断 */
+  .dashboard-page .kpi-value { font-size: 18px; line-height: 1.2; white-space: normal; }
+  .dashboard-page .kpi-sub { font-size: 10px; line-height: 1.3; }
+  .dashboard-page .kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+  .dashboard-page .kpi-icon svg { width: 15px; height: 15px; }
+  .dashboard-page .kpi-spark { display: none; }
+  .dashboard-page .kpi-band-panel { margin: 0 0 10px; }
+
+  /* 系统资源条：同样双列，进度条收窄 */
+  .dashboard-page .resource-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dashboard-page .resource-cell {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .dashboard-page .resource-cell-head span { font-size: 11px; }
+  .dashboard-page .resource-cell-head strong { font-size: 14px; }
+  .dashboard-page .resource-cell small { margin-top: 2px; font-size: 10px; }
+  .dashboard-page .resource-bar { height: 4px; margin-top: 6px; }
+  .dashboard-page .resource-strip-panel { margin-bottom: 10px; }
+
+  /* 面板：收内边距与标题字号，一屏能多看到一个模块 */
+  .dashboard-page .console-app-shell .panel {
+    padding: 13px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .dashboard-page .panel h2 { font-size: 17px; margin-bottom: 6px; }
+  .dashboard-page .panel h3 { font-size: 15px; }
+  .dashboard-page .section-head { gap: 8px; }
+  .dashboard-page .section-head .setting-help,
+  .dashboard-page .dashboard-control-head .setting-help { font-size: 11px; line-height: 1.45; }
+}

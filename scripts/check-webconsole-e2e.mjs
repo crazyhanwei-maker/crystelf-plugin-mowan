@@ -1960,7 +1960,85 @@ async function inspectMobilePages(page, baseUrl, runtimeErrors, profile) {
   results.push(await inspectMobileProviderModels(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileModelRows(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileFileChangeRows(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileDashboardDensity(page, baseUrl, runtimeErrors, profile));
   return results;
+}
+
+// 首页总览窄屏信息密度：标题区收起、操作条单行、KPI/资源双列，首屏必须露出数据
+async function inspectMobileDashboardDensity(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: '总览页信息密度',
+    path: '/index.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/index.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('.kpi-band', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    // 关掉「发现新版本」弹窗，避免遮挡测量
+    await page.evaluate(() => document.querySelector('#modal-cancel-btn')?.click());
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+      // 标题收起只约束紧凑布局（窄屏或矮视口）；宽屏标题保留
+      if (viewportWidth <= 700 || viewportHeight <= 520) {
+        const heroCopy = document.querySelector('.hero .hero-copy');
+        const heroCopyHidden = !heroCopy || getComputedStyle(heroCopy).display === 'none'
+          || heroCopy.getBoundingClientRect().height === 0;
+        push('标题区已收起（顶栏已有页面名）', heroCopyHidden);
+      }
+      const band = document.querySelector('.kpi-band');
+      if (band) {
+        const cols = getComputedStyle(band).gridTemplateColumns.split(' ').filter(Boolean).length;
+        push('KPI 指标卡至少双列', cols >= 2, `cols=${cols}`);
+        const firstCard = band.querySelector('.kpi-card');
+        if (firstCard) {
+          const cardRect = firstCard.getBoundingClientRect();
+          push('KPI 卡宽度不超过 55% 屏宽', cardRect.width <= viewportWidth * 0.55, `w=${Math.round(cardRect.width)} vw=${viewportWidth}`);
+        }
+      } else {
+        push('KPI 指标卡存在', false);
+      }
+      const strip = document.querySelector('.resource-strip');
+      if (strip) {
+        const cols = getComputedStyle(strip).gridTemplateColumns.split(' ').filter(Boolean).length;
+        push('资源条至少双列', cols >= 2, `cols=${cols}`);
+      }
+      // 首屏必须已经滚到数据：第一个数据面板顶边不超过视口 60% 高度
+      // （横屏视口矮，顶栏+搜索+操作条合计约 220px，用同一比例仍然能拦住回归到 400px+ 的情况）
+      const firstPanel = document.querySelector('[data-module-id="kpi"]');
+      if (firstPanel) {
+        const top = firstPanel.getBoundingClientRect().top;
+        push('首屏即见数据', top <= viewportHeight * 0.6 && top > 0, `top=${Math.round(top)} vh=${viewportHeight}`);
+      }
+      push('页面无横向溢出', document.documentElement.scrollWidth <= viewportWidth + 1, `scrollW=${document.documentElement.scrollWidth}`);
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, '总览页信息密度.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`总览页信息密度（${profile.label}）正常`);
+  return result;
 }
 
 // 斜杠命令面板窄屏：不溢出、行高够触控、分组与快捷键提示保留
