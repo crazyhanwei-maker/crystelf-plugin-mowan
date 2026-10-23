@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import http from 'http';
 import os from 'os';
 import path from 'path';
 import { withPuppeteerPage, closeSharedPuppeteerBrowser } from '../lib/system/puppeteerRenderer.js';
@@ -258,6 +259,25 @@ async function clickAndWait(page, selector, delayMs = 500) {
   await new Promise(resolve => setTimeout(resolve, delayMs));
 }
 
+// 本地假供应商：验证「获取模型」确实请求了 Base URL 的 /v1/models
+async function withFakeModelProvider(run) {
+  const server = http.createServer((req, res) => {
+    if (req.url === '/v1/models' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ data: [{ id: 'e2e-model-b' }, { id: 'e2e-model-a' }] }));
+      return;
+    }
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: { message: 'not found' } }));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    return await run(`http://127.0.0.1:${server.address().port}`);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+}
+
 async function resetFrontendErrorCollector(page) {
   await page.evaluate(() => {
     window.CrystelfFrontendErrors?.reset?.();
@@ -350,6 +370,30 @@ async function readMobileFixProbes(page) {
       }
     }
 
+    if (path.endsWith('/agent-workbench.html')) {
+      // 全局移动端按钮规则会把弹窗标题栏的 ✕ 撑成整条白块，这里锁定图标尺寸
+      for (const [label, selector] of [
+        ['工作台设置', '#agent-settings-close'],
+        ['管理模型', '#agent-model-manager-close'],
+        ['添加模型', '#agent-model-form-close'],
+        ['获取模型', '#agent-provider-models-close'],
+      ]) {
+        const button = document.querySelector(selector);
+        if (!button) continue;
+        const width = parseFloat(getComputedStyle(button).width) || 0;
+        push(`${label}关闭按钮为图标尺寸`, width > 20 && width <= 56, `width=${Math.round(width)}`);
+      }
+      // 管理模型：手机端必须是单栏（供应商横向滑动条 + 全宽编辑区），不能退回桌面双栏
+      const managerLayout = document.querySelector('.agent-model-manager-layout');
+      if (managerLayout) {
+        push('管理模型弹窗小屏单栏', getComputedStyle(managerLayout).flexDirection === 'column', `flexDirection=${getComputedStyle(managerLayout).flexDirection}`);
+      }
+      const managerRail = document.querySelector('.agent-model-manager-rail');
+      if (managerRail) {
+        push('供应商条横向滑动', getComputedStyle(managerRail).overflowX === 'auto', `overflowX=${getComputedStyle(managerRail).overflowX}`);
+      }
+    }
+
     return checks;
   });
 }
@@ -407,7 +451,7 @@ async function runInteractionCheck(page, baseUrl, runtimeErrors, item = {}) {
         await page.waitForSelector('body', { timeout: pageTimeoutMs });
         await new Promise(resolve => setTimeout(resolve, 700));
         await resetFrontendErrorCollector(page);
-        await item.run(page);
+        await item.run(page, { runtimeErrors });
         await new Promise(resolve => setTimeout(resolve, 700));
       })(),
       new Promise((_, reject) => {
@@ -953,6 +997,701 @@ async function runGlobalSearchInteraction(page) {
   }
 }
 
+// 上下文容量面板（对齐 ZCode）：标题行 + 细进度条 + 构成分类 + 缓存命中率
+async function runContextUsagePanelInteraction(page) {
+  await page.waitForSelector('#agent-context-usage-trigger', { timeout: pageTimeoutMs });
+  await page.evaluate(() => {
+    const menu = document.querySelector('#agent-context-usage-menu');
+    menu.open = true;
+    menu.dispatchEvent(new Event('toggle'));
+  });
+  await page.waitForSelector('.agent-context-usage-popover', { timeout: pageTimeoutMs });
+
+  const panel = await page.evaluate(() => {
+    const pop = document.querySelector('.agent-context-usage-popover');
+    const meter = pop?.querySelector('.agent-context-meter');
+    const header = pop?.querySelector('header');
+    const title = header?.querySelector('strong')?.textContent?.trim() || '';
+    const value = header?.querySelector('span')?.textContent?.trim() || '';
+    const rows = [...(pop?.querySelectorAll('.agent-context-breakdown-row') || [])];
+    const dot = rows[0]?.querySelector('.agent-context-breakdown-dot');
+    return {
+      title,
+      value,
+      meterHeight: meter ? Math.round(meter.getBoundingClientRect().height) : 0,
+      // 数值应右对齐并可用等宽数字
+      valueMono: header ? /mono/i.test(getComputedStyle(header.querySelector('span')).fontFamily) : false,
+      hasBreakdown: Boolean(pop?.querySelector('#agent-context-breakdown')),
+      hasCacheRow: Boolean(pop?.querySelector('#agent-context-cache-row')),
+      width: pop ? Math.round(pop.getBoundingClientRect().width) : 0,
+      height: pop ? Math.round(pop.getBoundingClientRect().height) : 0,
+      // 标题行数值要带百分比，形如「34.5万 / 100万（34.5%）」
+      valueShowsPercent: /（[\d.]+%）/.test(value),
+      // 圆点应为圆角（ZCode 用圆形色点）
+      dotRadius: dot ? getComputedStyle(dot).borderRadius : '',
+      dotSize: dot ? Math.round(dot.getBoundingClientRect().width) : 0,
+      // 明细表已并入摘要，面板内不应再出现旧表格
+      hasLegacyDetails: Boolean(pop?.querySelector('.agent-context-usage-details')),
+      breakdownLabels: rows.map(row => row.querySelector('.agent-context-breakdown-label')?.textContent?.trim() || ''),
+    };
+  });
+  if (!/上下文容量/.test(panel.title)) {
+    throw new Error(`上下文面板标题不对：${panel.title}`);
+  }
+  if (!panel.value) {
+    throw new Error('上下文面板标题行没有容量数值');
+  }
+  // 空会话没有上下文数据，标题显示「未读取」是正确状态；有数据时才要求「已用/上限（百分比）」
+  if (panel.value !== '未读取' && !/^\d/.test(panel.value)) {
+    throw new Error(`上下文面板标题行数值格式异常：${panel.value}`);
+  }
+  if (panel.value !== '未读取' && !panel.valueShowsPercent) {
+    throw new Error(`标题行数值缺少百分比：${panel.value}`);
+  }
+  if (panel.meterHeight !== 8) {
+    throw new Error(`上下文进度条高度应对齐 ZCode（8px），实际 ${panel.meterHeight}px`);
+  }
+  if (!panel.hasBreakdown || !panel.hasCacheRow) {
+    throw new Error('上下文面板缺少构成分类或缓存命中率区块');
+  }
+  if (panel.hasLegacyDetails) {
+    throw new Error('上下文面板仍在渲染旧明细表，应已并入摘要行');
+  }
+  if (panel.width > 340) {
+    throw new Error(`上下文面板过宽：${panel.width}`);
+  }
+  // 空/稀疏内容时面板会缩到 min-width；若被拉满则说明又退回固定宽度
+  if (panel.width < 220) {
+    throw new Error(`上下文面板过窄，内容被挤压：${panel.width}`);
+  }
+  if (panel.height > 420) {
+    throw new Error(`上下文面板过高：${panel.height}`);
+  }
+  // 「缓存命中」只能出现在底部命中率一行，不能混进构成来源（会把真实来源压成个位数）
+  if (panel.breakdownLabels.some(label => /缓存/.test(label))) {
+    throw new Error(`构成列表不应包含缓存类目：${panel.breakdownLabels.join(',')}`);
+  }
+  if (panel.dotRadius && !/50%/.test(panel.dotRadius)) {
+    throw new Error(`构成圆点应为圆形，实际 border-radius=${panel.dotRadius}`);
+  }
+  // 缓存命中率算法：cacheRead / input（input 已含缓存，不能再加一次）
+  const rate = await page.evaluate(() => {
+    const row = document.querySelector('#agent-context-cache-row');
+    const valueEl = document.querySelector('#agent-context-cache-rate');
+    return {
+      hidden: row?.classList.contains('hidden') !== false,
+      text: valueEl?.textContent?.trim() || '',
+    };
+  });
+  // 无缓存数据的会话里该行隐藏是正确行为；有数据时必须显示百分比
+  if (!rate.hidden && !/^[\d.]+%$/.test(rate.text)) {
+    throw new Error(`缓存命中率格式异常：${rate.text}`);
+  }
+  await page.evaluate(() => {
+    const menu = document.querySelector('#agent-context-usage-menu');
+    menu.open = false;
+  });
+}
+
+// 斜杠命令面板（对齐 ZCode）：分组 + 图标 + 搜索过滤 + 快捷键提示
+async function runSlashMenuInteraction(page) {
+  await page.waitForSelector('#agent-prompt', { timeout: pageTimeoutMs });
+  await page.evaluate(() => {
+    const input = document.querySelector('#agent-prompt');
+    input.value = '/';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.focus();
+  });
+  await page.waitForSelector('#agent-slash-menu:not(.hidden)', { timeout: pageTimeoutMs });
+
+  const menu = await page.evaluate(() => {
+    const root = document.querySelector('#agent-slash-menu');
+    return {
+      groups: [...root.querySelectorAll('.agent-slash-group-title')].map(node => node.textContent.trim()),
+      items: root.querySelectorAll('.agent-slash-item').length,
+      // 每行一个线性图标，不能残留 emoji 或纯文本符号
+      icons: root.querySelectorAll('.agent-slash-icon svg').length,
+      hasEmoji: /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(root.innerText),
+      hasSearch: Boolean(root.querySelector('#agent-slash-search-input')),
+      footKbd: root.querySelectorAll('.agent-slash-foot kbd').length,
+      count: root.querySelector('#agent-slash-count')?.textContent || '',
+    };
+  });
+  if (menu.groups.length < 2) {
+    throw new Error(`斜杠命令没有分组：${JSON.stringify(menu.groups)}`);
+  }
+  if (menu.items === 0 || menu.icons !== menu.items) {
+    throw new Error(`斜杠命令缺少图标：items=${menu.items} icons=${menu.icons}`);
+  }
+  if (menu.hasEmoji) {
+    throw new Error('斜杠命令中仍有 emoji 图标');
+  }
+  if (!menu.hasSearch || menu.footKbd < 3) {
+    throw new Error(`斜杠命令缺少搜索框或快捷键提示：${JSON.stringify(menu)}`);
+  }
+  if (!/\d+\s*项/.test(menu.count)) {
+    throw new Error(`斜杠命令缺少条目计数：${menu.count}`);
+  }
+
+  // 搜索过滤：输入 mod 只应留下 /models
+  await page.evaluate(() => {
+    const search = document.querySelector('#agent-slash-search-input');
+    search.value = 'mod';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const filtered = await page.evaluate(() => [...document.querySelectorAll('.agent-slash-item .agent-slash-command')].map(node => node.textContent.trim()));
+  if (filtered.length !== 1 || filtered[0] !== '/models') {
+    throw new Error(`斜杠命令搜索过滤异常：${filtered.join(',') || '(空)'}`);
+  }
+  // 清空搜索后关闭菜单，避免影响后续用例
+  await page.evaluate(() => {
+    const input = document.querySelector('#agent-prompt');
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await new Promise(resolve => setTimeout(resolve, 200));
+}
+
+// 输入区任务模式控件：触发标签、风险色点、与隐藏 select 双向同步
+async function runModeSwitchInteraction(page) {
+  await page.waitForSelector('#agent-mode-btn', { timeout: pageTimeoutMs });
+  const initial = await page.evaluate(() => ({
+    label: document.querySelector('#agent-mode-btn-label')?.textContent?.trim() || '',
+    mode: document.querySelector('#agent-mode-btn')?.dataset.mode || '',
+    select: document.querySelector('#agent-mode')?.value || '',
+  }));
+  if (!initial.label || initial.mode !== initial.select) {
+    throw new Error(`模式控件初始状态未同步：${JSON.stringify(initial)}`);
+  }
+  await clickAndWait(page, '#agent-mode-btn', 250);
+  await page.waitForSelector('#agent-mode-menu:not(.hidden)', { timeout: pageTimeoutMs });
+  const options = await page.evaluate(() => [...document.querySelectorAll('.agent-mode-option')].map(option => option.dataset.modeValue));
+  if (options.join(',') !== 'analyze,patch,edit,full') {
+    throw new Error(`模式菜单选项不完整：${options.join(',')}`);
+  }
+  await clickAndWait(page, '.agent-mode-option[data-mode-value="patch"]', 350);
+  const after = await page.evaluate(() => {
+    const icon = document.querySelector('#agent-mode-icon');
+    const btn = document.querySelector('#agent-mode-btn');
+    return {
+      label: document.querySelector('#agent-mode-btn-label')?.textContent?.trim() || '',
+      select: document.querySelector('#agent-mode')?.value || '',
+      mobile: document.querySelector('#agent-mobile-mode')?.value || '',
+      agent: document.querySelector('#agent-agent')?.value || '',
+      menuHidden: document.querySelector('#agent-mode-menu')?.classList.contains('hidden') === true,
+      iconSvg: icon?.querySelectorAll('svg').length || 0,
+      // 幽灵按钮：不能有可见边框，高度要和相邻图标按钮一致
+      borderWidth: btn ? parseFloat(getComputedStyle(btn).borderTopWidth) || 0 : -1,
+      height: btn ? Math.round(btn.getBoundingClientRect().height) : 0,
+      hasRiskClass: btn?.classList.contains('is-risk') === true,
+      hasWriteClass: btn?.classList.contains('is-write') === true,
+    };
+  });
+  if (!/补丁建议/.test(after.label) || after.select !== 'patch' || after.mobile !== 'patch') {
+    throw new Error(`模式切换没有同步到配置：${JSON.stringify(after)}`);
+  }
+  if (!after.menuHidden) {
+    throw new Error('选择模式后菜单没有关闭');
+  }
+  if (after.iconSvg !== 1) {
+    throw new Error(`模式触发器缺少语义图标：${JSON.stringify(after)}`);
+  }
+  if (after.borderWidth > 0) {
+    throw new Error(`模式触发器不应有边框（与相邻图标按钮不一致）：border=${after.borderWidth}px`);
+  }
+  if (after.height < 26 || after.height > 36) {
+    throw new Error(`模式触发器高度与工具条不匹配：${after.height}px`);
+  }
+  // 切到「实际修改」验证写入档的风险样式（patch 不属于写入档）
+  await clickAndWait(page, '#agent-mode-btn', 200);
+  await clickAndWait(page, '.agent-mode-option[data-mode-value="edit"]', 350);
+  const writeState = await page.evaluate(() => {
+    const btn = document.querySelector('#agent-mode-btn');
+    const icon = document.querySelector('#agent-mode-icon');
+    return {
+      label: document.querySelector('#agent-mode-btn-label')?.textContent?.trim() || '',
+      select: document.querySelector('#agent-mode')?.value || '',
+      agent: document.querySelector('#agent-agent')?.value || '',
+      hasWriteClass: btn?.classList.contains('is-write') === true,
+      hasRiskClass: btn?.classList.contains('is-risk') === true,
+      color: btn ? getComputedStyle(btn).color : '',
+      iconPaths: icon?.querySelectorAll('svg path').length || 0,
+    };
+  });
+  if (writeState.select !== 'edit') {
+    throw new Error(`写入档没有同步到配置：${JSON.stringify(writeState)}`);
+  }
+  // 注意：权限档只在「新建会话」或切到完全访问时才自动改写（既有设计），这里不做断言
+  if (!writeState.hasWriteClass || writeState.hasRiskClass) {
+    throw new Error(`写入档风险样式类不正确：${JSON.stringify(writeState)}`);
+  }
+  if (!/rgb\(180, 83, 9\)/.test(writeState.color)) {
+    throw new Error(`写入档没有使用警示色：${writeState.color}`);
+  }
+  // 完全访问：必须转为红色风险态
+  await clickAndWait(page, '#agent-mode-btn', 200);
+  await clickAndWait(page, '.agent-mode-option[data-mode-value="full"]', 350);
+  const fullState = await page.evaluate(() => {
+    const btn = document.querySelector('#agent-mode-btn');
+    return {
+      select: document.querySelector('#agent-mode')?.value || '',
+      hasRiskClass: btn?.classList.contains('is-risk') === true,
+      hasWriteClass: btn?.classList.contains('is-write') === true,
+      color: btn ? getComputedStyle(btn).color : '',
+    };
+  });
+  if (fullState.select !== 'full' || !fullState.hasRiskClass || fullState.hasWriteClass) {
+    throw new Error(`完全访问风险样式不正确：${JSON.stringify(fullState)}`);
+  }
+  if (!/rgb\(185, 28, 28\)/.test(fullState.color)) {
+    throw new Error(`完全访问没有使用红色警示：${fullState.color}`);
+  }
+  // 还原为只读，避免影响后续用例
+  await clickAndWait(page, '#agent-mode-btn', 200);
+  await clickAndWait(page, '.agent-mode-option[data-mode-value="analyze"]', 300);
+}
+
+// 输入区工具条图标：全部为 SVG，不能残留 emoji / 文字符号
+// 消息操作条：不依赖 OpenCode 消息 ID（ZCode 会话也要有复制/重发）
+async function runMessageActionsInteraction(page) {
+  await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+  await new Promise(resolve => setTimeout(resolve, 600));
+  const info = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.agent-message')];
+    const withActions = cards.filter(card => card.querySelector('.agent-message-actions'));
+    const first = withActions[0];
+    const buttons = first ? [...first.querySelectorAll('.agent-message-action')] : [];
+    return {
+      messages: cards.length,
+      withActions: withActions.length,
+      labels: buttons.map(btn => btn.textContent.trim()),
+      hasCopyIcon: buttons.some(btn => btn.querySelector('svg') && btn.dataset.messageCopy !== undefined),
+      idleOpacity: first ? getComputedStyle(first.querySelector('.agent-message-actions')).opacity : null,
+      position: first ? getComputedStyle(first.querySelector('.agent-message-actions')).position : '',
+    };
+  });
+  if (!info.messages) return; // 没有消息时跳过
+  if (info.withActions !== info.messages) {
+    throw new Error(`不是所有消息都有操作条：${info.withActions}/${info.messages}`);
+  }
+  if (!info.labels.includes('复制')) {
+    throw new Error(`消息操作条缺少复制：${info.labels.join(',')}`);
+  }
+  if (!info.hasCopyIcon) {
+    throw new Error('复制按钮缺少图标');
+  }
+  // hover 才浮现，避免常驻干扰阅读
+  if (info.idleOpacity !== '0') {
+    throw new Error(`操作条默认应收起（悬停浮现），实际 opacity=${info.idleOpacity}`);
+  }
+  // 复制功能：把内容写入剪贴板（用只读权限探测，不实际污染剪贴板）
+  const copyable = await page.evaluate(() => {
+    const btn = document.querySelector('[data-message-copy]');
+    const card = btn?.closest('.agent-message');
+    const text = card?.querySelector('.agent-message-bubble')?.innerText || '';
+    return { hasButton: Boolean(btn), textLength: text.trim().length };
+  });
+  if (!copyable.hasButton || copyable.textLength === 0) {
+    throw new Error(`复制按钮取不到消息文本：${JSON.stringify(copyable)}`);
+  }
+}
+
+// 侧栏收起把手：撑满整高、图标居中、有可见边界，而不是只剩一个小箭头
+async function runContextHandleInteraction(page) {
+  await page.waitForSelector('#agent-context-collapse-btn', { timeout: pageTimeoutMs });
+  const read = () => page.evaluate(() => {
+    const btn = document.querySelector('#agent-context-collapse-btn');
+    const sidebar = document.querySelector('#agent-context-sidebar');
+    const shell = document.querySelector('.agent-workbench-shell');
+    const svg = btn.querySelector('svg');
+    const br = btn.getBoundingClientRect();
+    const sr = sidebar.getBoundingClientRect();
+    const ir = svg.getBoundingClientRect();
+    return {
+      collapsed: shell.classList.contains('is-context-collapsed'),
+      sidebarW: Math.round(sr.width),
+      btnW: Math.round(br.width),
+      btnH: Math.round(br.height),
+      iconCenterOffsetX: Math.round((ir.left + ir.width / 2) - (br.left + br.width / 2)),
+      iconCenterOffsetY: Math.round((ir.top + ir.height / 2) - (br.top + br.height / 2)),
+      iconSize: Math.round(ir.width),
+      bg: getComputedStyle(btn).backgroundColor,
+      label: btn.getAttribute('aria-label'),
+      svgCount: btn.querySelectorAll('svg').length,
+      text: (btn.textContent || '').trim(),
+    };
+  });
+  const initial = await read();
+  if (initial.svgCount !== 1 || initial.text) {
+    throw new Error(`折叠把手应为纯 SVG 图标：svg=${initial.svgCount} text=${initial.text}`);
+  }
+  // 确保处于收起态
+  if (!initial.collapsed) {
+    await clickAndWait(page, '#agent-context-collapse-btn', 400);
+  }
+  const collapsed = await read();
+  if (!collapsed.collapsed) {
+    throw new Error('点击后没有进入收起态');
+  }
+  if (collapsed.btnH < 200) {
+    throw new Error(`收起态把手没有撑满高度：${collapsed.btnH}px`);
+  }
+  if (Math.abs(collapsed.iconCenterOffsetX) > 2 || Math.abs(collapsed.iconCenterOffsetY) > 2) {
+    throw new Error(`把手图标没有居中：x=${collapsed.iconCenterOffsetX} y=${collapsed.iconCenterOffsetY}`);
+  }
+  if (collapsed.iconSize < 16) {
+    throw new Error(`把手图标过小：${collapsed.iconSize}px`);
+  }
+  // 必须有可见边界（白底或描边），否则和侧栏灰底融为一体
+  if (!/rgb\(255, 255, 255\)/.test(collapsed.bg)) {
+    throw new Error(`收起态把手缺少可见背景：${collapsed.bg}`);
+  }
+  if (!/展开/.test(collapsed.label || '')) {
+    throw new Error(`收起态 aria-label 应提示展开：${collapsed.label}`);
+  }
+  // 展开回去，避免影响后续用例
+  await clickAndWait(page, '#agent-context-collapse-btn', 400);
+  const expanded = await read();
+  if (expanded.collapsed || expanded.btnH > 60) {
+    throw new Error(`展开态把手尺寸异常：${JSON.stringify(expanded)}`);
+  }
+}
+
+async function runComposerIconInteraction(page) {
+  await page.waitForSelector('#agent-composer-footer, .agent-composer-footer', { timeout: pageTimeoutMs });
+  const icons = await page.evaluate(() => {
+    const pick = id => document.getElementById(id);
+    const read = id => {
+      const el = pick(id);
+      return el ? { svg: el.querySelectorAll('svg').length, text: (el.innerText || '').trim() } : null;
+    };
+    return {
+      plus: read('agent-plus-btn'),
+      tools: read('agent-composer-tools-btn'),
+      model: read('agent-model-btn'),
+      mode: read('agent-mode-btn'),
+    };
+  });
+  for (const [name, info] of Object.entries(icons)) {
+    if (!info) throw new Error(`工具条按钮缺失：${name}`);
+    if (info.svg < 1) throw new Error(`工具条按钮 ${name} 不是 SVG 图标（残留文字：${info.text}）`);
+  }
+  // 图标不能被按钮字号撑满（曾出现 30px 图标塞进 30px 按钮，糊成一团）
+  const sizes = await page.evaluate(() => {
+    const out = {};
+    for (const id of ['agent-plus-btn', 'agent-composer-tools-btn', 'agent-model-btn']) {
+      const el = document.getElementById(id);
+      const svg = el?.querySelector('svg');
+      if (!svg) continue;
+      out[id] = { btn: Math.round(el.getBoundingClientRect().width), svg: Math.round(svg.getBoundingClientRect().width) };
+    }
+    return out;
+  });
+  for (const [id, size] of Object.entries(sizes)) {
+    // 桌面端「会话选项」按钮按设计隐藏（宽 0），不参与尺寸判断
+    if (size.btn === 0) continue;
+    if (size.svg >= size.btn - 2) {
+      throw new Error(`${id} 图标被撑满按钮：svg=${size.svg} btn=${size.btn}`);
+    }
+  }
+  // 会话选项面板只保留没有其它入口的字段，重复项应已移除
+  const panel = await page.evaluate(() => {
+    const root = document.getElementById('agent-composer-options');
+    if (!root) return null;
+    const visibleLabels = [...root.querySelectorAll('label')]
+      .filter(label => getComputedStyle(label).display !== 'none')
+      .map(label => (label.innerText || '').trim().split('\n')[0]);
+    return { visibleLabels, hasHiddenState: Boolean(root.querySelector('.agent-composer-hidden-state')) };
+  });
+  if (panel) {
+    if (!panel.hasHiddenState) {
+      throw new Error('会话选项缺少隐藏状态源（模型/思考档位需要保留唯一数据源）');
+    }
+    // 模型与思考档位已由工具条/模型卡片承载，面板里不应再出现
+    for (const removed of ['模型', '思考等级', '任务模式']) {
+      if (panel.visibleLabels.includes(removed)) {
+        throw new Error(`会话选项仍重复展示「${removed}」：${panel.visibleLabels.join(',')}`);
+      }
+    }
+  }
+}
+
+// 模型选择卡片（对齐 ZCode）：供应商行 / 模型行徽章 / 思考强度滑块三段结构
+async function runModelMenuCardInteraction(page) {
+  await page.waitForSelector('#agent-model-btn', { timeout: pageTimeoutMs });
+  await clickAndWait(page, '#agent-model-btn', 300);
+  await page.waitForSelector('#agent-model-menu:not(.hidden)', { timeout: pageTimeoutMs });
+
+  const card = await page.evaluate(() => {
+    const menu = document.querySelector('#agent-model-menu');
+    const rect = menu?.getBoundingClientRect() || { width: 0, height: 0 };
+    return {
+      width: Math.round(rect.width),
+      hasProviderRow: Boolean(menu?.querySelector('#agent-model-menu-provider-row')),
+      hasModelList: Boolean(menu?.querySelector('#agent-model-menu-list')),
+      hasEffort: Boolean(menu?.querySelector('#agent-model-menu-effort')),
+      hasSlider: Boolean(menu?.querySelector('#agent-effort-range')),
+      providerName: menu?.querySelector('#agent-model-menu-provider')?.textContent?.trim() || '',
+      stopCount: menu?.querySelectorAll('.agent-effort-stop').length || 0,
+      // 三段顺序：供应商行 → 列表 → 滑块
+      order: [...(menu?.children || [])].map(child => child.id || child.className).join('>'),
+    };
+  });
+  if (!card.hasProviderRow || !card.hasModelList || !card.hasEffort || !card.hasSlider) {
+    throw new Error(`模型卡片结构不完整：${JSON.stringify(card)}`);
+  }
+  if (card.width < 240 || card.width > 420) {
+    throw new Error(`模型卡片宽度异常：${card.width}`);
+  }
+  if (!card.providerName) {
+    throw new Error('供应商行没有显示当前供应商名称');
+  }
+
+  // 供应商行：点开为供应商列表，再点同一条目回到模型列表
+  await clickAndWait(page, '#agent-model-menu-provider-row', 300);
+  const providersView = await page.evaluate(() => {
+    const menu = document.querySelector('#agent-model-menu');
+    return {
+      isProviders: menu?.classList.contains('is-providers') === true,
+      items: menu?.querySelectorAll('#agent-model-menu-list .agent-model-provider').length || 0,
+      effortHidden: getComputedStyle(menu?.querySelector('#agent-model-menu-effort')).display === 'none',
+    };
+  });
+  if (!providersView.isProviders || providersView.items < 2) {
+    throw new Error(`供应商列表没有渲染：${JSON.stringify(providersView)}`);
+  }
+  if (!providersView.effortHidden) {
+    throw new Error('供应商列表视图下思考强度滑块应隐藏');
+  }
+  // 选中默认供应商，回到模型列表
+  await clickAndWait(page, '#agent-model-menu-list .agent-model-provider[data-provider-key="__default__"]', 300);
+  const backToModels = await page.evaluate(() => {
+    const menu = document.querySelector('#agent-model-menu');
+    return {
+      isProviders: menu?.classList.contains('is-providers') === true,
+      hasModelItem: Boolean(menu?.querySelector('.agent-model-item')),
+      effortVisible: menu?.querySelector('#agent-model-menu-effort') && getComputedStyle(menu.querySelector('#agent-model-menu-effort')).display !== 'none',
+    };
+  });
+  if (backToModels.isProviders || !backToModels.hasModelItem || !backToModels.effortVisible) {
+    throw new Error(`选中供应商后没有回到模型列表：${JSON.stringify(backToModels)}`);
+  }
+
+  // 思考强度滑块：拖到某一档后，隐藏的 select 必须同步，且填充条随之变宽
+  const slider = await page.evaluate(() => {
+    const range = document.querySelector('#agent-effort-range');
+    const options = [...document.querySelector('#agent-variant').options]
+      .filter(option => option.value && option.value !== '__custom__');
+    return { max: Number(range?.max || 0), optionCount: options.length, first: options[0]?.value || '' };
+  });
+  if (slider.max < 1) {
+    throw new Error(`思考强度滑块档位不足：max=${slider.max} options=${slider.optionCount}`);
+  }
+  await page.evaluate(() => {
+    const range = document.querySelector('#agent-effort-range');
+    range.value = range.max;
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    range.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await new Promise(resolve => setTimeout(resolve, 250));
+  const afterSlide = await page.evaluate(() => {
+    const range = document.querySelector('#agent-effort-range');
+    const select = document.querySelector('#agent-variant');
+    const fill = document.querySelector('#agent-effort-fill');
+    const label = document.querySelector('#agent-effort-label');
+    return {
+      selectValue: select?.value || '',
+      rangeValue: Number(range?.value ?? -1),
+      fillWidth: fill ? fill.style.width : '',
+      isMax: fill?.dataset.max === 'true',
+      label: label?.textContent?.trim() || '',
+      bubbles: document.querySelectorAll('.agent-effort-bubble').length,
+    };
+  });
+  if (afterSlide.selectValue !== slider.first && !afterSlide.selectValue) {
+    throw new Error(`滑块没有同步到档位 select：${JSON.stringify(afterSlide)}`);
+  }
+  if (afterSlide.rangeValue !== slider.max || !afterSlide.fillWidth) {
+    throw new Error(`滑块填充没有更新：${JSON.stringify(afterSlide)}`);
+  }
+  if (!afterSlide.isMax || afterSlide.bubbles === 0) {
+    throw new Error(`最高档没有进入渐变+气泡状态：${JSON.stringify(afterSlide)}`);
+  }
+  if (!afterSlide.label || afterSlide.label === '默认') {
+    throw new Error(`最高档标签没有更新：${afterSlide.label}`);
+  }
+
+  // 圆点必须完整显示、圆心压在填充条末端且垂直居中：
+  // 曾因圆点放在 overflow:hidden 轨道内被裁掉，又因 margin 折叠整体下移 4px
+  const alignment = await page.evaluate(() => {
+    const track = document.querySelector('.agent-effort-track');
+    const fill = document.querySelector('#agent-effort-fill');
+    const thumb = document.querySelector('#agent-effort-thumb');
+    const slider = document.querySelector('#agent-effort-slider');
+    const t = track.getBoundingClientRect();
+    const f = fill.getBoundingClientRect();
+    const th = thumb.getBoundingClientRect();
+    const s = slider.getBoundingClientRect();
+    return {
+      centerVsFillRight: Math.round((th.left + th.right) / 2 - f.right),
+      thumbOverflowRight: Math.round(th.right - t.right),
+      thumbOverflowLeft: Math.round(t.left - th.left),
+      thumbWidth: Math.round(th.width),
+      // 垂直居中：圆点中心与轨道中心、滑块中心三者应一致
+      thumbCenterVsTrackCenter: Math.round((th.top + th.bottom) / 2 - (t.top + t.bottom) / 2),
+      thumbCenterVsSliderCenter: Math.round((th.top + th.bottom) / 2 - (s.top + s.bottom) / 2),
+      trackHeight: Math.round(t.height),
+      thumbHeight: Math.round(th.height),
+    };
+  });
+  if (Math.abs(alignment.centerVsFillRight) > 2) {
+    throw new Error(`滑块圆点没有对齐填充末端：${JSON.stringify(alignment)}`);
+  }
+  if (alignment.thumbOverflowRight > 1 || alignment.thumbOverflowLeft > 1) {
+    throw new Error(`滑块圆点被轨道裁切：${JSON.stringify(alignment)}`);
+  }
+  if (Math.abs(alignment.thumbCenterVsTrackCenter) > 1 || Math.abs(alignment.thumbCenterVsSliderCenter) > 1) {
+    throw new Error(`滑块圆点没有垂直居中：${JSON.stringify(alignment)}`);
+  }
+  if (alignment.thumbWidth !== alignment.thumbHeight) {
+    throw new Error(`滑块圆点不是正圆：${JSON.stringify(alignment)}`);
+  }
+
+  // 点「主对话 API 模型」把选择复位，避免影响后续用例
+  await page.evaluate(() => {
+    const item = document.querySelector('.agent-model-item[data-model-value=""]');
+    item?.click();
+  });
+  await new Promise(resolve => setTimeout(resolve, 250));
+}
+
+// 模型选择卡片：打开 → 供应商视图 → 进入管理模型（新 UI 的「管理模型」在供应商二级列表里）
+async function openModelManagerFromComposerMenu(page) {
+  await page.waitForSelector('#agent-model-btn', { timeout: pageTimeoutMs });
+  await clickAndWait(page, '#agent-model-btn', 250);
+  await page.waitForSelector('#agent-model-menu:not(.hidden) #agent-model-menu-provider-row', { timeout: pageTimeoutMs });
+  // 卡片默认展示模型列表，点顶部供应商行切到供应商列表
+  await clickAndWait(page, '#agent-model-menu-provider-row', 250);
+  await page.waitForSelector('#agent-model-menu-list .agent-model-provider[data-provider-action="manage"]', { timeout: pageTimeoutMs });
+  await clickAndWait(page, '#agent-model-menu-list .agent-model-provider[data-provider-action="manage"]', 350);
+  await page.waitForSelector('#agent-model-manager-mask:not(.hidden)', { timeout: pageTimeoutMs });
+}
+
+// 获取模型：打开管理模型 → 添加供应商 → 点「获取模型」，校验弹窗与按钮布局（不发真实外网请求）
+async function runProviderModelsInteraction(page, runtimeErrors = []) {
+  await openModelManagerFromComposerMenu(page);
+  // 没有供应商时左栏整体收起，添加按钮在空状态卡片里；有供应商时才用左栏按钮
+  const emptyAddVisible = await page.evaluate(() => {
+    const button = document.querySelector('[data-manager-empty-add]');
+    return Boolean(button) && button.getBoundingClientRect().width > 0;
+  });
+  await clickAndWait(page, emptyAddVisible ? '[data-manager-empty-add]' : '#agent-model-manager-add', 300);
+  await page.waitForSelector('[data-manager-model-fetch-btn]', { timeout: pageTimeoutMs });
+
+  // 桌面端：模型列表头部两个按钮都不应被撑成整行
+  const headLayout = await page.evaluate(() => {
+    const head = document.querySelector('.agent-manager-models-head');
+    const fetchBtn = document.querySelector('[data-manager-model-fetch-btn]');
+    const addBtn = document.querySelector('[data-manager-model-add-btn]');
+    return {
+      headWidth: head?.getBoundingClientRect().width || 0,
+      fetchWidth: fetchBtn?.getBoundingClientRect().width || 0,
+      addWidth: addBtn?.getBoundingClientRect().width || 0,
+    };
+  });
+  if (!headLayout.fetchWidth || headLayout.fetchWidth > headLayout.headWidth * 0.6) {
+    throw new Error('「获取模型」按钮宽度异常（疑似被拉伸成整行）');
+  }
+  if (!headLayout.addWidth || headLayout.addWidth > headLayout.headWidth * 0.6) {
+    throw new Error('「添加模型」按钮宽度异常（疑似被拉伸成整行）');
+  }
+
+  // 缺 Base URL 时点获取模型：应弹出弹窗并在弹窗内提示，不弹全屏 alert
+  await clickAndWait(page, '[data-manager-model-fetch-btn]', 400);
+  await page.waitForSelector('#agent-provider-models-mask:not(.hidden)', { timeout: pageTimeoutMs });
+  await page.waitForSelector('#agent-provider-models-error:not(.hidden)', { timeout: pageTimeoutMs });
+  const errorText = await page.evaluate(() => document.querySelector('#agent-provider-models-error')?.textContent || '');
+  if (!/Base URL/.test(errorText)) {
+    throw new Error(`获取模型缺少 Base URL 提示不明确：${errorText}`);
+  }
+  // 关闭后回到管理模型弹窗，不残留遮罩
+  await clickAndWait(page, '#agent-provider-models-close', 300);
+  const closed = await page.evaluate(() => document.querySelector('#agent-provider-models-mask')?.classList.contains('hidden') === true);
+  if (!closed) {
+    throw new Error('获取模型弹窗关闭失败');
+  }
+
+  // 旧进程场景：路由不存在 → 404，提示应指向“重启 Bot”，而不是通用兜底文案
+  await page.setRequestInterception(true);
+  const notFoundHandler = request => {
+    if (request.url().includes('/api/agent-workbench/provider-models')) {
+      request.respond({ status: 404, contentType: 'text/plain', body: 'Not Found' }).catch(() => {});
+      return;
+    }
+    request.continue().catch(() => {});
+  };
+  page.on('request', notFoundHandler);
+  const injectedErrorIndex = runtimeErrors.length;
+  try {
+    await setInputValue(page, '[data-manager-field="baseApi"]', 'https://stale-route.example.com/v1');
+    await clickAndWait(page, '[data-manager-model-fetch-btn]', 700);
+    await page.waitForSelector('#agent-provider-models-error:not(.hidden)', { timeout: pageTimeoutMs });
+    const notFoundText = await page.evaluate(() => document.querySelector('#agent-provider-models-error')?.textContent || '');
+    if (!/重启 Bot/.test(notFoundText) || /没有找到对应的数据或接口/.test(notFoundText)) {
+      throw new Error(`路由缺失（404）提示没有指向重启：${notFoundText}`);
+    }
+  } finally {
+    page.off('request', notFoundHandler);
+    await page.setRequestInterception(false).catch(() => {});
+  }
+  await clickAndWait(page, '#agent-provider-models-close', 300);
+  await setInputValue(page, '[data-manager-field="baseApi"]', '');
+  // 这条 404 是测试主动注入的，不该算作真实前端异常：清掉收集器与本次追加记录
+  await resetFrontendErrorCollector(page);
+  runtimeErrors.splice(injectedErrorIndex);
+
+  // 全链路：指向本地假供应商 → 拉取 → 勾选 → 添加进草稿
+  await withFakeModelProvider(async providerBase => {
+    await setInputValue(page, '[data-manager-field="name"]', 'E2E 渠道');
+    await setInputValue(page, '[data-manager-field="baseApi"]', providerBase);
+    await clickAndWait(page, '[data-manager-model-fetch-btn]', 900);
+    await page.waitForSelector('#agent-provider-models-mask:not(.hidden)', { timeout: pageTimeoutMs });
+    await page.waitForSelector('#agent-provider-models-list .agent-provider-models-item input:not([disabled])', { timeout: pageTimeoutMs });
+    const fetched = await page.evaluate(() => {
+      const items = Array.from(document.querySelectorAll('#agent-provider-models-list .agent-provider-models-item'));
+      return {
+        names: items.map(item => item.textContent.trim()),
+        selected: items.filter(item => item.querySelector('input')?.checked).length,
+        countText: document.querySelector('#agent-provider-models-count')?.textContent || '',
+      };
+    });
+    if (fetched.names.length !== 2 || !fetched.names.join(',').includes('e2e-model-a')) {
+      throw new Error(`获取模型列表内容异常：${fetched.names.join(',')}`);
+    }
+    if (fetched.selected !== 2) {
+      throw new Error(`获取模型未默认全选未添加模型：selected=${fetched.selected}`);
+    }
+    // 取消勾选一个，验证筛选框与勾选状态联动
+    await clickAndWait(page, '#agent-provider-models-list .agent-provider-models-item:first-child', 200);
+    const afterUncheck = await page.evaluate(() => document.querySelector('#agent-provider-models-count')?.textContent || '');
+    if (!/已选 1 个/.test(afterUncheck)) {
+      throw new Error(`取消勾选后计数未更新：${afterUncheck}`);
+    }
+    await setInputValue(page, '#agent-provider-models-filter', 'e2e-model-b');
+    const filtered = await page.evaluate(() => document.querySelectorAll('#agent-provider-models-list .agent-provider-models-item').length);
+    if (filtered !== 1) {
+      throw new Error(`筛选框没有过滤列表：可见 ${filtered} 条`);
+    }
+    await clickAndWait(page, '#agent-provider-models-save', 400);
+    const rows = await page.evaluate(() => Array.from(document.querySelectorAll('.agent-manager-model-row strong')).map(item => item.textContent.trim()));
+    if (rows.length !== 1 || rows[0] !== 'e2e-model-b') {
+      throw new Error(`添加所选结果异常：${rows.join(',') || '(空)'}`);
+    }
+  });
+  await clickAndWait(page, '#agent-model-manager-close', 250);
+}
+
 async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
   const checks = [
     { label: 'API 设置草稿', path: '/api-settings.html', run: runApiSettingsInteraction },
@@ -961,6 +1700,14 @@ async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
     { label: '模拟调试安全发送', path: '/qq-simulator.html', run: runQqSimulatorInteraction },
     { label: '模拟调试深度预览', path: '/qq-simulator.html', run: runQqSimulatorDeepPreviewInteraction },
     { label: '依赖面板刷新与搜索', path: '/dependency-check.html', run: runDependencyInteraction },
+    { label: 'Agent 斜杠命令面板', path: '/agent-workbench.html', run: runSlashMenuInteraction },
+    { label: 'Agent 输入区模式切换', path: '/agent-workbench.html', run: runModeSwitchInteraction },
+    { label: 'Agent 输入区图标统一', path: '/agent-workbench.html', run: runComposerIconInteraction },
+    { label: 'Agent 消息操作条', path: '/agent-workbench.html', run: runMessageActionsInteraction },
+    { label: 'Agent 侧栏折叠把手', path: '/agent-workbench.html', run: runContextHandleInteraction },
+    { label: 'Agent 模型选择卡片', path: '/agent-workbench.html', run: runModelMenuCardInteraction },
+    { label: 'Agent 上下文容量面板', path: '/agent-workbench.html', run: runContextUsagePanelInteraction },
+    { label: 'Agent 管理模型获取模型', path: '/agent-workbench.html', run: (page, context = {}) => runProviderModelsInteraction(page, context.runtimeErrors || []) },
   ];
   const results = [];
   for (const check of checks) {
@@ -980,7 +1727,300 @@ async function inspectMobilePages(page, baseUrl, runtimeErrors, profile) {
       checkMobileLayout: true,
     }));
   }
+  // Agent 工作台的弹窗默认隐藏，静态探针量不到：这里实际打开「获取模型」再测窄屏布局
+  results.push(await inspectMobileContextPopover(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileSlashMenu(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileModelMenuCard(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileProviderModels(page, baseUrl, runtimeErrors, profile));
   return results;
+}
+
+// 斜杠命令面板窄屏：不溢出、行高够触控、分组与快捷键提示保留
+async function inspectMobileSlashMenu(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'Agent 斜杠命令面板',
+    path: '/agent-workbench.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/agent-workbench.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('#agent-prompt', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 900));
+    await page.evaluate(() => {
+      const input = document.querySelector('#agent-prompt');
+      input.value = '/';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+    });
+    await page.waitForSelector('#agent-slash-menu:not(.hidden)', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const menu = document.querySelector('#agent-slash-menu');
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      if (!menu) {
+        push('斜杠面板存在', false);
+        return checks;
+      }
+      const rect = menu.getBoundingClientRect();
+      push('面板不溢出视口', rect.left >= -1 && rect.right <= viewportWidth + 1, `l=${Math.round(rect.left)} r=${Math.round(rect.right)} vw=${viewportWidth}`);
+      push('页面无横向滚动', document.documentElement.scrollWidth <= viewportWidth + 1, `scrollW=${document.documentElement.scrollWidth}`);
+      const item = menu.querySelector('.agent-slash-item');
+      const isNarrow = window.matchMedia('(max-width: 760px)').matches;
+      if (item) {
+        // 窄屏放大触控目标；横屏（>760px）沿用桌面紧凑行高
+        const minHeight = isNarrow ? 40 : 32;
+        push('命令行高度合理', item.getBoundingClientRect().height >= minHeight, `h=${Math.round(item.getBoundingClientRect().height)} min=${minHeight}`);
+      }
+      push('保留分组标题', menu.querySelectorAll('.agent-slash-group-title').length >= 2, `groups=${menu.querySelectorAll('.agent-slash-group-title').length}`);
+      push('保留快捷键提示', menu.querySelectorAll('.agent-slash-foot kbd').length >= 3, `kbd=${menu.querySelectorAll('.agent-slash-foot kbd').length}`);
+      // 行内别名只在窄屏隐藏，避免把说明挤成省略号
+      const alias = menu.querySelector('.agent-slash-alias');
+      if (alias && isNarrow) push('窄屏隐藏别名', getComputedStyle(alias).display === 'none', `display=${getComputedStyle(alias).display}`);
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'Agent 斜杠命令面板.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`Agent 斜杠命令面板（${profile.label}）正常`);
+  return result;
+}
+
+// 上下文容量面板窄屏：居中、不超出视口、不被拉成整行
+async function inspectMobileContextPopover(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'Agent 上下文容量面板',
+    path: '/agent-workbench.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/agent-workbench.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('#agent-context-usage-trigger', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 900));
+    await page.evaluate(() => {
+      const menu = document.querySelector('#agent-context-usage-menu');
+      menu.open = true;
+      menu.dispatchEvent(new Event('toggle'));
+    });
+    // 合成 toggle 事件不保证走完原生流程，用一次 resize 触发同一套定位逻辑
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    await new Promise(resolve => setTimeout(resolve, 250));
+    await page.waitForSelector('.agent-context-usage-popover', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const pop = document.querySelector('.agent-context-usage-popover');
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      if (!pop) {
+        push('上下文面板存在', false);
+        return checks;
+      }
+      const rect = pop.getBoundingClientRect();
+      push('面板不超出视口', rect.left >= -1 && rect.right <= viewportWidth + 1, `left=${Math.round(rect.left)} right=${Math.round(rect.right)} vw=${viewportWidth}`);
+      // 不能横向铺满（旧规则是 left/right 都钉 12px，会被拉成整行）
+      push('面板宽度随内容而非铺满', rect.width < viewportWidth - 40, `w=${Math.round(rect.width)} vw=${viewportWidth}`);
+      // 关键约束：面板必须留在视口内，且宽度跟随内容不被拉满。
+      // 不做「相对聊天区居中/贴边」的判断——桌面锚定的是输入区容器，手机是聊天区，两者基准不同。
+      const host = pop.closest('.agent-chat-panel') || document.body;
+      const hostRect = host.getBoundingClientRect();
+      push('面板不超出聊天区', rect.left >= hostRect.left - 1 && rect.right <= hostRect.right + 1, `pop=${Math.round(rect.left)}-${Math.round(rect.right)} host=${Math.round(hostRect.left)}-${Math.round(hostRect.right)}`);
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'Agent 上下文容量面板.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`Agent 上下文容量面板（${profile.label}）正常`);
+  return result;
+}
+
+// 模型卡片窄屏：卡片不超出视口、模型列表可滚动、滑块可点
+async function inspectMobileModelMenuCard(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'Agent 模型选择卡片',
+    path: '/agent-workbench.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/agent-workbench.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('#agent-model-btn', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 900));
+    await clickAndWait(page, '#agent-model-btn', 400);
+    await page.waitForSelector('#agent-model-menu:not(.hidden)', { timeout: pageTimeoutMs });
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const menu = document.querySelector('#agent-model-menu');
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+      if (!menu) {
+        push('模型卡片存在', false);
+        return checks;
+      }
+      const rect = menu.getBoundingClientRect();
+      push('卡片宽度不超出视口', rect.width <= viewportWidth + 1, `card=${Math.round(rect.width)} viewport=${viewportWidth}`);
+      push('卡片左右完整可见', rect.left >= -1 && rect.right <= viewportWidth + 1, `left=${Math.round(rect.left)} right=${Math.round(rect.right)}`);
+      push('卡片上下不超出视口', rect.top >= -1 && rect.bottom <= viewportHeight + 1, `top=${Math.round(rect.top)} bottom=${Math.round(rect.bottom)}`);
+      const list = menu.querySelector('#agent-model-menu-list');
+      if (list) {
+        push('模型列表可滚动', ['auto', 'scroll'].includes(getComputedStyle(list).overflowY), `overflowY=${getComputedStyle(list).overflowY}`);
+      }
+      const slider = menu.querySelector('#agent-model-menu-effort');
+      if (slider) {
+        const sliderRect = slider.getBoundingClientRect();
+        push('思考强度滑块在卡片内', sliderRect.bottom <= rect.bottom + 1, `sliderBottom=${Math.round(sliderRect.bottom)} cardBottom=${Math.round(rect.bottom)}`);
+      }
+      const row = menu.querySelector('#agent-model-menu-provider-row');
+      if (row) {
+        push('供应商行触控高度足够', row.getBoundingClientRect().height >= 40, `height=${Math.round(row.getBoundingClientRect().height)}`);
+      }
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'Agent 模型选择卡片.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`Agent 模型选择卡片（${profile.label}）正常`);
+  return result;
+}
+
+async function inspectMobileProviderModels(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'Agent 获取模型弹窗',
+    path: '/agent-workbench.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/agent-workbench.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 900));
+    // 一次流程内完成：打开管理模型 → 添加供应商 → 获取模型，然后量布局并截图
+    await openModelManagerFromComposerMenu(page);
+    const emptyAddVisible = await page.evaluate(() => {
+      const button = document.querySelector('[data-manager-empty-add]');
+      return Boolean(button) && button.getBoundingClientRect().width > 0;
+    });
+    await clickAndWait(page, emptyAddVisible ? '[data-manager-empty-add]' : '#agent-model-manager-add', 300);
+    await page.waitForSelector('[data-manager-model-fetch-btn]', { timeout: pageTimeoutMs });
+
+    // 窄屏下模型列表头部的两个按钮不能被全局移动端规则拉满
+    const headProbe = await page.evaluate(() => {
+      const head = document.querySelector('.agent-manager-models-head');
+      const headWidth = head?.getBoundingClientRect().width || 0;
+      return Array.from(head?.querySelectorAll('.agent-quiet-btn') || []).map(button => ({
+        label: button.textContent.trim(),
+        width: button.getBoundingClientRect().width,
+        headWidth,
+      }));
+    });
+    for (const item of headProbe) {
+      if (!item.width || item.width > Math.max(160, item.headWidth * 0.55)) {
+        result.errors.push(`「${item.label}」按钮被拉伸（${Math.round(item.width)}/${Math.round(item.headWidth)}）`);
+      }
+    }
+
+    await clickAndWait(page, '[data-manager-model-fetch-btn]', 500);
+    await page.waitForSelector('#agent-provider-models-mask:not(.hidden)', { timeout: pageTimeoutMs });
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const dialog = document.querySelector('.agent-provider-models-dialog');
+      const footer = dialog?.querySelector('.agent-settings-footer');
+      const buttons = Array.from(dialog?.querySelectorAll('.agent-settings-footer .agent-quiet-btn') || []);
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      if (dialog) {
+        const rect = dialog.getBoundingClientRect();
+        push('获取模型弹窗未超出屏幕', rect.width <= viewportWidth + 1, `dialog=${Math.round(rect.width)} viewport=${viewportWidth}`);
+        const close = dialog.querySelector('#agent-provider-models-close');
+        const closeWidth = close ? parseFloat(getComputedStyle(close).width) || 0 : 0;
+        push('获取模型关闭按钮为图标尺寸', closeWidth > 20 && closeWidth <= 56, `width=${Math.round(closeWidth)}`);
+      }
+      if (footer && buttons.length) {
+        const footerWidth = footer.getBoundingClientRect().width;
+        for (const button of buttons) {
+          const width = button.getBoundingClientRect().width;
+          push(`「${button.textContent.trim()}」按钮未独占整行`, width < footerWidth * 0.95, `button=${Math.round(width)} footer=${Math.round(footerWidth)}`);
+        }
+      }
+      const toolbar = document.querySelector('.agent-provider-models-toolbar');
+      if (toolbar && !toolbar.classList.contains('hidden')) {
+        push('筛选行窄屏竖排', getComputedStyle(toolbar).flexDirection === 'column', `flexDirection=${getComputedStyle(toolbar).flexDirection}`);
+      }
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'Agent 获取模型弹窗.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    await page.screenshot({ path: result.screenshotPath, fullPage: false });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`Agent 获取模型弹窗（${profile.label}）正常`);
+  await clickAndWait(page, '#agent-provider-models-close', 150).catch(() => {});
+  return result;
 }
 
 async function inspectPage(page, baseUrl, item, runtimeErrors, options = {}) {

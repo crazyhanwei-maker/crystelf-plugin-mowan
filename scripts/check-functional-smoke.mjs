@@ -41,6 +41,8 @@ import {
   getAgentWorkspaceOptions,
   hasCompletedOpenCodeAssistantTurn,
   normalizeAgentWorkbenchConfig,
+  normalizeUsage,
+  parseAgentProviderModelList,
 } from '../lib/webConsole/agentWorkbenchConsole.js';
 import {
   buildBundledOpenCodeEnvironment,
@@ -462,6 +464,21 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(consoleSource.includes('async function listOpenCodeRuntimes') && consoleSource.includes('async function closeOpenCodeRuntime'), 'OpenCode 运行时监控或单实例关闭缺失');
   assert(css.includes('.agent-opencode-runtime-metrics') && css.includes('@media (max-width: 760px)'), 'OpenCode 运行时监控缺少移动端样式');
   assert(runTaskStart >= 0 && slashDispatch > runTaskStart && normalTaskRequest > slashDispatch, '斜杠命令会落入普通 Agent 任务创建流程');
+  // 供应商模型列表：管理模型「获取模型」按钮 + 拉取端点 + 响应解析
+  assert(script.includes('data-manager-model-fetch-btn') && script.includes("'/api/agent-workbench/provider-models'") && html.includes('id="agent-provider-models-mask"'), '管理模型缺少获取模型入口或弹窗');
+  assert(routesSource.includes('/api/agent-workbench/provider-models') && consoleSource.includes('async function fetchProviderModels'), '获取模型列表后端端点缺失');
+  assert(parseAgentProviderModelList({ data: [{ id: 'gpt-4o-mini' }, { id: 'gpt-4o-mini' }, { id: 'claude-3-5-sonnet' }] }).join(',') === 'claude-3-5-sonnet,gpt-4o-mini', '供应商模型列表解析没有去重排序');
+  assert(parseAgentProviderModelList({ models: [{ name: 'qwen-max' }, 'glm-4.6'] }).join(',') === 'glm-4.6,qwen-max', '供应商模型列表解析不兼容 models/字符串混合形态');
+  assert(parseAgentProviderModelList(null).length === 0, '供应商模型列表解析空响应应返回空数组');
+  // 上下文面板：进度条 8px、构成与缓存命中率区块
+  assert(script.includes('agent-context-breakdown') && html.includes('id="agent-context-breakdown"'), '上下文面板缺少构成分类区块');
+  assert(script.includes('renderContextCacheRate') && html.includes('id="agent-context-cache-row"'), '上下文面板缺少缓存命中率区块');
+  assert(/\.agent-context-meter\s*\{[^}]*height:\s*8px/.test(css), '上下文进度条高度没有对齐 ZCode（8px）');
+  // normalizeUsage 必须保留缓存分项，且对已归一化对象不得二次累加（否则 input 翻倍）
+  const rawUsage = normalizeUsage({ input: 100, output: 10, cache: { read: 900, write: 0 } });
+  assert(rawUsage.input === 1000 && rawUsage.cacheRead === 900, 'normalizeUsage 没有把缓存折入 input 或丢失分项');
+  const twiceUsage = normalizeUsage(rawUsage);
+  assert(twiceUsage.input === 1000 && twiceUsage.cacheRead === 900, 'normalizeUsage 对已归一化对象二次累加，input 会翻倍');
   logPass('Agent 斜杠命令、会话动作与 OpenCode Command 分流正常');
 }
 

@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import http from 'http';
 import os from 'os';
 import path from 'path';
 
@@ -378,6 +379,57 @@ async function checkApi(baseUrl, check) {
   logPass(`${check.label}接口正常`);
 }
 
+// 起一个假的 OpenAI 兼容供应商，验证「获取模型」真的会向 Base URL 请求 /v1/models
+async function withFakeModelProvider(run) {
+  const server = http.createServer((req, res) => {
+    if (req.url === '/v1/models' && req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ data: [{ id: 'smoke-model-b' }, { id: 'smoke-model-a' }, { id: 'smoke-model-a' }] }));
+      return;
+    }
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: { message: 'not found' } }));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    return await run(`http://127.0.0.1:${server.address().port}`);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+  }
+}
+
+async function checkProviderModels(baseUrl) {
+  await withFakeModelProvider(async providerBase => {
+    const response = await request(baseUrl, '/api/agent-workbench/provider-models', {
+      method: 'POST',
+      accept: 'application/json',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ name: 'smoke-provider', baseApi: providerBase, apiKey: 'smoke-key', apiProtocol: 'openai' }),
+    });
+    const data = await readJsonResponse(response, '/api/agent-workbench/provider-models');
+    if (data?.success !== true || !Array.isArray(data?.models)) {
+      fail('/api/agent-workbench/provider-models 没有返回模型列表');
+    }
+    if (data.models.join(',') !== 'smoke-model-a,smoke-model-b') {
+      fail(`/api/agent-workbench/provider-models 模型列表不符合预期：${data.models.join(',')}`);
+    }
+    logPass('Agent 供应商模型列表拉取接口正常');
+  });
+
+  // 缺 Base URL 时必须是 400 业务错误，而不是 500
+  const invalidResponse = await request(baseUrl, '/api/agent-workbench/provider-models', {
+    method: 'POST',
+    accept: 'application/json',
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ name: 'smoke-provider' }),
+  });
+  const invalidData = await invalidResponse.json().catch(() => null);
+  if (invalidResponse.status !== 400 || invalidData?.code !== 'AGENT_PROVIDER_BASE_API_REQUIRED') {
+    fail(`/api/agent-workbench/provider-models 缺少 Base URL 时返回 HTTP ${invalidResponse.status}`);
+  }
+  logPass('Agent 供应商模型列表缺参校验正常');
+}
+
 function getIsolatedSmokeToken() {
   return String(process.env.WEB_CONSOLE_SMOKE_TOKEN || 'crystelf-smoke-token').trim();
 }
@@ -496,6 +548,7 @@ async function runSmokeChecks(baseUrl, token) {
     for (const check of apiChecks) {
       await checkApi(baseUrl, check);
     }
+    await checkProviderModels(baseUrl);
     await checkProtectedPages(baseUrl);
   }
 
