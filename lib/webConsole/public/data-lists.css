@@ -522,3 +522,45 @@
     margin-bottom: 10px;
   }
 }
+
+/* ===== 用量中心「关键指标」：手机端卡片双列紧凑 =====
+   基础样式是 14px 内边距 + 18px 标题 + 每行 8px 上下留白，
+   4 张卡单列堆叠总高 762px，首屏只能看到第一张。 */
+@media (max-width: 900px) {
+  #usage-summary.config-summary { gap: 8px; }
+
+  #usage-summary .config-summary-grid {
+    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  #usage-summary .config-summary-card {
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 10px;
+  }
+
+  /* body.flarum-flat .panel h3 是 (0,2,2)，这里用 id 提权压回 13px */
+  #usage-summary .config-summary-card h3 {
+    margin: 0 0 5px;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  #usage-summary .config-summary-list { gap: 0; }
+
+  #usage-summary .config-summary-row {
+    padding: 3px 0;
+    gap: 8px;
+    align-items: baseline;
+  }
+
+  #usage-summary .config-summary-label,
+  #usage-summary .config-summary-value {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  #usage-summary .config-summary-label { min-width: 0; }
+  #usage-summary .config-summary-value { white-space: nowrap; }
+}
