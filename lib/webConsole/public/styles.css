@@ -9101,3 +9101,94 @@ body:has(#help-diy-save-btn) .hero .toolbar input {
 .miao-icon-search { flex: 1 1 180px; }
 .miao-icon-count { font-size: 12px; color: var(--muted-text); white-space: nowrap; }
 .miao-icon-more { grid-column: 1 / -1; }
+
+/* ===== 手机端通用：压缩页面标题区（hero）=====
+   各页 hero 在窄屏下普遍是「装饰徽章 + 24px 标题 + 一段说明 + 整宽按钮纵向排列」，
+   首屏几乎全被标题吃掉。顶栏面包屑已经显示页面名，这里收起重复徽章、
+   标题降到 20px、说明文字降档，操作按钮改两列小按钮。 */
+@media (max-width: 760px) {
+  .console-app-shell .hero {
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 12px 13px;
+    border-radius: 14px;
+  }
+
+  .console-app-shell .hero-badge { display: none; }
+
+  /* console-modern.css 的 .console-app-shell .hero h1 是 (0,3,1) 且后注入：
+     这里用 body + :where 保持 (0,3,1) 的前提下靠源顺序无法取胜，改为再加一层提权 */
+  body .console-app-shell .hero h1,
+  body .console-app-shell .hero:not(:has(.hero-action-group-data)) h1 {
+    margin: 0 0 2px;
+    font-size: 20px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .console-app-shell .hero p,
+  .console-app-shell .hero #plugin-meta,
+  .console-app-shell .hero .setting-help {
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  /* 操作按钮：两列网格，压到 30px 高；单数时最后一项跨整行 */
+  body .console-app-shell .hero > .actions,
+  body .console-app-shell .hero > .hero-actions,
+  body .console-app-shell .hero .hero-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  body .console-app-shell .hero > .actions > *,
+  body .console-app-shell .hero > .hero-actions > *,
+  body .console-app-shell .hero .hero-actions-grid > * {
+    width: auto !important;
+    min-width: 0;
+    min-height: 30px !important;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    border-radius: 8px;
+  }
+
+  body .console-app-shell .hero > .actions > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  /* 「快捷入口」「页面操作」这类分组标签在手机两列网格里只是噪音 */
+  body .console-app-shell .hero .hero-action-label { display: none; }
+
+  body .console-app-shell .hero-actions-shell,
+  body .console-app-shell .hero .hero-action-group {
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  /* 顶栏已经显示页面名：hero 内的 h1 与说明只保留摘要，不再重复排版。
+     console-modern.css 后注入，条件相同（同为 ≤560 的 hero h1 规则）时靠源顺序取胜，
+     这里再叠一层 body 类提权确保生效 */
+  body .console-app-shell .hero h1,
+  body .console-app-shell .hero:not(:has(.hero-action-group-data)) h1 { font-size: 17px; }
+
+  body .console-app-shell .hero p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  /* 说明文字折行超过两行时整体隐藏，避免把按钮推下去 */
+  body .console-app-shell .hero p:not(:has(*)) { max-height: 3em; }
+}

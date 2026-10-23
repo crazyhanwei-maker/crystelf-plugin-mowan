@@ -411,3 +411,114 @@
   background: color-mix(in srgb, #ef4444 12%, var(--panel-bg));
   color: #dc2626;
 }
+
+/* ===== AI 用量日志中心：手机端压缩筛选区 =====
+   原布局把「导出日志」和 5 个快捷筛选各占一整行（每个 40px 高），
+   首屏全被按钮占满、看不到日志。改为标题行紧凑、筛选项做成小胶囊。 */
+@media (max-width: 900px) {
+  .usage-center-page .panel h2 {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  /* 标题行：标题与「导出日志」同一行，按钮贴内容宽度 */
+  .usage-center-page .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .usage-center-page .section-head .actions {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .usage-center-page .section-head .actions > * {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .usage-center-page #export-usage-logs-btn {
+    width: auto !important;
+    min-width: 0;
+    min-height: 30px !important;
+    padding: 4px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* 搜索框：并排两列，高度压到 32px（原 37px + 每个独占一行） */
+  .usage-center-page .toolbar {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .usage-center-page .toolbar > input {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 32px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  /* 快捷筛选：胶囊按钮，一行能排下 2~3 个。
+     console-modern.css 在 ≤560px 给所有按钮钉了 width:100%，必须用 !important 收回 */
+  .usage-center-page .toolbar > button,
+  .usage-center-page .toolbar > .mini-btn {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-width: 0;
+    min-height: 28px !important;
+    padding: 3px 10px !important;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+
+  /* 工具栏里的说明文字与分隔符「·」在高密度布局里只是噪音 */
+  .usage-center-page .toolbar > .setting-help {
+    display: none;
+  }
+
+  /* 日志表格：紧凑行高 */
+  .usage-center-page .log-entry-compact {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+}
+
+/* 用量中心：把顶部标签与面板间距压紧，首屏多显示两行日志 */
+@media (max-width: 900px) {
+  .usage-center-page .usage-view-tabs {
+    margin-bottom: 8px;
+    padding: 3px;
+    border-radius: 9px;
+  }
+
+  .usage-center-page .usage-view-tab {
+    padding: 5px 14px !important;
+    font-size: 13px;
+  }
+
+  body.usage-center-page .panel {
+    padding: 12px 13px;
+    border-radius: 12px;
+  }
+
+  /* body.flarum-flat .panel h2 是 (0,3,1)，这里必须同档提权才压得住 */
+  body.usage-center-page .panel h2 {
+    font-size: 17px;
+    margin-bottom: 0;
+  }
+
+  .usage-center-page .panel h2::before {
+    margin-right: 6px;
+    font-size: 13px;
+  }
+
+  .usage-center-page .section-head {
+    margin-bottom: 10px;
+  }
+}

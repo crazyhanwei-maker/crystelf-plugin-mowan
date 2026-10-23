@@ -1062,3 +1062,60 @@
     font-size: 15px;
   }
 }
+
+/* ===== 手机端 API 设置：压缩 hero，首屏直接看到配置项 =====
+   原样式中 hero 高 382px（徽章 + 24px 标题 + 5 个整宽按钮纵向排列 241px），
+   首屏几乎全被标题区吃掉。这里收掉重复徽章、标题降档、按钮改两列小按钮。 */
+@media (max-width: 760px) {
+  .api-settings-page .hero {
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 12px 13px;
+    border-radius: 14px;
+  }
+
+  /* 顶栏面包屑已显示页面名，徽章是重复信息 */
+  .api-settings-page .hero .hero-badge { display: none; }
+
+  /* console-modern.css 的 .console-app-shell .hero h1 是 (0,3,1)，需同档提权 */
+  body.api-settings-page .console-app-shell .hero h1 {
+    margin: 0 0 2px;
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  .api-settings-page .hero > div { min-width: 0; }
+
+  .api-settings-page #api-settings-meta {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--soft-text);
+  }
+
+  /* 按钮改成两列紧凑网格：5 个按钮从 241px 收到约 100px */
+  .api-settings-page .hero > .actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .api-settings-page .hero > .actions > button,
+  .api-settings-page .hero > .actions > .link-btn {
+    width: auto !important;
+    min-width: 0;
+    min-height: 30px !important;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    border-radius: 8px;
+  }
+
+  /* 最后一个「返回首页」跨两列，避免落单占半格 */
+  .api-settings-page .hero > .actions > .link-btn:last-child {
+    grid-column: 1 / -1;
+  }
+}
