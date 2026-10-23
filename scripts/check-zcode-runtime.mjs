@@ -63,6 +63,9 @@ const PathStub = {
 
 const runtimeRoot = path.join(PathStub.data, 'agent-cli-runtime', 'zcode');
 
+// fake CLI 上报的绝对路径（Windows 形式）；跨平台断言按当前平台的 isAbsolute 规则换算
+const FAKE_ABS_FILE = 'C:\\abs\\target.md';
+
 // 假 zcode.cjs：按 prompt 指令模拟上游 -p --output-format stream-json 的行为
 const fakeCliSource = `
 const fs = require('fs');
@@ -97,7 +100,7 @@ if (prompt === 'RELATIVE') {
 send({ type: 'session.created', sessionId: 'sess-fake-1', payload: { mode: 'plan' } });
 send({ type: 'model.streaming', payload: { kind: 'text_delta', delta: '你好' } });
 send({ type: 'model.streaming', payload: { kind: 'text_delta', delta: '，世界' } });
-send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'Write', input: { file_path: 'C:\\\\abs\\\\target.md' } } });
+send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'Write', input: { file_path: ${JSON.stringify(FAKE_ABS_FILE)} } } });
 send({ type: 'tool.updated', payload: { kind: 'result', toolName: 'Write', result: 'written' } });
 send({ type: 'permission.requested', payload: { toolName: 'Bash', reason: 'headless deny' } });
 send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'Bash', input: { command: 'echo hi' } } });
@@ -323,7 +326,12 @@ async function main() {
     assert.equal(success.ok, true, success.error);
     assert.equal(success.sessionId, 'sess-fake-1');
     assert.equal(success.output, 'final answer');
-    assert.ok(success.filesChanged.includes('C:\\abs\\target.md'));
+    // fake CLI 发的是 Windows 绝对路径；POSIX 上它不算绝对路径，会被拼到工作区下，
+    // 因此按当前平台的绝对路径规则推导预期值，保证检查在 Windows 与 Linux 都成立
+    const expectedFile = path.isAbsolute(FAKE_ABS_FILE)
+      ? path.resolve(FAKE_ABS_FILE)
+      : path.resolve(workspace, FAKE_ABS_FILE);
+    assert.ok(success.filesChanged.includes(expectedFile), `filesChanged=${JSON.stringify(success.filesChanged)} expected=${expectedFile}`);
     assert.deepEqual(plain(success.usage), { inputTokens: 11, outputTokens: 7 });
     const types = success.events.map(event => event.type);
     assert.ok(types.includes('text') && types.includes('file_edit') && types.includes('tool_result'), `types=${JSON.stringify(types)}`);

@@ -1063,10 +1063,18 @@
   margin: 0;
 }
 
+/* ZCode 分段输出：每段是独立内容块，用细分隔线标出「这里另起一段」
+   （段间通常夹着工具调用，没有分隔会被读成一整段） */
+.agent-message-live-bubbles .agent-message-bubble + .agent-message-bubble {
+  padding-top: 12px;
+  border-top: 1px dashed var(--agent-line);
+}
+
 /* 运行中工具进度：显示当前读取/搜索/写入/命令，证明 Agent 在执行而不是卡住 */
 .agent-live-progress {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
   margin-top: 8px;
@@ -1086,6 +1094,27 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* 正在执行的命令：整行独占、等宽、保留换行，避免多行命令挤成一坨 */
+.agent-live-command {
+  flex: 1 0 100%;
+  max-height: 168px;
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border: 1px solid var(--agent-line);
+  border-radius: 6px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  scrollbar-width: thin;
+}
+
+.agent-live-command.hidden { display: none; }
 
 .agent-live-progress-dot {
   flex: none;
@@ -1514,7 +1543,8 @@
 }
 
 .agent-file-change-actions button {
-  min-height: 24px;
+  min-height: 24px !important;
+  height: 24px;
   padding: 3px 10px;
   border: 1px solid var(--agent-line-strong);
   border-radius: 6px;
@@ -1522,6 +1552,7 @@
   color: var(--agent-ink);
   font-size: 11px;
   font-weight: 700;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -1584,16 +1615,64 @@
   background: var(--agent-surface-soft);
 }
 
+/* 工具摘要行（ZCode 式）：图标 + 名称 + 目标 + 状态 + 箭头，一行看完做了什么 */
 .agent-tool-item > summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 7px 9px;
   cursor: pointer;
   color: var(--agent-ink);
-  font-size: 10px;
+  font-size: 11px;
+  list-style: none;
 }
+.agent-tool-item > summary::-webkit-details-marker { display: none; }
+
+.agent-tool-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  color: var(--agent-muted);
+}
+.agent-tool-icon svg { width: 15px; height: 15px; }
+
+.agent-tool-item > summary .agent-tool-name {
+  flex: 0 0 auto;
+  color: var(--agent-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.agent-tool-item > summary .agent-tool-target {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-tool-item > summary .agent-tool-state {
+  flex: 0 0 auto;
+  color: #16a34a;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.agent-tool-item.is-failed > summary .agent-tool-state { color: #b91c1c; }
+
+.agent-tool-item > summary .agent-tool-chevron {
+  flex: 0 0 auto;
+  color: var(--agent-muted);
+  font-size: 11px;
+  transition: transform 140ms ease-out;
+}
+.agent-tool-item[open] > summary .agent-tool-chevron { transform: rotate(90deg); }
 
 .agent-variant-control {
   display: grid;
@@ -1608,11 +1687,6 @@
 }
 
 .agent-variant-control input.hidden { display: none; }
-
-.agent-tool-item > summary span {
-  color: var(--agent-muted);
-  font-weight: 600;
-}
 
 .agent-tool-item pre {
   max-height: 220px;
@@ -4504,10 +4578,21 @@ body.agent-settings-modal-open { overflow: hidden; }
     max-height: min(420px, 54dvh);
     z-index: 90;
   }
-  .agent-file-change-row { flex-wrap: wrap; row-gap: 4px; padding: 7px 8px; }
-  .agent-file-change-name { flex: 1 1 auto; min-width: 0; }
-  .agent-file-change-stats { margin-left: auto; }
-  .agent-file-change-dir { order: 9; flex: 1 0 100%; }
+  /* 文件变更行保持单行：目录跟在文件名后按需截断，不再独占一整行 */
+  .agent-file-change-row { flex-wrap: nowrap; row-gap: 0; padding: 7px 8px; gap: 6px; }
+  .agent-file-change-name { flex: 0 1 auto; min-width: 0; }
+  .agent-file-change-dir { order: 0; flex: 1 1 auto; min-width: 0; padding-left: 0; }
+  .agent-file-change-stats { flex: 0 0 auto; margin-left: 0; }
+  /* 「打开/审查」收成紧凑小按钮（触屏没有 hover，必须常显） */
+  .agent-file-change-actions { flex: 0 0 auto; }
+  .agent-file-change-actions button {
+    width: auto !important;
+    min-width: 0;
+    height: 24px;
+    min-height: 24px !important;
+    padding: 2px 8px;
+    font-size: 10px;
+  }
   .agent-composer textarea { height: 60px; min-height: 60px; margin: 4px 0; padding: 7px 2px; font-size: 13px; line-height: 1.55; }
   .agent-composer-footer { align-items: center; }
   .agent-followup-control { gap: 1px; }

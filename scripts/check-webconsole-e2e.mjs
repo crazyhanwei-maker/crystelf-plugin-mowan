@@ -1358,6 +1358,228 @@ async function runContextHandleInteraction(page) {
   }
 }
 
+// ZCode 实时命令展示：多行命令必须用等宽块保留换行，不能挤进单行状态
+async function runLiveCommandRenderInteraction(page) {
+  await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+  const sample = 'echo "=== 阿里云镜像 ==="\ncurl -L -o /dev/null -s -w "速度: %{speed_download} B/s" --max-time 90 "https://mirrors.aliyun.com/x.iso"\necho "=== 清华镜像 ==="';
+  await page.evaluate(command => {
+    const out = document.querySelector('#agent-output');
+    const escaped = command.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    out.innerHTML = `<article class="agent-message agent-message-agent agent-message-live"><div class="agent-message-body">
+      <div class="agent-message-live-bubbles">正在执行网络测速...</div>
+      <div class="agent-live-progress"><span class="agent-live-progress-dot"></span>
+      <span class="agent-live-progress-text">正在执行命令：echo "=== 阿里云镜像 ===" …（第 6 步）</span>
+      <pre class="agent-live-command">${escaped}</pre></div></div></article>`;
+  }, sample);
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  const probe = await page.evaluate(() => {
+    const pre = document.querySelector('.agent-live-command');
+    const statusText = document.querySelector('.agent-live-progress-text');
+    if (!pre) return { found: false };
+    const style = getComputedStyle(pre);
+    return {
+      found: true,
+      whiteSpace: style.whiteSpace,
+      fontFamily: style.fontFamily,
+      lineCount: pre.textContent.split('\n').length,
+      // 命令块必须整行独占（width 接近容器），不能和状态文本并排
+      fullWidth: pre.getBoundingClientRect().width >= (pre.parentElement?.getBoundingClientRect().width || 0) * 0.8,
+      statusSingleLine: !String(statusText?.textContent || '').includes('\n'),
+    };
+  });
+  if (!probe.found) {
+    throw new Error('实时命令块缺失');
+  }
+  if (!/pre-wrap|pre/.test(probe.whiteSpace)) {
+    throw new Error(`命令块没有保留换行：white-space=${probe.whiteSpace}`);
+  }
+  if (!/mono|Consolas/i.test(probe.fontFamily)) {
+    throw new Error(`命令块没有使用等宽字体：${probe.fontFamily}`);
+  }
+  if (probe.lineCount < 3) {
+    throw new Error(`命令块行数异常：${probe.lineCount}`);
+  }
+  if (!probe.fullWidth) {
+    throw new Error('命令块没有整行独占，仍与状态文本挤在一起');
+  }
+  if (!probe.statusSingleLine) {
+    throw new Error('状态行仍包含多行命令');
+  }
+  await page.evaluate(() => {
+    document.querySelector('#agent-output').innerHTML = '';
+  });
+}
+
+// ZCode 分段输出：一轮任务的多段正文必须各自成块，不能连成一整段
+async function runLiveSegmentRenderInteraction(page) {
+  await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+  await page.evaluate(() => {
+    const segments = [
+      '我先看看这台机器上有哪些测速工具可用，然后跑一次实际测速。',
+      '这台机器上只有 curl 和 wget，没有安装 speedtest 工具。',
+      '延迟很好（到 1.1.1.1 平均 5.4ms）。下载大约 1.6 MB/s。',
+    ];
+    const out = document.querySelector('#agent-output');
+    out.innerHTML = `<article class="agent-message agent-message-agent agent-message-live"><div class="agent-message-body">
+      <div class="agent-message-live-bubbles">${segments.map(text => `<div class="agent-message-bubble agent-agent-bubble agent-markdown">${text}</div>`).join('')}
+      <div class="agent-message-bubble agent-agent-bubble agent-markdown">接下来测试上传速度…</div></div></div></article>`;
+  });
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  const probe = await page.evaluate(() => {
+    const bubbles = [...document.querySelectorAll('.agent-message-live-bubbles .agent-message-bubble')];
+    const tops = bubbles.map(item => Math.round(item.getBoundingClientRect().top));
+    return {
+      count: bubbles.length,
+      // 每段必须纵向递进，不能重叠
+      stacked: tops.every((top, index) => index === 0 || top > tops[index - 1]),
+      separators: bubbles.slice(1).filter(item => parseFloat(getComputedStyle(item).borderTopWidth) > 0).length,
+    };
+  });
+  if (probe.count < 3) {
+    throw new Error(`分段正文数量异常：${probe.count}`);
+  }
+  if (!probe.stacked) {
+    throw new Error('分段正文挤在一起，没有按段分开');
+  }
+  if (probe.separators < 2) {
+    throw new Error(`段落之间缺少分隔线：${probe.separators}`);
+  }
+  await page.evaluate(() => {
+    document.querySelector('#agent-output').innerHTML = '';
+  });
+}
+
+// 工具调用摘要行（对齐 ZCode ToolSummaryRow）：每项一行，图标+名称+目标+状态+箭头
+async function runToolSummaryRowInteraction(page) {
+  await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+  await page.evaluate(() => {
+    const tools = [
+      { name: 'read_file', status: 'completed', input: { file_path: 'lib/webConsole/public/agent-workbench.js' } },
+      { name: 'bash', status: 'completed', input: { command: 'npm run check:webconsole:e2e' } },
+      { name: 'edit_file', status: 'error', input: { path: 'apps/ai.js' } },
+    ];
+    const rows = tools.map(tool => {
+      const failed = /error|fail/i.test(String(tool.status || ''));
+      const target = tool.input.file_path || tool.input.path || tool.input.command || '';
+      return `<details class="agent-tool-item${failed ? ' is-failed' : ''}"><summary>
+        <span class="agent-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16"/></svg></span>
+        <strong class="agent-tool-name">${tool.name}</strong>
+        <span class="agent-tool-target">${target}</span>
+        <span class="agent-tool-state">${failed ? '失败' : '完成'}</span>
+        <span class="agent-tool-chevron">›</span>
+      </summary><div class="agent-tool-io"><div class="agent-tool-io-head"><span>输出</span></div><pre>ok</pre></div></details>`;
+    }).join('');
+    document.querySelector('#agent-output').innerHTML = `<article class="agent-message agent-message-agent"><div class="agent-message-body">
+      <details class="agent-artifact-card agent-tool-card"><summary><span>工具调用</span>
+      <span class="agent-change-inline">2/3 项成功</span><span class="agent-work-report-chevron">›</span></summary>
+      <div class="agent-tool-list">${rows}</div></details></div></article>`;
+  });
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  const probe = await page.evaluate(() => {
+    const items = [...document.querySelectorAll('.agent-tool-item')];
+    return items.map(item => {
+      const summary = item.querySelector('summary');
+      const kids = [...summary.children].map(el => {
+        const rect = el.getBoundingClientRect();
+        return { cls: el.className, top: Math.round(rect.top), h: Math.round(rect.height), w: Math.round(rect.width) };
+      });
+      return {
+        height: Math.round(summary.getBoundingClientRect().height),
+        scrollWidth: summary.scrollWidth,
+        clientWidth: summary.clientWidth,
+        icons: summary.querySelectorAll('.agent-tool-icon svg').length,
+        target: summary.querySelector('.agent-tool-target')?.textContent || '',
+        state: summary.querySelector('.agent-tool-state')?.textContent || '',
+        stateColor: getComputedStyle(summary.querySelector('.agent-tool-state')).color,
+        kids,
+      };
+    });
+  });
+  if (probe.length !== 3) {
+    throw new Error(`工具摘要行数量异常：${probe.length}`);
+  }
+  probe.forEach((row, index) => {
+    if (row.icons !== 1) throw new Error(`第 ${index + 1} 行缺少工具图标：${row.icons}`);
+    // 单行摘要：整行高度要贴近一行文本，不能因为换行被撑到多行
+    if (row.height > 40) throw new Error(`第 ${index + 1} 行被撑成多行：${row.height}px`);
+    if (row.scrollWidth > row.clientWidth + 1) throw new Error(`第 ${index + 1} 行横向溢出：${row.scrollWidth}>${row.clientWidth}`);
+  });
+  if (!probe[0].target.includes('agent-workbench.js')) {
+    throw new Error(`工具摘要没有提取操作目标：${probe[0].target}`);
+  }
+  if (probe[2].state !== '失败') {
+    throw new Error(`失败工具没有标记失败：${probe[2].state}`);
+  }
+  if (probe[2].stateColor === probe[1].stateColor) {
+    throw new Error('失败与成功的状态文字颜色没有区分');
+  }
+  await page.evaluate(() => {
+    document.querySelector('#agent-output').innerHTML = '';
+  });
+}
+
+// 文件变更行（对齐 ZCode changes-group）：单行布局，目录跟在文件名后截断，操作按钮常显
+async function runFileChangeRowInteraction(page) {
+  await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+  await page.evaluate(() => {
+    const files = [
+      { path: 'lib/webConsole/public/agent-workbench.js', additions: 120, deletions: 8 },
+      { path: 'scripts/check-webconsole-e2e.mjs', additions: 31, deletions: 2 },
+    ];
+    const rows = files.map(file => {
+      const name = file.path.split('/').pop();
+      const dir = file.path.slice(0, file.path.length - name.length).replace(/\/$/, '');
+      const ext = name.split('.').pop();
+      return `<div class="agent-file-change-row"><span class="agent-file-ext" data-ext="${ext}">${ext}</span>
+        <span class="agent-file-change-name">${name}</span><span class="agent-file-change-dir">${dir}</span>
+        <span class="agent-file-change-stats"><span class="is-added">+${file.additions}</span><span class="is-deleted">-${file.deletions}</span></span>
+        <span class="agent-file-change-actions"><button type="button">审查</button><button type="button">打开</button></span></div>`;
+    }).join('');
+    document.querySelector('#agent-output').innerHTML = `<article class="agent-message agent-message-agent"><div class="agent-message-body">
+      <details class="agent-artifact-card agent-file-changes" open><summary><span>2 个文件已更改</span>
+      <span class="agent-change-inline"><span class="is-added">+151</span><span class="is-deleted">-10</span></span>
+      <span class="agent-work-report-chevron">›</span></summary>
+      <div class="agent-file-change-list">${rows}</div></details></div></article>`;
+  });
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  const probe = await page.evaluate(() => {
+    return [...document.querySelectorAll('.agent-file-change-row')].map(row => {
+      const rect = row.getBoundingClientRect();
+      const name = row.querySelector('.agent-file-change-name').getBoundingClientRect();
+      const dir = row.querySelector('.agent-file-change-dir').getBoundingClientRect();
+      const actions = row.querySelector('.agent-file-change-actions');
+      return {
+        height: Math.round(rect.height),
+        scrollWidth: row.scrollWidth,
+        clientWidth: row.clientWidth,
+        dirOnSameLine: Math.abs(dir.top - name.top) < 8,
+        actionsVisible: actions.getBoundingClientRect().width > 0,
+        buttons: [...actions.querySelectorAll('button')].map(btn => Math.round(btn.getBoundingClientRect().height)),
+      };
+    });
+  });
+  if (probe.length !== 2) {
+    throw new Error(`文件变更行数量异常：${probe.length}`);
+  }
+  probe.forEach((row, index) => {
+    if (row.height > 46) throw new Error(`第 ${index + 1} 行文件变更被撑成多行：${row.height}px`);
+    if (!row.dirOnSameLine) throw new Error(`第 ${index + 1} 行目录换行到下一行`);
+    if (row.scrollWidth > row.clientWidth + 1) throw new Error(`第 ${index + 1} 行横向溢出：${row.scrollWidth}>${row.clientWidth}`);
+    if (!row.actionsVisible) throw new Error(`第 ${index + 1} 行操作按钮不可见`);
+    // 全局 button 规则会带 38px min-height，文件行按钮必须被压回 24px
+    row.buttons.forEach(height => {
+      if (height > 28) throw new Error(`文件行按钮被全局样式撑高：${height}px`);
+    });
+  });
+  await page.evaluate(() => {
+    document.querySelector('#agent-output').innerHTML = '';
+  });
+}
+
 async function runComposerIconInteraction(page) {
   await page.waitForSelector('#agent-composer-footer, .agent-composer-footer', { timeout: pageTimeoutMs });
   const icons = await page.evaluate(() => {
@@ -1703,6 +1925,10 @@ async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
     { label: 'Agent 斜杠命令面板', path: '/agent-workbench.html', run: runSlashMenuInteraction },
     { label: 'Agent 输入区模式切换', path: '/agent-workbench.html', run: runModeSwitchInteraction },
     { label: 'Agent 输入区图标统一', path: '/agent-workbench.html', run: runComposerIconInteraction },
+    { label: 'Agent 实时命令格式', path: '/agent-workbench.html', run: runLiveCommandRenderInteraction },
+    { label: 'Agent 分段输出', path: '/agent-workbench.html', run: runLiveSegmentRenderInteraction },
+    { label: 'Agent 工具调用摘要行', path: '/agent-workbench.html', run: runToolSummaryRowInteraction },
+    { label: 'Agent 文件变更行', path: '/agent-workbench.html', run: runFileChangeRowInteraction },
     { label: 'Agent 消息操作条', path: '/agent-workbench.html', run: runMessageActionsInteraction },
     { label: 'Agent 侧栏折叠把手', path: '/agent-workbench.html', run: runContextHandleInteraction },
     { label: 'Agent 模型选择卡片', path: '/agent-workbench.html', run: runModelMenuCardInteraction },
@@ -1733,6 +1959,7 @@ async function inspectMobilePages(page, baseUrl, runtimeErrors, profile) {
   results.push(await inspectMobileModelMenuCard(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileProviderModels(page, baseUrl, runtimeErrors, profile));
   results.push(await inspectMobileModelRows(page, baseUrl, runtimeErrors, profile));
+  results.push(await inspectMobileFileChangeRows(page, baseUrl, runtimeErrors, profile));
   return results;
 }
 
@@ -2111,6 +2338,89 @@ async function inspectMobileModelRows(page, baseUrl, runtimeErrors, profile) {
   result.errors.push(...runtimeErrors.slice(startedErrorIndex));
   result.ok = result.errors.length === 0;
   if (result.ok) logPass(`Agent 已添加模型列表（${profile.label}）正常`);
+  return result;
+}
+
+// 文件变更行窄屏：保持单行（目录跟在文件名后截断）、按钮紧凑且不被全局 38px 撑高
+async function inspectMobileFileChangeRows(page, baseUrl, runtimeErrors, profile) {
+  const result = {
+    label: 'Agent 文件变更行',
+    path: '/agent-workbench.html',
+    viewport: profile.label,
+    ok: true,
+    screenshotPath: '',
+    size: 0,
+    errors: [],
+    layout: null,
+  };
+  const startedErrorIndex = runtimeErrors.length;
+  try {
+    await page.goto(new URL('/agent-workbench.html', baseUrl).href, { waitUntil: 'domcontentloaded', timeout: pageTimeoutMs });
+    await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+    await new Promise(resolve => setTimeout(resolve, 900));
+    await page.evaluate(() => {
+      const files = [
+        { path: 'lib/webConsole/public/agent-workbench.js', additions: 120, deletions: 8 },
+        { path: 'lib/webConsole/agentWorkbenchConsole.js', additions: 45, deletions: 3 },
+      ];
+      const rows = files.map(file => {
+        const name = file.path.split('/').pop();
+        const dir = file.path.slice(0, file.path.length - name.length).replace(/\/$/, '');
+        const ext = name.split('.').pop();
+        return `<div class="agent-file-change-row"><span class="agent-file-ext" data-ext="${ext}">${ext}</span>
+          <span class="agent-file-change-name">${name}</span><span class="agent-file-change-dir">${dir}</span>
+          <span class="agent-file-change-stats"><span class="is-added">+${file.additions}</span><span class="is-deleted">-${file.deletions}</span></span>
+          <span class="agent-file-change-actions"><button type="button">审查</button><button type="button">打开</button></span></div>`;
+      }).join('');
+      document.querySelector('#agent-output').innerHTML = `<article class="agent-message agent-message-agent"><div class="agent-message-body">
+        <details class="agent-artifact-card agent-file-changes" open><summary><span>2 个文件已更改</span>
+        <span class="agent-change-inline"><span class="is-added">+165</span><span class="is-deleted">-11</span></span>
+        <span class="agent-work-report-chevron">›</span></summary>
+        <div class="agent-file-change-list">${rows}</div></details></div></article>`;
+    });
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const probes = await page.evaluate(() => {
+      const checks = [];
+      const push = (label, ok, detail = '') => checks.push({ label, ok, detail });
+      const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      const rows = [...document.querySelectorAll('.agent-file-change-row')];
+      if (!rows.length) { push('文件变更行存在', false); return checks; }
+      rows.forEach((row, index) => {
+        const tag = `第 ${index + 1} 行`;
+        const rect = row.getBoundingClientRect();
+        const name = row.querySelector('.agent-file-change-name').getBoundingClientRect();
+        const dir = row.querySelector('.agent-file-change-dir').getBoundingClientRect();
+        push(`${tag}单行显示`, rect.height <= 46, `h=${Math.round(rect.height)}`);
+        push(`${tag}目录未独占一行`, Math.abs(dir.top - name.top) < 8, `nameTop=${Math.round(name.top)} dirTop=${Math.round(dir.top)}`);
+        push(`${tag}未横向溢出`, row.scrollWidth <= row.clientWidth + 1, `scrollW=${row.scrollWidth} clientW=${row.clientWidth}`);
+        const buttons = [...row.querySelectorAll('.agent-file-change-actions button')];
+        push(`${tag}操作按钮常显`, buttons.every(btn => btn.getBoundingClientRect().width > 0), `count=${buttons.length}`);
+        push(`${tag}按钮未被全局样式撑高`, buttons.every(btn => btn.getBoundingClientRect().height <= 28), buttons.map(btn => Math.round(btn.getBoundingClientRect().height)).join('/'));
+      });
+      push('页面无横向溢出', document.documentElement.scrollWidth <= viewportWidth + 1, `scrollW=${document.documentElement.scrollWidth}`);
+      return checks;
+    });
+    const failed = probes.filter(probe => !probe.ok);
+    if (failed.length) {
+      result.errors.push(...failed.map(probe => `${probe.label}（${probe.detail}）`));
+    }
+    result.mobileFixProbes = probes;
+    result.screenshotPath = path.join(outputDir, profile.slug, 'Agent 文件变更行.png');
+    await fs.mkdir(path.dirname(result.screenshotPath), { recursive: true });
+    const clip = await page.evaluate(() => {
+      const el = document.querySelector('.agent-file-changes');
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return { x: Math.max(0, rect.x - 8), y: Math.max(0, rect.y - 8), width: rect.width + 16, height: rect.height + 16 };
+    });
+    await page.screenshot({ path: result.screenshotPath, clip: clip || undefined });
+  } catch (error) {
+    result.errors.push(error.message || String(error));
+  }
+  result.errors.push(...runtimeErrors.slice(startedErrorIndex));
+  result.ok = result.errors.length === 0;
+  if (result.ok) logPass(`Agent 文件变更行（${profile.label}）正常`);
   return result;
 }
 
