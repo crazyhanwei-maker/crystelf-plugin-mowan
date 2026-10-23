@@ -1119,3 +1119,87 @@
     grid-column: 1 / -1;
   }
 }
+
+/* ===== 手机端「配置摘要」：把每张卡压到一屏能看全 =====
+   原来每张卡 157~259px（内边距 14、标签间距 12、标签 8 个各占一格），
+   5 张卡要滚两屏多。这里收紧内边距与标签，并隐藏无信息量的占位句。 */
+@media (max-width: 760px) {
+  body.api-settings-page .api-settings-overview-panel {
+    padding: 12px 13px;
+    border-radius: 12px;
+  }
+
+  body.api-settings-page .api-settings-overview-panel h2 {
+    font-size: 17px;
+    margin-bottom: 4px;
+  }
+
+  body.api-settings-page .api-settings-overview-panel .setting-help {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  /* 统计胶囊：缩小并压掉外边距 */
+  body.api-settings-page .api-settings-overview-meta {
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  body.api-settings-page .api-settings-overview-chip {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  body.api-settings-page .api-settings-overview-list {
+    gap: 8px;
+  }
+
+  body.api-settings-page .api-settings-overview-item {
+    gap: 7px;
+    padding: 9px 10px;
+    border-radius: 10px;
+  }
+
+  body.api-settings-page .api-settings-overview-head {
+    gap: 6px;
+    align-items: center;
+  }
+
+  body.api-settings-page .api-settings-overview-head h4 {
+    margin: 0 0 1px;
+    font-size: 13.5px;
+  }
+
+  body.api-settings-page .api-settings-overview-head .setting-status {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  body.api-settings-page .api-settings-overview-state {
+    padding: 2px 7px;
+    font-size: 10.5px;
+  }
+
+  /* 标签：小号胶囊，允许收缩到半行宽 */
+  body.api-settings-page .api-settings-overview-tags {
+    gap: 4px;
+  }
+
+  body.api-settings-page .api-settings-overview-tag {
+    padding: 2px 7px;
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
+  body.api-settings-page .api-settings-overview-issues {
+    padding-left: 15px;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  /* 「当前没有需要特别处理的项目」是纯占位句：健康卡里只是噪音，手机端省掉。
+     只在卡片没有 issues 列表时隐藏（有 issues 的卡本来就不会渲染这句） */
+  body.api-settings-page .api-settings-overview-item > div.setting-status:last-child {
+    display: none;
+  }
+}
