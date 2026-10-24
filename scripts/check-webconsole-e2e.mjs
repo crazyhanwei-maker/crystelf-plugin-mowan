@@ -1454,28 +1454,24 @@ async function runLiveSegmentRenderInteraction(page) {
 // 工具调用摘要行（对齐 ZCode ToolSummaryRow）：每项一行，图标+名称+目标+状态+箭头
 async function runToolSummaryRowInteraction(page) {
   await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
-  await page.evaluate(() => {
-    const tools = [
-      { name: 'read_file', status: 'completed', input: { file_path: 'lib/webConsole/public/agent-workbench.js' } },
-      { name: 'bash', status: 'completed', input: { command: 'npm run check:webconsole:e2e' } },
-      { name: 'edit_file', status: 'error', input: { path: 'apps/ai.js' } },
-    ];
-    const rows = tools.map(tool => {
-      const failed = /error|fail/i.test(String(tool.status || ''));
-      const target = tool.input.file_path || tool.input.path || tool.input.command || '';
-      return `<details class="agent-tool-item${failed ? ' is-failed' : ''}"><summary>
-        <span class="agent-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16"/></svg></span>
-        <strong class="agent-tool-name">${tool.name}</strong>
-        <span class="agent-tool-target">${target}</span>
-        <span class="agent-tool-state">${failed ? '失败' : '完成'}</span>
-        <span class="agent-tool-chevron">›</span>
-      </summary><div class="agent-tool-io"><div class="agent-tool-io-head"><span>输出</span></div><pre>ok</pre></div></details>`;
-    }).join('');
-    document.querySelector('#agent-output').innerHTML = `<article class="agent-message agent-message-agent"><div class="agent-message-body">
-      <details class="agent-artifact-card agent-tool-card"><summary><span>工具调用</span>
-      <span class="agent-change-inline">2/3 项成功</span><span class="agent-work-report-chevron">›</span></summary>
-      <div class="agent-tool-list">${rows}</div></details></div></article>`;
+  // 直接调用真实渲染函数（而不是手写 DOM）：渲染器内部的未定义引用只有走真实代码路径才能暴露
+  const rendered = await page.evaluate(() => {
+    if (typeof window.renderAgentTools !== 'function') {
+      return { ok: false, error: 'renderAgentTools 未注册' };
+    }
+    try {
+      const html = window.renderAgentTools([
+        { name: 'read_file', status: 'completed', input: { file_path: 'lib/webConsole/public/agent-workbench.js' }, output: 'ok' },
+        { name: 'bash', status: 'completed', input: { command: 'npm run check:webconsole:e2e' }, output: 'ok' },
+        { name: 'edit_file', status: 'error', input: { path: 'apps/ai.js' }, output: 'failed' },
+      ]);
+      document.querySelector('#agent-output').innerHTML = `<article class="agent-message agent-message-agent"><div class="agent-message-body">${html}</div></article>`;
+      return { ok: true, length: html.length };
+    } catch (error) {
+      return { ok: false, error: `${error.name}: ${error.message}` };
+    }
   });
+  if (!rendered.ok) throw new Error(`工具摘要渲染失败：${rendered.error}`);
   await new Promise(resolve => setTimeout(resolve, 200));
 
   const probe = await page.evaluate(() => {
