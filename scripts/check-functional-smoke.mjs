@@ -37,6 +37,7 @@ import {
   buildAgentDefaultModelSelection,
   buildAgentRunCommand,
   buildOpenCodeModelSelection,
+  splitFinalOutputSegments,
   extractAgentJsonError,
   extractOpenCodeSessionId,
   getAgentWorkspaceOptions,
@@ -535,6 +536,17 @@ async function checkAgentWorkbenchSlashCommands() {
   const legacyRefSelection = buildOpenCodeModelSelection('crystelf-chat/probe-new');
   assert(legacyRefSelection.providerID === 'crystelf-chat' && legacyRefSelection.modelID === 'probe-new',
     `无 providerId 时没有从模型引用里拆出供应商：${JSON.stringify(legacyRefSelection)}`);
+  // 多轮分段收尾：最终回复只保留最后一段，其余分段必须留在执行过程里（否则任务结束后过程丢失）
+  const splitSegments = splitFinalOutputSegments('最终答复', ['第一段', '第二段', '最终答复']);
+  assert(splitSegments.finalText === '最终答复', `最终回复被改写：${splitSegments.finalText}`);
+  assert(splitSegments.processSegments.join('|') === '第一段|第二段',
+    `执行过程分段丢失或重复：${JSON.stringify(splitSegments.processSegments)}`);
+  const splitFallback = splitFinalOutputSegments('', ['第一段', '最后一段']);
+  assert(splitFallback.finalText === '最后一段', `缺少 result.output 时未用最后一段兜底：${splitFallback.finalText}`);
+  assert(splitFallback.processSegments.join('|') === '第一段', `兜底后执行过程分段异常：${JSON.stringify(splitFallback.processSegments)}`);
+  const splitNoSegments = splitFinalOutputSegments('单段回复', []);
+  assert(splitNoSegments.finalText === '单段回复' && splitNoSegments.processSegments.length === 0,
+    `单段回复被误拆分：${JSON.stringify(splitNoSegments)}`);
   logPass('Agent 斜杠命令、会话动作与 OpenCode Command 分流正常');
 }
 

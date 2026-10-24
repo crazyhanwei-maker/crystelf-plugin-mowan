@@ -1070,6 +1070,51 @@
   border-top: 1px dashed var(--agent-line);
 }
 
+/* 完成后的「执行过程」折叠块：任务收尾时最终回复只剩最后一段，
+   中间分段收进这里（默认收起），与运行中的分段气泡用同一套分隔线 */
+.agent-process-details {
+  margin: 8px 0;
+  padding: 0 10px;
+  border: 1px dashed var(--agent-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--agent-ink) 3%, transparent);
+}
+
+.agent-process-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 0;
+  color: var(--agent-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.agent-process-details > summary::-webkit-details-marker { display: none; }
+
+.agent-process-count {
+  color: var(--agent-muted);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.agent-process-details[open] > summary .agent-work-report-chevron { transform: rotate(90deg); }
+
+.agent-process-bodies {
+  display: grid;
+  gap: 0;
+  padding: 2px 0 8px;
+}
+
+.agent-process-bodies .agent-message-bubble { margin: 0; }
+
+.agent-process-bodies .agent-message-bubble + .agent-message-bubble {
+  padding-top: 10px;
+  border-top: 1px dashed var(--agent-line);
+}
+
 /* 运行中工具进度：显示当前读取/搜索/写入/命令，证明 Agent 在执行而不是卡住 */
 .agent-live-progress {
   display: flex;

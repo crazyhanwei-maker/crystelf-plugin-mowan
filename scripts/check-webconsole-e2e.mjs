@@ -1580,6 +1580,62 @@ async function runFileChangeRowInteraction(page) {
   });
 }
 
+// 执行过程折叠：任务结束后最终回复只剩最后一段，中间过程必须在消息里保留并可展开
+async function runProcessCollapseInteraction(page) {
+  await page.waitForSelector('#agent-output', { timeout: pageTimeoutMs });
+  const hasHelper = await page.evaluate(() => typeof window.renderMessageProcess === 'function');
+  if (!hasHelper) throw new Error('renderMessageProcess 未注册，无法渲染执行过程');
+
+  await page.evaluate(() => {
+    const out = document.querySelector('#agent-output');
+    out.innerHTML = `<article class="agent-message agent-message-agent"><div class="agent-message-body">
+      ${window.renderMessageProcess({ id: 'msg-process-test', content: '最终答复', processSegments: ['第一段过程', '第二段过程'] })}
+      <div class="agent-message-bubble agent-agent-bubble">最终答复</div>
+    </div></article>`;
+  });
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  const probe = await page.evaluate(() => {
+    const details = document.querySelector('.agent-process-details');
+    const bubbles = [...document.querySelectorAll('.agent-process-bodies .agent-message-bubble')];
+    const second = bubbles[1];
+    return {
+      found: Boolean(details),
+      open: details?.open === true,
+      summary: details?.querySelector('summary')?.textContent?.replace(/\s+/g, ' ').trim() || '',
+      bubbleCount: bubbles.length,
+      texts: bubbles.map(item => item.textContent.trim()),
+      separator: second ? parseFloat(getComputedStyle(second).borderTopWidth) || 0 : 0,
+      chevron: Boolean(details?.querySelector('.agent-work-report-chevron')),
+    };
+  });
+  if (!probe.found) throw new Error('执行过程折叠块缺失');
+  if (probe.open) throw new Error('有最终回复时执行过程应默认收起');
+  if (!/执行过程/.test(probe.summary) || !/2 段/.test(probe.summary)) {
+    throw new Error(`执行过程标题异常：${probe.summary}`);
+  }
+  if (probe.bubbleCount !== 2) throw new Error(`执行过程分段数量异常：${probe.bubbleCount}`);
+  if (probe.texts.join('|') !== '第一段过程|第二段过程') {
+    throw new Error(`执行过程分段内容异常：${probe.texts.join('|')}`);
+  }
+  if (probe.separator <= 0) throw new Error('执行过程分段之间缺少分隔线');
+  if (!probe.chevron) throw new Error('执行过程缺少展开箭头');
+
+  // 没有最终正文时（任务中途失败）必须默认展开，避免过程内容被藏起来
+  const emptyProbe = await page.evaluate(() => {
+    const out = document.querySelector('#agent-output');
+    out.innerHTML = window.renderMessageProcess({ id: 'msg-process-empty', content: '', processSegments: ['只有过程'] });
+    const details = document.querySelector('.agent-process-details');
+    return { open: details?.open === true, count: document.querySelectorAll('.agent-process-bodies .agent-message-bubble').length };
+  });
+  if (!emptyProbe.open) throw new Error('无最终正文时执行过程应默认展开');
+  if (emptyProbe.count !== 1) throw new Error(`无最终正文时过程段数异常：${emptyProbe.count}`);
+
+  await page.evaluate(() => {
+    document.querySelector('#agent-output').innerHTML = '';
+  });
+}
+
 async function runComposerIconInteraction(page) {
   await page.waitForSelector('#agent-composer-footer, .agent-composer-footer', { timeout: pageTimeoutMs });
   const icons = await page.evaluate(() => {
@@ -1929,6 +1985,7 @@ async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
     { label: 'Agent 分段输出', path: '/agent-workbench.html', run: runLiveSegmentRenderInteraction },
     { label: 'Agent 工具调用摘要行', path: '/agent-workbench.html', run: runToolSummaryRowInteraction },
     { label: 'Agent 文件变更行', path: '/agent-workbench.html', run: runFileChangeRowInteraction },
+    { label: 'Agent 执行过程折叠', path: '/agent-workbench.html', run: runProcessCollapseInteraction },
     { label: 'Agent 消息操作条', path: '/agent-workbench.html', run: runMessageActionsInteraction },
     { label: 'Agent 侧栏折叠把手', path: '/agent-workbench.html', run: runContextHandleInteraction },
     { label: 'Agent 模型选择卡片', path: '/agent-workbench.html', run: runModelMenuCardInteraction },
