@@ -60,6 +60,12 @@ const MessageTypeUSER = 1; // ilink message_type: 1=USER 2=BOT
 // 轮询单例：模块级状态（QQ 侧每条指令都会触发 ensurePoller，实例字段会导致循环叠加、消息重复处理）
 const pollerState = { running: false, generation: 0, started: false };
 
+// 最小轮询间隔：长轮询正常时服务端会把请求挂住（约 35s），一轮耗时远超下限、不额外等待；
+// 服务端也可能立即返回空结果，此时循环若没有下限就会以网络往返速度空转
+// （实测约 7 次/秒），既浪费流量又容易触发第三方限流。
+const MIN_POLL_INTERVAL_MS = 1000;
+const MIN_POLL_JITTER_MS = 200;
+
 // 每个会话只保留最近一条消息的 contextToken（sendMessage 必须回传）
 const sessionContexts = new Map();
 
@@ -160,6 +166,7 @@ export class weixinIlink extends plugin {
       let backoffMs = 0;
       let failureCount = 0;
       while (pollerState.running && pollerState.generation === myGeneration) {
+        const pollStartedAt = Date.now();
         try {
           const { updates, cursorBuf } = await longPollUpdates({
             token: credentials.botToken,
@@ -177,6 +184,14 @@ export class weixinIlink extends plugin {
           failureCount += 1;
           backoffMs = failureCount <= 5 ? 2000 : 30000;
           logger.warn(`[weixin-ilink] 长轮询失败（连续 ${failureCount} 次）：${error.message}，${backoffMs}ms 后重试`);
+        }
+        // 服务端立即返回（未按长轮询挂住）时补足最小间隔，避免成功分支空转；
+        // 处理消息本身的耗时也算在间隔内，正常情况下不会引入额外延迟
+        if (!backoffMs) {
+          const elapsed = Date.now() - pollStartedAt;
+          if (elapsed < MIN_POLL_INTERVAL_MS) {
+            await new Promise(resolve => setTimeout(resolve, MIN_POLL_INTERVAL_MS - elapsed + Math.random() * MIN_POLL_JITTER_MS));
+          }
         }
         if (backoffMs) await new Promise(resolve => setTimeout(resolve, backoffMs));
       }
