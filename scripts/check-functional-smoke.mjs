@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { createQqSimulatorConsole } from '../lib/webConsole/qqSimulatorConsole.js';
 import { renderStatusImage } from '../lib/system/statusImageRenderer.js';
@@ -53,6 +54,7 @@ import {
   isBundledOpenCodeBootstrapError,
   resolveBundledOpenCodeBootstrapCommand,
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
+import { materializeZcodeAttachments } from '../lib/webConsole/bundledZcodeRuntime.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -422,6 +424,31 @@ function checkAgentWorkbenchSafety() {
   assert(customSummaryModel?.modelID === 'custom-agent-model', 'Agent 上下文压缩没有优先使用自定义 API 模型');
   assert(buildAgentDefaultModelSelection({ aiConfig: {} }) === null, '没有配置模型时不应伪造固定模型选择');
   logPass('Agent 工作台分析、受控写入、目录白名单与安全默认值正常');
+}
+
+// ZCode 图片附件：data URL 必须落盘成 CLI 可读文件（--attach），
+// 非图片类型、远程 URL、缺少状态目录时都不应落盘
+async function checkZcodePromptAttachments() {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'crystelf-zcode-attach-'));
+  try {
+    const image = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex');
+    const dataUrl = `data:image/png;base64,${image.toString('base64')}`;
+    const written = materializeZcodeAttachments([
+      { name: '看图.png', mime: 'image/png', url: dataUrl },
+      { name: '看图.png', mime: 'image/png', url: dataUrl },
+      { name: 'note.txt', mime: 'text/plain', url: `data:text/plain;base64,${Buffer.from('hi').toString('base64')}` },
+      { name: 'remote.png', mime: 'image/png', url: 'https://example.com/a.png' },
+    ], tempRoot);
+    assert(written.length === 2, `图片附件落盘数量异常：${written.length}`);
+    assert(written.every(item => item.startsWith(path.join(tempRoot, 'attachments'))), '附件没有写到任务状态目录的 attachments 下');
+    assert(new Set(written.map(item => path.basename(item).toLowerCase())).size === written.length, '同名附件互相覆盖');
+    const contents = await Promise.all(written.map(item => fs.readFile(item)));
+    assert(contents.every(buffer => buffer.equals(image)), '落盘内容与 data URL 不一致');
+    assert(materializeZcodeAttachments([{ name: 'a.png', mime: 'image/png', url: dataUrl }], '').length === 0, '缺少状态目录时不应落盘');
+    logPass('ZCode 图片附件落盘（--attach）正常');
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true }).catch(() => { });
+  }
 }
 
 async function checkAgentWorkbenchSlashCommands() {
@@ -1797,6 +1824,7 @@ async function main() {
     await checkYunzaiCommandBridge();
     checkAgentWorkbenchSafety();
     await checkAgentWorkbenchSlashCommands();
+    await checkZcodePromptAttachments();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});
