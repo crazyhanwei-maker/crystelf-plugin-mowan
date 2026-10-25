@@ -22,6 +22,7 @@ import { buildChatCompletionMessages, resolveChatModel, runChat } from '../lib/a
 import { getBuiltinTools } from '../lib/ai/toolRegistry.js';
 import AiCaller from '../lib/ai/aiCaller.js';
 import { MemoryDistiller } from '../lib/humanize/memoryDistiller.js';
+import { RateLimiter } from '../lib/ai/sessionManager.js';
 import {
   buildSdWebUiApiUrl,
   buildSdWebUiRequest,
@@ -56,10 +57,12 @@ import {
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
 import { materializeZcodeAttachments } from '../lib/webConsole/bundledZcodeRuntime.js';
 import Message from '../lib/yunzai/message.js';
+import YunzaiUtils from '../lib/yunzai/utils.js';
 
 globalThis.logger ||= {
   info: () => {},
   warn: () => {},
+  debug: () => {},
   error: () => {},
 };
 
@@ -1832,7 +1835,36 @@ async function checkMultiAdapterGroupSend() {
   assert(apiCalls.length === 1 && apiCalls[0].action === 'send_msg', 'nc 适配器没有走 send_msg');
   assert(replies.length === 0, 'nc 适配器不应再走 e.reply');
 
-  logPass('多适配器群消息发送回退正常');
+  // sendApi 返回空/抛错时必须回退，不能把消息吞掉
+  for (const failingSendApi of [
+    async () => null,
+    async () => { throw new Error('socket closed'); },
+  ]) {
+    apiCalls.length = 0;
+    replies.length = 0;
+    await Message.sendGroupMessage({
+      ...e,
+      bot: { sendApi: failingSendApi },
+    }, '862739921', '在呢在呢', -1, -1, 'nc');
+    assert(replies.length === 1, 'sendApi 失败后没有回退到 e.reply');
+  }
+
+  // SnowLuma/OneBotv11 是 OneBot v11 实现，不能被当成未知适配器
+  const oneBotNames = ['OneBotv11', 'SnowLuma', 'NapCat.Onebot'];
+  for (const name of oneBotNames) {
+    const resolved = await YunzaiUtils.getAdapter({ adapter_name: name, bot: {} });
+    assert(resolved === 'nc', `适配器 ${name} 没有识别为 OneBot v11`);
+  }
+  const milkyResolved = await YunzaiUtils.getAdapter({ adapter_name: 'Milky', bot: {} });
+  assert(milkyResolved === '', 'Milky 不应被识别为 OneBot v11');
+
+  // 同一个用户/群在多个号上并发命中时，限流必须按 bot 隔离
+  const limiter = new RateLimiter();
+  limiter.record('3065737952', '862739921', '说话', 'bot-a');
+  assert(!limiter.canProcess('3065737952', '862739921', '说话', 'bot-a'), '同一个号应被限流');
+  assert(limiter.canProcess('3065737952', '862739921', '说话', 'bot-b'), '不同 bot 不应互相限流');
+
+  logPass('多适配器群消息发送回退与多账号限流隔离正常');
 }
 
 async function main() {

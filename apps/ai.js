@@ -136,6 +136,18 @@ function getBotUin(e) {
   return e?.bot?.uin || e?.self_id || e?.bot_id || Bot?.uin || null;
 }
 
+// 事件所属 bot 的稳定标识：不做全局 Bot 回退，避免多账号时把状态记到错误的号上
+function getEventBotId(e) {
+  return String(e?.self_id ?? e?.bot?.uin ?? e?.bot_id ?? '').trim();
+}
+
+function canProcessUserMessage(rateLimiter, e) {
+  const botId = getEventBotId(e);
+  if (rateLimiter.canProcess(e.user_id, e.group_id, e.msg, botId)) return true;
+  logger.debug(`[crystelf-ai] 跳过限流消息: bot=${botId || '?'} group=${e.group_id} user=${e.user_id}`);
+  return false;
+}
+
 function isAtBot(message, e) {
   const botUin = getBotUin(e);
   return message?.type === 'at' && botUin !== null && String(message.qq) === String(botUin);
@@ -1349,8 +1361,9 @@ function createEventSnapshot(e, content) {
       role: e?.sender?.role,
       title: e?.sender?.title,
     },
-    self_id: e?.self_id,
-    bot_id: e?.bot_id,
+    self_id: e?.self_id ?? e?.bot?.uin,
+    bot_id: e?.bot_id ?? e?.bot?.uin,
+    adapter_name: e?.adapter_name || e?.bot?.adapter?.name || '',
     isGroup: true,
     crystelfTriggeredByRule: Boolean(e?.crystelfTriggeredByRule),
     message: [
@@ -1363,7 +1376,10 @@ function createEventSnapshot(e, content) {
 }
 
 function restoreEventFromSnapshot(snapshot) {
-  const bot = Bot;
+  // 延迟/冷却重放时必须回到原事件所属的 bot：多账号共用一个群时，
+  // 用全局 Bot 会挑到另一个号，导致回复从错误的号发出或直接发不出去
+  const selfId = String(snapshot?.self_id ?? snapshot?.bot_id ?? '').trim();
+  const bot = (selfId && Bot?.bots?.[selfId]) || Bot;
   const group = bot?.pickGroup?.(snapshot.group_id);
 
   return {
@@ -2080,7 +2096,7 @@ export class crystelfAI extends plugin {
       if (!this.isGroupAllowed(e.group_id, aiConfig)) return;
       if (isBotUser(e.user_id, e)) return;
       if (!this.claimGroupMessage(e)) {
-        logger.info(`[crystelf-ai] 跳过重复群消息: group=${e.group_id}, message=${e.message_id ?? e.messageId}`);
+        logger.info(`[crystelf-ai] 跳过重复群消息: bot=${getEventBotId(e) || '?'}, group=${e.group_id}, message=${e.message_id ?? e.messageId}`);
         return;
       }
       const breaker = shouldCircuitBreakSync(usageControl, 'chat');
@@ -2228,8 +2244,8 @@ export class crystelfAI extends plugin {
 
       try {
         if (Array.isArray(options?.pseudoHumanHistory)) {
-          if (!this.rateLimiter.canProcess(e.user_id, e.group_id, e.msg)) return;
-          this.rateLimiter.record(e.user_id, e.group_id, e.msg);
+          if (!canProcessUserMessage(this.rateLimiter, e)) return;
+          this.rateLimiter.record(e.user_id, e.group_id, e.msg, getEventBotId(e));
           await this.processChat(e, aiConfig, {
             skipPlanner: true,
             pseudoHumanHistory: options.pseudoHumanHistory,
@@ -2239,21 +2255,21 @@ export class crystelfAI extends plugin {
         }
 
         if (flag) {
-          if (!this.rateLimiter.canProcess(e.user_id, e.group_id, e.msg)) return;
+          if (!canProcessUserMessage(this.rateLimiter, e)) return;
 
           if (aiConfig?.dynamicDelay?.enabled) {
             this.rateLimiter.recordInteraction(e.group_id, e.user_id);
             const delayInfo = this.rateLimiter.getDelayInfo(e.group_id);
 
             if (delayInfo.shouldDelay) {
-              this.rateLimiter.record(e.user_id, e.group_id, e.msg);
+              this.rateLimiter.record(e.user_id, e.group_id, e.msg, getEventBotId(e));
               this.collectDynamicDelayMessage(groupSessionId, e, e.msg);
               this.startDynamicDelayTimer(groupSessionId, e.group_id, delayInfo.delayMs, aiConfig);
               return;
             }
           }
 
-          this.rateLimiter.record(e.user_id, e.group_id, e.msg);
+          this.rateLimiter.record(e.user_id, e.group_id, e.msg, getEventBotId(e));
           await this.processChat(e, aiConfig, { skipPlanner: true, decisionSource: 'direct' });
           return;
         }
@@ -2271,8 +2287,8 @@ export class crystelfAI extends plugin {
           );
 
           if (planResult.action === 'reply') {
-            if (!this.rateLimiter.canProcess(e.user_id, e.group_id, e.msg)) return;
-            this.rateLimiter.record(e.user_id, e.group_id, e.msg);
+            if (!canProcessUserMessage(this.rateLimiter, e)) return;
+            this.rateLimiter.record(e.user_id, e.group_id, e.msg, getEventBotId(e));
             await this.processChat(e, aiConfig, { skipPlanner: true, decisionSource: 'nickname' });
           }
           return;
@@ -2290,8 +2306,8 @@ export class crystelfAI extends plugin {
           );
 
           if (planResult.action === 'reply') {
-            if (!this.rateLimiter.canProcess(e.user_id, e.group_id, e.msg)) return;
-            this.rateLimiter.record(e.user_id, e.group_id, e.msg);
+            if (!canProcessUserMessage(this.rateLimiter, e)) return;
+            this.rateLimiter.record(e.user_id, e.group_id, e.msg, getEventBotId(e));
             await this.processChat(e, aiConfig, { skipPlanner: true, triggerReason: '[持续关注接话] ', decisionSource: 'follow_up' });
           }
         }
@@ -2375,10 +2391,12 @@ export class crystelfAI extends plugin {
         return true;
       }
 
-      if (!this.rateLimiter.canProcess(e.user_id, 'private', e.msg)) {
+      const privateBotId = getEventBotId(e);
+      if (!this.rateLimiter.canProcess(e.user_id, 'private', e.msg, privateBotId)) {
+        logger.debug(`[crystelf-ai] 跳过私聊限流消息: bot=${privateBotId || '?'} user=${e.user_id}`);
         return true;
       }
-      this.rateLimiter.record(e.user_id, 'private', e.msg);
+      this.rateLimiter.record(e.user_id, 'private', e.msg, privateBotId);
       await this.processPrivateChat(e, aiConfig);
       return true;
     } catch (error) {
@@ -3440,12 +3458,17 @@ export class crystelfAI extends plugin {
           normalizedMessages.push(...expandedMessages);
         }
       }
+      if (normalizedMessages.length === 0) {
+        logger.warn(`[crystelf-ai] 回复没有可发送内容，跳过发送: bot=${getEventBotId(e) || '?'} group=${e.group_id}`);
+        return;
+      }
 
       for (const message of normalizedMessages) {
         switch (message.type) {
           case 'message': {
             const messageContent = applyEmojiSuppression(message.data, aiConfig);
             if (!messageContent) {
+              logger.warn(`[crystelf-ai] 群回复清洗后为空，跳过发送: bot=${getEventBotId(e) || '?'} group=${e.group_id}`);
               break;
             }
             await Message.sendGroupMessage(e, e.group_id, messageContent, message.at, message.quote, adapter);
@@ -4135,7 +4158,9 @@ export class crystelfAI extends plugin {
     // by their dedicated paths and must not be collapsed here.
     if (!groupId || !messageId || messageId === '0' || !this.recentMessageIds) return true;
 
-    const key = `${groupId}:${messageId}`;
+    // 去重按 bot 隔离：同一个群里挂多个号时，每个号都会收到同一条消息，
+    // 用 group:message 做键会让先到的号把其他号全部判成“重复消息”
+    const key = `${getEventBotId(e)}:${groupId}:${messageId}`;
     const now = Date.now();
     const claimedAt = this.recentMessageIds.get(key);
     const dedupeWindowMs = 10 * 60 * 1000;
