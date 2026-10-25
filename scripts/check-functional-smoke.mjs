@@ -425,16 +425,25 @@ function checkAgentWorkbenchSafety() {
 }
 
 async function checkAgentWorkbenchSlashCommands() {
-  const [script, html, css, consoleSource, routesSource] = await Promise.all([
+  const [script, html, css, consoleSource, routesSource, weixinSource] = await Promise.all([
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.js'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.html'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.css'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchConsole.js'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchRoutes.js'), 'utf8'),
+    fs.readFile(path.join(root, 'apps', 'weixin-ilink.js'), 'utf8'),
   ]);
   const runTaskStart = script.indexOf('async function runTask');
   const slashDispatch = script.indexOf('const slashCommand = parseSlashCommand(prompt);', runTaskStart);
   const normalTaskRequest = script.indexOf("postJson('/api/agent-workbench/tasks'", runTaskStart);
+  // 桥侧斜杠指令不能拦群聊：群里的 #重置会话 属于 AI 群聊（清群历史），
+  // 规则若声明 permission:master，内核会对普通群员回“暂无权限”并中断分发
+  const bridgeSlashRule = weixinSource.split(/\r?\n/).find(line => line.includes("fnc: 'qqSlashCommand'")) || '';
+  assert(!/permission:\s*'master'/.test(bridgeSlashRule), 'qqSlashCommand 规则声明了 permission:master，会吞掉群聊的 #重置会话');
+  const bridgeSlashStart = weixinSource.indexOf('async qqSlashCommand');
+  assert(bridgeSlashStart > 0, '缺少 qqSlashCommand 处理函数');
+  const bridgeSlashBody = weixinSource.slice(bridgeSlashStart, bridgeSlashStart + 900);
+  assert(/if \(e\?\.isGroup\) return false/.test(bridgeSlashBody), 'qqSlashCommand 没有把群聊消息放行给其他插件');
   assert(html.includes('id="agent-slash-menu"') && html.includes('data-plus-action="slash"'), 'Agent 输入区没有斜杠命令入口');
   assert(css.includes('.agent-slash-menu') && css.includes('.agent-slash-item.is-active'), 'Agent 斜杠命令菜单缺少桌面或键盘选中样式');
   assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');

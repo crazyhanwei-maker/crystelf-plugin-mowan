@@ -136,7 +136,10 @@ export class weixinIlink extends plugin {
         { reg: '^#(?:回答|跳过)(?:\\s+([\\s\\S]+))?$', fnc: 'answerQuestion', permission: 'master' },
         // QQ 侧斜杠指令（/模型 /思考等级 /进展 等）：与微信桥共用 handleSlashCommand，回复走 e.reply
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
-        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|新建会话|会话重置|重置会话|取消|退出)(\\s|$)', fnc: 'qqSlashCommand', permission: 'master' },
+        // 不能声明 permission: 'master'：群里的 #重置会话 属于 AI 群聊（清群历史），
+        // 一旦权限拦截，内核会直接回“暂无权限”并中断分发，普通群员就清不了群聊会话。
+        // 场景与权限都在 qqSlashCommand 内自判（群聊一律放行给其他插件）
+        { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|新建会话|会话重置|重置会话|取消|退出)(\\s|$)', fnc: 'qqSlashCommand' },
         // QQ 私聊对话式跟进：任务执行中 / 结论窗口期内的纯文本消息并入当前会话（放最后，不抢具体指令）。
         // 注意：兜底正则能匹配所有群消息，绝不能声明 permission: 'master'——内核 loader 会对每条
         // 匹配的非主人消息回复“暂无权限”并中断全部分发（群里就是轰炸+吞消息），权限在 qqFollowUp 内自判
@@ -1204,6 +1207,13 @@ export class weixinIlink extends plugin {
   // QQ 侧斜杠指令：与微信桥共用 handleSlashCommand（含 /模型 供应商透传），
   // 执行期间把 sendTo 改道到 e.reply；/新建任务 的黏性任务模式不适用于群聊，改为引导
   async qqSlashCommand(e) {
+    // 群聊里的这些词属于 AI 群聊或其他插件（例如 #重置会话 是清群聊历史），桥不接管；
+    // 返回 false 让内核继续分发后续规则
+    if (e?.isGroup) return false;
+    if (!e.isMaster) {
+      await e.reply('暂无权限，只有主人才能操作').catch(() => { });
+      return true;
+    }
     // TRSS 的 /→# 会把 /模型 变 #模型；统一剥掉前缀再按 '/命令' 交给 handleSlashCommand
     const text = '/' + String(e.msg || '').trim().replace(/^[#/]+/, '');
     // #帮助 是其他插件的指令：QQ 侧明确不接管（防御，规则表已不放行）
