@@ -55,6 +55,7 @@ import {
   resolveBundledOpenCodeBootstrapCommand,
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
 import { materializeZcodeAttachments } from '../lib/webConsole/bundledZcodeRuntime.js';
+import Message from '../lib/yunzai/message.js';
 
 globalThis.logger ||= {
   info: () => {},
@@ -1796,6 +1797,44 @@ async function checkArkAgentPlanImageRuntime() {
   }
 }
 
+async function checkMultiAdapterGroupSend() {
+  const apiCalls = [];
+  const replies = [];
+  const bot = {
+    sendApi: async (action, params) => {
+      apiCalls.push({ action, params });
+      return { message_id: 1 };
+    },
+  };
+  const e = {
+    group_id: '862739921',
+    bot,
+    reply: async message => {
+      replies.push(message);
+      return { message_id: 2 };
+    },
+  };
+
+  // Milky/Satori/未知适配器也暴露 sendApi，但不是 OneBot v11；必须回退 e.reply，
+  // 否则多账号（不同号走不同适配器）时会出现“AI 有回复但发不出去且无报错”
+  for (const adapter of ['', 'milky', 'satori']) {
+    apiCalls.length = 0;
+    replies.length = 0;
+    await Message.sendGroupMessage(e, '862739921', '在呢在呢', -1, -1, adapter);
+    assert(replies.length === 1 && replies[0] === '在呢在呢', `适配器 ${adapter || '(empty)'} 没有回退到 e.reply`);
+    assert(apiCalls.length === 0, `适配器 ${adapter || '(empty)'} 错误地走了 OneBot sendApi`);
+  }
+
+  // OneBot v11 保持 send_msg 路径，保留引用/@ 能力
+  apiCalls.length = 0;
+  replies.length = 0;
+  await Message.sendGroupMessage(e, '862739921', '在呢在呢', -1, -1, 'nc');
+  assert(apiCalls.length === 1 && apiCalls[0].action === 'send_msg', 'nc 适配器没有走 send_msg');
+  assert(replies.length === 0, 'nc 适配器不应再走 e.reply');
+
+  logPass('多适配器群消息发送回退正常');
+}
+
 async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
@@ -1825,6 +1864,7 @@ async function main() {
     checkAgentWorkbenchSafety();
     await checkAgentWorkbenchSlashCommands();
     await checkZcodePromptAttachments();
+    await checkMultiAdapterGroupSend();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});
