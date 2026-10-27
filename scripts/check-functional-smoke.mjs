@@ -474,7 +474,10 @@ async function checkAgentWorkbenchSlashCommands() {
   const bridgeSlashStart = weixinSource.indexOf('async qqSlashCommand');
   assert(bridgeSlashStart > 0, '缺少 qqSlashCommand 处理函数');
   const bridgeSlashBody = weixinSource.slice(bridgeSlashStart, bridgeSlashStart + 900);
-  assert(/if \(e\?\.isGroup\) return false/.test(bridgeSlashBody), 'qqSlashCommand 没有把群聊消息放行给其他插件');
+  // 群里只放行 #重置会话/#重置对话 给 AI 群聊；#模型/#压缩 等桥指令对主人仍要生效
+  assert(/e\?\.isGroup[\s\S]{0,320}重置会话[\s\S]{0,120}return false/.test(bridgeSlashBody), 'qqSlashCommand 没有把群聊的 #重置会话 放行给 AI 群聊');
+  assert(/e\?\.isGroup[\s\S]{0,520}if \(!e\.isMaster\) return false/.test(bridgeSlashBody), 'qqSlashCommand 在群聊里没有为非主人放行');
+  assert(bridgeSlashRule.includes('模型') && bridgeSlashRule.includes('压缩'), 'qqSlashCommand 规则没有覆盖 #模型/#压缩');
   assert(html.includes('id="agent-slash-menu"') && html.includes('data-plus-action="slash"'), 'Agent 输入区没有斜杠命令入口');
   assert(css.includes('.agent-slash-menu') && css.includes('.agent-slash-item.is-active'), 'Agent 斜杠命令菜单缺少桌面或键盘选中样式');
   assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');

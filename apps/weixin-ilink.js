@@ -138,7 +138,8 @@ export class weixinIlink extends plugin {
         // TRSS-Yunzai 开了 bot["/→#"] 会把开头 / 归一化成 #，规则必须同时兼容 # / #/ 前缀
         // 不能声明 permission: 'master'：群里的 #重置会话 属于 AI 群聊（清群历史），
         // 一旦权限拦截，内核会直接回“暂无权限”并中断分发，普通群员就清不了群聊会话。
-        // 场景与权限都在 qqSlashCommand 内自判（群聊一律放行给其他插件）
+        // 群聊权限在 qqSlashCommand 内自判：仅 #重置会话/#重置对话 放行给 ai.js，
+        // 其余桥指令（#模型/#压缩/#进展…）在群里仍可用，但只允许主人。
         { reg: '^[#/]+(模型|思考等级|当前配置|配置|停止|进展|压缩|恢复|归档|任务列表|任务|新建任务|新建会话|会话重置|重置会话|取消|退出)(\\s|$)', fnc: 'qqSlashCommand' },
         // QQ 私聊对话式跟进：任务执行中 / 结论窗口期内的纯文本消息并入当前会话（放最后，不抢具体指令）。
         // 注意：兜底正则能匹配所有群消息，绝不能声明 permission: 'master'——内核 loader 会对每条
@@ -1207,10 +1208,15 @@ export class weixinIlink extends plugin {
   // QQ 侧斜杠指令：与微信桥共用 handleSlashCommand（含 /模型 供应商透传），
   // 执行期间把 sendTo 改道到 e.reply；/新建任务 的黏性任务模式不适用于群聊，改为引导
   async qqSlashCommand(e) {
-    // 群聊里的这些词属于 AI 群聊或其他插件（例如 #重置会话 是清群聊历史），桥不接管；
-    // 返回 false 让内核继续分发后续规则
-    if (e?.isGroup) return false;
-    if (!e.isMaster) {
+    // 群聊里只有 #重置会话/#重置对话 属于 AI 群聊（清群历史），桥必须放行给 ai.js；
+    // 其余桥指令（#模型/#压缩/#进展…）在群里仍然可用，但仅限主人。
+    // 不能靠规则上的 permission:master 拦截：内核遇到非主人会先回“暂无权限”并中断分发。
+    if (e?.isGroup) {
+      const groupCommand = String(e.msg || '').trim().replace(/^[#/]+/, '').split(/\s+/)[0] || '';
+      if (/^(重置会话|重置对话)$/.test(groupCommand)) return false;
+      // 非主人在群里发桥指令时不接管，也不回“暂无权限”，交给其他插件或静默忽略
+      if (!e.isMaster) return false;
+    } else if (!e.isMaster) {
       await e.reply('暂无权限，只有主人才能操作').catch(() => { });
       return true;
     }
