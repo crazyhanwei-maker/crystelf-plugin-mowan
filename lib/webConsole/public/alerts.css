@@ -41,3 +41,24 @@
 .alert-item .mini-btn { flex: 0 0 auto; }
 
 :root[data-theme='dark'] .alert-item { background: var(--panel-bg, #17191c); border-color: rgba(148, 163, 184, 0.14); }
+
+/* 手机：全局按钮规则会把「标为已读」拉成整行，把标题挤成竖排——这里恢复单列流式布局 */
+@media (max-width: 560px) {
+  .alert-item {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+
+  .alert-main {
+    flex: 1 1 calc(100% - 30px);
+    min-width: 0;
+  }
+
+  .alert-item .mini-btn {
+    width: auto !important;
+    min-height: 28px !important;
+    margin-left: 18px;
+    padding: 0 10px !important;
+    white-space: nowrap;
+  }
+}

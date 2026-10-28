@@ -37,3 +37,15 @@
   object-fit: cover;
   display: block;
 }
+
+/* 手机：统计大卡 2 列紧凑化 */
+@media (max-width: 560px) {
+  #image-monitor-summary-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+  }
+
+  #image-monitor-summary-cards > * {
+    min-width: 0;
+  }
+}

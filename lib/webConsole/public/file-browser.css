@@ -4638,9 +4638,21 @@ body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browse
   }
 
   body.file-manager-page .file-manager-toolbar > .file-manager-search-inline {
-    flex: 1 1 140px;
+    flex: 1 1 100%;
     display: flex;
     gap: 4px;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-inline input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  body.file-manager-page .file-manager-toolbar > .file-manager-search-inline .mini-btn {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-height: 28px;
+    white-space: nowrap;
   }
 
   body.file-manager-page .file-manager-toolbar > .file-manager-icon-btn {
@@ -4654,10 +4666,28 @@ body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browse
     padding: 4px 10px;
   }
 
+  /* 表格操作按钮：3 列栅格铺满，显式白底，避免全局按钮样式在手机上把「属性」等染成蓝色长条 */
+  body.file-manager-page .file-manager-table-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
   body.file-manager-page .file-manager-table-actions .file-manager-secondary-btn {
+    width: auto !important;
     min-height: 28px;
     font-size: 12px;
     padding: 0 8px;
+    border: 1px solid #d8e0ec;
+    background: #fff;
+    color: #344054;
+    box-shadow: none;
+  }
+
+  body.file-manager-page .file-manager-table-actions .file-manager-secondary-btn:disabled {
+    border-color: #e5e9f0 !important;
+    background: var(--fm-disabled) !important;
+    color: #b7c0cc !important;
   }
 
   /* 单行文件条目 */
@@ -4868,3 +4898,126 @@ body.file-manager-page .file-manager-editor-shell.editor-gutter-off .file-browse
 }
 
 body.file-manager-page .file-manager-table-panel { position: relative; }
+
+/* ===== 手机/窄屏：分页与表格操作按钮紧凑化 ===== */
+@media (max-width: 900px) {
+  body.file-manager-page .file-manager-table-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  body.file-manager-page .file-manager-table-actions .file-manager-secondary-btn {
+    width: auto !important;
+    min-height: 28px;
+    padding: 0 8px;
+    border: 1px solid #d8e0ec;
+    border-radius: 4px;
+    background: #fff;
+    color: #344054;
+    font-size: 12px;
+    box-shadow: none;
+  }
+
+  body.file-manager-page .file-manager-table-actions .file-manager-secondary-btn:disabled {
+    border-color: #e5e9f0 !important;
+    background: var(--fm-disabled) !important;
+    color: #b7c0cc !important;
+  }
+
+  body.file-manager-page .file-manager-footer-right select {
+    width: auto;
+    min-width: 0;
+    height: 26px;
+    padding: 0 22px 0 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  body.file-manager-page .file-manager-pager-btn {
+    width: 24px;
+    min-width: 24px;
+    height: 26px;
+    padding: 0;
+    font-size: 14px;
+    border-radius: 4px;
+    box-shadow: none;
+  }
+
+  body.file-manager-page .file-manager-current-page {
+    font-size: 12px;
+  }
+
+  body.file-manager-page .file-manager-footer-stats {
+    font-size: 12px;
+  }
+}
+
+/* ===== 手机 ≤560：顶掉全局「按钮拉满宽 + 42px 高」规则，文件管理按钮全面紧凑化 ===== */
+@media (max-width: 560px) {
+  body.file-manager-page button,
+  body.file-manager-page .mini-btn,
+  body.file-manager-page .link-btn {
+    width: auto !important;
+    min-height: 26px !important;
+    padding: 0 10px !important;
+    border-radius: 4px;
+    box-shadow: none;
+    font-size: 12px;
+  }
+
+  body.file-manager-page .file-manager-icon-btn {
+    width: 30px !important;
+    min-width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+  }
+
+  body.file-manager-page .file-manager-primary-btn,
+  body.file-manager-page #file-browser-inline-save-btn,
+  body.file-manager-page #file-browser-replace-one-btn {
+    border-color: var(--fm-blue);
+    background: var(--fm-blue);
+    color: #fff;
+  }
+
+  body.file-manager-page .file-manager-pager-btn {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    font-size: 14px !important;
+  }
+
+  body.file-manager-page .file-manager-footer-right select {
+    width: auto !important;
+    min-width: 0 !important;
+    height: 26px !important;
+    padding: 0 22px 0 8px !important;
+    font-size: 12px;
+  }
+
+  body.file-manager-page .file-manager-search-inline input {
+    width: auto !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 28px !important;
+  }
+
+  body.file-manager-page .file-manager-search-inline .mini-btn {
+    width: auto !important;
+    min-height: 28px !important;
+  }
+
+  body.file-manager-page .file-manager-table-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  body.file-manager-page .file-manager-table-actions > button {
+    width: auto !important;
+    height: 28px !important;
+    min-height: 28px !important;
+  }
+}

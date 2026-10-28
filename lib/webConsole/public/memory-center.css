@@ -1,0 +1,263 @@
+/* 记忆与人设中心 */
+.memory-summary-panel {
+  margin-bottom: 14px;
+}
+
+.memory-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.memory-stat-card {
+  padding: 10px 12px;
+  border: 1px solid var(--border, rgba(120, 130, 160, 0.22));
+  border-radius: 10px;
+  background: rgba(120, 130, 160, 0.08);
+}
+
+.memory-stat-card span {
+  display: block;
+  font-size: 12px;
+  opacity: 0.72;
+}
+
+.memory-stat-card strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.memory-applied {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.memory-applied .memory-applied-chip {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(120, 130, 160, 0.1);
+  border: 1px solid var(--border, rgba(120, 130, 160, 0.22));
+}
+
+.memory-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 14px;
+  flex-wrap: wrap;
+}
+
+.memory-tab {
+  border: 1px solid var(--border, rgba(120, 130, 160, 0.22));
+  background: var(--panel-bg, #fff);
+  color: inherit;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.memory-tab.is-active {
+  background: var(--accent, #3a6df0);
+  border-color: var(--accent, #3a6df0);
+  color: #fff;
+}
+
+.memory-toolbar {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.memory-toolbar input,
+.memory-toolbar select {
+  flex: 1 1 180px;
+  width: auto;
+  min-width: 120px;
+}
+
+.memory-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.memory-toolbar .memory-inline-check {
+  width: auto !important;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  margin: 0;
+}
+
+.memory-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+/* 添加/编辑记忆：固定 12 栅格，两行均衡分布，避免宽屏下字段挤一行、下拉框后留大片空白 */
+.memory-form--memory {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.memory-form--memory > #memory-form-session { grid-column: span 6; }
+.memory-form--memory > #memory-form-user { grid-column: span 3; }
+.memory-form--memory > #memory-form-user-name { grid-column: span 3; }
+.memory-form--memory > #memory-form-kind { grid-column: span 3; }
+.memory-form--memory > #memory-form-importance { grid-column: span 3; }
+.memory-form--memory > #memory-form-tags { grid-column: span 6; }
+.memory-form--memory > #memory-form-content { grid-column: 1 / -1; }
+.memory-form--memory > .actions { grid-column: 1 / -1; }
+
+.memory-form textarea {
+  grid-column: 1 / -1;
+  min-height: 74px;
+  resize: vertical;
+}
+
+.memory-form .actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.memory-list-item {
+  padding: 12px 14px;
+  border: 1px solid var(--border, rgba(120, 130, 160, 0.22));
+  border-radius: 10px;
+  background: var(--panel-bg, #fff);
+  margin-bottom: 10px;
+}
+
+.memory-list-item.is-disabled {
+  opacity: 0.62;
+}
+
+.memory-list-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.memory-list-content {
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.memory-list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.78;
+}
+
+.memory-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(120, 130, 160, 0.14);
+  font-size: 11px;
+}
+
+.memory-list-item .actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.memory-pre {
+  max-height: 52vh;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(120, 130, 160, 0.1);
+  border: 1px solid var(--border, rgba(120, 130, 160, 0.22));
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.memory-artifact-item .memory-list-content {
+  font-size: 13px;
+}
+
+.memory-artifact-type {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(58, 109, 240, 0.12));
+}
+
+@media (max-width: 900px) {
+  .memory-form--memory {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .memory-form--memory > * {
+    grid-column: auto / span 1;
+  }
+
+  .memory-form--memory > #memory-form-session,
+  .memory-form--memory > #memory-form-tags,
+  .memory-form--memory > #memory-form-content,
+  .memory-form--memory > .actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .memory-toolbar input,
+  .memory-toolbar select {
+    min-width: 0;
+    flex: 1 1 140px;
+  }
+
+  .memory-list-head {
+    flex-direction: column;
+  }
+
+  .memory-form {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-form--memory > * {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .memory-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .memory-tab {
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .memory-list-item .actions button,
+  .memory-toolbar button,
+  .memory-form .actions button {
+    width: auto !important;
+    min-height: 30px !important;
+    padding: 4px 10px;
+  }
+}

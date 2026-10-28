@@ -2217,17 +2217,6 @@ const guobaSchema = [
     component: 'SOFT_GROUP_BEGIN',
   },
   {
-    field: 'ai.maxMix',
-    label: '混合模式阈值',
-    component: 'InputNumber',
-    bottomHelpMessage: '混合模式下，如果用户消息长度大于这个值，那么使用ai回复',
-    componentProps: {
-      min: 1,
-      step: 1,
-      placeholder: '请输入消息长度阈值',
-    },
-  },
-  {
     field: 'ai.timeout',
     label: 'AI调用超时时间',
     component: 'InputNumber',
@@ -3326,36 +3315,24 @@ const guobaSchema = [
   },
   {
     field: 'ai.memory.enabled',
-    label: '启用记忆检索',
+    label: '启用长期记忆',
     component: 'Switch',
-    bottomHelpMessage: '启用后会在需要时智能检索历史聊天内容',
+    bottomHelpMessage: '开启后自动把群聊蒸馏为长期记忆，并在回复时按相关度注入背景',
     componentProps: {
       checkedValue: true,
       unCheckedValue: false,
     },
   },
   {
-    field: 'ai.memory.maxIterations',
-    label: '记忆检索轮次',
+    field: 'ai.memory.extractBatchSize',
+    label: '记忆提炼批次',
     component: 'InputNumber',
-    bottomHelpMessage: 'ReAct 检索允许的最大迭代次数',
+    bottomHelpMessage: '攒够多少条聊天记录就蒸馏一次长期记忆；越大越省 AI 调用，越小记忆越及时（10-200）',
     componentProps: {
-      min: 1,
-      max: 10,
-      step: 1,
-      placeholder: '请输入记忆检索轮次',
-    },
-  },
-  {
-    field: 'ai.memory.timeoutMs',
-    label: '记忆检索超时',
-    component: 'InputNumber',
-    bottomHelpMessage: '记忆检索最长等待时间，单位毫秒',
-    componentProps: {
-      min: 1000,
-      max: 120000,
-      step: 1000,
-      placeholder: '请输入记忆检索超时(毫秒)',
+      min: 10,
+      max: 200,
+      step: 10,
+      placeholder: '默认 40',
     },
   },
   {

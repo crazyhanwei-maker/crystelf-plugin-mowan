@@ -22,8 +22,6 @@
   "multimodalModel": "gpt-5.4-mini",
   "?maxSessions": "最大同时存在的会话数",
   "maxSessions": 100,
-  "?maxMix": "混合模式阈值,超过后优先走AI回复",
-  "maxMix": 5,
   "?maxIterations": "AI工具调用最大迭代次数",
   "maxIterations": 20,
   "?maxMessageLength": "消息最大长度",
@@ -132,14 +130,12 @@
     "idleMessageCount": 100
   },
 
-  "?memory": "记忆检索配置",
+  "?memory": "长期记忆配置（记忆与人设页管理条目）",
   "memory": {
-    "?enabled": "是否启用智能记忆检索",
+    "?enabled": "是否启用长期记忆蒸馏与检索",
     "enabled": true,
-    "?maxIterations": "ReAct最大迭代次数",
-    "maxIterations": 3,
-    "?timeoutMs": "检索超时时间(毫秒)",
-    "timeoutMs": 15000
+    "?extractBatchSize": "攒够多少条聊天记录蒸馏一次长期记忆（10-200，默认 40）",
+    "extractBatchSize": 40
   },
 
   "?topic": "话题跟踪配置",

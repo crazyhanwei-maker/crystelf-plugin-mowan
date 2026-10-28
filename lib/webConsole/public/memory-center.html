@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 记忆与人设</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/data-lists.css" />
+  <link rel="stylesheet" href="/memory-center.css" />
+</head>
+<body data-memory-center-page>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>记忆与人设中心</h1>
+        <p id="page-meta">正在读取记忆数据...</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="refresh-btn">刷新数据</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel memory-summary-panel">
+      <div class="section-head">
+        <div>
+          <h2>记忆概览</h2>
+          <div class="setting-help">长期记忆会作为背景注入聊天；人设卡应用后会进入聊天 prompt，技能可应用到 ZCode 指令。</div>
+        </div>
+        <span id="refresh-status" class="setting-help">加载中...</span>
+      </div>
+      <div id="memory-stats" class="memory-stats-grid"></div>
+      <div id="applied-state" class="memory-applied"></div>
+    </section>
+
+    <nav class="memory-tabs" aria-label="记忆中心分区">
+      <button type="button" class="memory-tab is-active" data-memory-tab="memories">记忆库</button>
+      <button type="button" class="memory-tab" data-memory-tab="distill">从聊天提炼</button>
+      <button type="button" class="memory-tab" data-memory-tab="artifacts">人设与技能</button>
+    </nav>
+
+    <section id="memory-tab-memories" class="memory-tab-panel">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>筛选记忆</h2>
+            <div class="setting-help">按群会话、关键词、类型和来源筛选；编辑后可立即影响下一轮聊天。</div>
+          </div>
+        </div>
+        <div class="toolbar memory-toolbar">
+          <input id="memory-filter-session" list="memory-session-list" placeholder="会话，例如 group:123456" />
+          <input id="memory-filter-user" placeholder="用户 QQ（可选）" />
+          <input id="memory-filter-query" placeholder="搜索内容 / 标签 / 用户" />
+          <select id="memory-filter-kind">
+            <option value="">全部类型</option>
+            <option value="fact">事实</option>
+            <option value="preference">偏好</option>
+            <option value="event">事件/约定</option>
+            <option value="relationship">关系</option>
+            <option value="knowledge">知识</option>
+          </select>
+          <select id="memory-filter-source">
+            <option value="">全部来源</option>
+            <option value="distiller">自动提炼</option>
+            <option value="distill">手动提炼</option>
+            <option value="manual">手动添加</option>
+            <option value="marker">对话记忆</option>
+            <option value="knowledge-import">旧知识库导入</option>
+          </select>
+          <label class="memory-inline-check"><input id="memory-filter-disabled" type="checkbox" /> 包含已停用</label>
+          <button id="memory-filter-btn">筛选</button>
+          <button id="knowledge-import-btn" type="button" title="把旧知识库（ai.knowledgeBase）导入为全局知识条目，重复内容自动跳过">导入旧知识库</button>
+        </div>
+        <datalist id="memory-session-list"></datalist>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2 id="memory-form-title">添加记忆</h2>
+            <div class="setting-help">手动写入的记忆会按会话/用户归档，并参与后续检索。</div>
+          </div>
+          <button id="memory-form-reset" class="link-btn" type="button">清空表单</button>
+        </div>
+        <form id="memory-form" class="memory-form memory-form--memory">
+          <input type="hidden" id="memory-form-id" />
+          <input id="memory-form-session" list="memory-session-list" placeholder="会话，例如 group:123456（知识类型可留空=全局）" />
+          <input id="memory-form-user" placeholder="用户 QQ（可选）" />
+          <input id="memory-form-user-name" placeholder="用户昵称（可选）" />
+          <select id="memory-form-kind">
+            <option value="fact">事实</option>
+            <option value="preference">偏好</option>
+            <option value="event">事件/约定</option>
+            <option value="relationship">关系</option>
+            <option value="knowledge">知识（全局）</option>
+          </select>
+          <select id="memory-form-importance">
+            <option value="3">重要度 3</option>
+            <option value="1">重要度 1</option>
+            <option value="2">重要度 2</option>
+            <option value="4">重要度 4</option>
+            <option value="5">重要度 5</option>
+          </select>
+          <input id="memory-form-tags" placeholder="标签，用逗号分隔（可选）" />
+          <textarea id="memory-form-content" rows="3" placeholder="要记住的内容，一句话写清谁/什么事" required></textarea>
+          <div class="actions">
+            <button type="submit" id="memory-form-submit">添加记忆</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>记忆列表</h2>
+            <div class="setting-help" id="memory-list-meta">加载中...</div>
+          </div>
+        </div>
+        <div id="memory-list" class="list">加载中...</div>
+      </section>
+    </section>
+
+    <section id="memory-tab-distill" class="memory-tab-panel hidden">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>从聊天记录提炼</h2>
+            <div class="setting-help">记忆直接入库；人设卡/技能先生成 Markdown 预览，确认后再保存。提炼会把所选聊天记录发送到当前 AI 接口。</div>
+          </div>
+        </div>
+        <form id="distill-form" class="memory-form">
+          <input id="distill-session" list="memory-session-list" placeholder="会话，例如 group:123456" required />
+          <select id="distill-type">
+            <option value="memories">提炼长期记忆</option>
+            <option value="persona">提炼人设卡</option>
+            <option value="skill">提炼技能</option>
+          </select>
+          <input id="distill-target" placeholder="对象名称（人设/技能可选）" />
+          <input id="distill-user" placeholder="限定用户 QQ（可选）" />
+          <input id="distill-limit" type="number" min="20" max="1000" value="300" placeholder="最多读取多少条" />
+          <div class="actions">
+            <button type="submit" id="distill-submit">开始提炼</button>
+          </div>
+        </form>
+        <div id="distill-status" class="setting-help">选择会话后开始提炼。</div>
+        <div id="distill-output-wrap" class="hidden">
+          <input id="distill-artifact-name" placeholder="产物名称" />
+          <textarea id="distill-output" rows="16" spellcheck="false"></textarea>
+          <div class="actions">
+            <button id="distill-save-artifact" type="button">保存为人设/技能</button>
+            <button id="distill-copy" type="button" class="link-btn">复制内容</button>
+          </div>
+        </div>
+        <div id="distill-memories" class="list hidden"></div>
+      </section>
+    </section>
+
+    <section id="memory-tab-artifacts" class="memory-tab-panel hidden">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>人设与技能产物</h2>
+            <div class="setting-help">人设卡只补充语气/习惯/互动细节，不覆盖基础角色身份；技能可追加到 ZCode 自定义指令。</div>
+          </div>
+        </div>
+        <div id="artifact-list" class="list">加载中...</div>
+      </section>
+      <section id="artifact-preview-panel" class="panel hidden">
+        <div class="section-head">
+          <div>
+            <h2 id="artifact-preview-title">产物预览</h2>
+            <div class="setting-help" id="artifact-preview-meta"></div>
+          </div>
+          <button id="artifact-preview-close" type="button" class="link-btn">关闭</button>
+        </div>
+        <pre id="artifact-preview" class="memory-pre"></pre>
+      </section>
+    </section>
+  </div>
+  <script src="/auth.js"></script>
+  <script src="/memory-center.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

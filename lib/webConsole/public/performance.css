@@ -1127,3 +1127,14 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* 手机：KPI 卡 2 列紧凑化（顶掉外层样式对 grid 的 1 列覆盖） */
+@media (max-width: 660px) {
+  .performance-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .performance-kpi-item {
+    min-width: 0;
+  }
+}

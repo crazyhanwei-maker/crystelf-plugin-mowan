@@ -4,7 +4,6 @@ import cfg from '../../../lib/config/config.js';
 import { defaultConfig as pluginDefaultConfig } from '../constants/path.js';
 import SessionManager, { RateLimiter, MessageQueueManager, SkillSessionManager } from '../lib/ai/sessionManager.js';
 import AiCaller from '../lib/ai/aiCaller.js';
-import MemorySystem from '../lib/ai/memorySystem.js';
 import Renderer from '../lib/ai/renderer.js';
 import Meme from '../lib/core/meme.js';
 import Group from '../lib/yunzai/group.js';
@@ -12,6 +11,7 @@ import Message from '../lib/yunzai/message.js';
 import ResponseHandler, { normalizeOutgoingMessageForSend } from '../lib/ai/responseHandler.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
 import { initDatabase } from '../lib/ai/chatDatabase.js';
+import { searchKnowledge } from '../lib/ai/memoryLibrary.js';
 import { HumanizeEngine } from '../lib/humanize/index.js';
 import { runChat, shouldForceSearch } from '../lib/ai/chatEngine.js';
 import { shouldCircuitBreakSync } from '../lib/ai/usageLogger.js';
@@ -534,6 +534,27 @@ function buildRuntimeKnowledgeContext(matches = []) {
     'Relevant context retrieved from the configured local knowledge base:',
     ...matches.map((item, index) => `${index + 1}. 标题:${item.title}${item.tags?.length ? `\n标签:${item.tags.join(',')}` : ''}\n内容:${item.content}`),
   ].join('\n');
+}
+
+// 知识统一（方案 C）：旧配置知识库 + 记忆库里的全局知识条目合并检索
+async function collectKnowledgeMatches(aiConfig, queryText, topK = 3) {
+  if (!aiConfig?.knowledgeBaseEnabled) return [];
+  const items = retrieveRuntimeKnowledge(queryText, parseRuntimeKnowledgeBase(aiConfig?.knowledgeBase || ''), topK);
+  try {
+    const libraryKnowledge = await searchKnowledge(queryText, topK);
+    if (libraryKnowledge.length > 0) {
+      const keyOf = item => `${String(item.title || '')}|${String(item.content || '').slice(0, 80)}`.toLowerCase();
+      const seen = new Set(items.map(keyOf));
+      for (const item of libraryKnowledge) {
+        if (!seen.has(keyOf(item))) items.push(item);
+      }
+      items.sort((a, b) => (b.score || 0) - (a.score || 0));
+      return items.slice(0, Math.max(1, topK));
+    }
+  } catch (error) {
+    logger.warn?.(`[crystelf-ai] 记忆库知识检索失败: ${error.message}`);
+  }
+  return items;
 }
 
 function isChatHelpRequest(text = '') {
@@ -1505,7 +1526,6 @@ export class crystelfAI extends plugin {
       await this.humanize.init();
       
       AiCaller.init();
-      MemorySystem.init();
       Renderer.init();
       
       this.groupLastActivityTime = new Map();
@@ -2478,13 +2498,10 @@ export class crystelfAI extends plugin {
         return true;
       }
 
-      const memoryContext = this.humanize.memoryDistiller.getMemoryContext(sessionId, messageData.text, e.sender?.nickname || '');
+      const memoryContext = this.humanize.memoryDistiller.getMemoryContext(sessionId, messageData.text, e.sender?.nickname || '', userId);
       const topicContext = this.humanize.topicTracker.getTopicContext(sessionId);
       const expressionContext = this.humanize.expressionLearner.getExpressionContext(sessionId);
-      const knowledgeItems = aiConfig?.knowledgeBaseEnabled ? parseRuntimeKnowledgeBase(aiConfig?.knowledgeBase || '') : [];
-      const knowledgeMatches = aiConfig?.knowledgeBaseEnabled
-        ? retrieveRuntimeKnowledge(messageData.text, knowledgeItems, Number(aiConfig?.knowledgeTopK || 3))
-        : [];
+      const knowledgeMatches = await collectKnowledgeMatches(aiConfig, messageData.text, Number(aiConfig?.knowledgeTopK || 3));
       const knowledgeContext = buildRuntimeKnowledgeContext(knowledgeMatches);
       this.sessionLastKnowledgeMatches?.set(sessionId, knowledgeMatches);
 
@@ -2863,8 +2880,6 @@ export class crystelfAI extends plugin {
         }
       }
 
-      const memories = await MemorySystem.searchMemories(userId, e.msg || '', 5);
-
       if (isImageGenerationRequest(messageData.text)) {
         const imagePrompt = normalizeImagePromptText(messageData.text, e);
         logger.info(`[crystelf-ai] 检测到用户直接绘图请求: ${imagePrompt}`);
@@ -2896,10 +2911,7 @@ export class crystelfAI extends plugin {
         userId,
         e.sender?.nickname || '该用户'
       );
-      const knowledgeItems = aiConfig?.knowledgeBaseEnabled ? parseRuntimeKnowledgeBase(aiConfig?.knowledgeBase || '') : [];
-      const knowledgeMatches = aiConfig?.knowledgeBaseEnabled
-        ? retrieveRuntimeKnowledge(messageData.text, knowledgeItems, Number(aiConfig?.knowledgeTopK || 3))
-        : [];
+      const knowledgeMatches = await collectKnowledgeMatches(aiConfig, messageData.text, Number(aiConfig?.knowledgeTopK || 3));
       const knowledgeContext = buildRuntimeKnowledgeContext(knowledgeMatches);
       this.sessionLastKnowledgeMatches?.set(groupSessionId, knowledgeMatches);
       const statusHints = [];

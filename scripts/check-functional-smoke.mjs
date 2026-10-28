@@ -48,6 +48,7 @@ import {
   normalizeUsage,
   parseAgentProviderModelList,
   resolveTaskContextLimit,
+  shouldAutoCompactZcodeContext,
 } from '../lib/webConsole/agentWorkbenchConsole.js';
 import {
   buildBundledOpenCodeEnvironment,
@@ -482,6 +483,16 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(css.includes('.agent-slash-menu') && css.includes('.agent-slash-item.is-active'), 'Agent 斜杠命令菜单缺少桌面或键盘选中样式');
   assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');
   assert(consoleSource.includes('body: modelSelection') && consoleSource.includes(': { auto: true }'), 'Agent 上下文压缩没有在未选择模型时使用默认模型');
+  // ZCode 压缩：手动走运行时 /compact，自动按控制台阈值在每轮前触发
+  assert(consoleSource.includes("prompt: '/compact'") && consoleSource.includes('async function compactZcodeSession'), 'ZCode 手动压缩没有接入 /compact');
+  assert(consoleSource.includes("action === 'summarize' && task.providerId === 'zcode'"), 'manageSession 没有为 ZCode 分流 summarize');
+  assert(consoleSource.includes('await maybeAutoCompactZcodeSession(task)'), 'ZCode 自动压缩没有在任务轮次前触发');
+  assert(consoleSource.includes('config.manualContextLimit || 0') && consoleSource.includes('workbenchRuntimeConfig.manualContextLimit'), 'ZCode 上下文上限没有使用手动容量兜底');
+  assert(!shouldAutoCompactZcodeContext({ enabled: true, usage: 79, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值以下误触发');
+  assert(shouldAutoCompactZcodeContext({ enabled: true, usage: 80, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值处没有触发');
+  assert(!shouldAutoCompactZcodeContext({ enabled: false, usage: 95, limit: 100, threshold: 80 }), 'ZCode 自动压缩开关关闭时仍触发');
+  assert(!shouldAutoCompactZcodeContext({ enabled: true, usage: 95, limit: 100, threshold: 80, lastCompactedAt: new Date().toISOString() }), '刚压缩过仍连续自动压缩');
+  assert(shouldAutoCompactZcodeContext({ enabled: true, usage: 60, limit: 100, threshold: 10 }), 'ZCode 自动压缩阈值没有下限保护');
   assert(script.includes("name: 'undo'") && script.includes("name: 'redo'") && script.includes("name: 'fork'"), 'Agent 会话管理斜杠命令不完整');
   assert(script.includes("name: 'archive'") && script.includes("name: 'delete'") && script.includes("name: 'export'") && script.includes("name: 'terminal'"), 'Agent 工作台功能没有完整接入斜杠命令');
   assert(html.includes('id="agent-delete-btn"') && script.includes('async function deleteAgentTask') && html.includes('id="agent-actions-toggle"'), 'Agent 会话删除入口或处理逻辑缺失');
@@ -1870,6 +1881,163 @@ async function checkMultiAdapterGroupSend() {
   logPass('多适配器群消息发送回退与多账号限流隔离正常');
 }
 
+async function checkMemoryLibrary() {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'crystelf-memory-library-'));
+  const previousCwd = process.cwd();
+  process.chdir(tempRoot);
+  try {
+    const { initDatabase } = await import('../lib/ai/chatDatabase.js');
+    const {
+      saveArtifact,
+      listArtifacts,
+      getArtifact,
+      deleteArtifact,
+      distillMemories,
+      parseKnowledgeBaseText,
+      searchKnowledge,
+      addMemory: addLibraryMemory,
+      importKnowledgeFromConfig,
+    } = await import('../lib/ai/memoryLibrary.js');
+    const first = await initDatabase();
+    const second = await initDatabase();
+    assert(first === second, 'chatDatabase 不是单例，控制台与聊天会互相覆盖');
+
+    const item = first.addMemory({
+      sessionId: 'group:test',
+      content: '测试记忆：群主喜欢喝无糖可乐',
+      tags: ['群主', '可乐'],
+      kind: 'preference',
+      importance: 4,
+    });
+    assert(item?.id, '添加记忆失败');
+    assert(first.listMemories({ sessionId: 'group:test' }).length === 1, '记忆列表不包含新记忆');
+
+    const updated = first.updateMemory(item.id, { content: '更新后的记忆', disabled: true });
+    assert(updated?.content === '更新后的记忆' && updated.disabled === true, '更新/停用记忆失败');
+    assert(first.getMemories('group:test').length === 0, '停用记忆不应进入默认检索');
+    assert(first.getMemories('group:test', 10, { includeDisabled: true }).length === 1, '包含停用时应能读到记忆');
+
+    assert(first.deleteMemory(item.id) === true, '删除记忆失败');
+    assert(first.listMemories({ sessionId: 'group:test' }).length === 0, '删除后仍能查到记忆');
+
+    const artifact = saveArtifact({
+      type: 'persona',
+      name: '测试人设',
+      content: '# 测试人设\n说话温和，喜欢用短句。',
+      meta: { sessionId: 'group:test' },
+    });
+    assert(listArtifacts('persona').some(entry => entry.id === artifact.id), '产物列表缺少新产物');
+    assert(getArtifact(artifact.id).content.includes('说话温和'), '产物内容读取失败');
+    assert(deleteArtifact(artifact.id).removed === true, '删除产物失败');
+
+    // 控制台包装层：列表、增删改、产物存取（不触发 AI / 配置写入）
+    const { createMemoryLibraryConsole } = await import('../lib/webConsole/memoryLibraryConsole.js');
+    const consoleApi = createMemoryLibraryConsole({ logger: globalThis.logger });
+    const payload = await consoleApi.buildPayload({ sessionId: 'group:test' });
+    assert(payload.success === true && Array.isArray(payload.items), '控制台记忆载荷格式不正确');
+    const added = await consoleApi.addMemoryPayload({ sessionId: 'group:test', content: '控制台添加的记忆' });
+    assert(added.success === true && added.item?.id, '控制台添加记忆失败');
+    const updatedByConsole = await consoleApi.updateMemoryPayload({ id: added.item.id, content: '控制台更新的记忆' });
+    assert(updatedByConsole.item?.content === '控制台更新的记忆', '控制台更新记忆失败');
+    assert((await consoleApi.deleteMemoryPayload({ id: added.item.id })).removed === true, '控制台删除记忆失败');
+    const savedArtifact = await consoleApi.saveArtifactPayload({ type: 'skill', name: '测试技能', content: '# 技能：测试' });
+    assert(savedArtifact.artifact?.id, '控制台保存产物失败');
+    const readBack = await consoleApi.getArtifactPayload({ id: savedArtifact.artifact.id });
+    assert(readBack.artifact?.content.includes('测试'), '控制台读取产物失败');
+    assert((await consoleApi.deleteArtifactPayload({ id: savedArtifact.artifact.id })).removed === true, '控制台删除产物失败');
+
+    // 提炼链路：mock AI 返回，验证 JSON 解析与入库（不产生真实请求）
+    const originalCallAiDirect = AiCaller.callAiDirect;
+    AiCaller.callAiDirect = async (prompt = '') => ({
+      success: true,
+      response: String(prompt).includes('"memories"')
+        ? '{"memories":[{"content":"提炼出的测试记忆","kind":"fact","tags":["提炼"],"importance":4}]}'
+        : '# 测试人设\n说话温和，喜欢用短句。',
+      usage: {},
+    });
+    try {
+      first.saveMessage({
+        sessionId: 'group:test',
+        role: 'user',
+        content: '我们约定周末一起测试新功能',
+        userId: '10001',
+        userName: '测试用户',
+        timestamp: Date.now(),
+      });
+      const distilled = await distillMemories({ sessionId: 'group:test', save: true });
+      assert(distilled.entries.length === 1 && distilled.entries[0].content.includes('提炼'), '记忆提炼 JSON 解析失败');
+      assert(first.listMemories({ sessionId: 'group:test' }).some(item => item.content.includes('提炼出的测试记忆')), '提炼记忆没有入库');
+      const consoleDistilled = await consoleApi.distillMemoriesPayload({ sessionId: 'group:test', save: false });
+      assert(consoleDistilled.success === true && consoleDistilled.entries.length === 1, '控制台提炼记忆包装层失败');
+      const persona = await consoleApi.distillPersonaPayload({ sessionId: 'group:test' });
+      assert(persona.success === true && persona.content.includes('测试人设'), '控制台提炼人设包装层失败');
+      const skill = await consoleApi.distillSkillPayload({ sessionId: 'group:test' });
+      assert(skill.success === true && skill.content.includes('测试人设'), '控制台提炼技能包装层失败');
+    } finally {
+      AiCaller.callAiDirect = originalCallAiDirect;
+    }
+
+    const { buildSystemPrompt } = await import('../lib/ai/promptBuilder.js');
+    const prompt = buildSystemPrompt({
+      config: { personaCard: '测试人设卡内容', personaCardName: '测试卡' },
+      botNickname: 'Bot',
+      isGroup: true,
+      chatHistory: [],
+      targetMessage: { userName: '测试用户', userId: 1, content: '你好', userRole: 'member', timestamp: Date.now() },
+    });
+    assert(prompt.includes('Active Persona Card') && prompt.includes('测试人设卡内容'), '应用的人设卡没有注入聊天 prompt');
+    assert(prompt.includes('Persona card precedence') && prompt.includes('base persona wins'), '人设卡缺少与基础角色的优先级说明');
+
+    // 知识统一（方案 C）：解析、全局知识条目检索、旧知识库导入、聊天侧合并
+    const parsedKnowledge = parseKnowledgeBaseText('群规\n标签：测试,群规\n不要发广告');
+    assert(parsedKnowledge.length === 1
+      && parsedKnowledge[0].title === '群规'
+      && parsedKnowledge[0].tags.includes('群规')
+      && parsedKnowledge[0].content === '不要发广告', '旧知识库文本解析失败');
+    await addLibraryMemory({ kind: 'knowledge', content: '群规：不要发广告\n第二行', tags: ['群规'] });
+    const knowledgeHits = await searchKnowledge('群规 广告', 3);
+    assert(knowledgeHits.some(item => item.content.includes('不要发广告')), '全局知识条目检索未命中');
+    const importResult = await importKnowledgeFromConfig();
+    assert(typeof importResult.imported === 'number' && typeof importResult.total === 'number', '旧知识库导入返回格式不正确');
+
+    // 旧记忆迁移：旧 JSON 结构 → 新记忆库，幂等可重复执行
+    const { migrateLegacyMemories } = await import('../lib/ai/memoryLibrary.js');
+    const legacyRoot = path.join(tempRoot, 'data', 'crystelf', 'memories', '862739921');
+    await fs.mkdir(legacyRoot, { recursive: true });
+    await fs.writeFile(path.join(legacyRoot, '10001.json'), JSON.stringify({
+      mem_a: { id: 'mem_a', data: '旧记忆：群主喜欢无糖可乐', keywords: ['可乐'], createdAt: Date.now() - 86400000 },
+      mem_b: { id: 'mem_b', data: '   ', keywords: [], createdAt: Date.now() },
+    }), 'utf8');
+    const dryRun = await migrateLegacyMemories({ dryRun: true });
+    assert(dryRun.found === 2 && dryRun.imported === 1 && dryRun.skippedEmpty === 1, '旧记忆 dry-run 统计不正确');
+    const legacyResult = await migrateLegacyMemories();
+    assert(legacyResult.imported === 1, '旧记忆迁移没有写入新库');
+    const legacyItem = first.listMemories({ sessionId: 'group:862739921', userId: '10001' })
+      .find(item => item.content.includes('无糖可乐') && item.source === 'legacy-import');
+    assert(legacyItem, '迁移后的旧记忆检索不到');
+    const rerun = await migrateLegacyMemories();
+    assert(rerun.imported === 0 && rerun.skippedDuplicate === 1, '旧记忆迁移重复执行产生重复条目');
+
+    const navSource = await fs.readFile(path.join(root, 'lib/webConsole/public/console-shell.js'), 'utf8');
+    assert(navSource.includes("'/data-insight.html'") && navSource.includes('数据洞察'), '侧边栏缺少数据洞察分组');
+    assert(navSource.includes("{ group: '数据洞察', href: '/memory-center.html'"), '记忆与人设应挂在数据洞察分组');
+    const insightJs = await fs.readFile(path.join(root, 'lib/webConsole/public/data-insight.js'), 'utf8');
+    assert(['/api/sessions', '/api/profiles', '/api/affinity', '/api/memory-library']
+      .every(api => insightJs.includes(api)), '数据洞察页没有接全四个数据源');
+    const memoryHtml = await fs.readFile(path.join(root, 'lib/webConsole/public/memory-center.html'), 'utf8');
+    assert(memoryHtml.includes('value="knowledge"') && memoryHtml.includes('knowledge-import-btn'), '记忆页缺少知识类型与导入入口');
+    const distillerSource = await fs.readFile(path.join(root, 'lib/humanize/memoryDistiller.js'), 'utf8');
+    assert(distillerSource.includes("memory.kind !== 'knowledge'"), '长期记忆注入没有排除知识条目');
+    const appsSource = await fs.readFile(path.join(root, 'apps/ai.js'), 'utf8');
+    assert(appsSource.includes('collectKnowledgeMatches') && appsSource.includes("from '../lib/ai/memoryLibrary.js'"), '聊天侧没有合并记忆库知识检索');
+
+    logPass('记忆库 CRUD、单例与控制台产物存取正常');
+  } finally {
+    process.chdir(previousCwd);
+    await fs.rm(tempRoot, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
@@ -1900,6 +2068,7 @@ async function main() {
     await checkAgentWorkbenchSlashCommands();
     await checkZcodePromptAttachments();
     await checkMultiAdapterGroupSend();
+    await checkMemoryLibrary();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});

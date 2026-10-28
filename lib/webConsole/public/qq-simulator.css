@@ -2679,3 +2679,24 @@ body.qq-simulator-page .console-floating-tools {
 .qq-simulator-chat-flow .qq-simulator-chat-empty span { font-size: 12px; }
 /* 会话标题截断放宽一点 */
 .qq-simulator-session-main strong { font-size: 13px; padding-right: 34px; }
+
+/* 手机：标题按钮不折行，头部徽标横排滚动 */
+@media (max-width: 560px) {
+  body.qq-simulator-page .qq-simulator-title-btn {
+    width: auto !important;
+    min-height: 28px !important;
+    height: 28px;
+    padding: 0 8px !important;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  body.qq-simulator-page .qq-simulator-head-actions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  body.qq-simulator-page .qq-simulator-pill {
+    white-space: nowrap;
+  }
+}

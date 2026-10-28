@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>魔丸控制台 - 数据洞察</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%233a6df0'/%3E%3Cpath d='M18 18h28v8H30v8h14v8H30v14H18Z' fill='white'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/data-lists.css" />
+  <link rel="stylesheet" href="/memory-center.css" />
+  <link rel="stylesheet" href="/data-insight.css" />
+</head>
+<body data-data-insight-page>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-copy">
+        <div class="hero-badge">魔丸控制台</div>
+        <h1>数据洞察中心</h1>
+        <p id="page-meta">会话、画像、好感与记忆的统一入口，筛选联动。</p>
+      </div>
+      <div class="hero-actions-shell">
+        <div class="hero-action-group">
+          <div class="hero-action-label">页面操作</div>
+          <div class="actions hero-actions-grid">
+            <button id="insight-refresh-btn">刷新数据</button>
+            <a class="link-btn" href="/index.html">返回首页</a>
+            <button id="theme-toggle-btn" data-theme-toggle>深色主题</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>共享筛选</h2>
+          <div class="setting-help">群/会话、用户、关键词会联动下方四个视图；点击列表里的用户可快速切换筛选。</div>
+        </div>
+        <span id="insight-status" class="setting-help">加载中...</span>
+      </div>
+      <div class="toolbar memory-toolbar">
+        <input id="insight-filter-session" list="insight-session-list" placeholder="群/会话，例如 group:123456" />
+        <input id="insight-filter-user" placeholder="用户 QQ（可选）" />
+        <input id="insight-filter-query" placeholder="关键词（可选）" />
+        <button id="insight-filter-apply">应用筛选</button>
+        <button id="insight-filter-clear" type="button" class="link-btn">清空</button>
+      </div>
+      <datalist id="insight-session-list"></datalist>
+    </section>
+
+    <nav class="memory-tabs" aria-label="数据洞察分区">
+      <button type="button" class="memory-tab is-active" data-insight-tab="sessions">最近会话</button>
+      <button type="button" class="memory-tab" data-insight-tab="profiles">用户画像</button>
+      <button type="button" class="memory-tab" data-insight-tab="affinity">好感度</button>
+      <button type="button" class="memory-tab" data-insight-tab="memory">记忆</button>
+    </nav>
+
+    <section id="insight-tab-sessions" class="memory-tab-panel">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>最近会话</h2>
+            <div class="setting-help">点参与用户可设为筛选；清空消息/重置等完整管理在最近会话页。</div>
+          </div>
+          <div class="actions"><a class="link-btn" id="insight-open-sessions" href="/session-center.html">打开完整列表</a></div>
+        </div>
+        <div id="insight-sessions" class="list">加载中...</div>
+      </section>
+    </section>
+
+    <section id="insight-tab-profiles" class="memory-tab-panel hidden">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>用户画像</h2>
+            <div class="setting-help">画像由聊天自动沉淀；点用户可设为筛选。</div>
+          </div>
+          <div class="actions"><a class="link-btn" id="insight-open-profiles" href="/profile-center.html">打开完整列表</a></div>
+        </div>
+        <div id="insight-profiles" class="list">加载中...</div>
+      </section>
+    </section>
+
+    <section id="insight-tab-affinity" class="memory-tab-panel hidden">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>好感度</h2>
+            <div class="setting-help">按当前筛选列出好感 Top；历史与重置在好感度页。</div>
+          </div>
+          <div class="actions"><a class="link-btn" id="insight-open-affinity" href="/affinity-center.html">打开完整列表</a></div>
+        </div>
+        <div id="insight-affinity" class="list">加载中...</div>
+      </section>
+    </section>
+
+    <section id="insight-tab-memory" class="memory-tab-panel hidden">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>长期记忆</h2>
+            <div class="setting-help">编辑/停用/删除与人设提炼在记忆与人设页。</div>
+          </div>
+          <div class="actions"><a class="link-btn" id="insight-open-memory" href="/memory-center.html">打开完整列表</a></div>
+        </div>
+        <div id="insight-memory" class="list">加载中...</div>
+      </section>
+    </section>
+  </div>
+  <script src="/auth.js"></script>
+  <script src="/data-insight.js"></script>
+  <script src="/theme.js"></script>
+</body>
+</html>

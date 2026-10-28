@@ -22,6 +22,8 @@ const protectedPages = [
   { path: '/qq-simulator.html', text: '模拟调试' },
   { path: '/command-center.html', text: '命令中心' },
   { path: '/agent-workbench.html', text: 'Agent 工作台' },
+  { path: '/memory-center.html', text: '记忆与人设中心' },
+  { path: '/data-insight.html', text: '数据洞察中心' },
 ];
 
 const apiChecks = [
@@ -44,6 +46,11 @@ const apiChecks = [
     path: '/api/tasks',
     label: '任务中心',
     validate: data => data?.success === true && Array.isArray(data?.tasks),
+  },
+  {
+    path: '/api/memory-library',
+    label: '记忆与人设',
+    validate: data => data?.success === true && Array.isArray(data?.items) && data?.stats,
   },
   {
     path: '/api/command-center',

@@ -352,7 +352,6 @@ function validateConfig(configType, config = null) {
       }
 
       pushRangeError(errors, config.temperature, 0, 2, '聊天温度必须在 0-2 之间');
-      pushMinError(errors, config.maxMix, 1, '混合模式阈值必须大于 0');
       pushMinError(errors, config.timeout, 1, 'AI 调用超时时间必须大于 0');
       pushMinError(errors, config.maxSessions, 1, '最大会话数必须大于 0');
       if (config.maxIterations !== undefined && Number(config.maxIterations) < -1) {

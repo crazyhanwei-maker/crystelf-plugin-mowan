@@ -6406,7 +6406,7 @@ body.flarum-flat.box-style-shadow .console-app-shell .panel {
   backdrop-filter: none;
 }
 
-.console-app-shell .console-global-search .console-global-search-clear {
+.console-app-shell .console-topbar .console-global-search .console-global-search-clear {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -6815,7 +6815,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   border-radius: 14px;
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection),
+.console-app-shell button:not(.console-nav-section):not(.console-theme-settings-btn):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-global-search-clear):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection),
 .console-app-shell .link-btn {
   min-height: 38px;
   border-color: rgba(34, 211, 238, 0.22);
@@ -6827,7 +6827,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.console-global-search-clear):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .console-app-shell .link-btn:hover {
   background:
     linear-gradient(180deg, rgba(103, 232, 249, 0.98), rgba(56, 189, 248, 0.98));
@@ -7456,6 +7456,12 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     padding: max(8px, env(safe-area-inset-top, 0px)) 8px max(14px, env(safe-area-inset-bottom, 0px));
   }
 
+  /* 顶栏通栏负边距跟随外壳 8px 内边距，避免每页 4px 横向溢出 */
+  .console-app-shell .console-topbar {
+    margin-left: -8px;
+    margin-right: -8px;
+  }
+
   .console-topbar {
     grid-template-columns: auto minmax(0, 1fr) auto;
     min-height: 50px;
@@ -7538,10 +7544,10 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     width: 100%;
   }
 
-  button:not(.plugin-settings-switch):not(.artd-page-btn),
+  button:not(.plugin-settings-switch):not(.artd-page-btn):not(.console-global-search-clear):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-theme-settings-btn),
   .link-btn,
   .mini-btn,
-  .console-app-shell button:not(.plugin-settings-switch):not(.artd-page-btn),
+  .console-app-shell button:not(.plugin-settings-switch):not(.artd-page-btn):not(.console-global-search-clear):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-theme-settings-btn),
   .console-app-shell .link-btn {
     min-height: 42px;
     width: 100%;

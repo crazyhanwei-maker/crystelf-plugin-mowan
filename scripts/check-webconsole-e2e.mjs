@@ -25,6 +25,8 @@ const pages = [
   { path: '/qq-simulator.html', label: '模拟调试', text: '请求摘要', mobileText: '事件参数、附件与排查' },
   { path: '/command-center.html', label: '命令中心', text: '命令中心' },
   { path: '/agent-workbench.html', label: 'Agent 工作台', text: 'Agent 工作台' },
+  { path: '/memory-center.html', label: '记忆与人设', text: '记忆与人设中心' },
+  { path: '/data-insight.html', label: '数据洞察', text: '数据洞察中心' },
   { path: '/file-browser.html', label: '文件编辑', text: '文件管理' },
   { path: '/bot-plugins.html', label: '插件管理', text: '机器人插件管理' },
   { path: '/dependency-check.html', label: '依赖健康', text: '依赖健康面板' },
@@ -1966,6 +1968,30 @@ async function runProviderModelsInteraction(page, runtimeErrors = []) {
   await clickAndWait(page, '#agent-model-manager-close', 250);
 }
 
+async function runMemoryCenterInteraction(page) {
+  await page.waitForSelector('#memory-stats .memory-stat-card', { timeout: interactionTimeoutMs });
+  const statCount = await page.$$eval('#memory-stats .memory-stat-card', items => items.length);
+  if (statCount < 4) throw new Error(`记忆概览卡片过少：${statCount}`);
+  await clickAndWait(page, '[data-memory-tab="distill"]', 200);
+  const distillVisible = await page.$eval('#memory-tab-distill', element => !element.classList.contains('hidden'));
+  if (!distillVisible) throw new Error('切换到「从聊天提炼」后内容区没有显示');
+  await clickAndWait(page, '[data-memory-tab="artifacts"]', 200);
+  const artifactsVisible = await page.$eval('#memory-tab-artifacts', element => !element.classList.contains('hidden'));
+  if (!artifactsVisible) throw new Error('切换到「人设与技能」后内容区没有显示');
+  await clickAndWait(page, '[data-memory-tab="memories"]', 200);
+}
+
+async function runDataInsightInteraction(page) {
+  await page.waitForSelector('.memory-tabs [data-insight-tab]', { timeout: interactionTimeoutMs });
+  for (const tab of ['profiles', 'affinity', 'memory', 'sessions']) {
+    await clickAndWait(page, `[data-insight-tab="${tab}"]`, 250);
+    const visible = await page.$eval(`#insight-tab-${tab}`, element => !element.classList.contains('hidden'));
+    if (!visible) throw new Error(`数据洞察切换到 ${tab} 后内容区没有显示`);
+  }
+  const tabCount = await page.$$eval('[data-insight-tab]', buttons => buttons.length);
+  if (tabCount !== 4) throw new Error(`数据洞察子页数量异常：${tabCount}`);
+}
+
 async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
   const checks = [
     { label: 'API 设置草稿', path: '/api-settings.html', run: runApiSettingsInteraction },
@@ -1987,6 +2013,8 @@ async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
     { label: 'Agent 模型选择卡片', path: '/agent-workbench.html', run: runModelMenuCardInteraction },
     { label: 'Agent 上下文容量面板', path: '/agent-workbench.html', run: runContextUsagePanelInteraction },
     { label: 'Agent 管理模型获取模型', path: '/agent-workbench.html', run: (page, context = {}) => runProviderModelsInteraction(page, context.runtimeErrors || []) },
+    { label: '记忆与人设分页', path: '/memory-center.html', run: runMemoryCenterInteraction },
+    { label: '数据洞察分页', path: '/data-insight.html', run: runDataInsightInteraction },
   ];
   const results = [];
   for (const check of checks) {
