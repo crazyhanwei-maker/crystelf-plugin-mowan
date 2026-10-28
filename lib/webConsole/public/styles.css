@@ -7544,10 +7544,10 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
     width: 100%;
   }
 
-  button:not(.plugin-settings-switch):not(.artd-page-btn):not(.console-global-search-clear):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-theme-settings-btn),
+  button:not(.plugin-settings-switch):not(.artd-page-btn):not(.console-global-search-clear):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-theme-settings-btn):not(.plugin-catalog-floating-install):not(.plugin-catalog-floating-close),
   .link-btn,
   .mini-btn,
-  .console-app-shell button:not(.plugin-settings-switch):not(.artd-page-btn):not(.console-global-search-clear):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-theme-settings-btn),
+  .console-app-shell button:not(.plugin-settings-switch):not(.artd-page-btn):not(.console-global-search-clear):not(.console-sidebar-toggle):not(.console-notifications-btn):not(.console-theme-settings-btn):not(.plugin-catalog-floating-install):not(.plugin-catalog-floating-close),
   .console-app-shell .link-btn {
     min-height: 42px;
     width: 100%;

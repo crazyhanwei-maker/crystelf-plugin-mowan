@@ -56,6 +56,7 @@ import {
   isBundledOpenCodeBootstrapError,
   resolveBundledOpenCodeBootstrapCommand,
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
+import { createBotAdapterWatchdog, getOnlineBotIds } from '../lib/webConsole/botAdapterWatchdog.js';
 import { materializeZcodeAttachments } from '../lib/webConsole/bundledZcodeRuntime.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
@@ -2038,6 +2039,50 @@ async function checkMemoryLibrary() {
   }
 }
 
+async function checkBotAdapterWatchdog() {
+  const previousBot = globalThis.Bot;
+  try {
+    // TRSS：Bot 是 Proxy，bots 里混入实例属性；真实在线账号在 uin
+    globalThis.Bot = { uin: ['123456', '789012'], bots: { url: 'x', logger: {}, _events: {}, _eventsCount: 2 } };
+    assert(getOnlineBotIds().join(',') === '123456,789012', 'TRSS 应优先用 Bot.uin 统计在线账号');
+
+    // uin 为空时，bots 里的 url/logger/_events 等属性键不得算作在线账号
+    globalThis.Bot = { uin: [], bots: { url: 'x', logger: {}, _events: {}, _eventsCount: 2 } };
+    assert(getOnlineBotIds().length === 0, 'Bot.uin 为空时不得把实例属性当成在线账号');
+
+    // 没有 uin 的框架回退到 bots 注册表，只认数字账号键
+    globalThis.Bot = { bots: { '123456': {}, url: 'x', logger: {} } };
+    assert(getOnlineBotIds().join(',') === '123456', 'bots 注册表回退应只统计数字账号键');
+
+    // Miao-Yunzai 等单 bot 框架：uin 为数字/字符串
+    globalThis.Bot = { uin: 12345678 };
+    assert(getOnlineBotIds().join(',') === '12345678', '单 bot 框架应识别数字 uin');
+
+    delete globalThis.Bot;
+    assert(getOnlineBotIds().length === 0, '没有 Bot 时在线账号应为 0');
+
+    // 连续 5 次检查（确认窗口）为空后应触发掉线告警
+    const alerts = [];
+    const watchdog = createBotAdapterWatchdog({
+      getEnabled: () => true,
+      notifyMasters: (message, options) => alerts.push({ message, options }),
+    });
+    globalThis.Bot = { uin: [], bots: { url: 'x', logger: {}, _events: {} } };
+    for (let i = 0; i < 5; i += 1) watchdog.check();
+    assert(alerts.length === 1, '确认窗口结束后应发送一次掉线告警');
+    assert(alerts[0].message.includes('掉线'), '掉线告警文案应包含掉线');
+    const payload = watchdog.buildStatusPayload();
+    assert(payload.offline === true && payload.onlineCount === 0, '状态应标记 offline 且在线数为 0');
+    assert(Array.isArray(payload.onlineIds) && payload.onlineIds.length === 0, '状态应带 onlineIds');
+    watchdog.stop();
+
+    logPass('QQ 看门狗在线账号统计（Bot.uin 优先）与掉线告警触发正常');
+  } finally {
+    if (previousBot === undefined) delete globalThis.Bot;
+    else globalThis.Bot = previousBot;
+  }
+}
+
 async function main() {
   try {
     checkChatEngineUserMessageCompatibility();
@@ -2069,6 +2114,7 @@ async function main() {
     await checkZcodePromptAttachments();
     await checkMultiAdapterGroupSend();
     await checkMemoryLibrary();
+    await checkBotAdapterWatchdog();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});
