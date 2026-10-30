@@ -1604,6 +1604,38 @@ const guobaSchema = [
     },
   },
   {
+    field: 'coreConfig.tools.agentAuto.allowExecute',
+    label: '允许聊天触发全权限执行',
+    component: 'Switch',
+    bottomHelpMessage: '高风险，默认关闭。开启后主人可在私聊或白名单群让 AI 提交全权限 Agent 任务（可改文件、联网、执行终端命令）；实际执行前仍需回复「确认执行」，且需先开启 Agent 工作台的写入授权。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.executeTimeoutMs',
+    label: '执行任务超时',
+    component: 'InputNumber',
+    bottomHelpMessage: '自动执行任务的聊天侧跟踪上限，单位毫秒；默认 1800000 表示 30 分钟。',
+    componentProps: {
+      min: 60000,
+      max: 7200000,
+      step: 60000,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.executeConfirmTtlMs',
+    label: '执行确认有效期',
+    component: 'InputNumber',
+    bottomHelpMessage: '分析完成后等待主人回复「执行」，或执行请求等待「确认执行」的有效时间，单位毫秒。',
+    componentProps: {
+      min: 60000,
+      max: 3600000,
+      step: 60000,
+    },
+  },
+  {
     label: '语音工具配置',
     component: 'SOFT_GROUP_BEGIN',
   },

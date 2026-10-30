@@ -181,7 +181,13 @@
       "?saveToHistory": "是否把任务提交和结果写回聊天历史，便于下一轮聊天 AI 感知任务状态",
       "saveToHistory": true,
       "?showProgress": "是否在聊天中推送执行进展；默认只在完成时推送",
-      "showProgress": false
+      "showProgress": false,
+      "?allowExecute": "是否允许聊天 AI 在主人确认后提交全权限 Agent 执行任务（可改文件/联网/执行终端命令）；默认关闭",
+      "allowExecute": false,
+      "?executeTimeoutMs": "自动执行任务的跟踪上限，单位毫秒；默认 1800000 表示 30 分钟",
+      "executeTimeoutMs": 1800000,
+      "?executeConfirmTtlMs": "待执行计划/待确认执行的有效期，单位毫秒；默认 600000 表示 10 分钟",
+      "executeConfirmTtlMs": 600000
     },
     "?tts": "内置语音合成工具配置",
     "tts": {

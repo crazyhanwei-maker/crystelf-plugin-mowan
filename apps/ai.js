@@ -51,6 +51,7 @@ import {
   switchVoiceModelDirectly,
 } from '../lib/ai/ttsVoiceModelCommand.js';
 import { loadAutoSessionSkills } from '../lib/ai/httpSkillRegistry.js';
+import { maybeHandleAgentAutoExecution } from '../lib/ai/agentAutoTask.js';
 
 const nickname = await ConfigControl.get('profile')?.nickName;
 
@@ -156,6 +157,19 @@ function isAtBot(message, e) {
 function isBotUser(userId, e) {
   const botUin = getBotUin(e);
   return botUin !== null && String(userId) === String(botUin);
+}
+
+// Agent 执行确认必须看用户自己发的纯文本，不能看带昵称/引用前缀的 prompt 文本
+function getRawUserText(e = {}) {
+  const segments = Array.isArray(e.message) ? e.message : [];
+  const segmentText = segments
+    .filter(item => item?.type === 'text' && item.text)
+    .map(item => String(item.text))
+    .join('')
+    .replace(/\[CQ:[^\]]+\]/g, '')
+    .trim();
+  if (segmentText) return segmentText;
+  return String(e.msg || '').replace(/\[CQ:[^\]]+\]/g, '').trim();
 }
 
 function isNicknameMentioned(text, aiConfig) {
@@ -2466,6 +2480,17 @@ export class crystelfAI extends plugin {
         return true;
       }
 
+      if (await maybeHandleAgentAutoExecution({
+        event: e,
+        sessionId,
+        groupId: null,
+        userId,
+        db: this.db,
+        isMaster: isMasterUser(e),
+      }, getRawUserText(e))) {
+        return true;
+      }
+
       const history = this.db.getMessages(sessionId, aiConfig.chatHistory || 30);
       const botNickname = nickname || 'Bot';
       const sessionControl = this.sessionControlState?.get(sessionId) || {};
@@ -2858,6 +2883,17 @@ export class crystelfAI extends plugin {
           quote: -1,
           recall: false,
         }], aiConfig);
+        return;
+      }
+
+      if (await maybeHandleAgentAutoExecution({
+        event: e,
+        sessionId: groupSessionId,
+        groupId,
+        userId,
+        db: this.db,
+        isMaster: isMasterUser(e),
+      }, getRawUserText(e))) {
         return;
       }
 
