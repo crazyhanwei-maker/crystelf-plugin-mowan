@@ -51,7 +51,7 @@ import {
   switchVoiceModelDirectly,
 } from '../lib/ai/ttsVoiceModelCommand.js';
 import { loadAutoSessionSkills } from '../lib/ai/httpSkillRegistry.js';
-import { maybeHandleAgentAutoExecution } from '../lib/ai/agentAutoTask.js';
+import { maybeHandleAgentAutoAnalysis, maybeHandleAgentAutoExecution } from '../lib/ai/agentAutoTask.js';
 
 const nickname = await ConfigControl.get('profile')?.nickName;
 
@@ -2491,6 +2491,17 @@ export class crystelfAI extends plugin {
         return true;
       }
 
+      if (await maybeHandleAgentAutoAnalysis({
+        event: e,
+        sessionId,
+        groupId: null,
+        userId,
+        db: this.db,
+        isMaster: isMasterUser(e),
+      }, getRawUserText(e))) {
+        return true;
+      }
+
       const history = this.db.getMessages(sessionId, aiConfig.chatHistory || 30);
       const botNickname = nickname || 'Bot';
       const sessionControl = this.sessionControlState?.get(sessionId) || {};
@@ -2887,6 +2898,17 @@ export class crystelfAI extends plugin {
       }
 
       if (await maybeHandleAgentAutoExecution({
+        event: e,
+        sessionId: groupSessionId,
+        groupId,
+        userId,
+        db: this.db,
+        isMaster: isMasterUser(e),
+      }, getRawUserText(e))) {
+        return;
+      }
+
+      if (await maybeHandleAgentAutoAnalysis({
         event: e,
         sessionId: groupSessionId,
         groupId,
