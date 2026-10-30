@@ -1507,6 +1507,103 @@ const guobaSchema = [
     },
   },
   {
+    label: '聊天 AI 自动 Agent',
+    component: 'SOFT_GROUP_BEGIN',
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.enabled',
+    label: '启用聊天自动 Agent',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭。开启后只有 Bot 主人能在聊天中让 AI 自主提交只读 Agent 任务；需同时开启 Agent 工作台，完成后结果会回推到当前聊天并写入聊天历史。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.allowPrivate',
+    label: '允许私聊触发',
+    component: 'Switch',
+    bottomHelpMessage: '是否允许主人在私聊中触发自动 Agent 任务。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.allowedGroups',
+    label: '允许的群聊',
+    component: 'InputArray',
+    bottomHelpMessage: '仅主人消息可触发。留空表示不启用群聊；填 * 表示所有群；也可填写具体群号。',
+    componentProps: {
+      placeholder: '群号，或 * 表示所有群',
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.maxPerHour',
+    label: '每小时上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '每个会话每小时最多自动提交的 Agent 任务数，范围 1-60。',
+    componentProps: {
+      min: 1,
+      max: 60,
+      step: 1,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.maxConcurrent',
+    label: '自动任务并发',
+    component: 'InputNumber',
+    bottomHelpMessage: '同时运行的自动 Agent 任务上限，建议保持为 1。',
+    componentProps: {
+      min: 1,
+      max: 3,
+      step: 1,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.timeoutMs',
+    label: '跟踪超时',
+    component: 'InputNumber',
+    bottomHelpMessage: '单个自动 Agent 任务的聊天侧跟踪上限，单位毫秒；超时后停止跟踪，任务可能仍在后台。',
+    componentProps: {
+      min: 60000,
+      max: 1800000,
+      step: 60000,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.maxResultChars',
+    label: '结果长度上限',
+    component: 'InputNumber',
+    bottomHelpMessage: '回推到聊天的结果最大字符数，超出会截断并提示到控制台查看完整结果。',
+    componentProps: {
+      min: 200,
+      max: 4000,
+      step: 100,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.saveToHistory',
+    label: '结果写入聊天历史',
+    component: 'Switch',
+    bottomHelpMessage: '开启后任务提交和结果会写入聊天历史，下一轮聊天 AI 才能知道任务状态。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
+    field: 'coreConfig.tools.agentAuto.showProgress',
+    label: '推送执行进展',
+    component: 'Switch',
+    bottomHelpMessage: '默认关闭，只在完成时推送结果；开启后会在执行中推送进展，可能比较吵。',
+    componentProps: {
+      checkedValue: true,
+      unCheckedValue: false,
+    },
+  },
+  {
     label: '语音工具配置',
     component: 'SOFT_GROUP_BEGIN',
   },

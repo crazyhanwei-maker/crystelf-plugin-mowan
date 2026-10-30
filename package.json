@@ -20,7 +20,7 @@
     "postinstall": "node ./scripts/prepare-opencode-runtime.mjs",
     "check:zcode": "node --experimental-vm-modules ./scripts/check-zcode-runtime.mjs",
     "check:agent-refresh": "node ./scripts/check-agent-workbench-refresh.cjs",
-    "check:unit": "node --test lib/ai/retry.test.mjs",
+    "check:unit": "node --test lib/ai/retry.test.mjs lib/ai/agentAutoConfig.test.mjs",
     "check:quick": "npm run check:encoding && npm run check:structure && npm run check:config && npm run check:js",
     "check": "npm run check:quick && npm run check:unit && npm run check:functional && npm run check:render && npm run check:webconsole && npm run check:zcode && npm run check:agent-refresh"
   },

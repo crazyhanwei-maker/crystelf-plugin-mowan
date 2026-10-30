@@ -57,7 +57,7 @@ import {
   resolveBundledOpenCodeBootstrapCommand,
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
 import { createBotAdapterWatchdog, getOnlineBotIds } from '../lib/webConsole/botAdapterWatchdog.js';
-import { buildFollowUpHint, taskHasFileChanges } from '../lib/agent/agentChatBridge.js';
+import { buildBridgeTaskPayload, buildFollowUpHint, taskHasFileChanges } from '../lib/agent/agentChatBridge.js';
 import { materializeZcodeAttachments } from '../lib/webConsole/bundledZcodeRuntime.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
@@ -2058,7 +2058,14 @@ async function checkAgentBridgeFollowUpHint() {
 
   const weixinSource = await fs.readFile(path.join(root, 'apps', 'weixin-ilink.js'), 'utf8');
   assert(weixinSource.includes('buildFollowUpHint(result)') && weixinSource.includes("buildFollowUpHint(result, '直接回复消息')"), 'QQ/微信两侧没有使用统一的跟进提示');
-  logPass('Agent 桥跟进提示（已改文件不再提示执行）正常');
+
+  const planPayload = buildBridgeTaskPayload({ senderKey: 'auto:private:1', prompt: '看看日志', mode: 'plan' });
+  assert(planPayload.mode === 'plan' && planPayload.writeConfirmed !== true, '自动 Agent 只读任务不应携带写入确认');
+  assert(planPayload.allowNetwork === false && planPayload.allowAllDirectories === false && planPayload.allowTerminal === false, '自动 Agent 只读任务应显式关闭联网、目录外访问和终端');
+  const fullPayload = buildBridgeTaskPayload({ senderKey: 'qq:1', prompt: '看看日志' });
+  assert(fullPayload.mode === 'full' && fullPayload.writeConfirmed === true, '原有全权限桥任务必须保持 writeConfirmed=true');
+
+  logPass('Agent 桥跟进提示与只读任务载荷正常');
 }
 
 async function checkBotAdapterWatchdog() {

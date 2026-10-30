@@ -2572,6 +2572,7 @@ export class crystelfAI extends plugin {
         sessionId,
         groupId: null,
         userId,
+        isMaster: isMasterUser(e),
         defaultVoiceModel: getPrivateVoiceModel(userId),
         config: {
           ...aiConfig,
@@ -2677,7 +2678,7 @@ export class crystelfAI extends plugin {
       const emojiMeta = chatResult.emojiMeta || null;
       let parsedMessages = [];
 
-      if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply) {
+      if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply && chatResult.deliveredToolOnlyResult !== true) {
         setSessionDebugSnapshot(sessionId, {
           knowledgeMatches,
           toolCalls: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls : [],
@@ -2975,6 +2976,7 @@ export class crystelfAI extends plugin {
         sessionId: groupSessionId,
         groupId,
         userId,
+        isMaster: isMasterUser(e),
         defaultVoiceModel: getGroupVoiceModel(groupId),
         config: {
           ...aiConfig,
@@ -3106,7 +3108,7 @@ export class crystelfAI extends plugin {
         : { allow: false };
       let parsedMessages = [];
 
-      if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply) {
+      if (outputMessages.length === 0 && !hasVoiceMessages && !hasEmojiReply && chatResult.deliveredToolOnlyResult !== true) {
         setSessionDebugSnapshot(groupSessionId, {
           knowledgeMatches,
           toolCalls: Array.isArray(chatResult.toolCalls) ? chatResult.toolCalls : [],

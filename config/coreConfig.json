@@ -162,6 +162,27 @@
         "yunzai": false
       }
     },
+    "?agentAuto": "聊天 AI 自动调用 Agent 工作台的只读任务；仅主人可用，默认关闭",
+    "agentAuto": {
+      "?enabled": "是否允许聊天 AI 自动提交只读 Agent 任务（需同时开启 Agent 工作台）",
+      "enabled": false,
+      "?allowPrivate": "是否允许在私聊中自动提交 Agent 任务",
+      "allowPrivate": true,
+      "?allowedGroups": "允许自动提交 Agent 任务的群号列表；留空表示不启用群聊，填 * 表示所有群",
+      "allowedGroups": [],
+      "?maxPerHour": "每个会话每小时最多自动提交的 Agent 任务数",
+      "maxPerHour": 5,
+      "?maxConcurrent": "同时运行的自动 Agent 任务上限",
+      "maxConcurrent": 1,
+      "?timeoutMs": "单个自动 Agent 任务的跟踪上限，单位毫秒；默认 600000 表示 10 分钟",
+      "timeoutMs": 600000,
+      "?maxResultChars": "回推到聊天的结果最大字符数，超出部分截断并提示查看控制台",
+      "maxResultChars": 1200,
+      "?saveToHistory": "是否把任务提交和结果写回聊天历史，便于下一轮聊天 AI 感知任务状态",
+      "saveToHistory": true,
+      "?showProgress": "是否在聊天中推送执行进展；默认只在完成时推送",
+      "showProgress": false
+    },
     "?tts": "内置语音合成工具配置",
     "tts": {
       "?enabled": "是否启用内置语音合成工具",
