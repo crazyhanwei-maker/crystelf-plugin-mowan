@@ -18,7 +18,7 @@ import { buildImageFallbackConfig } from '../lib/ai/apiFallback.js';
 import { createApiSettingsConsole } from '../lib/webConsole/apiSettingsConsole.js';
 import { createPersistentMd5Store } from '../lib/imageMonitor/persistentMd5Store.js';
 import { evaluateSpamMessageWindow } from '../lib/groupManagement/contentModerationRuntime.js';
-import { buildChatCompletionMessages, resolveChatModel, runChat } from '../lib/ai/chatEngine.js';
+import { buildChatCompletionMessages, resolveChatModel, runChat, shouldForceSearch, shouldPreferLocalAgent } from '../lib/ai/chatEngine.js';
 import { getBuiltinTools } from '../lib/ai/toolRegistry.js';
 import AiCaller from '../lib/ai/aiCaller.js';
 import { MemoryDistiller } from '../lib/humanize/memoryDistiller.js';
@@ -750,6 +750,10 @@ function checkChatEngineUserMessageCompatibility() {
     resolveChatModel({ ...modelConfig, multimodalEnabled: true, smartMultimodal: true }, { hasImages: true }) === 'vision-model',
     '智能多模态模式下图片消息没有切换到多模态模型',
   );
+  assert(shouldPreferLocalAgent('看下当前灵晶插件的版本'), '当前插件版本问题应识别为本地 Agent 场景');
+  assert(!shouldForceSearch({ content: '看下当前灵晶插件的版本' }), '本地插件版本问题不应强制联网搜索');
+  assert(!shouldPreferLocalAgent('原神最新版本几点上线'), '通用版本问题不应误判为本地 Agent 场景');
+  assert(shouldForceSearch({ content: '原神最新版本几点上线' }), '通用版本问题仍应强制联网搜索');
   logPass('聊天引擎 user 消息兼容保护正常');
 }
 
