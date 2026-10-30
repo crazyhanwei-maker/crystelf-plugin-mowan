@@ -57,6 +57,7 @@ import {
   resolveBundledOpenCodeBootstrapCommand,
 } from '../lib/webConsole/bundledOpenCodeRuntime.js';
 import { createBotAdapterWatchdog, getOnlineBotIds } from '../lib/webConsole/botAdapterWatchdog.js';
+import { buildFollowUpHint, taskHasFileChanges } from '../lib/agent/agentChatBridge.js';
 import { materializeZcodeAttachments } from '../lib/webConsole/bundledZcodeRuntime.js';
 import Message from '../lib/yunzai/message.js';
 import YunzaiUtils from '../lib/yunzai/utils.js';
@@ -2039,6 +2040,27 @@ async function checkMemoryLibrary() {
   }
 }
 
+async function checkAgentBridgeFollowUpHint() {
+  assert(taskHasFileChanges({ changedFiles: [{ path: 'a.js' }] }), '工作区内文件改动应判定为已修改');
+  assert(taskHasFileChanges({ workspaceChanged: true }), 'workspaceChanged 应判定为已修改');
+  assert(taskHasFileChanges({ events: [{ message: '写入文件：/root/Yunzai/plugins/qqmusic-plugin/config/qqmusic.yaml' }] }), '工作区外写入事件应判定为已修改');
+  assert(!taskHasFileChanges({ startedAt: '2026-10-30T03:00:00.000Z', events: [{ time: '2026-10-30T02:59:59.000Z', message: '写入文件：old.yaml' }] }), '上一轮的写入事件不应影响本轮判定');
+  assert(!taskHasFileChanges({ events: [{ message: '执行命令：ls' }, { message: '工作目录已有未提交修改，将继续执行' }] }), '只读命令不应判定为已修改');
+  assert(!taskHasFileChanges({}), '空任务不应判定为已修改');
+
+  const modifiedHint = buildFollowUpHint({ ok: true, modified: true });
+  assert(modifiedHint === '💬 10 分钟内直接发消息可继续此任务。', '已修改任务不应再提示回复执行');
+  assert(!modifiedHint.includes('回复「执行」'), '已修改任务的提示不应包含回复执行');
+  const planHint = buildFollowUpHint({ ok: true, modified: false });
+  assert(planHint.includes('回复「执行」'), '仅出方案的任务应保留回复执行提示');
+  assert(buildFollowUpHint({ ok: true, modified: true }, '直接回复消息').startsWith('💬 10 分钟内直接回复消息'), '微信侧提示文案应支持自定义动作词');
+  assert(buildFollowUpHint({ ok: false }) === '', '失败任务不应输出跟进提示');
+
+  const weixinSource = await fs.readFile(path.join(root, 'apps', 'weixin-ilink.js'), 'utf8');
+  assert(weixinSource.includes('buildFollowUpHint(result)') && weixinSource.includes("buildFollowUpHint(result, '直接回复消息')"), 'QQ/微信两侧没有使用统一的跟进提示');
+  logPass('Agent 桥跟进提示（已改文件不再提示执行）正常');
+}
+
 async function checkBotAdapterWatchdog() {
   const previousBot = globalThis.Bot;
   try {
@@ -2111,6 +2133,7 @@ async function main() {
     await checkYunzaiCommandBridge();
     checkAgentWorkbenchSafety();
     await checkAgentWorkbenchSlashCommands();
+    await checkAgentBridgeFollowUpHint();
     await checkZcodePromptAttachments();
     await checkMultiAdapterGroupSend();
     await checkMemoryLibrary();

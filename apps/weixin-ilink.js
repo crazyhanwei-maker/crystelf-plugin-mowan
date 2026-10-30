@@ -18,6 +18,7 @@ import {
 } from '../lib/weixin/ilinkClient.js';
 import {
   createAgentChatBridge,
+  buildFollowUpHint,
   getBridgeState,
   getBridgeProvider,
   setBridgeEnabled,
@@ -687,7 +688,7 @@ export class weixinIlink extends plugin {
       '',
       '⑧ 对话式（QQ/微信通用）：任务结论推送后 10 分钟内直接发消息，',
       '   就在同一会话里继续（QQ 私聊无需再加 #agent 前缀）；',
-      '   回复「执行」把上面的方案落地为实际修改；「看全文」取回长文原文；',
+      '   回复「执行」可让模型把上一轮方案落地（仅出方案时）；「看全文」取回长文原文；',
       '   终端命令待审批时回复 1 批准 / 2 总是批准 / 3 拒绝（QQ 侧用 #回答 1/2/3）',
       '',
       '说明：任务以全权限模式在服务器上真实执行，可修改文件、联网、执行命令，请谨慎描述任务。',
@@ -924,7 +925,8 @@ export class weixinIlink extends plugin {
           if (result?.ok === true) this.rememberFollowupWindow(senderId, bridge.getProgress?.().taskId || '');
           const reported = this.sendReport(senderId, result, token).catch(() => { });
           if (result?.ok === true && !this.taskModeUsers?.has(senderId)) {
-            reported.then(() => this.sendTo(senderId, '💬 10 分钟内直接回复消息可继续此任务；回复「执行」把上面的方案落地为实际修改。', token).catch(() => { }));
+            const hint = buildFollowUpHint(result, '直接回复消息');
+            if (hint) reported.then(() => this.sendTo(senderId, hint, token).catch(() => { }));
           }
           return reported;
         },
@@ -1438,7 +1440,8 @@ export class weixinIlink extends plugin {
           if (result?.ok === true) this.rememberFollowupWindow(senderKey, this.getBridge(senderKey).getProgress?.().taskId || '');
           const reported = this.sendReport(e.user_id, result, '', { qqEvent: e }).catch(error => logger.warn(`[weixin-ilink] QQ 侧结论推送失败：${error.message}`));
           if (result?.ok === true) {
-            reported.then(() => e.reply('💬 10 分钟内直接发消息可继续此任务；回复「执行」把上面的方案落地为实际修改。').catch(() => { }));
+            const hint = buildFollowUpHint(result);
+            if (hint) reported.then(() => e.reply(hint).catch(() => { }));
           }
           return reported;
         },
