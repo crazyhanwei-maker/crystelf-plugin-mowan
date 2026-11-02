@@ -484,6 +484,15 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(bridgeSlashRule.includes('模型') && bridgeSlashRule.includes('压缩'), 'qqSlashCommand 规则没有覆盖 #模型/#压缩');
   assert(html.includes('id="agent-slash-menu"') && html.includes('data-plus-action="slash"'), 'Agent 输入区没有斜杠命令入口');
   assert(css.includes('.agent-slash-menu') && css.includes('.agent-slash-item.is-active'), 'Agent 斜杠命令菜单缺少桌面或键盘选中样式');
+  assert(css.includes('.agent-model-manager-rail > #agent-model-manager-list') && css.includes('display: contents'), '手机端供应商标签没有脱离列表包装层横向排列');
+  assert(css.includes('.agent-session-tools #agent-session-import') && css.includes('.agent-sidebar-section .agent-mode-field'), '手机端侧栏导入按钮或任务模式去重样式缺失');
+  assert(css.includes('.agent-workspace-files #agent-file-refresh-btn') && css.includes('.agent-workspace-files #agent-file-up-btn'), '任务上下文文件导航缺少移动端紧凑样式');
+  assert(css.includes('.agent-plan-confirm-actions') && css.includes('grid-template-columns: 1fr 1fr'), '计划确认卡缺少手机端等宽按钮布局');
+  assert(css.includes('.agent-chat-actions .agent-actions-toggle') && css.includes('flex: 0 0 36px'), '会话头部更多操作按钮缺少手机端固定尺寸');
+  assert(html.includes('id="agent-custom-workspace-field"') && script.includes('<option value="__custom__">'), '工作目录缺少自定义目录入口');
+  assert(routesSource.includes('/api/agent-workbench/workspaces/custom') && consoleSource.includes('async function addCustomWorkspace'), '工作台缺少自定义工作目录接口');
+  assert(routesSource.includes('/api/agent-workbench/workspaces/browse') && consoleSource.includes('function listWorkspaceDirectories'), '工作台缺少工作目录浏览接口');
+  assert(html.includes('agent-workspace-picker-mask') && script.includes('openWorkspacePicker'), '工作目录缺少可点选的目录选择器');
   assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');
   assert(consoleSource.includes('body: modelSelection') && consoleSource.includes(': { auto: true }'), 'Agent 上下文压缩没有在未选择模型时使用默认模型');
   // ZCode 压缩：手动走运行时 /compact，自动按控制台阈值在每轮前触发

@@ -76,7 +76,15 @@
             <span>工作目录</span>
             <select id="agent-workspace"></select>
           </label>
-          <label class="agent-compact-field">
+          <label id="agent-custom-workspace-field" class="agent-compact-field agent-custom-workspace-field hidden">
+            <span>自定义目录</span>
+            <div class="agent-custom-workspace-input">
+              <input id="agent-custom-workspace-path" type="text" maxlength="400" placeholder="D:/projects/my-app 或 /srv/docs" aria-label="自定义工作目录" />
+              <button id="agent-custom-workspace-browse" type="button" class="agent-mini-btn">浏览</button>
+              <button id="agent-custom-workspace-add" type="button" class="agent-mini-btn">添加</button>
+            </div>
+          </label>
+          <label class="agent-compact-field agent-mode-field">
             <span>任务模式</span>
             <select id="agent-mode">
               <option value="analyze">只读分析</option>
@@ -407,6 +415,23 @@
           <footer class="agent-settings-footer">
             <button id="agent-model-form-cancel" type="button" class="agent-quiet-btn">取消</button>
             <button id="agent-model-form-save" type="button" class="agent-quiet-btn is-primary">保存</button>
+          </footer>
+        </section>
+      </div>
+  <div id="agent-workspace-picker-mask" class="agent-settings-mask hidden">
+        <section class="agent-settings-dialog agent-workspace-picker" role="dialog" aria-label="选择工作目录">
+          <header class="agent-settings-head">
+            <strong>选择工作目录</strong>
+            <button id="agent-workspace-picker-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+          </header>
+          <div class="agent-settings-body agent-workspace-picker-body">
+            <div id="agent-workspace-picker-shortcuts" class="agent-workspace-picker-shortcuts"></div>
+            <div id="agent-workspace-picker-path" class="agent-workspace-picker-path"></div>
+            <div id="agent-workspace-picker-list" class="agent-workspace-picker-list"></div>
+          </div>
+          <footer class="agent-settings-footer">
+            <button id="agent-workspace-picker-up" type="button" class="agent-quiet-btn">上一级</button>
+            <button id="agent-workspace-picker-select" type="button" class="agent-quiet-btn is-primary">选择此目录</button>
           </footer>
         </section>
       </div>

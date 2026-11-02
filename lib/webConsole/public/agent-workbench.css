@@ -483,9 +483,128 @@
   gap: 6px;
   margin: 9px 0 4px;
 }
-.agent-session-tools input[type='search'] { min-width: 0; min-height: 29px; padding: 5px 8px; border: 1px solid var(--agent-line); border-radius: 7px; background: var(--agent-surface); color: var(--agent-ink); font-size: 11px; }
-.agent-session-tools label { display: inline-flex; grid-column: 1 / -1; align-items: center; gap: 5px; color: var(--agent-muted); font-size: 10px; }
+.agent-session-tools input[type='search'] { grid-column: 1 / -1; min-width: 0; min-height: 29px; padding: 5px 8px; border: 1px solid var(--agent-line); border-radius: 7px; background: var(--agent-surface); color: var(--agent-ink); font-size: 11px; }
+.agent-session-tools label { display: inline-flex; grid-column: 1; grid-row: 2; align-items: center; gap: 5px; color: var(--agent-muted); font-size: 10px; }
 .agent-session-tools label input { margin: 0; accent-color: var(--agent-accent); }
+/* 导入是低频操作：跟“已归档”同一行，保持小按钮，不被全局手机端 button 规则拉满 */
+.agent-session-tools #agent-session-import {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  width: auto !important;
+  min-height: 26px !important;
+  padding: 3px 10px !important;
+  box-shadow: none !important;
+  font-size: 10px;
+}
+/* 侧栏按钮统一去掉全局蓝色发光阴影 */
+.agent-session-sidebar .agent-mini-btn,
+.agent-session-sidebar .agent-quiet-btn,
+.agent-session-sidebar .agent-icon-btn {
+  box-shadow: none !important;
+}
+/* 任务模式已有输入区工具条入口，侧栏不再重复；保留 select 作为状态源 */
+.agent-sidebar-section .agent-mode-field { display: none; }
+.agent-custom-workspace-field { margin-top: 4px; }
+.agent-custom-workspace-input { display: flex; gap: 6px; }
+.agent-custom-workspace-input input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 12px;
+}
+.agent-custom-workspace-input .agent-mini-btn {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-height: 32px !important;
+  padding: 5px 10px !important;
+  box-shadow: none !important;
+}
+/* 自定义工作目录选择器 */
+.agent-workbench-page .agent-workspace-picker {
+  width: min(560px, 100%);
+  height: auto;
+  max-height: min(720px, 88dvh);
+}
+.agent-workspace-picker-body {
+  display: grid;
+  gap: 8px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
+}
+.agent-workspace-picker-shortcuts {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+.agent-workspace-picker-shortcuts .agent-mini-btn {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-height: 28px !important;
+  padding: 4px 10px !important;
+  border: 1px solid var(--agent-line) !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+}
+.agent-workspace-picker-path {
+  padding: 6px 9px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface-soft);
+  color: var(--agent-muted);
+  font: 11px/1.5 ui-monospace, Consolas, monospace;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.agent-workspace-picker-list {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-height: 0;
+  max-height: min(420px, 52dvh);
+  overflow-y: auto;
+  padding: 2px;
+  scrollbar-width: thin;
+}
+.agent-workspace-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100% !important;
+  min-height: 36px !important;
+  padding: 7px 9px !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-ink);
+  text-align: left;
+}
+.agent-workspace-picker-item:hover {
+  border-color: var(--agent-line) !important;
+  background: var(--agent-surface-soft) !important;
+}
+.agent-workspace-picker-item svg { flex: none; width: 16px; height: 16px; color: var(--agent-muted); }
+.agent-workspace-picker-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-workspace-picker .agent-settings-footer {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.agent-workspace-picker .agent-settings-footer .agent-quiet-btn {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-height: 32px !important;
+  padding: 6px 12px !important;
+  box-shadow: none !important;
+}
 
 .agent-context-status {
   max-width: 145px;
@@ -3449,6 +3568,32 @@
   min-width: 0;
   margin-bottom: 7px;
 }
+/* 上下文面板里的“刷新 / 上级目录”保持小按钮，避免被全局手机端 button 规则拉满 */
+.agent-workspace-files .agent-context-section-head > span:first-child {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+.agent-workspace-files #agent-file-refresh-btn {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-height: 26px !important;
+  padding: 3px 10px !important;
+  box-shadow: none !important;
+  font-size: 10px;
+}
+.agent-workspace-files #agent-file-up-btn {
+  flex: 0 0 28px;
+  width: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.agent-workspace-files .agent-file-nav code {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 .agent-file-nav code {
   min-width: 0;
@@ -4503,7 +4648,23 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-chat-heading h2 { margin: 0 0 3px; font-size: 14px; font-weight: 750; }
   .agent-chat-meta { font-size: 11px; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
   .agent-chat-actions { gap: 8px; }
-  .agent-chat-actions .agent-actions-toggle { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 6px; font-size: 22px; }
+  .agent-chat-actions .agent-actions-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px;
+    min-height: 36px !important;
+    padding: 0 !important;
+    border: 1px solid var(--agent-line) !important;
+    border-radius: 9px;
+    background: var(--agent-surface) !important;
+    box-shadow: none !important;
+    font-size: 20px;
+    line-height: 1;
+  }
   .agent-chat-actions .agent-state-badge { padding: 3px 6px; font-size: 9px; }
   .agent-chat-actions .agent-cancel-btn { min-height: 27px; padding: 4px 7px; border: 0; font-size: 10px; }
   .agent-task-actions { display: none; }
@@ -4791,6 +4952,32 @@ body.agent-settings-modal-open { overflow: hidden; }
 .agent-manager-key-eye svg { width: 16px; height: 16px; }
 .agent-manager-models-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--agent-muted); font-size: 10px; font-weight: 900; text-transform: none; }
 .agent-manager-model-list { display: grid; gap: 5px; }
+/* 管理模型内的按钮：全局 button 的蓝色发光阴影和手机端 42px 高度规则会把
+   头部操作、模型行图标撑成一张张浮卡，这里统一压回紧凑的描边按钮 */
+.agent-model-manager .agent-quiet-btn,
+.agent-model-manager .agent-icon-btn,
+.agent-model-manager .agent-mini-btn,
+.agent-model-manager .agent-manager-model-edit,
+.agent-model-manager .agent-manager-model-remove,
+.agent-model-manager .agent-manager-key-eye {
+  box-shadow: none !important;
+}
+.agent-model-manager .agent-manager-models-head .agent-quiet-btn,
+.agent-model-manager .agent-manager-editor-head .agent-quiet-btn {
+  width: auto !important;
+  min-height: 30px !important;
+  padding: 5px 9px !important;
+  border-color: var(--agent-line) !important;
+  background: var(--agent-surface) !important;
+}
+.agent-model-manager .agent-manager-models-head .agent-quiet-btn:hover,
+.agent-model-manager .agent-manager-editor-head .agent-quiet-btn:hover {
+  background: var(--agent-surface-strong) !important;
+}
+.agent-model-manager .agent-model-manager-rail > .agent-quiet-btn {
+  min-height: 34px !important;
+  box-shadow: none !important;
+}
 .agent-manager-model-row {
   display: flex;
   align-items: center;
@@ -5040,6 +5227,29 @@ body.agent-settings-modal-open { overflow: hidden; }
   color: #ffffff;
 }
 .agent-plan-confirm-actions button.is-primary:hover { filter: brightness(1.08); color: #ffffff; }
+
+@media (max-width: 760px) {
+  /* 计划确认卡：手机端头部独占一行，操作按钮等宽并排，避免“转为实际修改”被挤成两行 */
+  .agent-plan-confirm {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .agent-plan-confirm-head { align-items: flex-start; }
+  .agent-plan-confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .agent-plan-confirm-actions button {
+    width: 100% !important;
+    min-height: 36px !important;
+    padding: 7px 8px;
+    box-shadow: none !important;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
 
 /* ===== 图片灯箱 ===== */
 .agent-lightbox {
@@ -5398,6 +5608,11 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
     border-bottom: 1px solid var(--agent-line);
     scrollbar-width: thin;
     -webkit-overflow-scrolling: touch;
+  }
+  /* 列表包装层不参与布局：让供应商标签和「添加供应商」同处一条横向滑动带，
+     否则标签会在包装层里竖排、添加按钮被挤到右侧形成两列 */
+  .agent-model-manager-rail > #agent-model-manager-list {
+    display: contents;
   }
   .agent-workbench-page .agent-model-manager-provider {
     flex: 0 0 auto;
