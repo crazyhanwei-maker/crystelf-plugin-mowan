@@ -604,6 +604,11 @@ function validateConfig(configType, config = null) {
       pushRangeError(errors, config.maxReplyMessages, 1, 10, '戳一戳最大回复条数必须在 1-10 之间');
       pushMinError(errors, config.followGroupWindowMs, 1000, '戳一戳监听时长不能小于 1000 毫秒');
       pushMinError(errors, config.followGroupMaxReplies, 0, '戳一戳追踪回复上限不能小于 0');
+      if (config.contextSource !== undefined && !['live', 'session', 'hybrid'].includes(String(config.contextSource))) {
+        errors.push('戳一戳上下文来源必须是 live、session 或 hybrid');
+      }
+      pushRangeError(errors, config.contextMessageLimit, 0, 30, '戳一戳上下文读取条数必须在 0-30 之间');
+      pushRangeError(errors, config.contextLines, 0, 10, '戳一戳上下文注入条数必须在 0-10 之间');
       ['enableTextReply', 'enableMemeReply', 'enableVoiceReply'].forEach((field) => {
         if (config[field] !== undefined && typeof config[field] !== 'boolean') {
           errors.push(`戳一戳配置 ${field} 必须是布尔值`);

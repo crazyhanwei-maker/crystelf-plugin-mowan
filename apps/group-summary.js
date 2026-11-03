@@ -345,7 +345,11 @@ export class dailyGroupSummary extends plugin {
       name: 'daily-group-summary',
       dsc: '每日群聊总结',
       event: 'message.group',
-      priority: 9999,
+      // 记录型插件必须最先跑 accept：Yunzai 会按优先级依次执行各插件 accept，
+      // 任何一个先返回真值都会中断后续记录。放在最后（原 9999）时正常群消息会被
+      // AI/其他插件先消费，导致每日总结只记到漏网的命令消息。accept 只追加记录并
+      // 返回 false，不会拦截正常派发。
+      priority: -999999,
       rule: [
         {
           reg: '^#群总结$',

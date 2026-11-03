@@ -2641,8 +2641,8 @@ pre {
 }
 
 /* 文本域/多选等大控件：改为标签在上、控件整行 */
-.plugin-settings-page .plugin-settings-field-card:has(> textarea[data-field]),
-.plugin-settings-page .plugin-settings-field-card:has(> select[data-field][multiple]) {
+.plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):has(> textarea[data-field]),
+.plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):has(> select[data-field][multiple]) {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     'head'

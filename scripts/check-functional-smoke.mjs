@@ -2086,6 +2086,38 @@ async function checkAgentBridgeFollowUpHint() {
   logPass('Agent 桥跟进提示与只读任务载荷正常');
 }
 
+async function checkPokeContextConfig() {
+  const social = await import('../lib/ai/pokeContext.js');
+  const cfg = social.resolvePokeContextConfig({ contextSource: 'hybrid', contextMessageLimit: 8, contextLines: 4 });
+  assert(cfg.source === 'hybrid' && cfg.messageLimit === 8 && cfg.lineLimit === 4, '戳一戳上下文配置解析错误');
+  assert(social.resolvePokeContextConfig({ contextSource: 'bogus' }).source === 'live', '非法上下文来源应回退 live');
+
+  const merged = social.mergePokeContextHistory({
+    sessionHistory: [{ userId: '1', nickname: 'A', text: '旧消息', time: 1 }],
+    liveHistory: [{ userId: '2', nickname: 'B', text: '新消息', time: 2 }, { userId: '999', nickname: 'Bot', text: '自己的话', time: 3 }],
+    selfId: '999',
+    lineLimit: 5,
+  });
+  assert(merged.length === 2 && merged[1].text === '新消息', '戳一戳上下文应排除机器人自己并按时间排序');
+
+  const pokeConfig = JSON.parse(await fs.readFile(path.join(root, 'config', 'poke.json'), 'utf8'));
+  assert(Object.prototype.hasOwnProperty.call(pokeConfig, 'contextSource'), 'poke.json 缺少 contextSource 默认值');
+  assert(Object.prototype.hasOwnProperty.call(pokeConfig, 'contextMessageLimit'), 'poke.json 缺少 contextMessageLimit 默认值');
+  assert(Object.prototype.hasOwnProperty.call(pokeConfig, 'contextLines'), 'poke.json 缺少 contextLines 默认值');
+
+  const pokeSource = await fs.readFile(path.join(root, 'apps', 'poke.js'), 'utf8');
+  assert(pokeSource.includes('collectSessionPokeHistory'), '戳一戳会话上下文读取缺失');
+  assert(pokeSource.includes('describePokeContextSource(context.contextSource)'), '提示词没有标注上下文来源');
+  logPass('戳一戳上下文来源配置与合并逻辑正常');
+}
+
+async function checkDailyGroupSummaryRecordingOrder() {
+  const source = await fs.readFile(path.join(root, 'apps', 'group-summary.js'), 'utf8');
+  assert(/priority:\s*-999999/.test(source), '每日群总结记录器没有排在最前，正常群消息可能漏记');
+  assert(source.includes('recordDailyGroupSummaryMessage(e, aiConfig.dailyGroupSummary'), '群总结 accept 没有记录群消息');
+  logPass('每日群总结记录顺序正常');
+}
+
 async function checkBotAdapterWatchdog() {
   const previousBot = globalThis.Bot;
   try {
@@ -2163,6 +2195,8 @@ async function main() {
     await checkMultiAdapterGroupSend();
     await checkMemoryLibrary();
     await checkBotAdapterWatchdog();
+    await checkDailyGroupSummaryRecordingOrder();
+    await checkPokeContextConfig();
     console.log('功能 smoke test 通过');
   } finally {
     await closeSharedPuppeteerBrowser().catch(() => {});

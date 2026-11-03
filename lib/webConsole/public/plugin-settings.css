@@ -382,3 +382,1009 @@
     width: 100%;
   }
 }
+
+/* ===== 手机端信息密度优化 =====
+   原布局：Hero 116px + 三个顶部标签竖排 144px + 分组信息卡 148px，
+   首屏要滚到 563px 才看到第一个开关。这里压缩首屏占用并收紧行高。 */
+.plugin-settings-mobile-group,
+.plugin-settings-mobile-save-bar {
+  display: none;
+}
+.plugin-settings-page .setting-help-toggle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  /* 顶部面包屑已有页面名，Hero 不再重复；保存/返回改到底部吸附条 */
+  body.plugin-settings-page .hero {
+    display: none !important;
+  }
+  .plugin-settings-page .page {
+    padding-bottom: 92px;
+  }
+
+  /* 三个顶部标签改一行三等分 */
+  .plugin-settings-page .plugin-settings-top-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .plugin-settings-page .plugin-settings-top-tabs .plugin-settings-side-btn {
+    width: 100% !important;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 6px;
+    font-size: 12px;
+  }
+
+  /* 分组信息卡：标题给下拉让位（保留可访问性），说明最多两行，隐藏分类/分组/字段徽章 */
+  .plugin-settings-page .plugin-settings-content-head {
+    gap: 4px;
+    padding: 9px 12px;
+    border-radius: 12px;
+  }
+  .plugin-settings-page .plugin-settings-content-head h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .plugin-settings-page .plugin-settings-content-head .setting-status {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .plugin-settings-page .plugin-settings-content-head .plugin-settings-panel-meta {
+    display: none;
+  }
+
+  /* 手机端分组下拉，替代需要打开抽屉才能切换分组 */
+  .plugin-settings-mobile-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .plugin-settings-mobile-group > span {
+    flex: 0 0 auto;
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+  .plugin-settings-mobile-group > select {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 34px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  /* 设置行：收紧 padding，隐藏类型/Switch 等低价值标签，说明只占一行 */
+  .plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel) {
+    padding: 9px 2px;
+    row-gap: 3px;
+    column-gap: 14px;
+  }
+  .plugin-settings-page .plugin-settings-field-head {
+    margin-bottom: 0;
+  }
+  .plugin-settings-page .plugin-settings-field-head .tag,
+  .plugin-settings-page .plugin-settings-field-meta {
+    display: none;
+  }
+  .plugin-settings-page .plugin-settings-field-card .setting-help {
+    margin-top: 0;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  /* 长说明折叠成一行，点“?”展开 */
+  .plugin-settings-page .setting-help.is-compact {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .plugin-settings-page .setting-help.is-compact .setting-help-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    cursor: pointer;
+  }
+  .plugin-settings-page .setting-help.is-compact.is-expanded .setting-help-text {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+  .plugin-settings-page .setting-help-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 18px;
+    width: 18px !important;
+    min-width: 18px;
+    height: 18px;
+    min-height: 18px !important;
+    margin: 1px 0 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--panel-bg);
+    box-shadow: none !important;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  /* 视觉仍是 18px，实际热区扩到 30px，手机上好点中 */
+  .plugin-settings-page .setting-help-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+  }
+
+  /* 底部吸附保存条：沿用控制台的磨砂细边条 + 扁平按钮，不用大圆角渐变 CTA */
+  .plugin-settings-mobile-save-bar {
+    display: flex;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 60;
+    gap: 8px;
+    max-width: 520px;
+    margin-inline: auto;
+    padding: 7px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel-bg);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+  }
+  .plugin-settings-mobile-save-bar .link-btn,
+  .plugin-settings-mobile-save-bar button {
+    flex: 1 1 0;
+    width: auto !important;
+    min-width: 0;
+    min-height: 38px !important;
+    margin: 0;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    box-shadow: none !important;
+  }
+  .plugin-settings-mobile-save-bar .link-btn,
+  .plugin-settings-mobile-save-bar button {
+    border: 1px solid var(--console-control-border, var(--border)) !important;
+    background: var(--console-control-bg, rgba(255, 255, 255, 0.72)) !important;
+    background-image: none !important;
+    color: var(--text) !important;
+  }
+  .plugin-settings-mobile-save-bar .link-btn:hover,
+  .plugin-settings-mobile-save-bar button:hover {
+    border-color: var(--console-active-border, var(--border-strong)) !important;
+    background: var(--console-control-hover, var(--soft-bg)) !important;
+    background-image: none !important;
+    color: var(--text) !important;
+  }
+  /* 主操作只用主色描边/文字强调，不铺满整块蓝底 */
+  .plugin-settings-mobile-save-bar button {
+    border-color: color-mix(in srgb, var(--primary) 38%, var(--border)) !important;
+    color: var(--primary-hover) !important;
+  }
+}
+
+/* ===== 私聊安全管理面板 =====
+   原样式是橙色/红色实心整行按钮 + 20px 大卡片，和其余控制台面板不一致。
+   改为浅色描边操作按钮；手机端压成 2×2 按钮、指标条和紧凑检索区。 */
+#plugin-settings-private-safety-panel .plugin-settings-feature-actions > .feature-manage-btn {
+  border: 1px solid var(--console-control-border, var(--border));
+  border-radius: 8px;
+  background: var(--console-control-bg, rgba(255, 255, 255, 0.72));
+  color: var(--text);
+  box-shadow: none;
+}
+#plugin-settings-private-safety-panel .plugin-settings-feature-actions > .feature-manage-btn-warning {
+  border-color: color-mix(in srgb, #f59e0b 40%, var(--border));
+  background: color-mix(in srgb, #f59e0b 12%, var(--panel-bg));
+  color: #b45309;
+}
+#plugin-settings-private-safety-panel .plugin-settings-feature-actions > .feature-manage-btn-danger {
+  border-color: color-mix(in srgb, #ef4444 36%, var(--border));
+  background: color-mix(in srgb, #ef4444 10%, var(--panel-bg));
+  color: #dc2626;
+}
+#plugin-settings-private-safety-panel .feature-manage-btn-safe {
+  border-color: color-mix(in srgb, #10b981 36%, var(--border));
+  background: color-mix(in srgb, #10b981 10%, var(--panel-bg));
+  color: #047857;
+}
+:root[data-theme='dark'] #plugin-settings-private-safety-panel .plugin-settings-feature-actions > .feature-manage-btn-warning {
+  color: #fbbf24;
+}
+:root[data-theme='dark'] #plugin-settings-private-safety-panel .plugin-settings-feature-actions > .feature-manage-btn-danger {
+  color: #f87171;
+}
+:root[data-theme='dark'] #plugin-settings-private-safety-panel .feature-manage-btn-safe {
+  color: #34d399;
+}
+
+/* 概览卡独占整行；三张列表卡在宽屏并排，不再被 auto-fit 挤成四列窄条 */
+@media (min-width: 761px) {
+  .plugin-settings-page #plugin-settings-private-safety-panel #plugin-settings-private-safety-box {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel #plugin-settings-private-safety-box > .plugin-settings-feature-panel-card:first-child {
+    grid-column: 1 / -1;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-action-group {
+    max-width: 720px;
+  }
+}
+@media (min-width: 1280px) {
+  .plugin-settings-page #plugin-settings-private-safety-panel #plugin-settings-private-safety-box {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .plugin-settings-page .plugin-settings-special-panel {
+    gap: 9px;
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .plugin-settings-page .plugin-settings-special-panel-head h3 {
+    margin: 0 0 2px;
+    font-size: 16px;
+  }
+  .plugin-settings-page .plugin-settings-special-panel-head .setting-status {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  /* 顶部徽章和下方指标/概览重复，手机端让位给内容 */
+  .plugin-settings-page #plugin-settings-private-safety-meta {
+    display: none;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box {
+    gap: 9px;
+    margin-bottom: 0;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box > .plugin-settings-feature-panel-card {
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel-bg);
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-panel-head {
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-panel-head .setting-status {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-panel-head .kv-label {
+    font-size: 12px;
+  }
+
+  /* 操作按钮 2×2，不再整行排四个 */
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-panel-head > .plugin-settings-feature-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-actions > .feature-manage-btn {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px !important;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* 四项指标压成一条统计带 */
+  .plugin-settings-page #plugin-settings-private-safety-panel .private-safety-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding: 7px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--console-control-bg, rgba(255, 255, 255, 0.55));
+    overflow: hidden;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .private-safety-metric-card {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+    padding: 0 7px;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    background: none;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .private-safety-metric-card:last-child {
+    border-right: 0;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .private-safety-metric-card .kv-label {
+    overflow: hidden;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .private-safety-metric-card .plugin-settings-skill-metric-value {
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .private-safety-metric-card .plugin-settings-meta-chip {
+    display: none;
+  }
+
+  /* 安全开关说明压到两行 */
+  .plugin-settings-page #plugin-settings-private-safety-box > .plugin-settings-feature-panel-card > .setting-help {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    margin-top: 7px;
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+
+  /* 检索与分页：输入框和按钮同一行，筛选两个下拉并排 */
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-action-group {
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 9px;
+    background: var(--console-control-bg, rgba(255, 255, 255, 0.55));
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-action-title {
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-search-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-search-row > input {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-search-row > button {
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-private-safety-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-private-safety-filters > select {
+    min-width: 0;
+    min-height: 32px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-panel .plugin-settings-feature-action-group > .setting-help {
+    display: none;
+  }
+
+  /* 列表卡片收紧 */
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-skill-tools-list {
+    gap: 6px;
+  }
+  /* 空列表不再画一层带边框的占位卡 */
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-skill-tools-list > .setting-item,
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-history > .setting-item {
+    padding: 2px 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-skill-tools-list > .setting-item .setting-help,
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-history > .setting-item .setting-help {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-skill-tool-item {
+    padding: 8px 10px;
+    border-radius: 9px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-skill-tool-head .feature-manage-btn {
+    height: 28px;
+    min-height: 28px !important;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-history {
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-feature-history-item {
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .plugin-settings-page #plugin-settings-private-safety-box .plugin-settings-skill-tool-footer {
+    gap: 4px 10px;
+    font-size: 10.5px;
+  }
+}
+
+/* ===== 功能状态 / Skills 操作按钮 =====
+   实心绿/红/黄按钮在控制台里过于抢眼，统一改为浅色底 + 同色描边；
+   手机端每组按钮并排，不再一枚占一整行。 */
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-safe {
+  border: 1px solid color-mix(in srgb, #10b981 40%, var(--border));
+  background: color-mix(in srgb, #10b981 10%, var(--panel-bg));
+  color: #047857;
+  box-shadow: none;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-danger {
+  border: 1px solid color-mix(in srgb, #ef4444 38%, var(--border));
+  background: color-mix(in srgb, #ef4444 10%, var(--panel-bg));
+  color: #dc2626;
+  box-shadow: none;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-warning {
+  border: 1px solid color-mix(in srgb, #f59e0b 42%, var(--border));
+  background: color-mix(in srgb, #f59e0b 12%, var(--panel-bg));
+  color: #b45309;
+  box-shadow: none;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-secondary {
+  border: 1px solid var(--console-control-border, var(--border));
+  background: var(--console-control-bg, rgba(255, 255, 255, 0.72));
+  color: var(--text);
+  box-shadow: none;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-safe:hover:not(:disabled),
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-danger:hover:not(:disabled),
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-warning:hover:not(:disabled),
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-secondary:hover:not(:disabled) {
+  background-image: none !important;
+  box-shadow: none !important;
+  transform: none;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-safe:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #10b981 55%, var(--border)) !important;
+  background-color: color-mix(in srgb, #10b981 15%, var(--panel-bg)) !important;
+  color: #047857 !important;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #ef4444 52%, var(--border)) !important;
+  background-color: color-mix(in srgb, #ef4444 15%, var(--panel-bg)) !important;
+  color: #dc2626 !important;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-warning:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #f59e0b 58%, var(--border)) !important;
+  background-color: color-mix(in srgb, #f59e0b 17%, var(--panel-bg)) !important;
+  color: #b45309 !important;
+}
+.plugin-settings-page .feature-manage-btn.feature-manage-btn-secondary:hover:not(:disabled) {
+  border-color: var(--console-active-border, var(--border-strong)) !important;
+  background-color: var(--console-control-hover, var(--soft-bg)) !important;
+  color: var(--text) !important;
+}
+:root[data-theme='dark'] .plugin-settings-page .feature-manage-btn.feature-manage-btn-safe { color: #34d399; }
+:root[data-theme='dark'] .plugin-settings-page .feature-manage-btn.feature-manage-btn-danger { color: #f87171; }
+:root[data-theme='dark'] .plugin-settings-page .feature-manage-btn.feature-manage-btn-warning { color: #fbbf24; }
+
+@media (max-width: 760px) {
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-toolbox {
+    gap: 9px;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-panel-card {
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-panel-head {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-panel-head .setting-status {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-action-groups {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-action-group {
+    gap: 6px;
+    padding: 8px;
+    border-radius: 10px;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-action-title {
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  /* 开关操作只有三枚，一行放下 */
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-action-group:first-child .plugin-settings-feature-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-actions > button {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px !important;
+    padding: 0 6px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-action-group > .setting-help {
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+  .plugin-settings-page #plugin-settings-feature-list .plugin-settings-feature-panel-card > .setting-help {
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+  .plugin-settings-page #plugin-settings-feature-list > .feature-toggle-card {
+    min-height: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+}
+
+
+
+/* ===== Skills 设置：手机端布局与密度 =====
+   原来 4 张指标卡竖排、控制区 1600px、单个技能卡 1400px，31 个技能整页 44k px。
+   这里压成 2×2 指标、紧凑控制区和“名称-状态-操作-说明”四段式技能卡。 */
+@media (max-width: 760px) {
+  /* 总览指标：2×2 小卡 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skills-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-metric-card {
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--console-control-bg, var(--panel-bg));
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-metric-card .kv-label {
+    font-size: 10px;
+    line-height: 1.3;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-metric-value {
+    font-size: 17px;
+    line-height: 1.15;
+    letter-spacing: 0;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-metric-card .setting-help {
+    display: none;
+  }
+
+  /* 控制区 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skills-control-grid {
+    gap: 8px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-card {
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-card > .setting-help {
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-inline-metrics {
+    gap: 4px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-inline-metrics .tag {
+    padding: 2px 6px;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-split {
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-card .feature-manage-btn,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-footer .feature-manage-btn {
+    min-width: 0;
+    height: 32px;
+    min-height: 32px !important;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    box-shadow: none;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-timeout-box {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-timeout-box input {
+    min-height: 32px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-search-row {
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-search-row input {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-search-row .feature-manage-btn {
+    width: auto !important;
+    padding: 0 10px;
+  }
+  /* 8 个筛选按钮压成 4×2 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-filter-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-filter-btn {
+    min-height: 28px;
+    height: 28px;
+    padding: 0 4px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-action-cluster-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-group {
+    gap: 4px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-group-title {
+    font-size: 11px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-group > .setting-help {
+    display: none;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-preset-actions,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-batch-actions,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-expand-actions,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-reset-actions {
+    gap: 4px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-expand-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-footer {
+    gap: 6px;
+    padding-top: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-footer .setting-status {
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+
+  /* 技能卡：压缩名称区、元信息、操作区和说明区 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card {
+    gap: 8px;
+    height: auto;
+    min-height: 0;
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card::before {
+    width: 3px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-top {
+    gap: 6px;
+    min-height: 0;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-name-row {
+    min-height: 38px;
+    gap: 6px;
+    padding: 5px 8px;
+    border-radius: 8px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-name-kicker {
+    display: none;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-name {
+    font-size: 14px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-scene-pill {
+    min-height: 22px;
+    max-width: 96px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-copy {
+    min-height: 0;
+    font-size: 11.5px;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    min-height: 0;
+    max-height: none;
+  }
+  /* 元信息只保留前三项：运行状态、来源、工具数 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-meta > .plugin-settings-meta-chip:nth-child(n + 4) {
+    display: none;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-meta > .plugin-settings-meta-chip {
+    padding: 3px 4px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-card-actions > button {
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 6px;
+    border-radius: 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  /* 使用建议：去装饰、减少重复 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide {
+    gap: 6px;
+    padding: 8px;
+    border-radius: 9px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-head {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-kicker,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-head .plugin-settings-panel-meta {
+    display: none;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-title {
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-summary-card {
+    padding: 6px 8px;
+    border-radius: 7px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-summary {
+    font-size: 11.5px;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-facts {
+    gap: 4px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-fact {
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-fact-label {
+    min-height: 18px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    font-size: 9px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-fact-value {
+    font-size: 11px;
+    line-height: 1.4;
+    -webkit-line-clamp: 1;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-tool-preview {
+    gap: 6px;
+    padding-top: 4px;
+    font-size: 11px;
+  }
+  /* 示例占空间大且非必需，手机端收起 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-examples {
+    display: none;
+  }
+
+  /* 展开后的工具明细 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-tools-list {
+    gap: 6px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-tool-item {
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 9px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-tool-copy strong {
+    font-size: 12px;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-tool-desc {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 760px) {
+  /* 收起态已有「展开工具列表」按钮，省略 64px 的占位提示 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-tools-collapsed {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  /* 覆盖 ≤720 断点里被改成单列的布局：输入+清空同行，操作按钮两列 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-search-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-control-split,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-preset-actions,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-batch-actions,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-expand-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* 筛选按钮 3 列，标签不再被截断 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-filter-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  /* .actions 默认是 flex，只写 grid-template-columns 不生效 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-preset-actions,
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-batch-actions {
+    display: grid;
+  }
+}
+
+@media (max-width: 760px) {
+  /* 适合/注意保持“标签 + 内容”同一行，比上下两行更紧凑 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-skill-guide-fact {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  /* 徽章与下方指标/系统开关重复，手机端让位给内容 */
+  .plugin-settings-page #plugin-settings-skills-box .plugin-settings-special-panel-head .plugin-settings-panel-meta {
+    display: none;
+  }
+}
+
+/* ===== 带提示的字段：提示独占整行 =====
+   两列布局会把长提示压进左侧窄列（实测 66px 宽、313px 高）。
+   保留「标题 | 控件」两列（开关仍靠右对齐），提示横跨两列放在标题下方。 */
+.plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):has(> .plugin-settings-field-notice) {
+  /* 命名区域必须是矩形：control 只能占一行，否则整条声明会被浏览器丢弃 */
+  grid-template-areas:
+    'head control'
+    'meta meta'
+    'notice notice'
+    'extra extra'
+    'help help';
+}
+.plugin-settings-page .plugin-settings-field-card:has(> .plugin-settings-field-notice) > .plugin-settings-field-notice {
+  justify-self: stretch;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  /* 手机端提示压缩成两行，不再占掉半屏 */
+  .plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-notice {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    margin-bottom: 0;
+    padding: 6px 9px;
+    border-radius: 7px;
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+  /* 带提示的字段在手机上：标题/说明占左列，数字类控件仍靠右 */
+  .plugin-settings-page .plugin-settings-field-card:has(> .plugin-settings-field-notice) > input[data-field],
+  .plugin-settings-page .plugin-settings-field-card:has(> .plugin-settings-field-notice) > select[data-field],
+  .plugin-settings-page .plugin-settings-field-card:has(> .plugin-settings-field-notice) > .inline-field-form input[data-field],
+  .plugin-settings-page .plugin-settings-field-card:has(> .plugin-settings-field-notice) > .inline-field-form select[data-field] {
+    width: 200px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  /* 两列字段：控件独占 260px 会把标题列挤到 66px，标题被拆成两行。
+     手机端收窄控件，给标题留出至少约 100px。 */
+  .plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):not(:has(> textarea[data-field])):not(:has(> select[data-field][multiple])):not(:has(> .plugin-settings-field-notice)) > input[data-field],
+  .plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):not(:has(> textarea[data-field])):not(:has(> select[data-field][multiple])):not(:has(> .plugin-settings-field-notice)) > .inline-field-form input[data-field],
+  .plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):not(:has(> textarea[data-field])):not(:has(> select[data-field][multiple])):not(:has(> .plugin-settings-field-notice)) > select[data-field] {
+    width: 200px;
+    max-width: 100%;
+  }
+  .plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-head {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 760px) {
+  /* 行的底色在行式布局里会露出一块圆角色块，和上下行不齐；匹配状态改用标题色表达 */
+  .plugin-settings-page .plugin-settings-field-card.plugin-settings-field-card-matched,
+  .plugin-settings-page .plugin-settings-field-card.plugin-settings-field-card-recommended,
+  .plugin-settings-page .plugin-settings-field-card.plugin-settings-field-card-danger {
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* 匹配推荐时卡片用 ::before 画绿色圆角块，行式布局下会露出色块，手机端隐藏 */
+  .plugin-settings-page .plugin-settings-field-card.plugin-settings-field-card-matched::before {
+    display: none;
+  }
+}
+
+/* 推荐提示统一为行内小胶囊：避免整行浅蓝色带。敏感提示仍保持整行警示样式。 */
+.plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-notice-recommended {
+  justify-self: start;
+  width: auto;
+  max-width: 100%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  /* 手机端胶囊再小一号；:has() 前缀是为了压过上面“提示整行”的同等特异性规则 */
+  .plugin-settings-page .plugin-settings-field-card:not(.plugin-settings-knowledge-card):not(.plugin-settings-special-panel):has(> .plugin-settings-field-notice) > .plugin-settings-field-notice-recommended {
+    justify-self: start;
+    width: auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    line-height: 1.35;
+    -webkit-line-clamp: 1;
+  }
+}
+
+@media (min-width: 761px) {
+  /* 桌面端字段头已有可点击的“应用推荐”胶囊，不再重复一条文字提示 */
+  .plugin-settings-page .plugin-settings-field-card > .plugin-settings-field-notice-recommended {
+    display: none;
+  }
+}

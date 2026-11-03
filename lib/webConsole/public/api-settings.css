@@ -1020,6 +1020,7 @@
 
   .api-settings-nav-btn {
     flex: 0 0 auto;
+    width: auto !important;
     min-width: 128px;
     min-height: 40px;
     padding: 9px 11px;

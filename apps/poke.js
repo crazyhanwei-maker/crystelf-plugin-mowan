@@ -15,6 +15,15 @@ import { getTtsTools } from '../lib/ai/ttsRegistry.js';
 import { getGroupVoiceModel } from '../lib/ai/ttsGroupModelStore.js';
 import { setPokeDebugSnapshot } from '../lib/ai/runtimePokeDebugStore.js';
 import { getPokeFollowWindow, setPokeFollowWindow } from '../lib/ai/runtimePokeFollowStore.js';
+import { initDatabase } from '../lib/ai/chatDatabase.js';
+import {
+  resolvePokeContextConfig,
+  needsLiveHistory,
+  needsSessionHistory,
+  mergePokeContextHistory,
+  formatPokeContextLine,
+  describePokeContextSource,
+} from '../lib/ai/pokeContext.js';
 
 // 戳一戳回复输出上限：16384（32768 的一半）。模块级定义——两个调用点都要可见。
 // 旧默认 80 对思考型模型必坏——thinking 直接占满额度，回复为空；
@@ -460,8 +469,53 @@ function inferPokeEmotion(replyText = '') {
   return { memeEmotion: 'default', voiceEmotion: '默认' };
 }
 
+// 戳一戳上下文来源：live=只读实时群消息；session=只读会话数据库（与群聊 AI 同一 session）；
+// hybrid=两者合并去重，最完整。数量上限、注入行数均可配置。
+async function collectLivePokeHistory(e, limit) {
+  if (limit <= 0) return [];
+  try {
+    const history = await e.group?.getChatHistory?.(e.message_id || 0, limit);
+    return (Array.isArray(history) ? history : []).map(item => {
+      const msgArr = Array.isArray(item?.message) ? item.message : [];
+      const text = msgArr.filter(msg => msg.type === 'text').map(msg => msg.text).join(' ').trim();
+      const imageUrls = msgArr.filter(msg => msg.type === 'image' && msg.url).map(msg => msg.url);
+      return {
+        userId: item?.user_id,
+        nickname: item?.sender?.card || item?.sender?.nickname || `QQ${item?.user_id || '未知'}`,
+        text,
+        imageUrls,
+        time: item?.time,
+      };
+    });
+  } catch (error) {
+    logger.warn(`[poke] 读取实时群消息失败: ${error.message}`);
+    return [];
+  }
+}
+
+async function collectSessionPokeHistory(e, limit) {
+  if (limit <= 0 || !e?.group_id) return [];
+  try {
+    const db = await initDatabase();
+    const messages = db.getMessages(`group:${e.group_id}`, limit);
+    return (Array.isArray(messages) ? messages : []).map(item => ({
+      userId: item?.userId,
+      nickname: item?.userName || `QQ${item?.userId || '未知'}`,
+      text: String(item?.content || '').trim(),
+      imageUrls: [],
+      time: Number(item?.timestamp || 0),
+      fromSession: true,
+    }));
+  } catch (error) {
+    logger.warn(`[poke] 读取会话上下文失败: ${error.message}`);
+    return [];
+  }
+}
+
 async function getRecentPokeContext(e) {
   const aiConfig = configControl.get('ai') || {};
+  const pokeConfig = configControl.get('poke') || {};
+  const { source, messageLimit, lineLimit } = resolvePokeContextConfig(pokeConfig);
   const result = {
     lines: [],
     latestImageUrls: [],
@@ -470,27 +524,20 @@ async function getRecentPokeContext(e) {
     latestImageSource: 'none',
     latestImageSummary: '',
     useMultimodal: false,
+    contextSource: source,
+    contextLineCount: 0,
   };
   try {
-    const history = await e.group?.getChatHistory?.(e.message_id || 0, 6);
-    const normalized = (Array.isArray(history) ? history : [])
-      .map(item => {
-        const msgArr = Array.isArray(item?.message) ? item.message : [];
-        const text = msgArr.filter(msg => msg.type === 'text').map(msg => msg.text).join(' ').trim();
-        const imageUrls = msgArr.filter(msg => msg.type === 'image' && msg.url).map(msg => msg.url);
-        return {
-          userId: item?.user_id,
-          nickname: item?.sender?.card || item?.sender?.nickname || `QQ${item?.user_id || '未知'}`,
-          text,
-          imageUrls,
-          time: Number(item?.time || 0),
-        };
-      })
-      .filter(item => item.userId && String(item.userId) !== String(e.self_id))
-      .sort((a, b) => a.time - b.time)
-      .slice(-3);
-
-    result.lines = normalized.map(item => `${item.nickname}：${item.text || (item.imageUrls.length > 0 ? '[发了一张图片]' : '[无文本内容]')}`);
+    const liveHistory = needsLiveHistory(source) ? await collectLivePokeHistory(e, messageLimit) : [];
+    const sessionHistory = needsSessionHistory(source) ? await collectSessionPokeHistory(e, messageLimit) : [];
+    const normalized = mergePokeContextHistory({
+      sessionHistory,
+      liveHistory,
+      selfId: e.self_id,
+      lineLimit,
+    });
+    result.contextLineCount = normalized.length;
+    result.lines = normalized.map(formatPokeContextLine);
     const latestOperatorImage = [...normalized].reverse().find(item => item.imageUrls.length > 0 && String(item.userId) === String(e.operator_id));
     const latestWithImage = latestOperatorImage || [...normalized].reverse().find(item => item.imageUrls.length > 0);
     if ((aiConfig?.multimodalEnabled || aiConfig?.smartMultimodal) && latestWithImage) {
@@ -699,7 +746,9 @@ async function generateAiPokeReply(e, pokeConfig) {
     replyInstruction,
     emojiInstruction,
     `${operatorName} 刚刚戳了你一下，请立即回复一句。`,
-    context.lines.length > 0 ? `最近群聊上下文：\n${context.lines.join('\n')}` : '',
+    context.lines.length > 0
+      ? `最近群聊上下文（${describePokeContextSource(context.contextSource)}）：\n${context.lines.join('\n')}`
+      : '',
     context.latestImageUrls.length > 0 ? '最近一条消息包含图片，请结合图片内容和上下文自然回复。' : '',
     context.latestImageSenderId ? `最近图片发送者：${context.latestImageSenderName || `QQ${context.latestImageSenderId}`}（ID：${context.latestImageSenderId}）` : '',
     context.latestImageSource === 'operator_recent' ? '本次优先使用了戳你的人最近发的图片。' : '',
@@ -750,6 +799,8 @@ async function generateAiPokeReply(e, pokeConfig) {
     lastPrompt: prompt,
     lastReply: result.response || '',
     lastContextLines: context.lines,
+    contextSource: context.contextSource,
+    contextLineCount: context.contextLineCount,
     lastImageUrls: context.latestImageUrls,
     lastImageSenderId: context.latestImageSenderId,
     lastImageSenderName: context.latestImageSenderName,

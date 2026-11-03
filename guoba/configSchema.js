@@ -810,6 +810,44 @@ const guobaSchema = [
     },
   },
   {
+    field: 'poke.contextSource',
+    label: '上下文来源',
+    component: 'Select',
+    bottomHelpMessage: 'AI 回复时读取哪里的聊天上下文：实时群消息只读最近几条；会话记录与群聊 AI 共用同一份，能读到更早的对话；合并会对两处去重后取最近若干条。',
+    componentProps: {
+      options: [
+        { label: '实时群消息', value: 'live' },
+        { label: '会话记录（与群聊 AI 共用）', value: 'session' },
+        { label: '两者合并', value: 'hybrid' },
+      ],
+      placeholder: '请选择上下文来源',
+    },
+  },
+  {
+    field: 'poke.contextMessageLimit',
+    label: '上下文读取条数',
+    component: 'InputNumber',
+    bottomHelpMessage: '读取最近多少条消息作为上下文素材，0 表示不读取，最多 30 条。会话记录来源最多可覆盖 200 条历史。',
+    componentProps: {
+      min: 0,
+      max: 30,
+      step: 1,
+      placeholder: '请输入读取条数',
+    },
+  },
+  {
+    field: 'poke.contextLines',
+    label: '上下文注入条数',
+    component: 'InputNumber',
+    bottomHelpMessage: '实际拼进提示词的消息条数，0 表示不注入上下文，最多 10 条。条数越多越懂语境，但消耗的 token 也越多。',
+    componentProps: {
+      min: 0,
+      max: 10,
+      step: 1,
+      placeholder: '请输入注入条数',
+    },
+  },
+  {
     label: '本地控制台设置',
     component: 'SOFT_GROUP_BEGIN',
   },

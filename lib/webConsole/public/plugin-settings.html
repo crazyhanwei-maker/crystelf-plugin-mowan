@@ -58,6 +58,10 @@
           <div class="plugin-settings-content-head">
             <h2 id="plugin-settings-group-title">配置项</h2>
             <div id="plugin-settings-group-desc" class="setting-status">在这里修改当前分组的配置。</div>
+            <label id="plugin-settings-mobile-group-wrap" class="plugin-settings-mobile-group">
+              <span>分组</span>
+              <select id="plugin-settings-mobile-group" aria-label="切换设置分组"></select>
+            </label>
             <div id="plugin-settings-config-meta" class="plugin-settings-panel-meta"></div>
           </div>
           <div id="plugin-settings-form" class="plugin-settings-form-grid">加载中...</div>
@@ -97,6 +101,10 @@
         <!-- 导航设置已迁至「系统设置」页（system-settings.html） -->
       </div>
     </div>
+  </div>
+  <div id="plugin-settings-mobile-save-bar" class="plugin-settings-mobile-save-bar">
+    <a class="link-btn" href="/">返回首页</a>
+    <button id="plugin-settings-mobile-save-btn" type="button">保存插件设置</button>
   </div>
 <script src="/auth.js"></script>
 <script src="/plugin-settings-state.js"></script>
