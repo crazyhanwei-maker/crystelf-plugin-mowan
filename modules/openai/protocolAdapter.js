@@ -3,9 +3,12 @@
 // - grok：xAI 官方 API 本身就是 OpenAI 兼容格式，走 openai 同一条请求路径（baseApi 填 https://api.x.ai/v1）；
 // - anthropic：wire 格式差异较大（x-api-key 头、system 顶层参数、content blocks、max_tokens 必填），
 //   由本模块把内部 OpenAI 形态的消息映射为 Anthropic 请求，并把响应还原回内部形态。
+// - openai-responses：OpenAI Responses API（/v1/responses）。仅 Agent 控制台使用：
+//   GPT-5.4+ 在 /chat/completions 下不允许「function tools + reasoning_effort」并存，
+//   必须走 /responses 才能同时保留推理强度与工具调用。主对话仍使用 chat/completions。
 import { buildAiUserAgentHeaders } from '../../lib/ai/userAgent.js';
 
-const PROTOCOLS = new Set(['openai', 'anthropic', 'grok']);
+const PROTOCOLS = new Set(['openai', 'openai-responses', 'anthropic', 'grok']);
 
 const PROTOCOL_ALIASES = new Map([
   ['gork', 'grok'],
@@ -13,6 +16,9 @@ const PROTOCOL_ALIASES = new Map([
   ['claude', 'anthropic'],
   ['messages', 'anthropic'],
   ['chatgpt', 'openai'],
+  ['responses', 'openai-responses'],
+  ['openai-response', 'openai-responses'],
+  ['openai_responses', 'openai-responses'],
   ['', 'openai'],
 ]);
 

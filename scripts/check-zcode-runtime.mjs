@@ -45,10 +45,11 @@ async function checkAsync(label, callback) {
 const plain = value => JSON.parse(JSON.stringify(value));
 
 // 与仓库 modules/openai/protocolAdapter.js 行为一致的镜像 stub（PROTOCOLS + 别名表 + 默认 openai）
-const PROTOCOLS = new Set(['openai', 'anthropic', 'grok']);
+const PROTOCOLS = new Set(['openai', 'openai-responses', 'anthropic', 'grok']);
 const PROTOCOL_ALIASES = new Map([
   ['gork', 'grok'], ['xai', 'grok'], ['claude', 'anthropic'], ['messages', 'anthropic'],
-  ['chatgpt', 'openai'], ['', 'openai'],
+  ['chatgpt', 'openai'], ['responses', 'openai-responses'], ['openai-response', 'openai-responses'],
+  ['openai_responses', 'openai-responses'], ['', 'openai'],
 ]);
 const normalizeAiProtocol = value => {
   const raw = String(value ?? '').trim().toLowerCase();
@@ -204,6 +205,21 @@ async function main() {
     assert.equal(aliased.config.providerConfigRules.providerRules[0].config.api.baseUrl, 'https://gw.example.com/anthropic/v1');
     const grok = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'grok' }, 'm', {});
     assert.equal(grok.config.providerConfigRules.providerRules[0].config.api.type, 'openai-chat-completions');
+    // Responses API：GPT-5.4+ 需要它才能同时用 function tools + reasoning_effort
+    const responses = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'openai-responses' }, 'm', {});
+    assert.equal(responses.config.providerConfigRules.providerRules[0].config.api.type, 'openai-responses',
+      'openai-responses 协议没有映射成 Responses API');
+    const responsesAliased = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'responses' }, 'm', {});
+    assert.equal(responsesAliased.config.providerConfigRules.providerRules[0].config.api.type, 'openai-responses',
+      'responses 别名没有归一成 openai-responses');
+    // 自定义渠道同样按 responses 声明
+    const responsesProvider = zcode.buildZcodeConfig(aiConfig, 'probe-resp', {
+      requestedProviderId: 'Responses 渠道',
+      modelProviders: [{ name: 'Responses 渠道', baseApi: 'https://resp.example.com/v1', apiKey: 'k', apiProtocol: 'openai-responses', models: [{ name: 'probe-resp' }] }],
+    });
+    const responsesRule = responsesProvider.config.providerConfigRules.providerRules
+      .find(rule => rule.providerId !== 'crystelf-chat');
+    assert.equal(responsesRule?.config.api.type, 'openai-responses', '自定义渠道的 responses 协议丢失');
   });
   check('缺地址/缺 key 抛可区分错误（含自定义 API 变体）', () => {
     for (const [input, code] of [

@@ -583,6 +583,29 @@ async function checkAgentWorkbenchSlashCommands() {
   // 旧渠道仍应独立声明（不得被新渠道覆盖）
   const oldEntry = routeConfig.provider?.[providerIdOf('旧渠道')];
   assert(oldEntry?.options?.baseURL === 'https://old.example.com/v1' && oldEntry.npm === '@ai-sdk/anthropic', '多个自定义渠道的声明互相覆盖或协议串味');
+  // Responses API：GPT-5.4+ 在 /chat/completions 下无法同时启用 function tools 与 reasoning_effort，
+  // 自定义渠道声明 openai-responses 时必须走 @ai-sdk/openai（OpenCode 以 .responses() 提交）
+  const responsesProviderName = 'Responses 渠道';
+  const responsesProviderId = providerIdOf(responsesProviderName);
+  const responsesConfig = buildOpenCodeConfig(
+    { baseApi: 'https://main.example.com/v1', apiKey: 'main-key', apiProtocol: 'openai', modelType: 'main-model' },
+    'gpt-5.4',
+    {
+      requestedProviderId: responsesProviderId,
+      modelProviders: [{ name: responsesProviderName, baseApi: 'https://resp.example.com/v1', apiKey: 'k-resp', apiProtocol: 'openai-responses', models: [{ name: 'gpt-5.4' }] }],
+      writeMode: false,
+    },
+  );
+  const responsesEntry = responsesConfig.provider?.[responsesProviderId];
+  assert(responsesEntry?.npm === '@ai-sdk/openai', `responses 渠道没有使用 @ai-sdk/openai SDK：${responsesEntry?.npm}`);
+  assert(responsesConfig.model === `${responsesProviderId}/gpt-5.4`, 'responses 渠道的默认模型没有指向该渠道');
+  // 主接口直接声明 openai-responses 时同样生效
+  const mainResponsesConfig = buildOpenCodeConfig(
+    { baseApi: 'https://main.example.com/v1', apiKey: 'main-key', apiProtocol: 'openai-responses', modelType: 'main-model' },
+    '',
+    { writeMode: false },
+  );
+  assert(mainResponsesConfig.provider?.['crystelf-chat']?.npm === '@ai-sdk/openai', '主接口 responses 协议没有切换 SDK');
   // 名称形式也应能命中，兼容历史任务里存的供应商名
   const byNameConfig = buildOpenCodeConfig(
     { baseApi: 'https://main.example.com/v1', apiKey: 'main-key', apiProtocol: 'openai', modelType: 'main-model' },
