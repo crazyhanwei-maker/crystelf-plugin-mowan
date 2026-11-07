@@ -599,6 +599,18 @@ async function checkAgentWorkbenchSlashCommands() {
   // 旧渠道仍应独立声明（不得被新渠道覆盖）
   const oldEntry = routeConfig.provider?.[providerIdOf('旧渠道')];
   assert(oldEntry?.options?.baseURL === 'https://old.example.com/v1' && oldEntry.npm === '@ai-sdk/anthropic', '多个自定义渠道的声明互相覆盖或协议串味');
+  // 思考强度必须一一对应真实参数：OpenAI 档位原样透传，Anthropic 每档预算必须不同
+  const openaiVariants = routedEntry.models?.['probe-new']?.variants || {};
+  assert(openaiVariants.disabled?.reasoningEffort === 'none', 'OpenCode 关闭思考没有映射成 reasoningEffort=none');
+  for (const level of ['minimal', 'low', 'medium', 'high', 'xhigh', 'max']) {
+    assert(openaiVariants[level]?.reasoningEffort === level, `OpenCode 档位 ${level} 没有原样映射成 reasoningEffort`);
+  }
+  const anthropicVariants = oldEntry.models?.['probe-old']?.variants || {};
+  assert(anthropicVariants.disabled?.thinking?.type === 'disabled', 'OpenCode Anthropic 关闭思考没有映射成 thinking.disabled');
+  assert(anthropicVariants.minimal?.thinking?.budgetTokens === 1024, 'OpenCode Anthropic minimal 没有映射成最小真实预算');
+  assert(anthropicVariants.xhigh?.thinking?.budgetTokens === 16384, 'OpenCode Anthropic xhigh 预算不正确');
+  assert(anthropicVariants.max?.thinking?.budgetTokens === 24576, 'OpenCode Anthropic max 预算不正确');
+  assert(anthropicVariants.xhigh.thinking.budgetTokens !== anthropicVariants.max.thinking.budgetTokens, 'OpenCode Anthropic xhigh 与 max 仍是同一个预算');
   // Responses API：GPT-5.4+ 在 /chat/completions 下无法同时启用 function tools 与 reasoning_effort，
   // 自定义渠道声明 openai-responses 时必须走 @ai-sdk/openai（OpenCode 以 .responses() 提交）
   const responsesProviderName = 'Responses 渠道';
