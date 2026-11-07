@@ -79,6 +79,7 @@ Agent 工作台的 ZCode 会话支持上游的会话级能力，控制台侧统�
 - **思考强度真实映射**（不再折叠成 enabled/disabled）：`openai-responses` 写 `reasoning.effort`；OpenAI 兼容 chat/completions（含 grok）写 `reasoning_effort`；Anthropic 写 `thinking.budget_tokens`（按模型最大输出封顶）；`enabled`/默认不注入参数，`disabled` 显式写 `none`/`disabled`。是否支持某个档位由 API 决定，运行时不伪造。
 - **会话库选型同步**：上游 `--resume` 会优先恢复会话库里的 `runtime/model_selection`。运行时在每次续接前把任务当前选型写回 `session_entry`（`${sessionId}:runtime-model-selection`），否则切换模型/思考档位只会改 provider 配置，实际仍沿用旧档位。
 - 所有维护命令复用普通任务的队列、并发、SSE 事件、取消与审计链路；维护命令不做「空响应/只读写入违规」判定，也不为回退/分叉创建 Git 快照。
+- **错误透出**：`turn.failed` 取 cause 链最深层的 message（外层通常只有 “Turn execution failed”）；运行时再读本轮 ZCode 日志，补上真实 `HTTP 状态 / 模型 / 供应商 / request id`，并丢弃 APICallError 堆栈与请求体。`turn.failed` 即使伴随 result 行、进程退出码 0，也按失败收口。
 
 ## 4. 隔离测试
 
@@ -86,7 +87,7 @@ Agent 工作台的 ZCode 会话支持上游的会话级能力，控制台侧统�
 node --experimental-vm-modules scripts/check-zcode-runtime.mjs
 ```
 
-34 项检查：配置生成（协议映射/错误码/自定义供应商/manual 白名单）、沙箱 env、产物定位、假 CLI 全管道（成功事件序列、plan/build 档参数与 AskUserQuestion 禁用、相对路径解析、turn.failed、非零退出、.env 保护）、能力配置（AGENTS.md 注入、.mcp.json 不覆盖原则、contextWindow 回传）、续接（--resume 注入与父状态目录复用）、思考强度真实映射（Responses / chat-completions / Anthropic / 自定义档位）、会话控制事件（goal / checkpoint / rewind / forked / 命令中心整段 JSON）、并发池（上限 1 拒绝、可配 2 并存、中止、超时强杀）、状态目录清理（orphans/all 两种模式）。不读写真实配置。也可经 `npm run check:zcode` 运行。
+35 项检查：配置生成（协议映射/错误码/自定义供应商/manual 白名单）、沙箱 env、产物定位、假 CLI 全管道（成功事件序列、plan/build 档参数与 AskUserQuestion 禁用、相对路径解析、turn.failed、深层 cause 错误透出、非零退出、.env 保护）、能力配置（AGENTS.md 注入、.mcp.json 不覆盖原则、contextWindow 回传）、续接（--resume 注入与父状态目录复用）、思考强度真实映射（Responses / chat-completions / Anthropic / 自定义档位）、会话控制事件（goal / checkpoint / rewind / forked / 命令中心整段 JSON）、并发池（上限 1 拒绝、可配 2 并存、中止、超时强杀）、状态目录清理（orphans/all 两种模式）。不读写真实配置。也可经 `npm run check:zcode` 运行。
 
 ### 真实冒烟（需要测试 key 与真实产物）
 

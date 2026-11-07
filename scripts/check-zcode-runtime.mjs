@@ -99,6 +99,19 @@ if (prompt === 'FAIL_TURN') {
   send({ type: 'turn.failed', payload: { error: { message: '上游鉴权失败' }, turnPhase: 'model' } });
   process.exit(1);
 }
+if (prompt === 'FAIL_DEEP') {
+  send({ type: 'session.created', sessionId: 'sess-deep', payload: {} });
+  send({ type: 'turn.failed', payload: { error: {
+    message: 'Turn execution failed',
+    cause: { message: 'Model request failed.', cause: {
+      message: 'Model "gpt-6.1-sol" is not supported by any configured account in this group',
+      context: { statusCode: 404 },
+    } },
+  } } });
+  // 故意再输出 result + exit 0：验证 turn.failed 不会被 exit code 0 掩盖
+  send({ type: 'result', sessionId: 'sess-deep', response: '', projection: { status: 'complete' } });
+  process.exit(0);
+}
 if (prompt === 'RELATIVE') {
   send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'Write', input: { file_path: 'note.md' } } });
   send({ type: 'result', sessionId: 'sess-rel', response: 'done', projection: { status: 'complete' } });
@@ -572,6 +585,15 @@ async function main() {
     assert.equal(failed.sessionId, 'sess-fail');
     assert.ok(fs.existsSync(path.join(PathStub.data, 'agent-cli-runtime', 'zcode-state', 'tasks', failed.taskId)), '失败任务保留现场');
     assert.ok(failed.events.some(event => event.type === 'error'));
+  });
+
+  const deepFailed = await zcode.runZcodeTask({ ...baseOptions, prompt: 'FAIL_DEEP' });
+  check('turn.failed 深层 cause：透出真实 API 报错，且不被 result 行/exit 0 掩盖', () => {
+    assert.equal(deepFailed.ok, false, 'turn.failed 后仍被判定成功');
+    assert.match(deepFailed.error, /HTTP 404/, `错误缺少 HTTP 状态：${deepFailed.error}`);
+    assert.match(deepFailed.error, /not supported by any configured account in this group/, `错误没有取到最深 cause：${deepFailed.error}`);
+    assert.doesNotMatch(deepFailed.error, /^\s*at\s/m, '错误里不应带堆栈');
+    assert.ok(deepFailed.events.some(event => event.type === 'error' && /HTTP 404/.test(event.message || '')), '实时事件没有补发上游错误');
   });
 
   const exited = await zcode.runZcodeTask({ ...baseOptions, prompt: 'FAIL_EXIT' });
