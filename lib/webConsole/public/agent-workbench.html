@@ -46,7 +46,10 @@
             <button id="agent-manage-toggle" type="button" class="agent-mini-btn" title="批量管理会话" aria-label="批量管理会话" aria-pressed="false">管理</button>
           </div>
         </div>
-        <button id="agent-new-task-btn" type="button" class="agent-quiet-btn agent-new-task-btn" title="新建任务" aria-label="新建任务"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span>新建任务</span></button>
+        <div class="agent-new-session-actions">
+          <button id="agent-new-task-btn" type="button" class="agent-quiet-btn agent-new-task-btn" title="新建任务" aria-label="新建任务"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg><span>新建任务</span></button>
+          <button id="agent-new-project-btn" type="button" class="agent-quiet-btn agent-new-project-btn" title="新建项目" aria-label="新建项目"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg><span>新建项目</span></button>
+        </div>
         <div class="agent-session-tools">
           <input id="agent-session-search" type="search" maxlength="200" placeholder="搜索会话" aria-label="搜索会话" />
           <label><input id="agent-session-archived" type="checkbox" /> 已归档</label>
@@ -418,6 +421,28 @@
           </footer>
         </section>
       </div>
+  <div id="agent-project-mask" class="agent-settings-mask hidden">
+        <section class="agent-settings-dialog agent-project-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-project-title">
+          <header class="agent-settings-head">
+            <strong id="agent-project-title">新建项目</strong>
+            <button id="agent-project-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+          </header>
+          <div class="agent-settings-body agent-project-body">
+            <label class="agent-compact-field"><span>项目名称</span><input id="agent-project-name" type="text" maxlength="40" placeholder="例如 crystelf-plugin-main" autocomplete="off" /></label>
+            <div class="agent-project-folders-head"><span>源文件夹</span><small>第一个为主工作目录，自定义项目默认只读</small></div>
+            <div id="agent-project-folders" class="agent-project-folders"></div>
+            <button id="agent-project-add-folder" type="button" class="agent-quiet-btn agent-project-add-folder">＋ 添加文件夹</button>
+            <p id="agent-project-error" class="agent-form-error hidden"></p>
+          </div>
+          <footer class="agent-settings-footer agent-project-footer">
+            <button id="agent-project-delete" type="button" class="agent-quiet-btn agent-project-delete hidden">删除项目</button>
+            <div class="agent-project-footer-actions">
+              <button id="agent-project-cancel" type="button" class="agent-quiet-btn">取消</button>
+              <button id="agent-project-save" type="button" class="agent-quiet-btn is-primary">保存</button>
+            </div>
+          </footer>
+        </section>
+      </div>
   <div id="agent-workspace-picker-mask" class="agent-settings-mask hidden">
         <section class="agent-settings-dialog agent-workspace-picker" role="dialog" aria-label="选择工作目录">
           <header class="agent-settings-head">
@@ -495,6 +520,7 @@
                 <label class="agent-compact-field"><span>运行时上限</span><select id="agent-max-runtimes"><option value="1">1 个 OpenCode</option><option value="2">2 个 OpenCode</option><option value="3">3 个 OpenCode</option><option value="4">4 个 OpenCode</option></select></label>
                 <label class="agent-compact-field"><span>ZCode 并发</span><select id="agent-zcode-max-concurrent"><option value="1">1 个任务</option><option value="2">2 个任务</option><option value="3">3 个任务</option></select></label>
                 <label class="agent-compact-field"><span>空闲回收</span><select id="agent-runtime-idle"><option value="60000">1 分钟</option><option value="120000">2 分钟</option><option value="300000">5 分钟</option><option value="600000">10 分钟</option></select></label>
+                <label class="agent-compact-field"><span>HTTP 代理（可选）</span><input id="agent-http-proxy" type="url" maxlength="300" placeholder="http://127.0.0.1:7890" title="仅注入 OpenCode / ZCode 运行时环境，用于模型与工具的网络请求" autocomplete="off" /></label>
                 <label class="agent-compact-field"><span>ZCode 会话缓存</span><button id="agent-zcode-cleanup-btn" type="button" class="agent-quiet-btn" title="删除全部 ZCode 会话状态目录；旧任务将无法继续追问">清理会话状态</button></label>
               </div>
               <small class="agent-settings-note">ZCode 状态目录用于多轮对话续接上下文；启动时会自动回收 7 天以上的孤儿目录，一般无需手动清理。手动清理后旧任务记录保留，但不能再续接追问。</small>

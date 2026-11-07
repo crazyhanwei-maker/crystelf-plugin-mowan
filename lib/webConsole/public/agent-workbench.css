@@ -626,6 +626,106 @@
   padding-right: 2px;
 }
 
+/* ===== 会话按项目（工作目录）分组 ===== */
+.agent-task-project {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.agent-task-project + .agent-task-project {
+  margin-top: 6px;
+}
+
+/* 项目行：文件夹图标 + 名称 + 运行中圆点 + 会话数，整行可点击折叠 */
+.agent-task-project-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: auto !important;
+  min-height: 30px !important;
+  margin: 0;
+  padding: 4px 3px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-ink) !important;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-task-project-head:hover {
+  background: var(--agent-surface-strong) !important;
+}
+
+.agent-task-project-caret {
+  display: inline-flex;
+  flex: 0 0 12px;
+  color: var(--agent-muted);
+  transform: rotate(90deg);
+  transition: transform 120ms ease;
+}
+
+.agent-task-project.is-collapsed .agent-task-project-caret {
+  transform: rotate(0deg);
+}
+
+.agent-task-project-caret svg {
+  width: 12px;
+  height: 12px;
+}
+
+.agent-task-project-icon {
+  display: inline-flex;
+  flex: 0 0 14px;
+  color: var(--agent-muted);
+}
+
+.agent-task-project-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.agent-task-project-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-task-project-dot {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--agent-accent);
+}
+
+.agent-task-project-count {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--agent-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* 会话缩进挂在项目下；折叠时整组隐藏 */
+.agent-task-project-items {
+  display: grid;
+  gap: 1px;
+  padding-left: 16px;
+}
+
+.agent-task-project.is-collapsed .agent-task-project-items {
+  display: none;
+}
+
 .agent-task-item {
   position: relative;
   display: grid;
@@ -777,13 +877,50 @@
 }
 
 .agent-task-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   min-width: 0;
   overflow: hidden;
   font-size: 12px;
   font-weight: 500;
   line-height: 1.35;
+  white-space: nowrap;
+}
+
+.agent-task-title-text {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 会话状态：执行中/排队中转圈，已完成小蓝点 */
+.agent-task-state {
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.agent-task-state.is-done {
+  background: var(--agent-accent);
+}
+
+.agent-task-state.is-running {
+  border: 1.5px solid color-mix(in srgb, var(--agent-accent) 22%, transparent);
+  border-top-color: var(--agent-accent);
+  animation: agent-task-spin 720ms linear infinite;
+}
+
+@keyframes agent-task-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-task-state.is-running {
+    animation-duration: 2.2s;
+  }
 }
 
 .agent-task-time {
@@ -4640,7 +4777,8 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-settings-footer > div { justify-content: flex-end; width: 100%; }
   .agent-chat-panel { height: 100%; min-height: 0; }
   .agent-context-head { grid-column: auto; }
-  .agent-task-list { max-height: 190px; }
+  /* 手机端会话面板本身整屏可滚动，列表不再单独限高，避免项目/会话被截断 */
+  .agent-task-list { max-height: none; overflow: visible; }
   .agent-sidebar-safety { margin-top: 14px; }
   .agent-chat-header { align-items: center; width: 100%; min-height: 54px; padding: 8px 14px; }
   .agent-chat-heading { flex: 1 1 auto; flex-direction: column; align-items: stretch; gap: 0; }
@@ -5726,4 +5864,268 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
 }
 :root[data-theme='dark'] .agent-workbench-page .agent-quiet-btn.is-primary:hover {
   color: #0b1220 !important;
+}
+
+/* ===== 新建项目按钮 / 项目编辑 ===== */
+.agent-new-project-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-height: 30px;
+  margin: 0 0 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.agent-new-project-btn:hover {
+  background: var(--agent-surface) !important;
+  color: var(--agent-ink) !important;
+}
+
+.agent-new-project-btn svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+}
+
+.agent-task-project {
+  position: relative;
+}
+
+.agent-task-project-actions {
+  position: absolute;
+  top: 3px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.agent-task-project:hover .agent-task-project-actions,
+.agent-task-project:focus-within .agent-task-project-actions {
+  opacity: 1;
+}
+
+.agent-task-project:hover .agent-task-project-count,
+.agent-task-project:focus-within .agent-task-project-count {
+  opacity: 0;
+}
+
+.agent-task-project-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 5px;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-muted) !important;
+  cursor: pointer;
+}
+
+.agent-task-project-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.agent-task-project-action:hover {
+  background: var(--agent-surface-strong) !important;
+  color: var(--agent-ink) !important;
+}
+
+@media (hover: none) {
+  /* 触屏没有 hover：操作按钮常显，项目计数让位 */
+  .agent-task-project-actions {
+    opacity: 1;
+  }
+  .agent-task-project-head {
+    padding-right: 54px !important;
+  }
+  .agent-task-project-count {
+    display: none;
+  }
+}
+
+/* ===== 项目编辑弹窗 ===== */
+.agent-project-dialog {
+  width: min(520px, calc(100vw - 24px));
+  /* 设置类弹窗默认锁 780px 高；项目弹窗内容少时按内容收缩 */
+  height: auto;
+  max-height: min(780px, 92dvh);
+}
+
+.agent-project-body {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+
+.agent-project-folders-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--agent-ink);
+}
+
+.agent-project-folders-head small {
+  color: var(--agent-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.agent-project-folders {
+  display: grid;
+  gap: 6px;
+}
+
+.agent-project-folder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-surface-soft);
+}
+
+.agent-project-folder-icon {
+  display: inline-flex;
+  flex: 0 0 15px;
+  color: var(--agent-muted);
+}
+
+.agent-project-folder-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.agent-project-folder-input {
+  /* 手机端全局 input{width:100%} 会和 flex 抢空间，把路径输入框挤成 0 宽 */
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 2px 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 12px;
+}
+
+.agent-project-folder-primary {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border: 1px solid var(--agent-line);
+  border-radius: 6px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.agent-project-folder .agent-mini-btn {
+  flex: 0 0 auto;
+  /* 手机端全局 button{width:100%} 会让浏览按钮按整行宽参与 flex 计算，把路径输入挤没 */
+  width: auto !important;
+  min-height: 24px !important;
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+  white-space: nowrap;
+}
+
+.agent-project-folder-remove {
+  flex: 0 0 auto;
+  width: 22px !important;
+  height: 22px;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 4px;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--agent-muted) !important;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.agent-project-folder-remove:hover {
+  background: var(--agent-surface-strong) !important;
+  color: var(--agent-ink) !important;
+}
+
+.agent-project-add-folder {
+  justify-self: start;
+  min-height: 28px !important;
+  padding: 3px 10px !important;
+  border: 1px dashed var(--agent-line) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 11px;
+}
+
+.agent-project-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.agent-project-footer-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.agent-project-delete {
+  border-color: rgba(220, 38, 38, 0.32) !important;
+  color: #b91c1c !important;
+}
+
+.agent-project-delete:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.08) !important;
+}
+
+/* 新建任务 / 新建项目：同一容器内统一尺寸与间距 */
+.agent-new-session-actions {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 8px;
+}
+
+.agent-new-session-actions > .agent-new-task-btn,
+.agent-new-session-actions > .agent-new-project-btn {
+  width: 100%;
+  height: 34px;
+  min-height: 34px !important;
+  margin: 0 !important;
+  padding: 0 8px !important;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.agent-new-session-actions > .agent-new-task-btn svg,
+.agent-new-session-actions > .agent-new-project-btn svg {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
 }
