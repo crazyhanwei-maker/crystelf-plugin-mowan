@@ -103,6 +103,7 @@ send({ type: 'model.streaming', payload: { kind: 'text_delta', delta: '你好' }
 send({ type: 'model.streaming', payload: { kind: 'text_delta', delta: '，世界' } });
 send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'Write', input: { file_path: ${JSON.stringify(FAKE_ABS_FILE)} } } });
 send({ type: 'tool.updated', payload: { kind: 'result', toolName: 'Write', result: 'written' } });
+send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'TodoWrite', input: { todos: [{ content: '检查依赖', status: 'in_progress', priority: 'high' }, { content: '补充测试', status: 'pending', priority: 'medium' }] } } });
 send({ type: 'permission.requested', payload: { toolName: 'Bash', reason: 'headless deny' } });
 send({ type: 'tool.updated', payload: { kind: 'scheduled', toolName: 'Bash', input: { command: 'echo hi' } } });
 send({ type: 'result', sessionId: 'sess-fake-1', response: 'final answer', usage: { inputTokens: 11, outputTokens: 7 }, projection: { status: 'complete', turnCount: 1 } });
@@ -289,6 +290,7 @@ async function main() {
   check('隔离 env：ZCODE_* 全部指向 scratch，继承的 ZCODE_*/OPENCODE_* 被剔除', () => {
     const bundled = zcode.buildBundledZcodeEnvironment({
       aiConfig, model: 'glm-5.3-flash',
+      reasoningLevel: 'disabled',
       env: { ...process.env, PATH: process.env.PATH, ZCODE_HACK: '1', OPENCODE_HACK: '1' },
     });
     const { env, dirs } = bundled;
@@ -304,6 +306,8 @@ async function main() {
     assert.equal(env.ZCODE_BUILTIN_PROVIDER_CONFIG_FILE, path.join(runtimeRoot, 'runtime', 'provider', 'zcode-builtin.json'));
     const personal = JSON.parse(fs.readFileSync(env.ZCODE_PERSONAL_PROVIDER_CONFIG_FILE, 'utf8'));
     assert.equal(personal.config.providerConfigRules.providerRules[0].config.access.apiKey, 'sk-test-key-123');
+    assert.equal(personal.config.defaultModelSelection.options.reasoningLevel, 'disabled',
+      '任务选择 disabled 时没有传入 ZCode 配置，思考档位被固定为 enabled');
   });
   check('rg 二进制存在时注入 ZCODE_RG_BINARY', () => {
     const toolsDir = path.join(runtimeRoot, 'tools');
@@ -352,6 +356,9 @@ async function main() {
     const types = success.events.map(event => event.type);
     assert.ok(types.includes('text') && types.includes('file_edit') && types.includes('tool_result'), `types=${JSON.stringify(types)}`);
     assert.ok(types.includes('command_exec') && types.includes('permission_request'));
+    const todoEvent = success.events.find(event => event.type === 'todo');
+    assert.ok(todoEvent && todoEvent.todos.length === 2, 'TodoWrite 没有转成 todo 事件');
+    assert.equal(todoEvent.todos[0].content, '检查依赖');
     assert.equal(types.at(-1), 'done');
     const text = success.events.filter(event => event.type === 'text').map(event => event.text).join('');
     assert.equal(text, '你好，世界');
