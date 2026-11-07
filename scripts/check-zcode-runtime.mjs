@@ -108,6 +108,8 @@ if (prompt === 'FAIL_DEEP') {
       context: { statusCode: 404 },
     } },
   } } });
+  // 模拟 APICallError inspect 输出里的原始响应体（403/503 排查关键信息）
+  process.stderr.write("APICallError inspect { statusCode: 404, responseBody: '{\\"error\\":{\\"message\\":\\"Model not supported\\",\\"type\\":\\"model_not_found\\"}}', isRetryable: false }\\n");
   // 故意再输出 result + exit 0：验证 turn.failed 不会被 exit code 0 掩盖
   send({ type: 'result', sessionId: 'sess-deep', response: '', projection: { status: 'complete' } });
   process.exit(0);
@@ -594,6 +596,8 @@ async function main() {
     assert.match(deepFailed.error, /not supported by any configured account in this group/, `错误没有取到最深 cause：${deepFailed.error}`);
     assert.doesNotMatch(deepFailed.error, /^\s*at\s/m, '错误里不应带堆栈');
     assert.ok(deepFailed.events.some(event => event.type === 'error' && /HTTP 404/.test(event.message || '')), '实时事件没有补发上游错误');
+    assert.match(deepFailed.upstreamErrorDetail, /HTTP 响应体/);
+    assert.match(deepFailed.upstreamErrorDetail, /model_not_found/, '原始响应体没有回传给控制台');
   });
 
   const exited = await zcode.runZcodeTask({ ...baseOptions, prompt: 'FAIL_EXIT' });

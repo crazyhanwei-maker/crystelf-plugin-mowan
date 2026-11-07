@@ -6364,3 +6364,33 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
     max-width: 100%;
   }
 }
+
+/* 错误卡：原始 API 报错折叠块（403/503 排查用，保留响应体但默认收起） */
+.agent-message-error .agent-error-detail {
+  margin-top: 4px;
+}
+
+.agent-message-error .agent-error-detail > summary {
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+}
+
+.agent-message-error .agent-error-detail > pre {
+  max-height: 260px;
+  margin: 6px 0 0;
+  padding: 8px;
+  overflow: auto;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.06);
+  color: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+:root[data-theme='dark'] .agent-message-error .agent-error-detail > pre {
+  background: rgba(0, 0, 0, 0.22);
+}

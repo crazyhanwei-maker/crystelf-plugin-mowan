@@ -515,6 +515,10 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(html.includes('id="agent-zcode-session-variant"') && html.includes('关闭思考') && html.includes('极高') && html.includes('最大'), 'ZCode 会话控制缺少真实思考强度档位');
   assert(script.includes('getZcodeSessionVariantValue') && script.includes('syncZcodeSessionVariantCustomField'), 'ZCode 思考强度档位选择逻辑缺失');
   assert(consoleSource.includes('resolveZcodeReasoningLevel') && runtimeSource.includes('syncZcodeSessionModelSelection') && runtimeSource.includes('buildZcodeReasoningMap'), 'ZCode 续接没有同步会话库选型或未使用真实档位');
+  // 403/503 原始报错：运行时取响应体，控制台持久化并在错误卡折叠展示
+  assert(runtimeSource.includes('extractResponseBodyFromStderr') && runtimeSource.includes('upstreamErrorDetail'), 'ZCode 没有提取/回传原始 API 响应体');
+  assert(consoleSource.includes('describeOpenCodeErrorDetail') && consoleSource.includes('upstreamErrorDetail'), 'OpenCode 错误没有保留原始载荷或控制台没有落库');
+  assert(script.includes('agent-error-detail') && script.includes('原始报错') && script.includes('message.upstreamErrorDetail'), '错误卡缺少“原始报错”折叠块');
   assert(css.includes('.agent-zcode-goal-banner') && css.includes('.agent-zcode-session-dialog'), 'ZCode 会话控制样式缺失');
   assert(!shouldAutoCompactZcodeContext({ enabled: true, usage: 79, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值以下误触发');
   assert(shouldAutoCompactZcodeContext({ enabled: true, usage: 80, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值处没有触发');
