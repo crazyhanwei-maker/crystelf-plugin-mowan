@@ -10,6 +10,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  ZCODE_DEFAULT_MAX_OUTPUT_TOKENS,
+  ZCODE_REASONING_LEVELS,
+  buildZcodeReasoningMap,
+  resolveZcodeReasoningLevel,
+} from '../lib/ai/zcodeSession.js';
 
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'crystelf-zcode-runtime-'));
@@ -98,6 +104,55 @@ if (prompt === 'RELATIVE') {
   send({ type: 'result', sessionId: 'sess-rel', response: 'done', projection: { status: 'complete' } });
   process.exit(0);
 }
+if (prompt === '/goal-command-center') {
+  process.stdout.write(JSON.stringify({
+    sessionId: 'sess-cc',
+    response: 'Goal active\\nObjective: 命令中心目标\\nUsage: 3 tokens / none\\nTime: 2 seconds',
+  }, null, 2) + '\\n');
+  process.exit(0);
+}
+if (prompt.startsWith('/goal')) {
+  send({ type: 'session.created', sessionId: 'sess-goal', payload: {} });
+  const action = prompt.replace('/goal', '').trim();
+  if (action === 'clear') {
+    send({ type: 'session.updated', payload: { action: 'clear', source: 'command', target: null } });
+    send({ type: 'result', sessionId: 'sess-goal', response: 'Goal cleared.', projection: { status: 'complete' } });
+  } else {
+    send({ type: 'session.updated', payload: {
+      action: 'set',
+      source: 'command',
+      target: {
+        objective: action.replace(/^replace/, '').trim(),
+        status: 'active',
+        tokensUsed: 42,
+        tokenBudget: null,
+        timeUsedSeconds: 5,
+        time: { created: 1700000000000, updated: 1700000005000 },
+      },
+    } });
+    send({ type: 'result', sessionId: 'sess-goal', response: 'Goal active\\nObjective: ' + action, projection: { status: 'complete' } });
+  }
+  process.exit(0);
+}
+if (prompt.startsWith('/rewind')) {
+  send({ type: 'session.created', sessionId: 'sess-rewind', payload: {} });
+  send({ type: 'checkpoint.created', payload: { checkpointId: 'checkpoint_cp-1', scope: 'workspace', fileCount: 2, messageId: 'msg-1', targetMessageId: 'msg-1' } });
+  send({ type: 'rewind.triggered', payload: { rewindId: 'rewind_1', scope: 'workspace', strategy: 'active_chain', targetCheckpointId: 'checkpoint_cp-1', reason: 'requested' } });
+  send({ type: 'result', sessionId: 'sess-rewind', response: 'Rewound workspace to checkpoint checkpoint_cp-1: restored 2 files.', projection: { status: 'complete' } });
+  process.exit(0);
+}
+if (prompt.startsWith('/fork')) {
+  send({ type: 'session.created', sessionId: 'sess-parent', payload: {} });
+  send({ type: 'session.updated', payload: {
+    originalSessionId: 'sess-parent',
+    forkedSessionId: 'sess-forked-9',
+    targetCheckpointId: 'checkpoint_cp-1',
+    targetMessageId: 'msg-1',
+    restoredFileCount: 2,
+  } });
+  send({ type: 'result', sessionId: 'sess-parent', response: 'Forked session sess-forked-9 from checkpoint checkpoint_cp-1: copied 3 messages and restored 2 files.', projection: { status: 'complete' } });
+  process.exit(0);
+}
 send({ type: 'session.created', sessionId: 'sess-fake-1', payload: { mode: 'plan' } });
 send({ type: 'model.streaming', payload: { kind: 'text_delta', delta: '你好' } });
 send({ type: 'model.streaming', payload: { kind: 'text_delta', delta: '，世界' } });
@@ -141,6 +196,14 @@ async function main() {
       '../../modules/openai/protocolAdapter.js': { normalizeAiProtocol },
       // 上下文窗口查表（models.dev 缓存）：沙箱里没有缓存文件，返回 0 走默认兜底
       '../ai/modelCatalog.js': { lookupModelContextLimit: () => 0 },
+      '../ai/zcodeSession.js': {
+        ZCODE_DEFAULT_MAX_OUTPUT_TOKENS,
+        ZCODE_REASONING_LEVELS,
+        buildZcodeReasoningMap,
+        resolveZcodeReasoningLevel,
+      },
+      // 会话库选型同步依赖 node:sqlite；沙箱内不落真实数据库，返回未同步
+      './zcodeSessionSelection.js': { syncZcodeSessionModelSelection: async () => false },
     });
   } catch (error) {
     console.error('模块加载失败（需 node --experimental-vm-modules）:', error.message);
@@ -261,7 +324,10 @@ async function main() {
     assert.equal(manual.modelId, 'm');
     assert.equal(manual.config.properties.contextWindow, 200000);
     assert.equal(manual.config.properties.inputFormat.supportsImage, true);
-    assert.deepEqual(plain(manual.config.optionSpecs.reasoningLevel), { values: ['disabled', 'enabled'], map: '{}' });
+    assert.deepEqual(plain(manual.config.optionSpecs.reasoningLevel), {
+      values: ['disabled', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'enabled'],
+      map: '{}',
+    }, '默认档位应保留完整强度枚举且不注入参数');
     assert.equal(manual.config.optionSpecs.maxOutputTokens.max, 32000);
     assert.equal('supportsToolCall' in manual.config.properties, false, 'supportsToolCall 不在手动白名单');
     const withoutRule = zcode.buildZcodeConfig(aiConfig, 'm', {});
@@ -270,6 +336,33 @@ async function main() {
     assert.equal(minimal.config.optionSpecs.maxOutputTokens.max, 32000, 'maxOutputTokens 必填（decode 硬约束）');
     assert.deepEqual(plain(withoutRule.config.modelConfigRules.providerModelRules), [], 'providerModelRules 必填数组');
   });
+  check('思考强度真实映射：三种协议各自注入请求参数，默认不注入', () => {
+    const chat = zcode.buildZcodeConfig(aiConfig, 'm', { reasoningLevel: 'high' });
+    const chatRule = chat.config.modelConfigRules.manualProviderModelRules[0];
+    assert.equal(chatRule.config.optionSpecs.reasoningLevel.map, '{"reasoning_effort":"high"}');
+    assert.equal(chat.config.defaultModelSelection.options.reasoningLevel, 'high');
+
+    const chatDisabled = zcode.buildZcodeConfig(aiConfig, 'm', { reasoningLevel: 'disabled' });
+    assert.equal(chatDisabled.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.map, '{"reasoning_effort":"none"}');
+
+    const responses = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'openai-responses' }, 'm', { reasoningLevel: 'low' });
+    assert.equal(responses.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.map, '{"reasoning":{"effort":"low"}}');
+
+    const anthropic = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'anthropic' }, 'm', { reasoningLevel: 'medium', maxOutputTokens: 32000 });
+    assert.equal(anthropic.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.map, '{"thinking":{"type":"enabled","budget_tokens":4096}}');
+
+    const anthropicDisabled = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'anthropic' }, 'm', { reasoningLevel: 'disabled' });
+    assert.equal(anthropicDisabled.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.map, '{"thinking":{"type":"disabled"}}');
+
+    const customNumeric = zcode.buildZcodeConfig({ ...aiConfig, apiProtocol: 'anthropic' }, 'm', { reasoningLevel: '8192', maxOutputTokens: 32000 });
+    assert.equal(customNumeric.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.map, '{"thinking":{"type":"enabled","budget_tokens":8192}}');
+    assert.ok(customNumeric.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.values.includes('8192'), '自定义档位没有加入模型声明');
+
+    const customLevel = zcode.buildZcodeConfig(aiConfig, 'm', { reasoningLevel: 'turbo' });
+    assert.equal(customLevel.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.map, '{"reasoning_effort":"turbo"}');
+    assert.ok(customLevel.config.modelConfigRules.manualProviderModelRules[0].config.optionSpecs.reasoningLevel.values.includes('turbo'));
+  });
+
   check('userAgent 进 api.headers 且剔除换行', () => {
     const config = zcode.buildZcodeConfig({ ...aiConfig, userAgent: 'crystelf/1.0\r\nX-Evil: 1' }, 'm', {});
     assert.equal(config.config.providerConfigRules.providerRules[0].config.api.headers['User-Agent'], 'crystelf/1.0X-Evil: 1'.replace(/\r/g, '').replace(/\n/g, ''));
@@ -427,6 +520,49 @@ async function main() {
   check('相对路径文件变更按工作区解析', () => {
     assert.equal(relativeRun.ok, true, relativeRun.error);
     assert.deepEqual(plain(relativeRun.filesChanged), [path.resolve(workspace, 'note.md')]);
+  });
+
+  // ---- 会话控制事件：目标 / 检查点 / 回退 / 分叉 ----
+  const goalRun = await zcode.runZcodeTask({ ...baseOptions, prompt: '/goal replace 修复登录', resumeSessionId: 'sess-goal', taskId: keepRun.taskId, keepStateOnSuccess: true });
+  check('目标事件：target_changed 转成 goal 事件并保留用量字段', () => {
+    assert.equal(goalRun.ok, true, goalRun.error);
+    const goalEvent = goalRun.events.find(event => event.type === 'goal');
+    assert.ok(goalEvent, `events=${JSON.stringify(goalRun.events.map(event => event.type))}`);
+    assert.equal(goalEvent.action, 'set');
+    assert.equal(goalEvent.target.objective, '修复登录');
+    assert.equal(goalEvent.target.tokensUsed, 42);
+  });
+
+  const commandCenterRun = await zcode.runZcodeTask({ ...baseOptions, prompt: '/goal-command-center', resumeSessionId: 'sess-cc', taskId: keepRun.taskId, keepStateOnSuccess: true });
+  check('命令中心输出：无 stream-json 事件时解析整段 {sessionId,response} JSON', () => {
+    assert.equal(commandCenterRun.ok, true, commandCenterRun.error);
+    assert.equal(commandCenterRun.sessionId, 'sess-cc');
+    assert.match(commandCenterRun.output, /Objective: 命令中心目标/);
+    assert.ok(commandCenterRun.events.some(event => event.type === 'text' && event.text.includes('命令中心目标')), '命令中心响应没有补发 text 事件');
+  });
+
+  const rewindRun = await zcode.runZcodeTask({ ...baseOptions, prompt: '/rewind latest', resumeSessionId: 'sess-rewind', taskId: keepRun.taskId, keepStateOnSuccess: true });
+  check('回退事件：checkpoint.created 与 rewind.triggered 均透传', () => {
+    assert.equal(rewindRun.ok, true, rewindRun.error);
+    const checkpointEvent = rewindRun.events.find(event => event.type === 'checkpoint');
+    assert.ok(checkpointEvent, `events=${JSON.stringify(rewindRun.events.map(event => event.type))}`);
+    assert.equal(checkpointEvent.checkpoint.id, 'checkpoint_cp-1');
+    assert.equal(checkpointEvent.checkpoint.fileCount, 2);
+    const rewindEvent = rewindRun.events.find(event => event.type === 'rewind');
+    assert.ok(rewindEvent, '缺少 rewind 事件');
+    assert.equal(rewindEvent.targetCheckpointId, 'checkpoint_cp-1');
+    assert.equal(rewindEvent.reason, 'requested');
+  });
+
+  const forkRun = await zcode.runZcodeTask({ ...baseOptions, prompt: '/fork latest', resumeSessionId: 'sess-parent', taskId: keepRun.taskId, keepStateOnSuccess: true });
+  check('分叉事件：回传 forkedSessionId 与检查点信息', () => {
+    assert.equal(forkRun.ok, true, forkRun.error);
+    assert.equal(forkRun.forkedSessionId, 'sess-forked-9');
+    const forkedEvent = forkRun.events.find(event => event.type === 'forked');
+    assert.ok(forkedEvent, `events=${JSON.stringify(forkRun.events.map(event => event.type))}`);
+    assert.equal(forkedEvent.parentSessionId, 'sess-parent');
+    assert.equal(forkedEvent.targetCheckpointId, 'checkpoint_cp-1');
+    assert.equal(forkedEvent.restoredFileCount, 2);
   });
 
   const failed = await zcode.runZcodeTask({ ...baseOptions, prompt: 'FAIL_TURN' });

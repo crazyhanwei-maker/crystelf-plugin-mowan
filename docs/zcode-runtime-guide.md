@@ -68,13 +68,25 @@ node zcode.cjs -p "<prompt>" --mode plan|edit|yolo --output-format stream-json -
 - 工作区预置空 `.env` 阻断上游 CLI 向上查找（任务成功后删除；工作区已有 `.env` 则不动）。
 - 超时/中止：Windows `taskkill /T /F`，Linux 进程组 `SIGKILL`。上游文件写入原子化、SQLite WAL，强杀不留半写文件。
 
+### 3.1 会话目标 / 检查点 / 分叉 / 中途切换
+
+Agent 工作台的 ZCode 会话支持上游的会话级能力，控制台侧统一走「会话控制」弹窗（头部「会话控制」按钮或 `/goal`、`/rewind` 斜杠命令）：
+
+- **会话目标**：`/goal replace <目标>` 设置/替换，`/goal pause|resume|clear` 管理状态。设置目标会触发上游 `continueTargetAfterChange` 自动继续执行；只读档上游只记录目标、不自动执行。上游 headless 的 `/goal` 走命令中心，只输出整段 `{sessionId,response}` JSON，运行时会整段解析兜底；普通轮次里的 `session.updated`（payload.action + target）仍会透传成 `goal` 事件。命令中心响应没有目标摘要时（写档下直接继续执行），控制台按已提交的动作兜底写入状态。
+- **检查点**：上游每次文件写入成功后发 `checkpoint.created`，控制台收集完整 `checkpointId`、文件数与创建时间（每任务最多 50 条）。`/rewind latest|<id>` 恢复工作区文件；`/fork latest|<id>` 从检查点创建新会话。
+- **分叉**：上游 `/fork` 在事件里返回 `forkedSessionId`（当前进程仍停在父会话），运行时单独回传；控制台用该 ID 新建任务记录，与父任务共享同一 ZCode 状态目录（sqlite 会话库），标题追加「（分叉）」。同一状态目录的父子任务在调度器里互斥，避免两个进程抢 sqlite 锁。
+- **中途切换模式/模型/思考强度**：ZCode 的 `--mode` 与模型配置是每次调用参数，控制台在任务记录上更新 `mode/model/modelProviderId/variant`，从下一轮消息开始生效；运行中的轮次不允许切换，避免收尾判定与记录不一致。切换到写入档仍需一次写入风险确认。
+- **思考强度真实映射**（不再折叠成 enabled/disabled）：`openai-responses` 写 `reasoning.effort`；OpenAI 兼容 chat/completions（含 grok）写 `reasoning_effort`；Anthropic 写 `thinking.budget_tokens`（按模型最大输出封顶）；`enabled`/默认不注入参数，`disabled` 显式写 `none`/`disabled`。是否支持某个档位由 API 决定，运行时不伪造。
+- **会话库选型同步**：上游 `--resume` 会优先恢复会话库里的 `runtime/model_selection`。运行时在每次续接前把任务当前选型写回 `session_entry`（`${sessionId}:runtime-model-selection`），否则切换模型/思考档位只会改 provider 配置，实际仍沿用旧档位。
+- 所有维护命令复用普通任务的队列、并发、SSE 事件、取消与审计链路；维护命令不做「空响应/只读写入违规」判定，也不为回退/分叉创建 Git 快照。
+
 ## 4. 隔离测试
 
 ```bash
 node --experimental-vm-modules scripts/check-zcode-runtime.mjs
 ```
 
-28 项检查：配置生成（协议映射/错误码/自定义供应商/manual 白名单）、沙箱 env、产物定位、假 CLI 全管道（成功事件序列、plan/build 档参数与 AskUserQuestion 禁用、相对路径解析、turn.failed、非零退出、.env 保护）、能力配置（AGENTS.md 注入、.mcp.json 不覆盖原则、contextWindow 回传）、续接（--resume 注入与父状态目录复用）、并发池（上限 1 拒绝、可配 2 并存、中止、超时强杀）、状态目录清理（orphans/all 两种模式）。不读写真实配置。也可经 `npm run check:zcode` 运行。
+34 项检查：配置生成（协议映射/错误码/自定义供应商/manual 白名单）、沙箱 env、产物定位、假 CLI 全管道（成功事件序列、plan/build 档参数与 AskUserQuestion 禁用、相对路径解析、turn.failed、非零退出、.env 保护）、能力配置（AGENTS.md 注入、.mcp.json 不覆盖原则、contextWindow 回传）、续接（--resume 注入与父状态目录复用）、思考强度真实映射（Responses / chat-completions / Anthropic / 自定义档位）、会话控制事件（goal / checkpoint / rewind / forked / 命令中心整段 JSON）、并发池（上限 1 拒绝、可配 2 并存、中止、超时强杀）、状态目录清理（orphans/all 两种模式）。不读写真实配置。也可经 `npm run check:zcode` 运行。
 
 ### 真实冒烟（需要测试 key 与真实产物）
 

@@ -119,6 +119,7 @@
             <div id="agent-task-actions" class="agent-task-actions" role="group" aria-label="会话操作">
               <button id="agent-content-search-toggle" type="button" class="agent-quiet-btn" title="搜索会话内容（当前会话消息）" aria-label="搜索会话内容" aria-expanded="false">搜索</button>
               <button id="agent-resume-btn" type="button" class="agent-quiet-btn hidden">继续任务</button>
+              <button id="agent-zcode-session-btn" type="button" class="agent-quiet-btn hidden" title="ZCode 会话控制：目标 / 检查点 / 分叉 / 模式与模型">会话控制</button>
               <button id="agent-retry-btn" type="button" class="agent-quiet-btn hidden">重试</button>
               <button id="agent-undo-btn" type="button" class="agent-quiet-btn hidden" title="把本任务改动的文件恢复为任务开始时的内容（agent 新建的文件会被删除）">回滚改动</button>
               <button id="agent-history-load-btn" type="button" class="agent-quiet-btn hidden">加载完整历史</button>
@@ -418,6 +419,96 @@
           <footer class="agent-settings-footer">
             <button id="agent-model-form-cancel" type="button" class="agent-quiet-btn">取消</button>
             <button id="agent-model-form-save" type="button" class="agent-quiet-btn is-primary">保存</button>
+          </footer>
+        </section>
+      </div>
+  <div id="agent-zcode-session-mask" class="agent-settings-mask hidden">
+        <section class="agent-settings-dialog agent-zcode-session-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-zcode-session-title">
+          <header class="agent-settings-head">
+            <div>
+              <span class="agent-eyebrow">ZCODE SESSION</span>
+              <strong id="agent-zcode-session-title">会话控制</strong>
+              <span id="agent-zcode-session-subtitle">目标、检查点与运行模式，修改后下一轮生效。</span>
+            </div>
+            <button id="agent-zcode-session-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+          </header>
+          <div class="agent-settings-body agent-zcode-session-body">
+            <section class="agent-zcode-session-section">
+              <div class="agent-zcode-session-head">
+                <strong>会话目标</strong>
+                <span id="agent-zcode-goal-status" class="agent-zcode-session-tag">未设置</span>
+              </div>
+              <textarea id="agent-zcode-goal-input" rows="3" maxlength="2000" placeholder="描述这个会话要达成的目标，例如：修复登录页在移动端的布局问题并补上回归测试"></textarea>
+              <p id="agent-zcode-goal-usage" class="agent-zcode-session-hint">设置目标后 ZCode 会自动继续执行，直到完成、预算耗尽或手动暂停；只读模式只记录目标，不自动执行。</p>
+              <div class="agent-zcode-session-actions">
+                <button id="agent-zcode-goal-save" type="button" class="agent-quiet-btn is-primary">设置并执行</button>
+                <button id="agent-zcode-goal-pause" type="button" class="agent-quiet-btn hidden">暂停</button>
+                <button id="agent-zcode-goal-resume" type="button" class="agent-quiet-btn hidden">继续目标</button>
+                <button id="agent-zcode-goal-clear" type="button" class="agent-quiet-btn hidden">清除目标</button>
+              </div>
+            </section>
+            <section class="agent-zcode-session-section">
+              <div class="agent-zcode-session-head">
+                <strong>工作区检查点</strong>
+                <span class="agent-zcode-session-tag" id="agent-zcode-checkpoint-count">0 个</span>
+              </div>
+              <label class="agent-compact-field"><span>目标检查点</span>
+                <select id="agent-zcode-checkpoint-select">
+                  <option value="latest">最新检查点</option>
+                </select>
+              </label>
+              <div class="agent-zcode-session-actions">
+                <button id="agent-zcode-rewind-btn" type="button" class="agent-quiet-btn">回退工作区</button>
+                <button id="agent-zcode-fork-btn" type="button" class="agent-quiet-btn">分叉会话</button>
+              </div>
+              <p id="agent-zcode-checkpoint-hint" class="agent-zcode-session-hint">回退会用检查点覆盖工作区文件；分叉会新建会话并恢复检查点文件，父会话保持不变。</p>
+            </section>
+            <section class="agent-zcode-session-section">
+              <div class="agent-zcode-session-head">
+                <strong>运行模式与模型</strong>
+                <span class="agent-zcode-session-tag">下一轮生效</span>
+              </div>
+              <div class="agent-zcode-session-grid">
+                <label class="agent-compact-field"><span>权限模式</span>
+                  <select id="agent-zcode-session-mode">
+                    <option value="analyze">只读分析</option>
+                    <option value="patch">补丁建议</option>
+                    <option value="edit">实际修改文件</option>
+                    <option value="full">完全访问</option>
+                  </select>
+                </label>
+                <label class="agent-compact-field"><span>模型供应商</span>
+                  <select id="agent-zcode-session-provider"></select>
+                </label>
+                <label class="agent-compact-field"><span>模型</span>
+                  <input id="agent-zcode-session-model" type="text" maxlength="160" placeholder="留空跟随默认模型" autocomplete="off" />
+                </label>
+                <label class="agent-compact-field"><span>思考强度</span>
+                  <select id="agent-zcode-session-variant">
+                    <option value="">默认（不注入参数）</option>
+                    <option value="disabled">关闭思考</option>
+                    <option value="minimal">最低</option>
+                    <option value="low">低</option>
+                    <option value="medium">中</option>
+                    <option value="high">高</option>
+                    <option value="xhigh">极高</option>
+                    <option value="max">最大</option>
+                    <option value="__custom__">自定义</option>
+                  </select>
+                </label>
+                <label id="agent-zcode-session-variant-custom-field" class="agent-compact-field hidden"><span>自定义值</span>
+                  <input id="agent-zcode-session-variant-custom" type="text" maxlength="80" placeholder="如 8192（Anthropic 预算）或供应商支持的档位" autocomplete="off" />
+                </label>
+              </div>
+              <p class="agent-zcode-session-hint">真实映射：Responses → reasoning.effort；OpenAI 兼容 → reasoning_effort；Anthropic → thinking.budget_tokens。默认不注入参数，由模型自行决定。</p>
+            </section>
+          </div>
+          <footer class="agent-settings-footer">
+            <span id="agent-zcode-session-error" class="agent-zcode-session-error"></span>
+            <div>
+              <button id="agent-zcode-session-cancel" type="button" class="agent-quiet-btn">关闭</button>
+              <button id="agent-zcode-session-save" type="button" class="agent-quiet-btn is-primary">应用运行配置</button>
+            </div>
           </footer>
         </section>
       </div>

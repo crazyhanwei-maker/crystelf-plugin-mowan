@@ -460,12 +460,13 @@ async function checkZcodePromptAttachments() {
 }
 
 async function checkAgentWorkbenchSlashCommands() {
-  const [script, html, css, consoleSource, routesSource, weixinSource] = await Promise.all([
+  const [script, html, css, consoleSource, routesSource, runtimeSource, weixinSource] = await Promise.all([
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.js'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.html'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'public', 'agent-workbench.css'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchConsole.js'), 'utf8'),
     fs.readFile(path.join(root, 'lib', 'webConsole', 'agentWorkbenchRoutes.js'), 'utf8'),
+    fs.readFile(path.join(root, 'lib', 'webConsole', 'bundledZcodeRuntime.js'), 'utf8'),
     fs.readFile(path.join(root, 'apps', 'weixin-ilink.js'), 'utf8'),
   ]);
   const runTaskStart = script.indexOf('async function runTask');
@@ -500,6 +501,21 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(consoleSource.includes("action === 'summarize' && task.providerId === 'zcode'"), 'manageSession 没有为 ZCode 分流 summarize');
   assert(consoleSource.includes('await maybeAutoCompactZcodeSession(task)'), 'ZCode 自动压缩没有在任务轮次前触发');
   assert(consoleSource.includes('config.manualContextLimit || 0') && consoleSource.includes('workbenchRuntimeConfig.manualContextLimit'), 'ZCode 上下文上限没有使用手动容量兜底');
+  // ZCode 会话控制：目标 / 检查点 / 分叉 / 中途切换模式与模型
+  assert(consoleSource.includes('function setZcodeGoal') && consoleSource.includes('buildZcodeGoalCommand'), 'ZCode 会话目标后端缺失');
+  assert(consoleSource.includes('function runZcodeCheckpointAction') && consoleSource.includes('buildZcodeCheckpointCommand'), 'ZCode 检查点回退/分叉后端缺失');
+  assert(consoleSource.includes('function updateZcodeSessionConfig') && consoleSource.includes('countTurn'), 'ZCode 中途切换模式/模型后端缺失');
+  assert(consoleSource.includes("event.type === 'checkpoint'") && consoleSource.includes("event.type === 'forked'"), 'ZCode 检查点/分叉事件没有接入控制台');
+  assert(consoleSource.includes('createForkedZcodeTask') && consoleSource.includes("emitWorkbenchUpdate('task_forked'"), 'ZCode 分叉后没有创建控制台侧会话');
+  assert(routesSource.includes('\\/goal$/') && routesSource.includes('\\/checkpoint$/') && routesSource.includes('\\/session\\/config$/'), 'ZCode 会话控制路由缺失');
+  assert(script.includes("name: 'goal'") && script.includes("name: 'rewind'") && script.includes("name: 'fork'"), 'ZCode 会话控制斜杠命令不完整');
+  assert(script.includes('function renderZcodeGoalBanner') && script.includes('function openZcodeSessionDialog') && script.includes('function submitZcodeCheckpoint'), 'ZCode 会话控制前端逻辑缺失');
+  assert(html.includes('id="agent-zcode-session-mask"') && html.includes('id="agent-zcode-session-btn"'), 'ZCode 会话控制弹窗或入口缺失');
+  // 思考强度必须是真实档位选择，不能只剩开关或假的自由文本
+  assert(html.includes('id="agent-zcode-session-variant"') && html.includes('关闭思考') && html.includes('极高') && html.includes('最大'), 'ZCode 会话控制缺少真实思考强度档位');
+  assert(script.includes('getZcodeSessionVariantValue') && script.includes('syncZcodeSessionVariantCustomField'), 'ZCode 思考强度档位选择逻辑缺失');
+  assert(consoleSource.includes('resolveZcodeReasoningLevel') && runtimeSource.includes('syncZcodeSessionModelSelection') && runtimeSource.includes('buildZcodeReasoningMap'), 'ZCode 续接没有同步会话库选型或未使用真实档位');
+  assert(css.includes('.agent-zcode-goal-banner') && css.includes('.agent-zcode-session-dialog'), 'ZCode 会话控制样式缺失');
   assert(!shouldAutoCompactZcodeContext({ enabled: true, usage: 79, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值以下误触发');
   assert(shouldAutoCompactZcodeContext({ enabled: true, usage: 80, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值处没有触发');
   assert(!shouldAutoCompactZcodeContext({ enabled: false, usage: 95, limit: 100, threshold: 80 }), 'ZCode 自动压缩开关关闭时仍触发');

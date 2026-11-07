@@ -6129,3 +6129,238 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
   width: 15px;
   height: 15px;
 }
+
+/* ===== ZCode 会话控制：目标横幅 / 目标 + 检查点 + 运行配置弹窗 ===== */
+.agent-zcode-goal-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(37, 99, 235, 0.28);
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.agent-zcode-goal-banner.is-paused {
+  border-color: rgba(245, 158, 11, 0.34);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.agent-zcode-goal-banner.is-warning {
+  border-color: rgba(234, 88, 12, 0.36);
+  background: rgba(234, 88, 12, 0.08);
+}
+
+.agent-zcode-goal-banner.is-done {
+  border-color: rgba(22, 163, 74, 0.34);
+  background: rgba(22, 163, 74, 0.07);
+}
+
+.agent-zcode-goal-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.agent-zcode-goal-banner.is-paused .agent-zcode-goal-dot {
+  background: #d97706;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
+}
+
+.agent-zcode-goal-banner.is-warning .agent-zcode-goal-dot {
+  background: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.16);
+}
+
+.agent-zcode-goal-banner.is-done .agent-zcode-goal-dot {
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+}
+
+.agent-zcode-goal-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.agent-zcode-goal-body strong {
+  color: var(--agent-ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.agent-zcode-goal-body > span {
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-zcode-goal-body small {
+  color: var(--agent-muted);
+  font-size: 10px;
+}
+
+.agent-zcode-goal-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.agent-zcode-goal-actions .agent-mini-btn {
+  min-height: 26px;
+  padding: 3px 9px;
+}
+
+.agent-zcode-session-dialog {
+  width: min(760px, 100%);
+  height: auto;
+  max-height: 92dvh;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+
+.agent-zcode-session-body {
+  display: grid;
+  gap: 14px;
+  max-height: min(64dvh, 640px);
+}
+
+.agent-zcode-session-section {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--agent-line);
+  border-radius: 10px;
+  background: var(--agent-bg);
+}
+
+.agent-zcode-session-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent-zcode-session-head strong {
+  color: var(--agent-ink);
+  font-size: 12px;
+}
+
+.agent-zcode-session-tag {
+  padding: 2px 8px;
+  border: 1px solid var(--agent-line);
+  border-radius: 999px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.agent-zcode-session-tag.is-active {
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.agent-zcode-session-tag.is-paused,
+.agent-zcode-session-tag.is-warning {
+  border-color: rgba(245, 158, 11, 0.32);
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.09);
+}
+
+.agent-zcode-session-tag.is-done {
+  border-color: rgba(22, 163, 74, 0.3);
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.agent-zcode-session-section textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.agent-zcode-session-hint {
+  margin: 0;
+  color: var(--agent-muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.agent-zcode-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.agent-zcode-session-actions .agent-quiet-btn {
+  min-height: 30px;
+  padding: 5px 11px;
+  font-size: 11px;
+}
+
+.agent-zcode-session-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 12px;
+}
+
+.agent-zcode-session-grid .agent-compact-field {
+  min-width: 0;
+}
+
+.agent-zcode-session-error {
+  color: #b91c1c;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .agent-zcode-goal-banner {
+    margin-bottom: 14px;
+    padding: 9px 10px;
+  }
+
+  .agent-zcode-goal-actions .agent-mini-btn {
+    min-height: 28px;
+  }
+
+  .agent-zcode-session-dialog {
+    width: calc(100vw - 20px);
+    max-height: 94dvh;
+  }
+
+  .agent-zcode-session-body {
+    max-height: none;
+    padding: 12px;
+  }
+
+  .agent-zcode-session-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agent-zcode-session-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .agent-zcode-session-actions .agent-quiet-btn {
+    width: 100%;
+    min-height: 34px;
+  }
+
+  .agent-zcode-session-error {
+    display: block;
+    max-width: 100%;
+  }
+}
