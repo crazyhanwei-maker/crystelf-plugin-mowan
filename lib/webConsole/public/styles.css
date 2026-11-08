@@ -8340,7 +8340,6 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
 }
 
 @media (max-width: 900px) {
-@media (max-width: 900px) {
   .update-log-timeline {
     max-width: none;
   }
