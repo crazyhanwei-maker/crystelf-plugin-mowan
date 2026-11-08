@@ -225,7 +225,7 @@ button {
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .link-btn:hover {
   background: var(--primary-hover);
   box-shadow: 0 10px 20px rgba(59, 130, 246, 0.24);
@@ -3036,7 +3036,7 @@ button,
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
 }
 
-button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .link-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, var(--primary-hover) 0%, var(--primary-hover) 100%);
@@ -6827,7 +6827,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
 }
 
-.console-app-shell button:not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.console-global-search-clear):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+.console-app-shell button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.console-global-search-clear):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .console-app-shell .link-btn:hover {
   background:
     linear-gradient(180deg, rgba(103, 232, 249, 0.98), rgba(56, 189, 248, 0.98));
@@ -8063,14 +8063,17 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
 .update-log-timeline {
   display: grid;
   gap: 0;
+  /* 限宽可读：避免通栏长行把几十个版本的条目糊成一片 */
+  max-width: 880px;
+  margin: 0 auto;
 }
 
 .update-log-version {
   position: relative;
   display: grid;
   grid-template-columns: 26px minmax(0, 1fr);
-  gap: 14px;
-  padding-bottom: 22px;
+  gap: 16px;
+  padding-bottom: 26px;
 }
 
 /* 时间线竖线：连接相邻版本的节点 */
@@ -8089,7 +8092,7 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
   position: relative;
   display: flex;
   justify-content: center;
-  padding-top: 4px;
+  padding-top: 6px;
 }
 
 .update-log-version-dot {
@@ -8108,22 +8111,26 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
 .update-log-version-body {
   min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--panel-bg);
-  padding: 14px 16px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .update-log-version-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
 }
 
 .update-log-version-head strong {
   color: var(--text);
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .update-log-current-tag {
@@ -8137,16 +8144,26 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
 
 .update-log-items {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .update-log-item {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
   color: var(--text-soft, var(--text));
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.update-log-item span:last-child {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.update-log-item .update-log-chip {
+  margin-top: 2px;
 }
 
 .update-log-chip {
@@ -8323,13 +8340,33 @@ body.flarum-flat .panel:has(#usage-log-box) h2::before { content: '▤'; }
 }
 
 @media (max-width: 900px) {
+@media (max-width: 900px) {
+  .update-log-timeline {
+    max-width: none;
+  }
+
   .update-log-version {
     grid-template-columns: 18px minmax(0, 1fr);
     gap: 10px;
+    padding-bottom: 18px;
   }
 
   .update-log-version:not(:last-child) .update-log-version-node::after {
     left: 8px;
+  }
+
+  .update-log-version-body {
+    padding: 14px 14px;
+    border-radius: 12px;
+  }
+
+  .update-log-version-head {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .update-log-items {
+    gap: 8px;
   }
 }
 

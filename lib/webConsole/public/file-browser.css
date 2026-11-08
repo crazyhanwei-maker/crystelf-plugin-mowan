@@ -2991,7 +2991,12 @@ body.file-manager-page .file-browser-row-check.is-checked {
 }
 
 body.file-manager-page .file-browser-file-row.is-selected {
-  background: color-mix(in srgb, var(--primary) 8%, transparent 92%);
+  /* 固定浅蓝底：不依赖 color-mix，避免个别渲染环境把半透明色算成整块主题蓝 */
+  background: #eef4ff;
+}
+
+body.file-manager-page .file-browser-file-row.is-selected.is-active {
+  background: #eaf1ff;
 }
 
 /* 批量操作条 */
