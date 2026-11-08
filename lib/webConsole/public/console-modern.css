@@ -315,7 +315,7 @@
   box-shadow: none;
 }
 
-.console-app-shell button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+.console-app-shell button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.file-browser-tree-item):not(.agent-capability-item):not(.qq-simulator-session-item):not(.danger):not(.feature-manage-btn-danger):not(.console-global-search-clear):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .console-app-shell .link-btn:hover {
   border-color: var(--console-active-border);
   background: var(--console-control-hover);

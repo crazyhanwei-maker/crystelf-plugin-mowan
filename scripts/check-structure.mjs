@@ -132,6 +132,41 @@ async function findNativePublicDialogUsages() {
   return hits;
 }
 
+/** CSS 大括号必须配平：一次未闭合的 @media/规则会把后面整段样式吞掉（真实事故） */
+async function findUnbalancedCssBraces() {
+  const publicRoot = path.join(root, 'lib/webConsole/public');
+  const cssFiles = await listFilesByExtension(publicRoot, '.css');
+  const broken = [];
+
+  for (const file of cssFiles) {
+    const relativePath = path.relative(root, file).replace(/\\/g, '/');
+    const text = await fs.readFile(file, 'utf8');
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (const char of text) {
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === '\\') escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') { inString = true; continue; }
+      if (char === '{') depth += 1;
+      else if (char === '}') depth -= 1;
+      if (depth < 0) {
+        broken.push(`${relativePath}: 出现多余的 }`);
+        break;
+      }
+    }
+    if (depth > 0) {
+      broken.push(`${relativePath}: 缺少 ${depth} 个 }`);
+    }
+  }
+
+  return broken;
+}
+
 async function listTextFiles(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files = [];
@@ -206,6 +241,8 @@ async function main() {
   addCheck('web console protected pages load auth script', publicHtmlPagesMissingAuth.length === 0, publicHtmlPagesMissingAuth.join('; '));
   const nativePublicDialogUsages = await findNativePublicDialogUsages();
   addCheck('web console public pages use unified dialog', nativePublicDialogUsages.length === 0, nativePublicDialogUsages.join('; '));
+  const unbalancedCssFiles = await findUnbalancedCssBraces();
+  addCheck('web console css braces balanced', unbalancedCssFiles.length === 0, unbalancedCssFiles.join('; '));
 
   const server = await readText('lib/webConsole/server.js');
   const configFeatureConsoleSuite = await readText('lib/webConsole/configFeatureConsoleSuite.js');

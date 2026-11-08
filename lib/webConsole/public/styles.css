@@ -225,7 +225,7 @@ button {
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.file-browser-tree-item):not(.agent-capability-item):not(.qq-simulator-session-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .link-btn:hover {
   background: var(--primary-hover);
   box-shadow: 0 10px 20px rgba(59, 130, 246, 0.24);
@@ -3036,7 +3036,7 @@ button,
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
 }
 
-button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.file-browser-tree-item):not(.agent-capability-item):not(.qq-simulator-session-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .link-btn:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, var(--primary-hover) 0%, var(--primary-hover) 100%);
@@ -6827,7 +6827,7 @@ body:not(.dashboard-page) .console-app-shell .console-auth-panel {
   box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18);
 }
 
-.console-app-shell button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.console-global-search-clear):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
+.console-app-shell button:not(.file-browser-file-row):not(.file-browser-context-menu-item):not(.file-browser-tree-item):not(.agent-capability-item):not(.qq-simulator-session-item):not(.console-nav-section):not(.console-sidebar-toggle):not(.console-theme-settings-btn):not(.console-notifications-btn):not(.console-global-search-clear):not(.plugin-settings-switch):not(.feature-manage-btn):not(.artd-page-btn):not(.console-nav-subsection):hover,
 .console-app-shell .link-btn:hover {
   background:
     linear-gradient(180deg, rgba(103, 232, 249, 0.98), rgba(56, 189, 248, 0.98));
