@@ -2,7 +2,7 @@
 
 > 定版：zai-org/ZCode **v3.14.3**（不追上游；将来升级 = 手动拉新 tag 重新构建）。
 > 产物形态：**cjs + node 资产**（esbuild bundle，宿主 Node 直接执行；无 npm install）。
-> 硬性要求：**宿主 Node ≥ 22**（上游 esbuild target=node22，运行时模块会预检并给出可区分错误）。
+> 硬性要求：**宿主 Node ≥ 22**（上游 esbuild target=node22，运行时模块会预检并给出可区分错误）。**会话库模型/思考档位同步需要 Node ≥ 22.13**（`node:sqlite` 在 22.13 才取消 `--experimental-sqlite`）；22.0–22.12 首轮可用，续接轮次会降级为警告并沿用会话库旧选型。
 
 ## 1. 产物目录结构
 
@@ -77,9 +77,23 @@ Agent 工作台的 ZCode 会话支持上游的会话级能力，控制台侧统�
 - **分叉**：上游 `/fork` 在事件里返回 `forkedSessionId`（当前进程仍停在父会话），运行时单独回传；控制台用该 ID 新建任务记录，与父任务共享同一 ZCode 状态目录（sqlite 会话库），标题追加「（分叉）」。同一状态目录的父子任务在调度器里互斥，避免两个进程抢 sqlite 锁。
 - **中途切换模式/模型/思考强度**：ZCode 的 `--mode` 与模型配置是每次调用参数，控制台在任务记录上更新 `mode/model/modelProviderId/variant`，从下一轮消息开始生效；运行中的轮次不允许切换，避免收尾判定与记录不一致。切换到写入档仍需一次写入风险确认。
 - **思考强度真实映射**（不再折叠成 enabled/disabled）：`openai-responses` 写 `reasoning.effort`；OpenAI 兼容 chat/completions（含 grok）写 `reasoning_effort`；Anthropic 写 `thinking.budget_tokens`（按模型最大输出封顶）；`enabled`/默认不注入参数，`disabled` 显式写 `none`/`disabled`。是否支持某个档位由 API 决定，运行时不伪造。
-- **会话库选型同步**：上游 `--resume` 会优先恢复会话库里的 `runtime/model_selection`。运行时在每次续接前把任务当前选型写回 `session_entry`（`${sessionId}:runtime-model-selection`），否则切换模型/思考档位只会改 provider 配置，实际仍沿用旧档位。
+- **会话库选型同步**：上游 `--resume` 会优先恢复会话库里的 `runtime/model_selection`。运行时在每次续接前把任务当前选型写回 `session_entry`（`${sessionId}:runtime-model-selection`），否则切换模型/思考档位只会改 provider 配置，实际仍沿用旧档位。同步是尽力而为：宿主 Node 低于 22.13、`node:sqlite` 不可用或会话库被占用时，本轮任务继续执行，但会发出「未能同步会话模型/思考档位」警告并沿用旧选型。
 - 所有维护命令复用普通任务的队列、并发、SSE 事件、取消与审计链路；维护命令不做「空响应/只读写入违规」判定，也不为回退/分叉创建 Git 快照。
 - **错误透出**：`turn.failed` 取 cause 链最深层的 message（外层通常只有 “Turn execution failed”）；运行时再读本轮 ZCode 日志，补上真实 `HTTP 状态 / 模型 / 供应商 / request id`，并丢弃 APICallError 堆栈与请求体。`turn.failed` 即使伴随 result 行、进程退出码 0，也按失败收口。
+
+### 3.2 MCP 服务器与动态工作流
+
+- **MCP 结构化编辑**：Agent 设置里的「MCP 服务器」提供列表式增删改（stdio 的 command/args/env，sse/http 的 url/headers），并保留「高级 JSON」编辑。最终仍序列化为原来的 `zcodeMcpServers` JSON，任务期写入工作区 `.mcp.json`，结束清理；工作区已有 `.mcp.json` 时不覆盖。当前只做配置管理，实时连接状态需要 app-server 的 `mcp/list`。
+- **动态工作流**：设置项 `zcodeEnableWorkflow` 显式开启后，ZCode 子进程追加 `--enable-workflow`。输入区 `+ → 动态工作流` 插入 `/workflow `，`runTask` 对 ZCode 会话放行 `/workflow`、`/init` 这类核心内置提示词命令，不再被控制台斜杠分发层拦截。
+- 运行时把 `workflow.run.progress` 事件转成 `workflow` 事件；控制台按 runId 归并状态、节点进度与最近日志（最多 5 个 run、每个 30 条事件），在对话顶部展示工作流卡片。任务取消会杀掉进程树，未收到 `run-settled` 的运行会收口为 canceled/error。
+- 工作流的运行列表/恢复管理需要 app-server 的 `workflows/*` 或 `/dwf`，当前无头模式只做启用、进度展示与随任务取消。
+
+### 3.3 技能/自定义命令、会话库刷新与压缩附加指令
+
+- **技能与自定义命令**：控制台通过 `zcode skills list --json` / `zcode commands list --json` 探测工作区可见能力（独立临时 HOME，不读宿主 `~/.zcode`），结果按目录缓存 30 秒。技能插入 `/skill <name> `；自定义命令插入 `/<name> ` 并在下一次提交时放行给 ZCode 的 customCommandPromptResolver。`disableNonInteractive` 的命令在面板中标记为不可用。
+- **会话库刷新**：`POST /api/agent-workbench/tasks/:id/zcode-state` 只读会话库，补齐 `session_target` 目标（含 Token 预算/用量/耗时）、`runtime/workspace_checkpoint` 检查点、`turn_usage` 累计 Token/轮次/工具次数。刷新只更新 `zcodeStateRefreshedAt`，不影响任务 `updatedAt` 与列表排序；目标表读取失败（锁冲突/损坏）时保留事件流里的已有目标，不误清空。旧 `GET` 客户端兼容但只读不落库。切换选中会话时自动刷新一次（60 秒节流），会话控制弹窗也有手动「刷新」按钮。会话库不存在/被清理时返回 `refreshed:false`，不影响任务。
+- **压缩附加指令**：手动 `/compact [要求]` 会拼成 `/compact <instructions>` 交给上游；自动压缩仍使用默认 `/compact`。
+- **AI 用量日志**：ZCode 每轮按 `result.usage` 直接写入 `scene=agent_task:zcode`（单轮值，不做累计差分），成功、失败、超时、取消都记；`completion` 含 reasoning，`total` 按 prompt+completion 计算，避免日志里 completion 大于 total。失败/取消轮 result 没有 usage 时回读会话库最新 `turn_usage` 兜底，`total=0` 自动跳过。OpenCode 按会话累计增量写入 `scene=agent_task:opencode`，失败/取消会尽力回读一次会话用量。已上报基线 `usageReported` 随任务落盘，控制台重启后续聊同一 OpenCode 会话不会重复记账。
 
 ## 4. 隔离测试
 
@@ -87,7 +101,7 @@ Agent 工作台的 ZCode 会话支持上游的会话级能力，控制台侧统�
 node --experimental-vm-modules scripts/check-zcode-runtime.mjs
 ```
 
-35 项检查：配置生成（协议映射/错误码/自定义供应商/manual 白名单）、沙箱 env、产物定位、假 CLI 全管道（成功事件序列、plan/build 档参数与 AskUserQuestion 禁用、相对路径解析、turn.failed、深层 cause 错误透出、非零退出、.env 保护）、能力配置（AGENTS.md 注入、.mcp.json 不覆盖原则、contextWindow 回传）、续接（--resume 注入与父状态目录复用）、思考强度真实映射（Responses / chat-completions / Anthropic / 自定义档位）、会话控制事件（goal / checkpoint / rewind / forked / 命令中心整段 JSON）、并发池（上限 1 拒绝、可配 2 并存、中止、超时强杀）、状态目录清理（orphans/all 两种模式）。不读写真实配置。也可经 `npm run check:zcode` 运行。
+39 项检查：配置生成（协议映射/错误码/自定义供应商/manual 白名单）、沙箱 env、产物定位、假 CLI 全管道（成功事件序列、plan/build 档参数与 AskUserQuestion 禁用、相对路径解析、turn.failed、深层 cause 错误透出、非零退出、.env 保护）、能力配置（AGENTS.md 注入、.mcp.json 不覆盖原则、contextWindow 回传）、续接（--resume 注入与父状态目录复用、选型同步失败降级）、思考强度真实映射（Responses / chat-completions / Anthropic / 自定义档位）、会话控制事件（goal / checkpoint / rewind / forked / 命令中心整段 JSON）、动态工作流（--enable-workflow / workflow.run.progress）、能力探测（skills / commands JSON 解析、单个子命令失败返回部分结果）、并发池（上限 1 拒绝、可配 2 并存、中止、超时强杀）、状态目录清理（orphans/all 两种模式）。不读写真实配置。也可经 `npm run check:zcode` 运行。
 
 ### 真实冒烟（需要测试 key 与真实产物）
 
@@ -104,6 +118,7 @@ node --experimental-vm-modules scripts/check-zcode-runtime.mjs
 | json 模式看不到真实失败原因 | 上游 json 模式不打印 Cause，加 `--verbose` 或改用 stream-json 看事件载荷 |
 | `AGENT_ZCODE_RUNTIME_MISSING` | 产物未构建或不完整 → 重跑构建脚本；检查 `manifest.json` 是否存在 |
 | `AGENT_ZCODE_NODE_UNSUPPORTED` | 宿主 Node < 22 → 升级 Yunzai 宿主 Node |
+| 续接轮次提示「未能同步会话模型/思考档位」 | 宿主 Node < 22.13（`node:sqlite` 仍需 `--experimental-sqlite`）或会话库被锁/损坏；任务会继续，但本轮沿用旧选型 → 升级 Node 到 22.13+，或等当前轮结束再切换 |
 | `AGENT_ZCODE_TASK_BUSY` | 并发池已满（上限 `zcodeMaxConcurrent` 1-3，默认 1）→ 等待、调高上限或 `abortZcodeTask` |
 | 启动报 rg 相关错误 | 不应发生（rg 缺失只降级搜索）；确认 `tools/rg` 存在或 PATH 有 rg |
 | 模型请求 401/404 | 检查灵晶 baseApi/apiKey；anthropic 协议地址由运行时自动补 `/v1`，openai 地址保持原样 |

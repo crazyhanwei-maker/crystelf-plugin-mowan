@@ -89,15 +89,35 @@ if (dump) {
     disallowedTools: dtIndex >= 0 ? args.slice(dtIndex + 1).filter((v, i, arr) => !v.startsWith('--')) : [],
     cwd: args[args.indexOf('--cwd') + 1] || null,
     resume: args.includes('--resume') ? args[args.indexOf('--resume') + 1] || '' : null,
+    enableWorkflow: args.includes('--enable-workflow'),
   }), 'utf8');
 }
 const send = obj => process.stdout.write(JSON.stringify(obj) + '\\n');
+if (args[0] === 'skills' && args[1] === 'list') {
+  if (process.env.FAKE_CAP_FAIL_SKILLS === '1') { process.stderr.write('skills list boom\\n'); process.exit(2); }
+  process.stdout.write(JSON.stringify({ cwd: process.cwd(), diagnostics: [], skills: [{ name: 'demo', description: 'Demo skill', scope: 'project', source: 'zcode', path: process.cwd() + '/.zcode/skills/demo/SKILL.md' }], totalDiscovered: 1 }) + '\\n');
+  process.exit(0);
+}
+if (args[0] === 'commands' && args[1] === 'list') {
+  if (process.env.FAKE_CAP_FAIL_COMMANDS === '1') { process.stderr.write('commands list boom\\n'); process.exit(2); }
+  process.stdout.write(JSON.stringify({ commands: [{ name: 'hello', description: 'Say hello', argumentHint: '<name>', scope: 'project', source: 'zcode', skills: [], disableNonInteractive: false, path: process.cwd() + '/.zcode/commands/hello.md' }], cwd: process.cwd(), diagnostics: [], totalDiscovered: 1 }) + '\\n');
+  process.exit(0);
+}
 if (prompt === 'HANG') { setTimeout(() => {}, 60000); return; }
 if (prompt === 'FAIL_EXIT') { process.stderr.write('boom: provider auth failed\\n'); process.exit(3); }
 if (prompt === 'FAIL_TURN') {
   send({ type: 'session.created', sessionId: 'sess-fail', payload: {} });
   send({ type: 'turn.failed', payload: { error: { message: '上游鉴权失败' }, turnPhase: 'model' } });
   process.exit(1);
+}
+if (prompt === 'WORKFLOW') {
+  send({ type: 'session.created', sessionId: 'sess-workflow', payload: {} });
+  send({ type: 'workflow.run.progress', payload: { runId: 'run-1', eventType: 'run-started', payload: {} } });
+  send({ type: 'workflow.run.progress', payload: { runId: 'run-1', eventType: 'node-queued', payload: { instance: { siteId: 'worker', ordinal: 0 } } } });
+  send({ type: 'workflow.run.progress', payload: { runId: 'run-1', eventType: 'node-settled', payload: { instance: { siteId: 'worker', ordinal: 0 }, outcome: 'success' } } });
+  send({ type: 'workflow.run.progress', payload: { runId: 'run-1', eventType: 'run-settled', payload: { status: 'completed' } } });
+  send({ type: 'result', sessionId: 'sess-workflow', response: 'workflow done', projection: { status: 'complete' } });
+  process.exit(0);
 }
 if (prompt === 'FAIL_DEEP') {
   send({ type: 'session.created', sessionId: 'sess-deep', payload: {} });
@@ -217,8 +237,16 @@ async function main() {
         buildZcodeReasoningMap,
         resolveZcodeReasoningLevel,
       },
-      // 会话库选型同步依赖 node:sqlite；沙箱内不落真实数据库，返回未同步
-      './zcodeSessionSelection.js': { syncZcodeSessionModelSelection: async () => false },
+      // 会话库选型同步依赖 node:sqlite；沙箱内不落真实数据库，返回未同步。
+      // 续接失败降级测试用固定 taskId 触发一次模拟异常。
+      './zcodeSessionSelection.js': {
+        syncZcodeSessionModelSelection: async options => {
+          if (String(options?.dbPath || '').includes('zcode-corrupt-sync')) {
+            throw new Error('模拟 node:sqlite 不可用');
+          }
+          return false;
+        },
+      },
     });
   } catch (error) {
     console.error('模块加载失败（需 node --experimental-vm-modules）:', error.message);
@@ -441,6 +469,52 @@ async function main() {
   const envForTask = { PATH: process.env.PATH || '', SYSTEMROOT: process.env.SYSTEMROOT || '', FAKE_ARGS_FILE: path.join(scratch, 'fake-args.json') };
   const baseOptions = { aiConfig, model: 'glm-5.3-flash', workspaceDir: workspace, env: envForTask };
 
+  const capabilities = await zcode.listBundledZcodeCapabilities({
+    workspaceDir: workspace,
+    runtimeRoot,
+    env: envForTask,
+  });
+  check('能力探测：skills / commands list JSON 解析', () => {
+    assert.equal(capabilities.skills.length, 1);
+    assert.equal(capabilities.skills[0].name, 'demo');
+    assert.equal(capabilities.skills[0].scope, 'project');
+    assert.equal(capabilities.commands.length, 1);
+    assert.equal(capabilities.commands[0].name, 'hello');
+    assert.equal(capabilities.commands[0].argumentHint, '<name>');
+    assert.equal(capabilities.commands[0].disableNonInteractive, false);
+  });
+
+  await checkAsync('能力探测：单个子命令失败时返回部分结果与诊断', async () => {
+    const partial = await zcode.listBundledZcodeCapabilities({
+      workspaceDir: workspace,
+      runtimeRoot,
+      env: { ...envForTask, FAKE_CAP_FAIL_COMMANDS: '1' },
+    });
+    assert.equal(partial.skills.length, 1);
+    assert.equal(partial.commands.length, 0);
+    assert.equal(partial.partial, true);
+    assert.equal(partial.failed.skills, false);
+    assert.equal(partial.failed.commands, true);
+    assert.ok(partial.diagnostics.some(item => item.code === 'commands_list_failed' && /commands list boom/.test(item.message)), `diagnostics=${JSON.stringify(partial.diagnostics)}`);
+  });
+
+  await checkAsync('续接选型同步失败时任务继续并发出警告', async () => {
+    const corruptTaskId = 'zcode-corrupt-sync';
+    const corruptStateRoot = path.join(scratch, 'corrupt-state');
+    const warnEvents = [];
+    const corrupt = await zcode.runZcodeTask({
+      ...baseOptions,
+      taskId: corruptTaskId,
+      stateRoot: corruptStateRoot,
+      resumeSessionId: 'sess-corrupt',
+      prompt: 'hello',
+      onEvent: event => { if (event.type === 'warn') warnEvents.push(event); },
+    });
+    assert.equal(corrupt.ok, true);
+    assert.equal(corrupt.sessionSelectionSynced, false);
+    assert.ok(corrupt.sessionSelectionSyncWarning, `synced=${corrupt.sessionSelectionSynced}`);
+    assert.ok(warnEvents.some(event => /未能同步会话模型/.test(String(event.message))), `warnEvents=${JSON.stringify(warnEvents)}`);
+  });
   await checkAsync('空 prompt / 非法工作区 / 非法权限档全部快速失败', async () => {
     await assert.rejects(zcode.runZcodeTask({ ...baseOptions, prompt: '  ' }), /prompt/);
     await assert.rejects(zcode.runZcodeTask({ ...baseOptions, prompt: 'x', workspaceDir: 'relative/path' }), /绝对路径/);
@@ -529,6 +603,19 @@ async function main() {
     const dumped = JSON.parse(fs.readFileSync(envForTask.FAKE_ARGS_FILE, 'utf8'));
     assert.equal(dumped.mode, 'edit');
     assert.deepEqual(dumped.disallowedTools, ['AskUserQuestion', 'Bash', 'WebFetch', 'WebSearch']);
+  });
+
+  const workflowRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'WORKFLOW', enableWorkflow: true });
+  check('动态工作流：--enable-workflow 与 workflow.run.progress 事件透传', () => {
+    assert.equal(workflowRun.ok, true, workflowRun.error);
+    const dumped = JSON.parse(fs.readFileSync(envForTask.FAKE_ARGS_FILE, 'utf8'));
+    assert.equal(dumped.enableWorkflow, true, '开启工作流时没有传 --enable-workflow');
+    const workflowEvents = workflowRun.events.filter(event => event.type === 'workflow');
+    assert.equal(workflowEvents.length, 4, `workflow 事件数=${workflowEvents.length}`);
+    assert.equal(workflowEvents[0].workflow.runId, 'run-1');
+    assert.equal(workflowEvents[0].workflow.eventType, 'run-started');
+    assert.equal(workflowEvents.at(-1).workflow.eventType, 'run-settled');
+    assert.equal(workflowEvents.at(-1).workflow.payload.status, 'completed');
   });
 
   const relativeRun = await zcode.runZcodeTask({ ...baseOptions, prompt: 'RELATIVE' });

@@ -470,7 +470,7 @@ async function checkAgentWorkbenchSlashCommands() {
     fs.readFile(path.join(root, 'apps', 'weixin-ilink.js'), 'utf8'),
   ]);
   const runTaskStart = script.indexOf('async function runTask');
-  const slashDispatch = script.indexOf('const slashCommand = parseSlashCommand(prompt);', runTaskStart);
+  const slashDispatch = script.indexOf('let slashCommand = parseSlashCommand(prompt);', runTaskStart);
   const normalTaskRequest = script.indexOf("postJson('/api/agent-workbench/tasks'", runTaskStart);
   // 桥侧斜杠指令不能拦群聊：群里的 #重置会话 属于 AI 群聊（清群历史），
   // 规则若声明 permission:master，内核会对普通群员回“暂无权限”并中断分发
@@ -497,7 +497,7 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(script.includes("name: 'compact'") && script.includes("aliases: ['summarize']"), 'Agent 没有注册上下文压缩命令');
   assert(consoleSource.includes('body: modelSelection') && consoleSource.includes(': { auto: true }'), 'Agent 上下文压缩没有在未选择模型时使用默认模型');
   // ZCode 压缩：手动走运行时 /compact，自动按控制台阈值在每轮前触发
-  assert(consoleSource.includes("prompt: '/compact'") && consoleSource.includes('async function compactZcodeSession'), 'ZCode 手动压缩没有接入 /compact');
+  assert(consoleSource.includes('instructions ? `/compact ${instructions}`') && consoleSource.includes('async function compactZcodeSession'), 'ZCode 手动压缩没有接入 /compact 或附加指令');
   assert(consoleSource.includes("action === 'summarize' && task.providerId === 'zcode'"), 'manageSession 没有为 ZCode 分流 summarize');
   assert(consoleSource.includes('await maybeAutoCompactZcodeSession(task)'), 'ZCode 自动压缩没有在任务轮次前触发');
   assert(consoleSource.includes('config.manualContextLimit || 0') && consoleSource.includes('workbenchRuntimeConfig.manualContextLimit'), 'ZCode 上下文上限没有使用手动容量兜底');
@@ -520,6 +520,29 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(consoleSource.includes('describeOpenCodeErrorDetail') && consoleSource.includes('upstreamErrorDetail'), 'OpenCode 错误没有保留原始载荷或控制台没有落库');
   assert(script.includes('agent-error-detail') && script.includes('原始报错') && script.includes('message.upstreamErrorDetail'), '错误卡缺少“原始报错”折叠块');
   assert(css.includes('.agent-zcode-goal-banner') && css.includes('.agent-zcode-session-dialog'), 'ZCode 会话控制样式缺失');
+  // ZCode MCP 结构化编辑 + 动态工作流
+  assert(html.includes('id="agent-mcp-mask"') && html.includes('id="agent-zcode-mcp-manage"') && script.includes('function openMcpManager') && script.includes('function saveMcpManager'), 'MCP 服务器结构化编辑器缺失');
+  assert(script.includes('parseMcpServerText') && script.includes('serializeMcpServers') && css.includes('.agent-mcp-dialog'), 'MCP 配置解析/序列化或弹窗样式缺失');
+  assert(html.includes('id="agent-zcode-enable-workflow"') && html.includes('data-plus-action="workflow"') && script.includes('/workflow '), '动态工作流开关或入口缺失');
+  assert(runtimeSource.includes('--enable-workflow') && runtimeSource.includes("workflow.run.progress"), 'ZCode 运行时没有传递工作流开关或事件');
+  assert(consoleSource.includes('mergeZcodeWorkflowEvent') && consoleSource.includes('workflowRuns'), '控制台没有归并/持久化工作流运行');
+  assert(script.includes('renderWorkflowCard') && css.includes('.agent-workflow-card'), '工作流运行卡片缺失');
+  // ZCode 技能/自定义命令 + 会话库刷新 + 压缩附加指令
+  assert(routesSource.includes('/zcode/capabilities') && consoleSource.includes('listZcodeCapabilities') && runtimeSource.includes('listBundledZcodeCapabilities'), 'ZCode 技能/命令能力接口缺失');
+  assert(html.includes('id="agent-zcode-capabilities-mask"') && script.includes('function openZcodeCapabilities') && script.includes('data-capability-type'), 'ZCode 技能/命令面板缺失');
+  assert(script.includes("['workflow', 'init', 'skill']") && script.includes('zcodeCommandNames'), 'ZCode 内置/自定义提示词命令没有放行');
+  assert(routesSource.includes('\\/zcode-state') && consoleSource.includes('refreshZcodeSessionState') && consoleSource.includes('readZcodeSessionState'), 'ZCode 会话库刷新接口缺失');
+  assert(script.includes('refreshZcodeSessionStateFromServer') && html.includes('id="agent-zcode-session-refresh"') && html.includes('id="agent-zcode-session-usage"'), '会话库刷新入口或累计用量展示缺失');
+  assert(consoleSource.includes('function reportZcodeTurnUsage') && consoleSource.includes("scene: 'agent_task:zcode'"), 'ZCode Agent 用量没有写入 AI 用量日志');
+  assert(consoleSource.includes('readZcodeLastTurnUsage') && consoleSource.includes('reportZcodeTurnUsageWithFallback'), 'ZCode 失败/取消轮次的用量没有会话库兜底');
+  assert(consoleSource.includes('reportAgentTaskUsage(task, {') && consoleSource.includes('reportZcodeTurnUsage(task, {'), 'Agent 用量上报没有覆盖成功/失败收尾');
+  assert(consoleSource.includes('result.usageReported') && consoleSource.includes('item.usageReported') && consoleSource.includes('_usageReported'), 'Agent 用量上报基线没有持久化');
+  assert(routesSource.includes("req.method === 'POST'") && script.includes('postJson(`/api/agent-workbench/tasks/${encodeURIComponent(taskId)}/zcode-state`'), '会话库刷新没有改成 POST');
+  assert(!consoleSource.includes('task.updatedAt = task.zcodeStateRefreshedAt'), '会话库刷新不应修改任务 updatedAt');
+  assert(runtimeSource.includes('partial') && runtimeSource.includes('commands_list_failed') && script.includes('state.partial'), '能力探测没有返回/展示部分失败结果');
+  assert(script.includes('buildZcodeCapabilityPrompt') && script.includes('输入框已有斜杠命令'), '能力面板插入没有保留已有输入');
+  assert(runtimeSource.includes('sessionSelectionSyncWarning') && consoleSource.includes("event.type === 'warn'"), '会话选型同步失败没有降级为警告');
+  assert(consoleSource.includes('/compact ${instructions}') && script.includes('payload.instructions'), 'ZCode 压缩附加指令没有接通');
   assert(!shouldAutoCompactZcodeContext({ enabled: true, usage: 79, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值以下误触发');
   assert(shouldAutoCompactZcodeContext({ enabled: true, usage: 80, limit: 100, threshold: 80 }), 'ZCode 自动压缩在阈值处没有触发');
   assert(!shouldAutoCompactZcodeContext({ enabled: false, usage: 95, limit: 100, threshold: 80 }), 'ZCode 自动压缩开关关闭时仍触发');
@@ -530,6 +553,9 @@ async function checkAgentWorkbenchSlashCommands() {
   assert(html.includes('id="agent-delete-btn"') && script.includes('async function deleteAgentTask') && html.includes('id="agent-actions-toggle"'), 'Agent 会话删除入口或处理逻辑缺失');
   assert(html.includes('id="agent-settings-mask"') && html.includes('class="agent-settings-dialog"') && script.includes('function setSettingsModalOpen'), 'Agent 工作台设置没有使用独立弹窗');
   assert(css.includes('.agent-settings-mask') && css.includes('.agent-settings-grid') && css.includes('.agent-settings-footer'), 'Agent 工作台设置弹窗缺少响应式布局');
+  // 自定义 API 已从设置界面下线：UI 不再渲染，保存草稿不带 customApi，后端按“未变更”保留
+  assert(!html.includes('agent-custom-api-enabled') && !script.includes('agent-custom-api-enabled'), '自定义 API 设置 UI 没有下线');
+  assert(consoleSource.includes('nextConfig.customApi = payload.customApi === undefined'), '保存设置没有保留既有 customApi');
   assert(script.includes("command.kind === 'native'") && script.includes('runNativeCommand(command.nativeCommand'), 'OpenCode 自定义 Command 没有接入输入框');
   assert(script.includes("['status', 'terminal', 'search', 'worktrees'].includes(command.action)"), 'OpenCode 能力中心没有接入斜杠命令');
   assert(consoleSource.includes('/prompt_async') && consoleSource.includes('waitForOpenCodeSessionIdle') && consoleSource.includes('/session/status'), 'Agent 没有使用 OpenCode 异步任务链路或兼容等待');

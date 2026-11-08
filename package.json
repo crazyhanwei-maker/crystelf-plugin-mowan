@@ -1,6 +1,6 @@
 {
   "name": "crystelf-plugin",
-  "version": "3.1.0",
+  "version": "3.2.1",
   "description": "魔改灵晶成魔丸：Yunzai Bot AI Agent 与综合运维插件",
   "main": "index.js",
   "type": "module",

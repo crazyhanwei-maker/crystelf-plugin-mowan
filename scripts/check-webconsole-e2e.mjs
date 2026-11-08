@@ -1155,6 +1155,47 @@ async function runSlashMenuInteraction(page) {
   await new Promise(resolve => setTimeout(resolve, 200));
 }
 
+// 能力面板插入：保留已输入任务描述；已有斜杠命令时拒绝覆盖
+async function runCapabilityInsertInteraction(page) {
+  await page.waitForSelector('#agent-prompt', { timeout: pageTimeoutMs });
+  const result = await page.evaluate(() => {
+    const input = document.querySelector('#agent-prompt');
+    const originalAlert = window.webConsoleAlert;
+    let alertText = '';
+    window.webConsoleAlert = async message => { alertText = String(message || ''); };
+    try {
+      input.value = '修复登录模块';
+      window.insertZcodeCapability('skill', 'demo', false, '');
+      const skillValue = input.value;
+      input.value = '/workflow 构建登录模块';
+      window.insertZcodeCapability('command', 'hello', false, '');
+      const conflictValue = input.value;
+      const conflictAlert = alertText;
+      input.value = '';
+      window.insertZcodeCapability('command', 'hello', false, '');
+      const commandValue = input.value;
+      return { skillValue, conflictValue, conflictAlert, commandValue };
+    } finally {
+      window.webConsoleAlert = originalAlert;
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      agentWorkbenchState.pendingZcodeCommand = '';
+    }
+  });
+  if (!/^\/skill demo 修复登录模块$/.test(result.skillValue.trim())) {
+    throw new Error(`技能插入没有保留原输入：${result.skillValue}`);
+  }
+  if (result.conflictValue !== '/workflow 构建登录模块') {
+    throw new Error(`已有斜杠命令时不应覆盖输入：${result.conflictValue}`);
+  }
+  if (!/已有斜杠命令/.test(result.conflictAlert)) {
+    throw new Error(`已有斜杠命令时缺少提示：${result.conflictAlert}`);
+  }
+  if (result.commandValue.trim() !== '/hello') {
+    throw new Error(`命令插入结果异常：${result.commandValue}`);
+  }
+}
+
 // 输入区任务模式控件：触发标签、风险色点、与隐藏 select 双向同步
 async function runModeSwitchInteraction(page) {
   await page.waitForSelector('#agent-mode-btn', { timeout: pageTimeoutMs });
@@ -2001,6 +2042,7 @@ async function runInteractiveChecks(page, baseUrl, runtimeErrors) {
     { label: '模拟调试深度预览', path: '/qq-simulator.html', run: runQqSimulatorDeepPreviewInteraction },
     { label: '依赖面板刷新与搜索', path: '/dependency-check.html', run: runDependencyInteraction },
     { label: 'Agent 斜杠命令面板', path: '/agent-workbench.html', run: runSlashMenuInteraction },
+    { label: 'Agent 能力面板插入', path: '/agent-workbench.html', run: runCapabilityInsertInteraction },
     { label: 'Agent 输入区模式切换', path: '/agent-workbench.html', run: runModeSwitchInteraction },
     { label: 'Agent 输入区图标统一', path: '/agent-workbench.html', run: runComposerIconInteraction },
     { label: 'Agent 实时命令格式', path: '/agent-workbench.html', run: runLiveCommandRenderInteraction },

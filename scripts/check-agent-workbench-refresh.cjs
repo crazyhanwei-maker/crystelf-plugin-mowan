@@ -63,6 +63,14 @@ const backendSupport = {
   redactAgentText: (value = '') => String(value),
   // 上下文窗口查表依赖运行时模型库缓存，刷新顺序测试不涉及该行为，直接返回记录值
   resolveTaskContextLimit: (task = {}) => Math.max(0, Number(task?.contextLimit || 0)),
+  // ZCode 会话新增的序列化字段与刷新顺序无关；给出同形状的轻量替身，
+  // 避免 VM 沙箱因为缺少模块级辅助函数而把任务列表整体打成空。
+  normalizeZcodeSessionUsage: value => (value && typeof value === 'object' ? value : null),
+  normalizeIsoTimestamp: value => (value ? String(value) : ''),
+  normalizeZcodeWorkflowRuns: value => (Array.isArray(value) ? value : []),
+  normalizeZcodeGoal: value => (value && typeof value === 'object' ? value : null),
+  normalizeZcodeCheckpointList: value => (Array.isArray(value) ? value : []),
+  normalizeUsageReported: value => (value && typeof value === 'object' ? value : undefined),
 };
 const constants = {};
 for (const name of ['AGENT_TASK_LIMIT', 'AGENT_MESSAGE_LIMIT', 'AGENT_MESSAGE_TOOL_LIMIT', 'AGENT_EVENT_LIMIT', 'AGENT_PERMISSION_LIMIT', 'AGENT_QUESTION_LIMIT', 'AGENT_ATTACHMENT_LIMIT', 'AGENT_FOLLOW_UP_LIMIT']) {
@@ -154,6 +162,9 @@ function harness({ search = '?task=A', taskItems = null, synchronousFetchError =
     updateConversationFollowButton() {}, loadTodoAnchors: () => new Map(),
     renderPlanConfirmCard: () => '', renderAssistantArtifacts: () => '',
     renderInlineToolImages: () => '', renderFileChangesCard: () => '',
+    renderZcodeGoalBanner: () => '', renderWorkflowCard: () => '', isZcodeTaskBusy: () => false,
+    renderZcodeSessionDialog: () => '', renderZcodeGoalBannerActions: () => '',
+    refreshZcodeSessionStateFromServer: () => Promise.resolve(false),
     renderNativeMessageActions: () => '', renderMessageAttachments: () => '',
     formatAgentMarkdown: escapeHtml, normalizeAgentOutput: value => String(value || ''),
     countLiveFollowUps: () => 0,
@@ -187,6 +198,9 @@ function harness({ search = '?task=A', taskItems = null, synchronousFetchError =
       requests.push(request);
       return promise;
     },
+    // 会话库刷新走 POST，但刷新顺序测试不关心它；返回失败让调用方自行兜底，
+    // 不能同步抛错，否则会打断 renderSelectedTask。
+    postJson: async () => { throw new Error('postJson is not used in refresh ordering tests'); },
   });
   runBlock(context, stateBlock, 'globalThis.__state = agentWorkbenchState;');
   for (const block of [...frontendFunctions, ...backendFunctions]) runBlock(context, block);
@@ -250,7 +264,7 @@ function harness({ search = '?task=A', taskItems = null, synchronousFetchError =
     async assertFulfilled(packet) {
       for (const call of calls) {
         const outcome = await call.done;
-        assert.equal(outcome.status, 'fulfilled');
+        assert.equal(outcome.status, 'fulfilled', `refresh rejected: ${outcome.reason?.stack || outcome.reason}`);
         assert.equal(outcome.value, packet, 'All joiners must receive the latest result');
       }
       this.assertClean();
@@ -616,6 +630,15 @@ scenario('A-B-A 但 pending 有 force：应保留一次强制补刷', async () =
   assert.equal(h.requests[1].query.get('force'), '1');
   h.requests[1].resolve();
   await h.assertFulfilled(h.requests[1].packet);
+});
+
+scenario('用量上报基线只随持久化载荷落盘', () => {
+  const h = harness();
+  const task = fixtureTask('A', { _usageReported: { input: 10, output: 2, total: 12 } });
+  const stored = h.context.serializeTask(task, { includeMessages: true, includeSecrets: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(stored.usageReported)), { input: 10, output: 2, total: 12 });
+  const api = h.context.serializeTask(task, { includeMessages: true });
+  assert.equal(api.usageReported, undefined, 'API 载荷不应暴露内部用量基线');
 });
 
 after(() => {

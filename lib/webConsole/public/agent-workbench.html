@@ -97,14 +97,6 @@
             </select>
           </label>
         </div>
-
-        <div class="agent-sidebar-safety">
-          <div class="agent-safety-line">
-            <span class="agent-safety-dot"></span>
-            <strong id="agent-security-title">只读执行边界</strong>
-          </div>
-          <p id="agent-security-detail">plan Agent · pure 模式 · 不自动批准 · 不直接写文件</p>
-        </div>
       </aside>
 
       <main class="agent-chat-panel">
@@ -246,6 +238,12 @@
                 </button>
                 <button type="button" class="agent-plus-item" data-plus-action="slash">
                   <span class="agent-plus-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4 7 20"/></svg></span><span><strong>命令与能力</strong><small>斜杠命令、技能与原生能力</small></span>
+                </button>
+                <button type="button" class="agent-plus-item" data-plus-action="workflow">
+                  <span class="agent-plus-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 6h8"/><path d="M7 8l4 8"/><path d="M17 8l-4 8"/></svg></span><span><strong>动态工作流</strong><small>用多个子 Agent 并行处理复杂任务（需先在设置中启用）</small></span>
+                </button>
+                <button type="button" class="agent-plus-item" data-plus-action="zcode-capabilities">
+                  <span class="agent-plus-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 16 9 5 9-5"/></svg></span><span><strong>ZCode 技能与命令</strong><small>浏览工作区可见的 Skills 与自定义 Command</small></span>
                 </button>
               </section></span>
               <button id="agent-composer-tools-btn" type="button" class="agent-icon-btn agent-composer-tools-btn" data-agent-composer-options-toggle title="会话选项：标题、Agent、优先级" aria-label="会话选项" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
@@ -440,6 +438,7 @@
               </div>
               <textarea id="agent-zcode-goal-input" rows="3" maxlength="2000" placeholder="描述这个会话要达成的目标，例如：修复登录页在移动端的布局问题并补上回归测试"></textarea>
               <p id="agent-zcode-goal-usage" class="agent-zcode-session-hint">设置目标后 ZCode 会自动继续执行，直到完成、预算耗尽或手动暂停；只读模式只记录目标，不自动执行。</p>
+              <p id="agent-zcode-session-usage" class="agent-zcode-session-hint hidden"></p>
               <div class="agent-zcode-session-actions">
                 <button id="agent-zcode-goal-save" type="button" class="agent-quiet-btn is-primary">设置并执行</button>
                 <button id="agent-zcode-goal-pause" type="button" class="agent-quiet-btn hidden">暂停</button>
@@ -450,7 +449,10 @@
             <section class="agent-zcode-session-section">
               <div class="agent-zcode-session-head">
                 <strong>工作区检查点</strong>
-                <span class="agent-zcode-session-tag" id="agent-zcode-checkpoint-count">0 个</span>
+                <span class="agent-zcode-session-head-actions">
+                  <span class="agent-zcode-session-tag" id="agent-zcode-checkpoint-count">0 个</span>
+                  <button id="agent-zcode-session-refresh" type="button" class="agent-mini-btn" title="从 ZCode 会话库刷新目标、检查点与累计用量">刷新</button>
+                </span>
               </div>
               <label class="agent-compact-field"><span>目标检查点</span>
                 <select id="agent-zcode-checkpoint-select">
@@ -584,7 +586,7 @@
         <div>
           <span class="agent-eyebrow">AGENT PREFERENCES</span>
           <strong id="agent-settings-title">工作台设置</strong>
-          <span>管理运行权限、模型接口与 Agent 能力。</span>
+          <span>管理运行权限与 Agent 能力。</span>
         </div>
         <button id="agent-settings-close" type="button" class="agent-icon-btn" title="关闭设置" aria-label="关闭设置">×</button>
       </header>
@@ -617,7 +619,16 @@
               <small class="agent-settings-note">ZCode 状态目录用于多轮对话续接上下文；启动时会自动回收 7 天以上的孤儿目录，一般无需手动清理。手动清理后旧任务记录保留，但不能再续接追问。</small>
               <div class="agent-settings-group-head"><strong>ZCode 能力配置</strong><span>自定义指令与 MCP 服务器，对所有 ZCode 任务生效</span></div>
               <label class="agent-compact-field"><span>自定义指令（用户级 AGENTS.md，所有 ZCode 任务可见）</span><textarea id="agent-zcode-instructions" rows="4" spellcheck="false" placeholder="例如：回复使用中文；遵循仓库现有代码风格；不要主动提交 git"></textarea></label>
-              <label class="agent-compact-field"><span>MCP 服务器（JSON，任务期写入工作区 .mcp.json，结束自动清理）</span><textarea id="agent-zcode-mcp" rows="4" spellcheck="false" placeholder='{"mcpServers":{"server-name":{"type":"stdio","command":"npx","args":["-y","some-mcp-server"]}}}'></textarea></label>
+              <div class="agent-compact-field agent-zcode-mcp-field">
+                <span>MCP 服务器</span>
+                <div class="agent-zcode-mcp-summary">
+                  <span id="agent-zcode-mcp-summary">未配置</span>
+                  <button id="agent-zcode-mcp-manage" type="button" class="agent-mini-btn">添加</button>
+                </div>
+                <textarea id="agent-zcode-mcp" class="hidden" spellcheck="false"></textarea>
+                <small class="agent-settings-note">任务启动时写入工作区 .mcp.json，任务结束自动清理；不会覆盖工作区已有的 .mcp.json。环境变量与请求头会落盘到该临时文件，请只填该 MCP 服务需要的凭据。</small>
+              </div>
+              <label class="agent-setting-check"><input id="agent-zcode-enable-workflow" type="checkbox" /><span><strong>允许动态工作流</strong><small>启用 ZCode 的 --enable-workflow；工作流会启动子 Agent 并消耗更多 Token，仅对可信任务开启</small></span></label>
               <label class="agent-compact-field"><span>自定义工作区（每行：名称|目录，只读档，最多 5 个）</span><textarea id="agent-custom-workspaces" rows="3" spellcheck="false" placeholder="我的项目|D:/projects/my-app&#10;文档库|/srv/docs"></textarea></label>
               <div class="agent-settings-subgroup">
                 <div class="agent-settings-group-head"><strong>上下文管理</strong><span>接近 Agent 上下文上限时，发送下一轮消息前自动压缩（OpenCode / ZCode）</span></div>
@@ -629,18 +640,6 @@
                   <label class="agent-compact-field"><span>提供方（OpenCode，可选）</span><input id="agent-compact-provider" type="text" maxlength="120" placeholder="例如 openai" title="仅用于 OpenCode 的 summarize；ZCode 跟随会话模型" /></label>
                 </div>
               </div>
-            </div>
-          </section>
-
-          <section class="agent-settings-group">
-            <div class="agent-settings-group-head"><strong>自定义 API</strong><span>未启用时自动使用聊天默认 API</span></div>
-            <div class="agent-settings-stack">
-              <label class="agent-setting-check"><input id="agent-custom-api-enabled" type="checkbox" /><span><strong>使用自定义 API</strong><small>支持 OpenAI 兼容 / OpenAI Responses / Anthropic / Grok 接口</small></span></label>
-              <label class="agent-compact-field agent-custom-api-field"><span>接入协议</span><select id="agent-custom-api-protocol"><option value="">跟随主接口</option><option value="openai">OpenAI 兼容格式（chat/completions）</option><option value="openai-responses">OpenAI Responses（/v1/responses）</option><option value="anthropic">Anthropic（Claude Messages API）</option><option value="grok">Grok（xAI，OpenAI 兼容）</option></select></label>
-              <label class="agent-compact-field agent-custom-api-field"><span>Base URL</span><input id="agent-custom-api-base" type="url" maxlength="500" placeholder="https://example.com/v1" /></label>
-              <label class="agent-compact-field agent-custom-api-field"><span>API Key</span><input id="agent-custom-api-key" type="password" maxlength="500" placeholder="留空保持当前密钥" autocomplete="new-password" /></label>
-              <label class="agent-compact-field agent-custom-api-field"><span>模型</span><input id="agent-custom-api-model" type="text" maxlength="160" placeholder="例如 gpt-5.4-mini" /></label>
-              <label class="agent-compact-field agent-custom-api-field"><span>User-Agent</span><input id="agent-custom-api-ua" type="text" maxlength="200" placeholder="可选" /></label>
             </div>
           </section>
 
@@ -669,6 +668,98 @@
         <div>
           <button id="agent-settings-cancel" type="button" class="agent-quiet-btn">关闭</button>
           <button id="agent-save-btn" type="button" class="agent-settings-save-btn">保存设置</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <div id="agent-mcp-mask" class="agent-settings-mask hidden">
+    <section class="agent-settings-dialog agent-mcp-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-mcp-title">
+      <header class="agent-settings-head">
+        <div>
+          <span class="agent-eyebrow">ZCODE MCP</span>
+          <strong id="agent-mcp-title">MCP 服务器</strong>
+          <span>配置任务运行期写入工作区 .mcp.json 的 MCP 服务，任务结束自动清理。</span>
+        </div>
+        <button id="agent-mcp-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+      </header>
+      <div class="agent-settings-body agent-mcp-body">
+        <div class="agent-mcp-toolbar">
+          <span id="agent-mcp-count">0 个服务器</span>
+          <button id="agent-mcp-add" type="button" class="agent-mini-btn">＋ 添加服务器</button>
+        </div>
+        <div id="agent-mcp-list" class="agent-mcp-list"></div>
+        <section id="agent-mcp-editor" class="agent-mcp-editor hidden">
+          <div class="agent-mcp-editor-head">
+            <strong id="agent-mcp-editor-title">添加服务器</strong>
+            <span>stdio 填命令；sse / http 填 URL</span>
+          </div>
+          <div class="agent-mcp-editor-grid">
+            <label class="agent-compact-field"><span>名称</span><input id="agent-mcp-name" type="text" maxlength="80" placeholder="例如 filesystem" autocomplete="off" /></label>
+            <label class="agent-compact-field"><span>类型</span>
+              <select id="agent-mcp-type">
+                <option value="stdio">stdio（本地进程）</option>
+                <option value="sse">sse（远程事件流）</option>
+                <option value="http">http（远程 HTTP）</option>
+              </select>
+            </label>
+            <label id="agent-mcp-command-row" class="agent-compact-field"><span>命令</span><input id="agent-mcp-command" type="text" maxlength="400" placeholder="例如 npx" autocomplete="off" /></label>
+            <label id="agent-mcp-args-row" class="agent-compact-field agent-mcp-wide"><span>参数（每行一个）</span><textarea id="agent-mcp-args" rows="3" spellcheck="false" placeholder="-y&#10;@modelcontextprotocol/server-filesystem&#10;D:/projects"></textarea></label>
+            <label id="agent-mcp-env-row" class="agent-compact-field agent-mcp-wide"><span>环境变量（每行 KEY=VALUE）</span><textarea id="agent-mcp-env" rows="2" spellcheck="false" placeholder="API_KEY=xxx"></textarea></label>
+            <label id="agent-mcp-url-row" class="agent-compact-field agent-mcp-wide hidden"><span>URL</span><input id="agent-mcp-url" type="url" maxlength="800" placeholder="https://example.com/mcp" autocomplete="off" /></label>
+            <label id="agent-mcp-headers-row" class="agent-compact-field agent-mcp-wide hidden"><span>请求头（每行 Key: Value）</span><textarea id="agent-mcp-headers" rows="2" spellcheck="false" placeholder="Authorization: Bearer xxx"></textarea></label>
+          </div>
+          <div class="agent-mcp-editor-actions">
+            <button id="agent-mcp-editor-cancel" type="button" class="agent-mini-btn">取消编辑</button>
+            <button id="agent-mcp-editor-save" type="button" class="agent-mini-btn is-primary">保存服务器</button>
+          </div>
+        </section>
+        <details class="agent-mcp-advanced">
+          <summary>高级 JSON</summary>
+          <textarea id="agent-mcp-raw" rows="6" spellcheck="false" placeholder='{"mcpServers":{"server-name":{"type":"stdio","command":"npx","args":["-y","some-mcp-server"]}}}'></textarea>
+          <div class="agent-mcp-advanced-actions">
+            <button id="agent-mcp-raw-format" type="button" class="agent-mini-btn">格式化</button>
+            <button id="agent-mcp-raw-apply" type="button" class="agent-mini-btn">应用 JSON</button>
+          </div>
+        </details>
+        <p id="agent-mcp-error" class="agent-form-error hidden"></p>
+      </div>
+      <footer class="agent-settings-footer">
+        <span id="agent-mcp-footnote">保存后写入 ZCode 能力配置，下个任务生效。</span>
+        <div>
+          <button id="agent-mcp-cancel" type="button" class="agent-quiet-btn">取消</button>
+          <button id="agent-mcp-save" type="button" class="agent-quiet-btn is-primary">保存</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <div id="agent-zcode-capabilities-mask" class="agent-settings-mask hidden">
+    <section class="agent-settings-dialog agent-zcode-capabilities-dialog" role="dialog" aria-modal="true" aria-labelledby="agent-zcode-capabilities-title">
+      <header class="agent-settings-head">
+        <div>
+          <span class="agent-eyebrow">ZCODE CAPABILITIES</span>
+          <strong id="agent-zcode-capabilities-title">技能与命令</strong>
+          <span>选择技能或自定义命令后插入输入框；ZCode 会在任务中加载/执行。</span>
+        </div>
+        <button id="agent-zcode-capabilities-close" type="button" class="agent-icon-btn" aria-label="关闭">✕</button>
+      </header>
+      <div class="agent-settings-body agent-zcode-capabilities-body">
+        <div class="agent-capability-toolbar">
+          <div class="agent-capability-tabs" role="tablist" aria-label="能力类型">
+            <button id="agent-capability-tab-skills" type="button" class="agent-capability-tab is-active" data-capability-tab="skills" role="tab" aria-selected="true">技能</button>
+            <button id="agent-capability-tab-commands" type="button" class="agent-capability-tab" data-capability-tab="commands" role="tab" aria-selected="false">命令</button>
+          </div>
+          <input id="agent-capability-search" type="search" maxlength="120" placeholder="搜索名称或描述" aria-label="搜索技能或命令" />
+          <button id="agent-capability-refresh" type="button" class="agent-mini-btn">刷新</button>
+        </div>
+        <div id="agent-capability-list" class="agent-capability-list" role="list"></div>
+        <p id="agent-capability-error" class="agent-form-error hidden"></p>
+      </div>
+      <footer class="agent-settings-footer">
+        <span id="agent-capability-footnote">技能会插入 /skill 命令；自定义命令会原样交给 ZCode。</span>
+        <div>
+          <button id="agent-zcode-capabilities-cancel" type="button" class="agent-quiet-btn">关闭</button>
         </div>
       </footer>
     </section>

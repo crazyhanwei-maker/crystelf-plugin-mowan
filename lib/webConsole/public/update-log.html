@@ -15,6 +15,7 @@
         <h1>更新日志</h1>
       </div>
       <div class="actions">
+        <button id="update-log-check-btn" type="button" class="link-btn update-log-btn-secondary">检查更新</button>
         <a class="link-btn" href="/index.html">返回总览</a>
       </div>
     </header>
@@ -25,8 +26,10 @@
           <h2>版本记录</h2>
           <div class="setting-help">按版本倒序展示，来源为插件仓库的 GIT.md 更新记录章节。</div>
         </div>
+        <span id="update-log-update-badge" class="tag hidden"></span>
         <span id="update-log-version-tag" class="tag"></span>
       </div>
+      <div id="update-log-update-status" class="update-log-update-status hidden"></div>
       <div id="update-log-timeline" class="update-log-timeline">加载中...</div>
     </section>
   </div>

@@ -106,7 +106,6 @@
 .agent-topbar-meta,
 .agent-topbar-actions,
 .agent-sidebar-head,
-.agent-safety-line,
 .agent-chat-header,
 .agent-chat-actions,
 .agent-composer-footer,
@@ -283,6 +282,31 @@
   /* 工作台有自己的顶栏（返回/主题/设置），隐藏全局顶栏换回一屏工作区；手机端保留 ☰ 导航入口 */
   body.agent-workbench-page .console-topbar {
     display: none;
+  }
+
+  /* auth-ready 的 display:block 特异性更高，把 .page 打回了块流；这里用同权重选择器
+     恢复「顶栏 + 工作区」网格，并让工作区吃满剩余高度，桌面端不再出现底部空白 */
+  .agent-workbench-page.auth-ready .auth-guarded-content.page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+    max-width: 1600px;
+    /* console-modern 壳上下 padding 各 12px：页面高度 = 视口 - 24px */
+    height: calc(100dvh - 24px);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* 工作台一屏铺满：主列底部 24px 留白会把页面顶出滚动条，这里收掉 */
+  body.agent-workbench-page .console-main {
+    padding-bottom: 0;
+  }
+
+  /* 高度交给页面网格的 1fr 行分配，不再用魔法常数估 chrome 高度 */
+  .agent-workbench-shell {
+    height: auto;
+    min-height: 460px;
   }
 }
 
@@ -931,8 +955,7 @@
   white-space: nowrap;
 }
 
-.agent-sidebar-section,
-.agent-sidebar-safety {
+.agent-sidebar-section {
   display: grid;
   gap: 10px;
   margin-top: 16px;
@@ -975,31 +998,6 @@
   background: var(--agent-surface);
   color: var(--agent-ink);
   font-size: 12px;
-}
-
-.agent-sidebar-safety {
-  margin-top: auto;
-}
-
-.agent-safety-line {
-  gap: 7px;
-  color: var(--agent-ink);
-  font-size: 11px;
-}
-
-.agent-safety-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
-}
-
-.agent-sidebar-safety p {
-  margin: 0;
-  color: var(--agent-muted);
-  font-size: 10px;
-  line-height: 1.55;
 }
 
 .agent-chat-panel {
@@ -4320,7 +4318,7 @@
 
 .agent-settings-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px 22px;
 }
 
@@ -4426,14 +4424,6 @@
 .agent-settings-save-btn:disabled { opacity: 0.62; cursor: wait; }
 
 body.agent-settings-modal-open { overflow: hidden; }
-
-.agent-custom-api-field.is-disabled {
-  display: none;
-}
-
-.agent-custom-api-field input:disabled {
-  cursor: not-allowed;
-}
 
 .agent-setting-check {
   display: grid;
@@ -4779,7 +4769,6 @@ body.agent-settings-modal-open { overflow: hidden; }
   .agent-context-head { grid-column: auto; }
   /* 手机端会话面板本身整屏可滚动，列表不再单独限高，避免项目/会话被截断 */
   .agent-task-list { max-height: none; overflow: visible; }
-  .agent-sidebar-safety { margin-top: 14px; }
   .agent-chat-header { align-items: center; width: 100%; min-height: 54px; padding: 8px 14px; }
   .agent-chat-heading { flex: 1 1 auto; flex-direction: column; align-items: stretch; gap: 0; }
   .agent-chat-heading .agent-eyebrow { display: none; }
@@ -6393,4 +6382,606 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
 
 :root[data-theme='dark'] .agent-message-error .agent-error-detail > pre {
   background: rgba(0, 0, 0, 0.22);
+}
+
+/* ===== ZCode MCP 服务器结构化编辑 ===== */
+.agent-zcode-mcp-field {
+  gap: 6px;
+}
+
+.agent-zcode-mcp-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface);
+}
+
+.agent-zcode-mcp-summary > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-zcode-mcp-summary .agent-mini-btn {
+  flex: 0 0 auto;
+}
+
+.agent-mcp-dialog {
+  width: min(760px, 100%);
+  height: auto;
+  max-height: 92dvh;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+
+.agent-mcp-body {
+  display: grid;
+  gap: 12px;
+  max-height: min(66dvh, 680px);
+}
+
+.agent-mcp-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent-mcp-toolbar > span {
+  color: var(--agent-muted);
+  font-size: 11px;
+}
+
+.agent-mcp-list {
+  display: grid;
+  gap: 6px;
+}
+
+.agent-mcp-empty {
+  padding: 18px 12px;
+  border: 1px dashed var(--agent-line);
+  border-radius: 8px;
+  color: var(--agent-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.agent-mcp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-bg);
+}
+
+.agent-mcp-row-main {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agent-mcp-row-main strong {
+  overflow: hidden;
+  color: var(--agent-ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-mcp-row-main small {
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-mcp-row-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.agent-mcp-delete {
+  border-color: rgba(220, 38, 38, 0.32) !important;
+  color: #b91c1c !important;
+}
+
+.agent-mcp-editor {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--agent-line-strong);
+  border-radius: 10px;
+  background: var(--agent-surface);
+}
+
+.agent-mcp-editor-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent-mcp-editor-head strong {
+  color: var(--agent-ink);
+  font-size: 12px;
+}
+
+.agent-mcp-editor-head span {
+  color: var(--agent-muted);
+  font-size: 10px;
+}
+
+.agent-mcp-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 12px;
+}
+
+.agent-mcp-wide {
+  grid-column: 1 / -1;
+}
+
+.agent-mcp-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.agent-mcp-advanced {
+  padding: 8px 10px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-bg);
+}
+
+.agent-mcp-advanced > summary {
+  cursor: pointer;
+  color: var(--agent-ink);
+  font-size: 11px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.agent-mcp-advanced textarea {
+  width: 100%;
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.agent-mcp-advanced-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+@media (max-width: 760px) {
+  .agent-mcp-dialog {
+    width: calc(100vw - 20px);
+    max-height: 94dvh;
+  }
+
+  .agent-mcp-body {
+    max-height: none;
+  }
+
+  .agent-mcp-editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agent-mcp-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .agent-mcp-row-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ===== ZCode 动态工作流卡片 ===== */
+.agent-workflow-card {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.agent-workflow-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--agent-ink);
+  font-size: 12px;
+}
+
+.agent-workflow-head strong {
+  font-weight: 650;
+}
+
+.agent-workflow-head span {
+  color: var(--agent-muted);
+  font-size: 10px;
+}
+
+.agent-workflow-run {
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-surface);
+}
+
+.agent-workflow-run > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  cursor: pointer;
+  list-style: none;
+  min-width: 0;
+}
+
+.agent-workflow-run > summary::-webkit-details-marker { display: none; }
+
+.agent-workflow-run > summary strong {
+  flex: 0 0 auto;
+  color: var(--agent-ink);
+  font-size: 11px;
+}
+
+.agent-workflow-run > summary code {
+  flex: 0 0 auto;
+  color: var(--agent-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10px;
+}
+
+.agent-workflow-progress {
+  flex: 0 0 auto;
+  color: var(--agent-muted);
+  font-size: 10px;
+}
+
+.agent-workflow-last {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-workflow-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #8b5cf6;
+}
+
+.agent-workflow-run.is-running .agent-workflow-dot {
+  animation: agent-workflow-pulse 1s ease-in-out infinite;
+}
+
+.agent-workflow-run.is-done .agent-workflow-dot { background: #16a34a; }
+.agent-workflow-run.is-error .agent-workflow-dot { background: #dc2626; }
+.agent-workflow-run.is-canceled .agent-workflow-dot { background: #94a3b8; }
+.agent-workflow-run.is-warning .agent-workflow-dot { background: #d97706; }
+
+@keyframes agent-workflow-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.agent-workflow-chevron {
+  flex: 0 0 auto;
+  color: var(--agent-muted);
+  font-size: 14px;
+  transition: transform 0.18s ease;
+}
+
+.agent-workflow-run[open] .agent-workflow-chevron { transform: rotate(90deg); }
+
+.agent-workflow-body {
+  display: grid;
+  gap: 6px;
+  padding: 0 9px 9px;
+}
+
+.agent-workflow-message {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--agent-bg);
+  color: var(--agent-ink);
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.agent-workflow-events {
+  display: grid;
+  gap: 3px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.agent-workflow-event {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.agent-workflow-event > span:nth-child(2) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-workflow-event time {
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+
+.agent-workflow-event-dot {
+  flex: 0 0 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--agent-line-strong);
+}
+
+.agent-workflow-empty {
+  color: var(--agent-muted);
+  font-size: 10px;
+}
+
+@media (max-width: 760px) {
+  .agent-workflow-card {
+    margin-bottom: 14px;
+    padding: 9px 10px;
+  }
+
+  .agent-workflow-last {
+    display: none;
+  }
+}
+
+/* MCP 弹窗内的小按钮不要被移动端全局 width:100% 拉满 */
+.agent-zcode-mcp-summary .agent-mini-btn,
+.agent-mcp-row-actions .agent-mini-btn,
+.agent-mcp-editor-actions .agent-mini-btn,
+.agent-mcp-advanced-actions .agent-mini-btn {
+  width: auto !important;
+  min-width: 0;
+}
+
+/* ===== ZCode 技能与命令面板 ===== */
+.agent-zcode-capabilities-dialog {
+  width: min(760px, 100%);
+  height: auto;
+  max-height: 92dvh;
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+
+.agent-zcode-capabilities-body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  max-height: min(66dvh, 680px);
+}
+
+.agent-capability-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-capability-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-bg);
+}
+
+.agent-capability-tab {
+  width: auto !important;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--agent-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agent-capability-tab.is-active {
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.agent-capability-toolbar #agent-capability-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid var(--agent-line);
+  border-radius: 7px;
+  background: var(--agent-surface);
+  color: var(--agent-ink);
+  font-size: 11px;
+}
+
+.agent-capability-toolbar #agent-capability-refresh {
+  flex: 0 0 auto;
+  width: auto !important;
+}
+
+.agent-capability-list {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 100px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.agent-capability-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100% !important;
+  padding: 9px 10px;
+  border: 1px solid var(--agent-line);
+  border-radius: 8px;
+  background: var(--agent-bg);
+  color: var(--agent-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-capability-item:hover:not(.is-disabled) {
+  border-color: var(--agent-accent);
+  background: var(--agent-surface);
+}
+
+.agent-capability-item.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.agent-capability-icon {
+  display: grid;
+  flex: 0 0 24px;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--agent-surface-strong);
+  color: var(--agent-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.agent-capability-main {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agent-capability-main strong {
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-capability-main small {
+  overflow: hidden;
+  color: var(--agent-muted);
+  font-size: 10px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-capability-main em {
+  color: var(--agent-muted);
+  font-size: 9px;
+  font-style: normal;
+  opacity: 0.8;
+}
+
+.agent-capability-action {
+  flex: 0 0 auto;
+  color: var(--agent-accent);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.agent-capability-item.is-disabled .agent-capability-action {
+  color: var(--agent-muted);
+}
+
+.agent-capability-empty {
+  padding: 20px 12px;
+  border: 1px dashed var(--agent-line);
+  border-radius: 8px;
+  color: var(--agent-muted);
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .agent-zcode-capabilities-dialog {
+    width: calc(100vw - 20px);
+    max-height: 94dvh;
+  }
+
+  .agent-zcode-capabilities-body {
+    max-height: none;
+  }
+
+  .agent-capability-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .agent-capability-toolbar #agent-capability-search {
+    order: 3;
+    width: 100%;
+  }
+
+  .agent-capability-main small {
+    white-space: normal;
+  }
+}
+
+.agent-zcode-session-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.agent-zcode-session-head-actions .agent-mini-btn {
+  width: auto !important;
+  min-height: 26px;
+  padding: 2px 8px;
 }
