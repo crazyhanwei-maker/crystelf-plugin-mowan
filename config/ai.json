@@ -41,13 +41,13 @@
     "?groups": "按群号配置 enabled 和 probability（0-100）",
     "groups": {}
   },
-  "?character": "回复表情包的角色",
+  "?character": "回复表情包时锁定的角色（留空则允许 AI 从角色库自选）",
   "character": "",
   "?memeConfig": "表情包发送配置",
   "memeConfig": {
     "?apiBase": "表情包API基础地址",
     "apiBase": "http://38.22.95.201:5555",
-    "?character": "发送表情包时默认使用的角色",
+    "?character": "发送表情包时锁定的角色（留空则允许 AI 从角色库自选）",
     "character": "",
     "?availableEmotions": "允许主动发送的表情情绪",
     "availableEmotions": ["happy", "sad", "angry", "confused", "shy", "surprised", "default"],
