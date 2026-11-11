@@ -5105,6 +5105,119 @@ body.agent-settings-modal-open { overflow: hidden; }
   min-height: 34px !important;
   box-shadow: none !important;
 }
+
+/* 添加供应商预设：对齐 ZCode 的分组卡片面板（智谱 / 其他，双列品牌入口） */
+/* 预设面板叠在管理模型弹窗之上，否则同 z-index 下会被后出现的弹窗盖住 */
+.agent-provider-preset-mask { z-index: 95; }
+.agent-workbench-page .agent-provider-preset-dialog {
+  width: min(820px, 100%);
+  height: auto;
+  max-height: min(820px, 92dvh);
+}
+.agent-provider-preset-body { padding: 18px 20px 24px; }
+.agent-provider-preset-groups { display: grid; gap: 22px; }
+.agent-provider-preset-group { display: grid; gap: 8px; }
+.agent-provider-preset-group h3 {
+  position: sticky;
+  top: -18px;
+  z-index: 1;
+  margin: 0;
+  padding: 4px 0 8px;
+  background: var(--agent-surface);
+  color: var(--agent-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.agent-provider-preset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.agent-workbench-page .agent-provider-preset-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: auto;
+  min-height: 62px;
+  padding: 10px 12px;
+  border: 1px solid var(--agent-line) !important;
+  border-radius: 10px !important;
+  background: var(--agent-surface-soft) !important;
+  box-shadow: none !important;
+  color: var(--agent-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease-out, background 140ms ease-out, box-shadow 140ms ease-out;
+}
+.agent-workbench-page .agent-provider-preset-card:hover {
+  border-color: var(--agent-accent) !important;
+  background: var(--agent-surface) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+}
+.agent-provider-preset-card.is-added { opacity: 0.66; }
+.agent-provider-preset-card.is-custom { border-style: dashed !important; color: var(--agent-muted); }
+.agent-provider-preset-logo {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #111827;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+.agent-provider-preset-logo.is-bigmodel { background: linear-gradient(135deg, #1d4ed8, #60a5fa); }
+.agent-provider-preset-logo.is-zai { background: #09090b; }
+.agent-provider-preset-logo.is-moonshot-kimi { background: #09090b; }
+.agent-provider-preset-logo.is-minimax { background: linear-gradient(135deg, #ff5c8a, #f43f5e); }
+.agent-provider-preset-logo.is-deepseek { background: linear-gradient(135deg, #1d4ed8, #0ea5e9); }
+.agent-provider-preset-logo.is-alibaba-model-studio { background: linear-gradient(135deg, #ff6a00, #ff9f1c); }
+.agent-provider-preset-logo.is-xiaomi-mimo { background: #111; }
+.agent-provider-preset-logo.is-tencent-cloud { background: linear-gradient(135deg, #1d4ed8, #38bdf8); }
+.agent-provider-preset-logo.is-volcengine { background: linear-gradient(135deg, #2563eb, #60a5fa); }
+.agent-provider-preset-logo.is-stepfun { background: #0f172a; }
+.agent-provider-preset-logo.is-openai { background: #0f172a; }
+.agent-provider-preset-logo.is-anthropic { background: #f3efe5; color: #292524; }
+.agent-provider-preset-logo.is-xai { background: #000; }
+.agent-provider-preset-logo.is-siliconflow { background: linear-gradient(135deg, #4338ca, #818cf8); }
+.agent-provider-preset-logo.is-openrouter { background: #111827; }
+.agent-provider-preset-logo.is-opencode { background: #18181b; }
+.agent-provider-preset-logo.is-custom {
+  border: 1px dashed var(--agent-line-strong);
+  background: var(--agent-surface-strong);
+  color: var(--agent-muted);
+}
+.agent-provider-preset-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.agent-provider-preset-state {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--agent-surface-strong);
+  color: var(--agent-muted);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.agent-provider-preset-chevron { display: inline-flex; flex: 0 0 auto; color: var(--agent-muted); }
+.agent-provider-preset-chevron svg { width: 15px; height: 15px; }
+.agent-manager-editor-actions { display: flex; align-items: center; gap: 8px; }
+.agent-manager-key-link {
+  color: var(--agent-accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.agent-manager-key-link:hover { text-decoration: underline; }
 .agent-manager-model-row {
   display: flex;
   align-items: center;
@@ -5789,6 +5902,13 @@ mark.agent-search-hit.is-active { background: var(--agent-accent); color: #fffff
   }
   .agent-manager-empty { padding: 26px 16px; }
   .agent-manager-empty .agent-quiet-btn.is-primary { width: auto !important; min-width: 160px; }
+  /* 添加供应商：窄屏单列，长名称允许换行 */
+  .agent-provider-preset-body { padding: 14px 12px 18px; }
+  .agent-provider-preset-groups { gap: 18px; }
+  .agent-provider-preset-group h3 { top: -14px; }
+  .agent-provider-preset-grid { grid-template-columns: 1fr; gap: 8px; }
+  .agent-workbench-page .agent-provider-preset-card { min-height: 56px; }
+  .agent-provider-preset-name { white-space: normal; }
 }
 
 /* 没有任何供应商时收起左栏，只保留编辑区空状态里的“添加供应商” */
